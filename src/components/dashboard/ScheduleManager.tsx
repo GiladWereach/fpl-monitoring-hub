@@ -42,7 +42,7 @@ export function ScheduleManager({ functionName, functionDisplayName }: ScheduleM
     },
   });
 
-  const { data: schedule, isLoading, error } = useQuery({
+  const { data: schedule, isLoading } = useQuery({
     queryKey: ["schedule", functionName],
     queryFn: async () => {
       console.log(`Fetching schedule for function: ${functionName}`);
@@ -51,14 +51,20 @@ export function ScheduleManager({ functionName, functionDisplayName }: ScheduleM
           .from("schedules")
           .select("*")
           .eq("function_name", functionName)
-          .maybeSingle(); // Use maybeSingle() instead of single()
+          .maybeSingle();
 
         if (error) {
           console.error(`Error fetching schedule for ${functionName}:`, error);
           throw error;
         }
 
-        return data; // This can be null if no schedule exists
+        if (!data) {
+          console.log(`No schedule found for ${functionName}, using default values`);
+          return null;
+        }
+
+        console.log(`Schedule found for ${functionName}:`, data);
+        return data;
       } catch (error) {
         console.error(`Failed to fetch schedule for ${functionName}:`, error);
         toast({
@@ -66,21 +72,27 @@ export function ScheduleManager({ functionName, functionDisplayName }: ScheduleM
           description: "Failed to fetch schedule. Please try again later.",
           variant: "destructive",
         });
-        throw error;
+        return null;
       }
     },
-    retry: 3,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    retry: false, // Don't retry on 406 errors
   });
 
   React.useEffect(() => {
     if (schedule) {
       console.log(`Setting form values for ${functionName}:`, schedule);
       form.reset({
-        enabled: schedule.enabled,
-        scheduleType: schedule.schedule_type,
-        timeConfig: schedule.time_config as ScheduleFormValues['timeConfig'],
-        eventConfig: schedule.event_config as ScheduleFormValues['eventConfig'],
+        enabled: schedule.enabled ?? false,
+        scheduleType: schedule.schedule_type ?? "time_based",
+        timeConfig: schedule.time_config as ScheduleFormValues['timeConfig'] ?? {
+          type: "interval",
+          intervalMinutes: 5,
+          hour: 0
+        },
+        eventConfig: schedule.event_config as ScheduleFormValues['eventConfig'] ?? {
+          triggerType: "deadline",
+          offsetMinutes: 0
+        },
       });
     }
   }, [schedule, form, functionName]);
@@ -115,11 +127,11 @@ export function ScheduleManager({ functionName, functionDisplayName }: ScheduleM
     }
   };
 
-  if (error) {
+  if (isLoading) {
     return (
-      <div className="text-red-500">
-        Failed to load schedule. Please refresh the page.
-      </div>
+      <Button size="sm" variant="outline" disabled>
+        <Timer className="h-4 w-4 animate-spin" />
+      </Button>
     );
   }
 
