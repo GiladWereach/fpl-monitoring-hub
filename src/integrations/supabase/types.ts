@@ -54,6 +54,7 @@ export type Database = {
           squad_max_play: number | null
           squad_max_select: number | null
           squad_min_play: number | null
+          squad_min_select: number | null
           squad_select: number | null
         }
         Insert: {
@@ -67,6 +68,7 @@ export type Database = {
           squad_max_play?: number | null
           squad_max_select?: number | null
           squad_min_play?: number | null
+          squad_min_select?: number | null
           squad_select?: number | null
         }
         Update: {
@@ -80,6 +82,7 @@ export type Database = {
           squad_max_play?: number | null
           squad_max_select?: number | null
           squad_min_play?: number | null
+          squad_min_select?: number | null
           squad_select?: number | null
         }
         Relationships: []
