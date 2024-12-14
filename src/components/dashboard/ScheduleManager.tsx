@@ -17,6 +17,7 @@ import { TimeConfigFields } from "./TimeConfigFields";
 import { ExecutionHistory } from "./ExecutionHistory";
 import { ScheduleFormFields } from "./ScheduleFormFields";
 import { ScheduleFormValues } from "./types";
+import { Form } from "@/components/ui/form";
 
 interface ScheduleManagerProps {
   functionName: string;
@@ -29,6 +30,15 @@ export function ScheduleManager({ functionName, functionDisplayName }: ScheduleM
     defaultValues: {
       enabled: false,
       scheduleType: "time_based",
+      timeConfig: {
+        type: "interval",
+        intervalMinutes: 5,
+        hour: 0
+      },
+      eventConfig: {
+        triggerType: "deadline",
+        offsetMinutes: 0
+      }
     },
   });
 
@@ -40,14 +50,15 @@ export function ScheduleManager({ functionName, functionDisplayName }: ScheduleM
         const { data, error } = await supabase
           .from("schedules")
           .select("*")
-          .eq("function_name", functionName);
+          .eq("function_name", functionName)
+          .single();
 
         if (error) {
           console.error(`Error fetching schedule for ${functionName}:`, error);
           throw error;
         }
 
-        return data && data.length > 0 ? data[0] : null;
+        return data;
       } catch (error) {
         console.error(`Failed to fetch schedule for ${functionName}:`, error);
         toast({
@@ -68,8 +79,8 @@ export function ScheduleManager({ functionName, functionDisplayName }: ScheduleM
       form.reset({
         enabled: schedule.enabled,
         scheduleType: schedule.schedule_type,
-        timeConfig: schedule.time_config,
-        eventConfig: schedule.event_config,
+        timeConfig: schedule.time_config as ScheduleFormValues['timeConfig'],
+        eventConfig: schedule.event_config as ScheduleFormValues['eventConfig'],
       });
     }
   }, [schedule, form, functionName]);
