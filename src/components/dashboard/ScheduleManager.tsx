@@ -24,35 +24,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Timer } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
+import { TimeConfigFields } from "./TimeConfigFields";
+import { ExecutionHistory } from "./ExecutionHistory";
+import { ScheduleFormValues, TimeConfig, EventConfig } from "./types";
 
 interface ScheduleManagerProps {
   functionName: string;
   functionDisplayName: string;
-}
-
-type TimeConfig = {
-  type?: "interval" | "daily" | "weekly" | "monthly" | "cron";
-  intervalMinutes?: number;
-  cronExpression?: string;
-};
-
-type EventConfig = {
-  triggerType?: "deadline" | "kickoff" | "match_status";
-  offsetMinutes?: number;
-};
-
-interface ScheduleFormValues {
-  enabled: boolean;
-  scheduleType: "time_based" | "event_based";
-  timeConfig?: TimeConfig;
-  eventConfig?: EventConfig;
 }
 
 export function ScheduleManager({ functionName, functionDisplayName }: ScheduleManagerProps) {
@@ -184,138 +168,46 @@ export function ScheduleManager({ functionName, functionDisplayName }: ScheduleM
                 </FormItem>
               )}
             />
+
             {form.watch("scheduleType") === "time_based" && (
-              <>
-                <FormField
-                  control={form.control}
-                  name="timeConfig.type"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Time Schedule Type</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select time schedule type" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="interval">Interval</SelectItem>
-                          <SelectItem value="daily">Daily</SelectItem>
-                          <SelectItem value="weekly">Weekly</SelectItem>
-                          <SelectItem value="monthly">Monthly</SelectItem>
-                          <SelectItem value="cron">Cron</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                {form.watch("timeConfig.type") === "interval" && (
-                  <FormField
-                    control={form.control}
-                    name="timeConfig.intervalMinutes"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Interval (minutes)</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            min={5}
-                            {...field}
-                            onChange={(e) =>
-                              field.onChange(parseInt(e.target.value))
-                            }
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          Minimum 5 minutes interval
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
-                {form.watch("timeConfig.type") === "cron" && (
-                  <FormField
-                    control={form.control}
-                    name="timeConfig.cronExpression"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Cron Expression</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormDescription>
-                          Standard cron expression format
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
-              </>
+              <TimeConfigFields form={form} />
             )}
+
             {form.watch("scheduleType") === "event_based" && (
-              <>
-                <FormField
-                  control={form.control}
-                  name="eventConfig.triggerType"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Event Trigger Type</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select trigger type" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="deadline">Deadline</SelectItem>
-                          <SelectItem value="kickoff">Kickoff</SelectItem>
-                          <SelectItem value="match_status">
-                            Match Status
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="eventConfig.offsetMinutes"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Offset (minutes)</FormLabel>
+              <FormField
+                control={form.control}
+                name="eventConfig.triggerType"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Event Trigger Type</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
-                        <Input
-                          type="number"
-                          {...field}
-                          onChange={(e) =>
-                            field.onChange(parseInt(e.target.value))
-                          }
-                        />
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select trigger type" />
+                        </SelectTrigger>
                       </FormControl>
-                      <FormDescription>
-                        Minutes before/after the event (negative for before)
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </>
+                      <SelectContent>
+                        <SelectItem value="deadline">Deadline</SelectItem>
+                        <SelectItem value="kickoff">Kickoff</SelectItem>
+                        <SelectItem value="match_status">
+                          Match Status
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             )}
             <Button type="submit" className="w-full">
               Save Schedule
             </Button>
           </form>
         </Form>
+        <ExecutionHistory functionName={functionName} />
       </DialogContent>
     </Dialog>
   );
