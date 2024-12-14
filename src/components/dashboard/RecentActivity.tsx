@@ -12,6 +12,9 @@ type ExecutionLog = {
   error_details: string | null;
   execution_duration_ms: number | null;
   created_at: string;
+  schedules: {
+    function_name: string;
+  } | null;
 };
 
 export function RecentActivity() {
@@ -21,8 +24,13 @@ export function RecentActivity() {
       console.log("Fetching recent executions");
       const { data: executionLogs, error } = await supabase
         .from("schedule_execution_logs")
-        .select("*, schedules(function_name)")
-        .order("started_at", { ascending: false })
+        .select(`
+          *,
+          schedules (
+            function_name
+          )
+        `)
+        .order('started_at', { ascending: false })
         .limit(5);
 
       if (error) {
@@ -30,7 +38,7 @@ export function RecentActivity() {
         throw error;
       }
 
-      return executionLogs;
+      return executionLogs as ExecutionLog[];
     },
     refetchInterval: 30000, // Refresh every 30 seconds
   });
