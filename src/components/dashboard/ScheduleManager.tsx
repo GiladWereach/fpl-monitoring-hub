@@ -8,23 +8,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 import { Timer } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,7 +15,8 @@ import { toast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { TimeConfigFields } from "./TimeConfigFields";
 import { ExecutionHistory } from "./ExecutionHistory";
-import { ScheduleFormValues, TimeConfig, EventConfig } from "./types";
+import { ScheduleFormFields } from "./ScheduleFormFields";
+import { ScheduleFormValues } from "./types";
 
 interface ScheduleManagerProps {
   functionName: string;
@@ -48,35 +32,44 @@ export function ScheduleManager({ functionName, functionDisplayName }: ScheduleM
     },
   });
 
-  const { data: schedule, isLoading } = useQuery({
+  const { data: schedule, isLoading, error } = useQuery({
     queryKey: ["schedule", functionName],
     queryFn: async () => {
       console.log(`Fetching schedule for function: ${functionName}`);
-      const { data, error } = await supabase
-        .from("schedules")
-        .select("*")
-        .eq("function_name", functionName);
+      try {
+        const { data, error } = await supabase
+          .from("schedules")
+          .select("*")
+          .eq("function_name", functionName);
 
-      if (error) {
-        console.error(`Error fetching schedule for ${functionName}:`, error);
+        if (error) {
+          console.error(`Error fetching schedule for ${functionName}:`, error);
+          throw error;
+        }
+
+        return data && data.length > 0 ? data[0] : null;
+      } catch (error) {
+        console.error(`Failed to fetch schedule for ${functionName}:`, error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch schedule. Please try again later.",
+          variant: "destructive",
+        });
         throw error;
       }
-
-      return data && data.length > 0 ? data[0] : null;
     },
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
   React.useEffect(() => {
     if (schedule) {
       console.log(`Setting form values for ${functionName}:`, schedule);
-      const timeConfig = schedule.time_config as TimeConfig;
-      const eventConfig = schedule.event_config as EventConfig;
-      
       form.reset({
         enabled: schedule.enabled,
         scheduleType: schedule.schedule_type,
-        timeConfig,
-        eventConfig,
+        timeConfig: schedule.time_config,
+        eventConfig: schedule.event_config,
       });
     }
   }, [schedule, form, functionName]);
@@ -105,11 +98,19 @@ export function ScheduleManager({ functionName, functionDisplayName }: ScheduleM
       console.error("Error saving schedule:", error);
       toast({
         title: "Error",
-        description: "Failed to update schedule",
+        description: "Failed to update schedule. Please try again.",
         variant: "destructive",
       });
     }
   };
+
+  if (error) {
+    return (
+      <div className="text-red-500">
+        Failed to load schedule. Please refresh the page.
+      </div>
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -124,84 +125,7 @@ export function ScheduleManager({ functionName, functionDisplayName }: ScheduleM
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="enabled"
-              render={({ field }) => (
-                <FormItem className="flex items-center justify-between rounded-lg border p-4">
-                  <div className="space-y-0.5">
-                    <FormLabel className="text-base">Enabled</FormLabel>
-                    <FormDescription>
-                      Enable or disable this schedule
-                    </FormDescription>
-                  </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="scheduleType"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Schedule Type</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select schedule type" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="time_based">Time Based</SelectItem>
-                      <SelectItem value="event_based">Event Based</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {form.watch("scheduleType") === "time_based" && (
-              <TimeConfigFields form={form} />
-            )}
-
-            {form.watch("scheduleType") === "event_based" && (
-              <FormField
-                control={form.control}
-                name="eventConfig.triggerType"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Event Trigger Type</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select trigger type" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="deadline">Deadline</SelectItem>
-                        <SelectItem value="kickoff">Kickoff</SelectItem>
-                        <SelectItem value="match_status">
-                          Match Status
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
+            <ScheduleFormFields form={form} />
             <Button type="submit" className="w-full">
               Save Schedule
             </Button>
