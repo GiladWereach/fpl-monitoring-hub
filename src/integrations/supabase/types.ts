@@ -273,6 +273,8 @@ export type Database = {
           starts: number | null
           starts_per_90: number | null
           status: string | null
+          team: number | null
+          team_code: number | null
           team_id: number | null
           threat: number | null
           threat_rank: number | null
@@ -367,6 +369,8 @@ export type Database = {
           starts?: number | null
           starts_per_90?: number | null
           status?: string | null
+          team?: number | null
+          team_code?: number | null
           team_id?: number | null
           threat?: number | null
           threat_rank?: number | null
@@ -461,6 +465,8 @@ export type Database = {
           starts?: number | null
           starts_per_90?: number | null
           status?: string | null
+          team?: number | null
+          team_code?: number | null
           team_id?: number | null
           threat?: number | null
           threat_rank?: number | null
