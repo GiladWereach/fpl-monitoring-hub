@@ -143,6 +143,7 @@ export type Database = {
       }
       game_settings: {
         Row: {
+          cup_qualifying_method: string | null
           id: number
           last_updated: string | null
           league_join_private_max: number | null
@@ -158,6 +159,7 @@ export type Database = {
           transfers_sell_on_fee: number | null
         }
         Insert: {
+          cup_qualifying_method?: string | null
           id: number
           last_updated?: string | null
           league_join_private_max?: number | null
@@ -173,6 +175,7 @@ export type Database = {
           transfers_sell_on_fee?: number | null
         }
         Update: {
+          cup_qualifying_method?: string | null
           id?: number
           last_updated?: string | null
           league_join_private_max?: number | null
@@ -578,6 +581,7 @@ export type Database = {
           strength_defence_home: number | null
           strength_overall_away: number | null
           strength_overall_home: number | null
+          team_division: number | null
           win: number | null
         }
         Insert: {
@@ -600,6 +604,7 @@ export type Database = {
           strength_defence_home?: number | null
           strength_overall_away?: number | null
           strength_overall_home?: number | null
+          team_division?: number | null
           win?: number | null
         }
         Update: {
@@ -622,6 +627,7 @@ export type Database = {
           strength_defence_home?: number | null
           strength_overall_away?: number | null
           strength_overall_home?: number | null
+          team_division?: number | null
           win?: number | null
         }
         Relationships: []

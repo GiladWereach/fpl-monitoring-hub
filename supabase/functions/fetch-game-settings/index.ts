@@ -26,7 +26,6 @@ Deno.serve(async (req) => {
     const data = await response.json()
     console.log('Game settings data fetched successfully')
 
-    // Extract only the fields that exist in our database
     const mappedSettings = {
       id: 1,
       league_join_private_max: data.game_settings.league_join_private_max,
@@ -40,6 +39,7 @@ Deno.serve(async (req) => {
       squad_total_spend: data.game_settings.squad_total_spend,
       transfers_cap: data.game_settings.transfers_cap,
       transfers_sell_on_fee: data.game_settings.transfers_sell_on_fee,
+      cup_qualifying_method: data.game_settings.cup_qualifying_method,
       last_updated: new Date().toISOString()
     }
 

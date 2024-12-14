@@ -26,7 +26,6 @@ Deno.serve(async (req) => {
     const data = await response.json()
     console.log('Teams data fetched successfully')
 
-    // Map only the fields that exist in our database
     const mappedTeams = data.teams.map(team => ({
       id: team.id,
       code: team.code,
@@ -47,6 +46,7 @@ Deno.serve(async (req) => {
       loss: team.loss,
       draw: team.draw,
       pulse_id: team.pulse_id,
+      team_division: team.team_division,
       last_updated: new Date().toISOString()
     }))
 
