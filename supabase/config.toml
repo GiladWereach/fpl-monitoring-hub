@@ -1,4 +1,19 @@
 project_id = "qlkhlcoyrifbvzbqkshu"
 
-[functions.fetch-fpl-data]
+[functions.fetch-teams]
+verify_jwt = false
+
+[functions.fetch-events]
+verify_jwt = false
+
+[functions.fetch-game-settings]
+verify_jwt = false
+
+[functions.fetch-element-types]
+verify_jwt = false
+
+[functions.fetch-chips]
+verify_jwt = false
+
+[functions.fetch-players]
 verify_jwt = false

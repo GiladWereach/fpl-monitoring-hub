@@ -2,6 +2,7 @@ import { Activity, Database, Server } from "lucide-react";
 import { StatusCard } from "@/components/dashboard/StatusCard";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/AppSidebar";
+import { EdgeFunctionManager } from "@/components/dashboard/EdgeFunctionManager";
 
 const Index = () => {
   return (
@@ -38,6 +39,10 @@ const Index = () => {
               status="info"
               icon={<Server className="h-4 w-4" />}
             />
+          </div>
+
+          <div className="mt-8">
+            <EdgeFunctionManager />
           </div>
 
           <div className="mt-8 glass-card rounded-lg p-6">
