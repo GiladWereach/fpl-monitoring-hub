@@ -1,1 +1,4 @@
 project_id = "qlkhlcoyrifbvzbqkshu"
+
+[functions.fetch-fpl-data]
+verify_jwt = false
