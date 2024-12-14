@@ -51,14 +51,14 @@ export function ScheduleManager({ functionName, functionDisplayName }: ScheduleM
           .from("schedules")
           .select("*")
           .eq("function_name", functionName)
-          .single();
+          .maybeSingle(); // Use maybeSingle() instead of single()
 
         if (error) {
           console.error(`Error fetching schedule for ${functionName}:`, error);
           throw error;
         }
 
-        return data;
+        return data; // This can be null if no schedule exists
       } catch (error) {
         console.error(`Failed to fetch schedule for ${functionName}:`, error);
         toast({
