@@ -44,6 +44,7 @@ export type Database = {
       }
       element_types: {
         Row: {
+          element_count: number | null
           id: number
           last_updated: string | null
           plural_name: string | null
@@ -55,6 +56,7 @@ export type Database = {
           squad_select: number | null
         }
         Insert: {
+          element_count?: number | null
           id: number
           last_updated?: string | null
           plural_name?: string | null
@@ -66,6 +68,7 @@ export type Database = {
           squad_select?: number | null
         }
         Update: {
+          element_count?: number | null
           id?: number
           last_updated?: string | null
           plural_name?: string | null
