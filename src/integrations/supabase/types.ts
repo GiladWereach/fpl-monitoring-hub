@@ -260,6 +260,7 @@ export type Database = {
           points_per_game_rank: number | null
           points_per_game_rank_type: number | null
           red_cards: number | null
+          region: string | null
           removed: boolean | null
           saves: number | null
           second_name: string | null
@@ -352,6 +353,7 @@ export type Database = {
           points_per_game_rank?: number | null
           points_per_game_rank_type?: number | null
           red_cards?: number | null
+          region?: string | null
           removed?: boolean | null
           saves?: number | null
           second_name?: string | null
@@ -444,6 +446,7 @@ export type Database = {
           points_per_game_rank?: number | null
           points_per_game_rank_type?: number | null
           red_cards?: number | null
+          region?: string | null
           removed?: boolean | null
           saves?: number | null
           second_name?: string | null
