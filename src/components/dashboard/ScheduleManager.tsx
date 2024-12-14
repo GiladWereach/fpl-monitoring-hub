@@ -1,4 +1,5 @@
 import { useState } from "react";
+import * as React from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -36,23 +37,32 @@ interface ScheduleManagerProps {
   functionDisplayName: string;
 }
 
+type TimeConfig = {
+  type?: "interval" | "daily" | "weekly" | "monthly" | "cron";
+  intervalMinutes?: number;
+  cronExpression?: string;
+};
+
+type EventConfig = {
+  triggerType?: "deadline" | "kickoff" | "match_status";
+  offsetMinutes?: number;
+};
+
 interface ScheduleFormValues {
   enabled: boolean;
   scheduleType: "time_based" | "event_based";
-  timeConfig?: {
-    type: "interval" | "daily" | "weekly" | "monthly" | "cron";
-    intervalMinutes?: number;
-    cronExpression?: string;
-  };
-  eventConfig?: {
-    triggerType: "deadline" | "kickoff" | "match_status";
-    offsetMinutes: number;
-  };
+  timeConfig?: TimeConfig;
+  eventConfig?: EventConfig;
 }
 
 export function ScheduleManager({ functionName, functionDisplayName }: ScheduleManagerProps) {
   const [open, setOpen] = useState(false);
-  const form = useForm<ScheduleFormValues>();
+  const form = useForm<ScheduleFormValues>({
+    defaultValues: {
+      enabled: false,
+      scheduleType: "time_based",
+    },
+  });
 
   const { data: schedule, isLoading } = useQuery({
     queryKey: ["schedule", functionName],
@@ -68,23 +78,24 @@ export function ScheduleManager({ functionName, functionDisplayName }: ScheduleM
         throw error;
       }
 
-      // Return the first schedule or null if none exists
       return data && data.length > 0 ? data[0] : null;
     },
   });
 
-  // Set form values when schedule data is loaded
   React.useEffect(() => {
     if (schedule) {
       console.log(`Setting form values for ${functionName}:`, schedule);
+      const timeConfig = schedule.time_config as TimeConfig;
+      const eventConfig = schedule.event_config as EventConfig;
+      
       form.reset({
         enabled: schedule.enabled,
         scheduleType: schedule.schedule_type,
-        timeConfig: schedule.time_config,
-        eventConfig: schedule.event_config,
+        timeConfig,
+        eventConfig,
       });
     }
-  }, [schedule, form]);
+  }, [schedule, form, functionName]);
 
   const onSubmit = async (values: ScheduleFormValues) => {
     try {
