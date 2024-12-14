@@ -20,11 +20,16 @@ Deno.serve(async (req) => {
 
     const response = await fetch('https://fantasy.premierleague.com/api/fixtures/', {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Accept': 'application/json',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Referer': 'https://fantasy.premierleague.com/',
+        'Origin': 'https://fantasy.premierleague.com'
       }
     })
     
     if (!response.ok) {
+      console.error(`FPL API error: ${response.status}`, await response.text())
       throw new Error(`FPL API error: ${response.status}`)
     }
 
@@ -39,7 +44,10 @@ Deno.serve(async (req) => {
         last_updated: new Date().toISOString()
       })))
 
-    if (fixturesError) throw fixturesError
+    if (fixturesError) {
+      console.error('Error upserting fixtures:', fixturesError)
+      throw fixturesError
+    }
 
     console.log('Fixtures data processed successfully')
 
