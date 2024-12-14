@@ -33,7 +33,10 @@ Deno.serve(async (req) => {
       .order('kickoff_time', { ascending: true })
       .limit(2) // Process 2 matches at a time to avoid overwhelming the API
 
-    if (fixturesError) throw fixturesError
+    if (fixturesError) {
+      console.error('Error fetching fixtures:', fixturesError)
+      throw fixturesError
+    }
     
     if (!finishedFixtures?.length) {
       console.log('No new finished fixtures to process')
@@ -52,7 +55,10 @@ Deno.serve(async (req) => {
       .select('id')
       .in('team', teamIds)
 
-    if (playersError) throw playersError
+    if (playersError) {
+      console.error('Error fetching players:', playersError)
+      throw playersError
+    }
 
     console.log(`Found ${players?.length} players to update`)
 
@@ -91,7 +97,10 @@ Deno.serve(async (req) => {
               }))
             )
           
-          if (fixturesUpsertError) throw fixturesUpsertError
+          if (fixturesUpsertError) {
+            console.error(`Error upserting fixtures for player ${player.id}:`, fixturesUpsertError)
+            throw fixturesUpsertError
+          }
         }
 
         // Update player_history
@@ -140,7 +149,10 @@ Deno.serve(async (req) => {
               }))
             )
           
-          if (historyUpsertError) throw historyUpsertError
+          if (historyUpsertError) {
+            console.error(`Error upserting history for player ${player.id}:`, historyUpsertError)
+            throw historyUpsertError
+          }
         }
 
         // Update player_history_past
@@ -181,7 +193,10 @@ Deno.serve(async (req) => {
               }))
             )
           
-          if (historyPastUpsertError) throw historyPastUpsertError
+          if (historyPastUpsertError) {
+            console.error(`Error upserting history_past for player ${player.id}:`, historyPastUpsertError)
+            throw historyPastUpsertError
+          }
         }
 
         // Add delay to respect rate limiting
@@ -199,7 +214,10 @@ Deno.serve(async (req) => {
       .update({ processed_for_player_details: true })
       .in('id', finishedFixtures.map(f => f.id))
 
-    if (updateFixturesError) throw updateFixturesError
+    if (updateFixturesError) {
+      console.error('Error updating fixtures:', updateFixturesError)
+      throw updateFixturesError
+    }
 
     console.log('Player details processing completed successfully')
 
