@@ -11,7 +11,11 @@ import {
 } from "@/components/ui/tooltip";
 import { format } from "date-fns";
 
-export function LiveStatus() {
+interface LiveStatusProps {
+  showLabel?: boolean;
+}
+
+export function LiveStatus({ showLabel = true }: LiveStatusProps) {
   const [isActive, setIsActive] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -87,10 +91,10 @@ export function LiveStatus() {
   }, [liveError]);
 
   const getStatusColor = () => {
-    if (error) return "text-destructive";
-    if (!currentEvent) return "text-muted-foreground";
-    if (isActive) return "text-success";
-    return "text-muted-foreground";
+    if (error) return "text-destructive fill-destructive";
+    if (!currentEvent) return "text-muted-foreground fill-muted-foreground";
+    if (isActive) return "text-success fill-success";
+    return "text-muted-foreground fill-muted-foreground";
   };
 
   const getTooltipContent = () => {
@@ -112,7 +116,7 @@ export function LiveStatus() {
                 isActive && "animate-pulse"
               )}
             />
-            <span className="text-sm">Live Updates</span>
+            {showLabel && <span className="text-sm">Live Updates</span>}
           </div>
         </TooltipTrigger>
         <TooltipContent>

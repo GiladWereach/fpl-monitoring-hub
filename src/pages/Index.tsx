@@ -1,9 +1,10 @@
-import { Activity, Database, Server } from "lucide-react";
+import { Activity, Database, Server, Circle } from "lucide-react";
 import { StatusCard } from "@/components/dashboard/StatusCard";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { EdgeFunctionManager } from "@/components/dashboard/EdgeFunctionManager";
 import { LiveStatus } from "@/components/dashboard/LiveStatus";
+import { RecentActivity } from "@/components/dashboard/RecentActivity";
 
 const Index = () => {
   return (
@@ -18,13 +19,16 @@ const Index = () => {
                 Monitor your system's health and performance
               </p>
             </div>
-            <div className="flex items-center gap-4">
-              <LiveStatus />
-              <SidebarTrigger />
-            </div>
+            <SidebarTrigger />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <StatusCard
+              title="Live Updates"
+              value={<LiveStatus showLabel={false} />}
+              status="info"
+              icon={<Circle className="h-4 w-4" />}
+            />
             <StatusCard
               title="API Health"
               value="98.5%"
@@ -49,22 +53,8 @@ const Index = () => {
             <EdgeFunctionManager />
           </div>
 
-          <div className="mt-8 glass-card rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-4">Recent Activity</h2>
-            <div className="space-y-4">
-              {[1, 2, 3].map((i) => (
-                <div
-                  key={i}
-                  className="flex items-center justify-between py-2 border-b last:border-0"
-                >
-                  <div className="flex items-center gap-3">
-                    <Activity className="h-4 w-4 text-muted-foreground" />
-                    <span>API Request Completed</span>
-                  </div>
-                  <span className="text-sm text-muted-foreground">2m ago</span>
-                </div>
-              ))}
-            </div>
+          <div className="mt-8">
+            <RecentActivity />
           </div>
         </main>
       </div>
