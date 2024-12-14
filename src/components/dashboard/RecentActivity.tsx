@@ -3,14 +3,25 @@ import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { Activity, CheckCircle2, XCircle } from "lucide-react";
 
+type ExecutionLog = {
+  id: string;
+  schedule_id: string;
+  started_at: string;
+  completed_at: string | null;
+  status: string;
+  error_details: string | null;
+  execution_duration_ms: number | null;
+  created_at: string;
+};
+
 export function RecentActivity() {
   const { data: executions } = useQuery({
     queryKey: ["recent-executions"],
     queryFn: async () => {
       console.log("Fetching recent executions");
-      const { data, error } = await supabase
+      const { data: executionLogs, error } = await supabase
         .from("schedule_execution_logs")
-        .select("*")
+        .select("*, schedules(function_name)")
         .order("started_at", { ascending: false })
         .limit(5);
 
@@ -19,7 +30,7 @@ export function RecentActivity() {
         throw error;
       }
 
-      return data;
+      return executionLogs;
     },
     refetchInterval: 30000, // Refresh every 30 seconds
   });
@@ -40,7 +51,7 @@ export function RecentActivity() {
                 <XCircle className="h-4 w-4 text-destructive" />
               )}
               <div>
-                <span className="font-medium">{execution.function_name}</span>
+                <span className="font-medium">{execution.schedules?.function_name || 'Unknown Function'}</span>
                 <p className="text-sm text-muted-foreground">
                   Duration: {execution.execution_duration_ms}ms
                 </p>
