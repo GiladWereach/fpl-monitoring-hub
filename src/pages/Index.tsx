@@ -3,6 +3,7 @@ import { StatusCard } from "@/components/dashboard/StatusCard";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { EdgeFunctionManager } from "@/components/dashboard/EdgeFunctionManager";
+import { LiveStatus } from "@/components/dashboard/LiveStatus";
 
 const Index = () => {
   return (
@@ -17,7 +18,10 @@ const Index = () => {
                 Monitor your system's health and performance
               </p>
             </div>
-            <SidebarTrigger />
+            <div className="flex items-center gap-4">
+              <LiveStatus />
+              <SidebarTrigger />
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
