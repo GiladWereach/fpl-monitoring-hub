@@ -166,6 +166,7 @@ export type Database = {
           kickoff_time: string | null
           last_updated: string | null
           minutes: number | null
+          processed_for_player_details: boolean | null
           provisional_start_time: boolean | null
           pulse_id: number | null
           started: boolean | null
@@ -186,6 +187,7 @@ export type Database = {
           kickoff_time?: string | null
           last_updated?: string | null
           minutes?: number | null
+          processed_for_player_details?: boolean | null
           provisional_start_time?: boolean | null
           pulse_id?: number | null
           started?: boolean | null
@@ -206,6 +208,7 @@ export type Database = {
           kickoff_time?: string | null
           last_updated?: string | null
           minutes?: number | null
+          processed_for_player_details?: boolean | null
           provisional_start_time?: boolean | null
           pulse_id?: number | null
           started?: boolean | null
