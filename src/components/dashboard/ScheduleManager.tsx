@@ -57,19 +57,38 @@ export function ScheduleManager({ functionName, functionDisplayName }: ScheduleM
   const { data: schedule, isLoading } = useQuery({
     queryKey: ["schedule", functionName],
     queryFn: async () => {
+      console.log(`Fetching schedule for function: ${functionName}`);
       const { data, error } = await supabase
         .from("schedules")
         .select("*")
-        .eq("function_name", functionName)
-        .single();
+        .eq("function_name", functionName);
 
-      if (error) throw error;
-      return data;
+      if (error) {
+        console.error(`Error fetching schedule for ${functionName}:`, error);
+        throw error;
+      }
+
+      // Return the first schedule or null if none exists
+      return data && data.length > 0 ? data[0] : null;
     },
   });
 
+  // Set form values when schedule data is loaded
+  React.useEffect(() => {
+    if (schedule) {
+      console.log(`Setting form values for ${functionName}:`, schedule);
+      form.reset({
+        enabled: schedule.enabled,
+        scheduleType: schedule.schedule_type,
+        timeConfig: schedule.time_config,
+        eventConfig: schedule.event_config,
+      });
+    }
+  }, [schedule, form]);
+
   const onSubmit = async (values: ScheduleFormValues) => {
     try {
+      console.log(`Saving schedule for ${functionName}:`, values);
       const { error } = await supabase
         .from("schedules")
         .upsert({
