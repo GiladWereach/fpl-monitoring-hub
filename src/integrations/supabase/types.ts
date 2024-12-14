@@ -263,6 +263,7 @@ export type Database = {
           region: string | null
           removed: boolean | null
           saves: number | null
+          saves_per_90: number | null
           second_name: string | null
           selected_by_percent: number | null
           selected_rank: number | null
@@ -356,6 +357,7 @@ export type Database = {
           region?: string | null
           removed?: boolean | null
           saves?: number | null
+          saves_per_90?: number | null
           second_name?: string | null
           selected_by_percent?: number | null
           selected_rank?: number | null
@@ -449,6 +451,7 @@ export type Database = {
           region?: string | null
           removed?: boolean | null
           saves?: number | null
+          saves_per_90?: number | null
           second_name?: string | null
           selected_by_percent?: number | null
           selected_rank?: number | null

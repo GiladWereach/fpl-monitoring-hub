@@ -30,8 +30,10 @@ Deno.serve(async (req) => {
       .from('players')
       .upsert(data.elements.map(player => ({
         ...player,
+        team_id: player.team, // Map 'team' to 'team_id'
         last_updated: new Date().toISOString(),
-        region: player.region || null // Include the new region field
+        region: player.region || null,
+        saves_per_90: player.saves_per_90 || null
       })))
     if (playersError) throw playersError
 
