@@ -52,6 +52,7 @@ export type Database = {
           singular_name: string | null
           singular_name_short: string | null
           squad_max_play: number | null
+          squad_max_select: number | null
           squad_min_play: number | null
           squad_select: number | null
         }
@@ -64,6 +65,7 @@ export type Database = {
           singular_name?: string | null
           singular_name_short?: string | null
           squad_max_play?: number | null
+          squad_max_select?: number | null
           squad_min_play?: number | null
           squad_select?: number | null
         }
@@ -76,6 +78,7 @@ export type Database = {
           singular_name?: string | null
           singular_name_short?: string | null
           squad_max_play?: number | null
+          squad_max_select?: number | null
           squad_min_play?: number | null
           squad_select?: number | null
         }
