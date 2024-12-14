@@ -156,6 +156,91 @@ export type Database = {
         }
         Relationships: []
       }
+      fixtures: {
+        Row: {
+          code: number | null
+          event: number | null
+          finished: boolean | null
+          finished_provisional: boolean | null
+          id: number
+          kickoff_time: string | null
+          last_updated: string | null
+          minutes: number | null
+          provisional_start_time: boolean | null
+          pulse_id: number | null
+          started: boolean | null
+          stats: Json | null
+          team_a: number | null
+          team_a_difficulty: number | null
+          team_a_score: number | null
+          team_h: number | null
+          team_h_difficulty: number | null
+          team_h_score: number | null
+        }
+        Insert: {
+          code?: number | null
+          event?: number | null
+          finished?: boolean | null
+          finished_provisional?: boolean | null
+          id: number
+          kickoff_time?: string | null
+          last_updated?: string | null
+          minutes?: number | null
+          provisional_start_time?: boolean | null
+          pulse_id?: number | null
+          started?: boolean | null
+          stats?: Json | null
+          team_a?: number | null
+          team_a_difficulty?: number | null
+          team_a_score?: number | null
+          team_h?: number | null
+          team_h_difficulty?: number | null
+          team_h_score?: number | null
+        }
+        Update: {
+          code?: number | null
+          event?: number | null
+          finished?: boolean | null
+          finished_provisional?: boolean | null
+          id?: number
+          kickoff_time?: string | null
+          last_updated?: string | null
+          minutes?: number | null
+          provisional_start_time?: boolean | null
+          pulse_id?: number | null
+          started?: boolean | null
+          stats?: Json | null
+          team_a?: number | null
+          team_a_difficulty?: number | null
+          team_a_score?: number | null
+          team_h?: number | null
+          team_h_difficulty?: number | null
+          team_h_score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_fixtures_event"
+            columns: ["event"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_fixtures_team_a"
+            columns: ["team_a"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_fixtures_team_h"
+            columns: ["team_h"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       game_settings: {
         Row: {
           cup_qualifying_method: string | null

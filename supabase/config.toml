@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.fetch-scoring-rules]
 verify_jwt = false
+
+[functions.fetch-fixtures]
+verify_jwt = false

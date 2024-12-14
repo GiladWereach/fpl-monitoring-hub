@@ -12,6 +12,7 @@ const functions = [
   { name: "Chips", function: "fetch-chips" },
   { name: "Players", function: "fetch-players" },
   { name: "Scoring Rules", function: "fetch-scoring-rules" },
+  { name: "Fixtures", function: "fetch-fixtures" },
 ];
 
 export function EdgeFunctionManager() {
