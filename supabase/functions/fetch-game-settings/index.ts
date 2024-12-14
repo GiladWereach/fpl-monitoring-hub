@@ -26,13 +26,27 @@ Deno.serve(async (req) => {
     const data = await response.json()
     console.log('Game settings data fetched successfully')
 
+    // Extract only the fields that exist in our database
+    const mappedSettings = {
+      id: 1,
+      league_join_private_max: data.game_settings.league_join_private_max,
+      league_join_public_max: data.game_settings.league_join_public_max,
+      league_max_size_public_classic: data.game_settings.league_max_size_public_classic,
+      league_max_size_public_h2h: data.game_settings.league_max_size_public_h2h,
+      league_max_size_private_h2h: data.game_settings.league_max_size_private_h2h,
+      squad_squadplay: data.game_settings.squad_squadplay,
+      squad_squadsize: data.game_settings.squad_squadsize,
+      squad_team_limit: data.game_settings.squad_team_limit,
+      squad_total_spend: data.game_settings.squad_total_spend,
+      transfers_cap: data.game_settings.transfers_cap,
+      transfers_sell_on_fee: data.game_settings.transfers_sell_on_fee,
+      last_updated: new Date().toISOString()
+    }
+
     const { error: settingsError } = await supabaseClient
       .from('game_settings')
-      .upsert([{
-        id: 1,
-        ...data.game_settings,
-        last_updated: new Date().toISOString()
-      }])
+      .upsert([mappedSettings])
+
     if (settingsError) throw settingsError
 
     console.log('Game settings data processed successfully')
