@@ -11,6 +11,7 @@ const functions = [
   { name: "Element Types", function: "fetch-element-types" },
   { name: "Chips", function: "fetch-chips" },
   { name: "Players", function: "fetch-players" },
+  { name: "Scoring Rules", function: "fetch-scoring-rules" },
 ];
 
 export function EdgeFunctionManager() {
