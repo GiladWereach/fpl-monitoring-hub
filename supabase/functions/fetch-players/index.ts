@@ -29,11 +29,43 @@ Deno.serve(async (req) => {
     const { error: playersError } = await supabaseClient
       .from('players')
       .upsert(data.elements.map(player => ({
-        ...player,
-        team_id: player.team, // Map 'team' to 'team_id'
-        last_updated: new Date().toISOString(),
-        region: player.region || null,
-        saves_per_90: player.saves_per_90 || null
+        id: player.id,
+        assists: player.assists,
+        bonus: player.bonus,
+        bps: player.bps,
+        clean_sheets: player.clean_sheets,
+        clean_sheets_per_90: player.clean_sheets_per_90,
+        creativity: player.creativity,
+        element_type: player.element_type,
+        event_points: player.event_points,
+        first_name: player.first_name,
+        form: player.form,
+        goals_conceded: player.goals_conceded,
+        goals_scored: player.goals_scored,
+        ict_index: player.ict_index,
+        influence: player.influence,
+        minutes: player.minutes,
+        now_cost: player.now_cost,
+        own_goals: player.own_goals,
+        penalties_missed: player.penalties_missed,
+        penalties_saved: player.penalties_saved,
+        photo: player.photo,
+        points_per_game: player.points_per_game,
+        red_cards: player.red_cards,
+        saves: player.saves,
+        saves_per_90: player.saves_per_90,
+        second_name: player.second_name,
+        selected_by_percent: player.selected_by_percent,
+        special: player.special,
+        status: player.status,
+        team_id: player.team,
+        threat: player.threat,
+        total_points: player.total_points,
+        transfers_in: player.transfers_in,
+        transfers_out: player.transfers_out,
+        web_name: player.web_name,
+        yellow_cards: player.yellow_cards,
+        last_updated: new Date().toISOString()
       })))
     if (playersError) throw playersError
 
