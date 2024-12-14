@@ -9,18 +9,40 @@ interface ExecutionHistoryProps {
 }
 
 export function ExecutionHistory({ functionName }: ExecutionHistoryProps) {
-  const { data: executions } = useQuery({
-    queryKey: ["executions", functionName],
+  // First query to get the schedule
+  const { data: schedule } = useQuery({
+    queryKey: ["schedule", functionName],
     queryFn: async () => {
+      console.log(`Fetching schedule for ${functionName}`);
+      const { data, error } = await supabase
+        .from("schedules")
+        .select("id")
+        .eq("function_name", functionName)
+        .maybeSingle();
+
+      if (error) {
+        console.error(`Error fetching schedule for ${functionName}:`, error);
+        return null;
+      }
+
+      return data;
+    },
+  });
+
+  // Only fetch execution logs if we have a valid schedule
+  const { data: executions } = useQuery({
+    queryKey: ["executions", functionName, schedule?.id],
+    queryFn: async () => {
+      if (!schedule?.id) {
+        console.log(`No schedule found for ${functionName}, skipping execution history fetch`);
+        return [];
+      }
+
       console.log(`Fetching execution history for ${functionName}`);
       const { data, error } = await supabase
         .from("schedule_execution_logs")
         .select("*")
-        .eq("schedule_id", (await supabase
-          .from("schedules")
-          .select("id")
-          .eq("function_name", functionName)
-          .single()).data?.id)
+        .eq("schedule_id", schedule.id)
         .order("started_at", { ascending: false })
         .limit(5);
 
@@ -31,6 +53,7 @@ export function ExecutionHistory({ functionName }: ExecutionHistoryProps) {
 
       return data;
     },
+    enabled: !!schedule?.id, // Only run this query if we have a schedule id
   });
 
   if (!executions?.length) return null;
