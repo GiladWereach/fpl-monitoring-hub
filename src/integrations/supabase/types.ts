@@ -292,6 +292,320 @@ export type Database = {
         }
         Relationships: []
       }
+      player_fixtures: {
+        Row: {
+          difficulty: number | null
+          event: number | null
+          expected_minutes: number | null
+          fixture_id: number | null
+          id: number
+          is_home: boolean | null
+          last_updated: string | null
+          player_id: number | null
+        }
+        Insert: {
+          difficulty?: number | null
+          event?: number | null
+          expected_minutes?: number | null
+          fixture_id?: number | null
+          id?: number
+          is_home?: boolean | null
+          last_updated?: string | null
+          player_id?: number | null
+        }
+        Update: {
+          difficulty?: number | null
+          event?: number | null
+          expected_minutes?: number | null
+          fixture_id?: number | null
+          id?: number
+          is_home?: boolean | null
+          last_updated?: string | null
+          player_id?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_fixtures_event_fkey"
+            columns: ["event"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_fixtures_fixture_id_fkey"
+            columns: ["fixture_id"]
+            isOneToOne: false
+            referencedRelation: "fixtures"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_fixtures_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      player_history: {
+        Row: {
+          assists: number | null
+          bonus: number | null
+          bps: number | null
+          clean_sheets: number | null
+          creativity: number | null
+          expected_assists: number | null
+          expected_goal_involvements: number | null
+          expected_goals: number | null
+          expected_goals_conceded: number | null
+          fixture_id: number | null
+          goals_conceded: number | null
+          goals_scored: number | null
+          ict_index: number | null
+          id: number
+          influence: number | null
+          kickoff_time: string | null
+          last_updated: string | null
+          minutes: number | null
+          opponent_team: number | null
+          own_goals: number | null
+          penalties_missed: number | null
+          penalties_saved: number | null
+          player_id: number | null
+          red_cards: number | null
+          round: number | null
+          saves: number | null
+          selected: number | null
+          starts: number | null
+          team_a_score: number | null
+          team_h_score: number | null
+          threat: number | null
+          total_points: number | null
+          transfers_balance: number | null
+          transfers_in: number | null
+          transfers_out: number | null
+          value: number | null
+          was_home: boolean | null
+          yellow_cards: number | null
+        }
+        Insert: {
+          assists?: number | null
+          bonus?: number | null
+          bps?: number | null
+          clean_sheets?: number | null
+          creativity?: number | null
+          expected_assists?: number | null
+          expected_goal_involvements?: number | null
+          expected_goals?: number | null
+          expected_goals_conceded?: number | null
+          fixture_id?: number | null
+          goals_conceded?: number | null
+          goals_scored?: number | null
+          ict_index?: number | null
+          id?: number
+          influence?: number | null
+          kickoff_time?: string | null
+          last_updated?: string | null
+          minutes?: number | null
+          opponent_team?: number | null
+          own_goals?: number | null
+          penalties_missed?: number | null
+          penalties_saved?: number | null
+          player_id?: number | null
+          red_cards?: number | null
+          round?: number | null
+          saves?: number | null
+          selected?: number | null
+          starts?: number | null
+          team_a_score?: number | null
+          team_h_score?: number | null
+          threat?: number | null
+          total_points?: number | null
+          transfers_balance?: number | null
+          transfers_in?: number | null
+          transfers_out?: number | null
+          value?: number | null
+          was_home?: boolean | null
+          yellow_cards?: number | null
+        }
+        Update: {
+          assists?: number | null
+          bonus?: number | null
+          bps?: number | null
+          clean_sheets?: number | null
+          creativity?: number | null
+          expected_assists?: number | null
+          expected_goal_involvements?: number | null
+          expected_goals?: number | null
+          expected_goals_conceded?: number | null
+          fixture_id?: number | null
+          goals_conceded?: number | null
+          goals_scored?: number | null
+          ict_index?: number | null
+          id?: number
+          influence?: number | null
+          kickoff_time?: string | null
+          last_updated?: string | null
+          minutes?: number | null
+          opponent_team?: number | null
+          own_goals?: number | null
+          penalties_missed?: number | null
+          penalties_saved?: number | null
+          player_id?: number | null
+          red_cards?: number | null
+          round?: number | null
+          saves?: number | null
+          selected?: number | null
+          starts?: number | null
+          team_a_score?: number | null
+          team_h_score?: number | null
+          threat?: number | null
+          total_points?: number | null
+          transfers_balance?: number | null
+          transfers_in?: number | null
+          transfers_out?: number | null
+          value?: number | null
+          was_home?: boolean | null
+          yellow_cards?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_history_fixture_id_fkey"
+            columns: ["fixture_id"]
+            isOneToOne: false
+            referencedRelation: "fixtures"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_history_opponent_team_fkey"
+            columns: ["opponent_team"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_history_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_history_round_fkey"
+            columns: ["round"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      player_history_past: {
+        Row: {
+          assists: number | null
+          bonus: number | null
+          bps: number | null
+          clean_sheets: number | null
+          creativity: number | null
+          element_code: number | null
+          end_cost: number | null
+          expected_assists: number | null
+          expected_goal_involvements: number | null
+          expected_goals: number | null
+          expected_goals_conceded: number | null
+          goals_conceded: number | null
+          goals_scored: number | null
+          ict_index: number | null
+          id: number
+          influence: number | null
+          last_updated: string | null
+          minutes: number | null
+          own_goals: number | null
+          penalties_missed: number | null
+          penalties_saved: number | null
+          player_id: number | null
+          red_cards: number | null
+          saves: number | null
+          season_name: string | null
+          start_cost: number | null
+          starts: number | null
+          threat: number | null
+          total_points: number | null
+          yellow_cards: number | null
+        }
+        Insert: {
+          assists?: number | null
+          bonus?: number | null
+          bps?: number | null
+          clean_sheets?: number | null
+          creativity?: number | null
+          element_code?: number | null
+          end_cost?: number | null
+          expected_assists?: number | null
+          expected_goal_involvements?: number | null
+          expected_goals?: number | null
+          expected_goals_conceded?: number | null
+          goals_conceded?: number | null
+          goals_scored?: number | null
+          ict_index?: number | null
+          id?: number
+          influence?: number | null
+          last_updated?: string | null
+          minutes?: number | null
+          own_goals?: number | null
+          penalties_missed?: number | null
+          penalties_saved?: number | null
+          player_id?: number | null
+          red_cards?: number | null
+          saves?: number | null
+          season_name?: string | null
+          start_cost?: number | null
+          starts?: number | null
+          threat?: number | null
+          total_points?: number | null
+          yellow_cards?: number | null
+        }
+        Update: {
+          assists?: number | null
+          bonus?: number | null
+          bps?: number | null
+          clean_sheets?: number | null
+          creativity?: number | null
+          element_code?: number | null
+          end_cost?: number | null
+          expected_assists?: number | null
+          expected_goal_involvements?: number | null
+          expected_goals?: number | null
+          expected_goals_conceded?: number | null
+          goals_conceded?: number | null
+          goals_scored?: number | null
+          ict_index?: number | null
+          id?: number
+          influence?: number | null
+          last_updated?: string | null
+          minutes?: number | null
+          own_goals?: number | null
+          penalties_missed?: number | null
+          penalties_saved?: number | null
+          player_id?: number | null
+          red_cards?: number | null
+          saves?: number | null
+          season_name?: string | null
+          start_cost?: number | null
+          starts?: number | null
+          threat?: number | null
+          total_points?: number | null
+          yellow_cards?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_history_past_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       players: {
         Row: {
           assists: number | null
