@@ -42,12 +42,29 @@ Deno.serve(async (req) => {
     const data = await response.json()
     console.log('Element types data fetched successfully')
 
+    // Transform the data before inserting
+    const transformedElementTypes = data.element_types.map(type => ({
+      id: type.id,
+      plural_name: type.plural_name,
+      plural_name_short: type.plural_name_short,
+      singular_name: type.singular_name,
+      singular_name_short: type.singular_name_short,
+      squad_select: type.squad_select,
+      squad_min_play: type.squad_min_play,
+      squad_max_play: type.squad_max_play,
+      element_count: type.element_count,
+      squad_max_select: type.squad_max_select,
+      squad_min_select: type.squad_min_select,
+      sub_positions_locked: type.sub_positions_locked === true,
+      ui_shirt_specific: type.ui_shirt_specific === true,
+      last_updated: new Date().toISOString()
+    }))
+
+    console.log('Transformed element types:', transformedElementTypes)
+
     const { error: elementTypesError } = await supabaseClient
       .from('element_types')
-      .upsert(data.element_types.map(type => ({
-        ...type,
-        last_updated: new Date().toISOString()
-      })))
+      .upsert(transformedElementTypes)
 
     if (elementTypesError) {
       console.error('Supabase error:', elementTypesError)
