@@ -26,12 +26,34 @@ Deno.serve(async (req) => {
     const data = await response.json()
     console.log('Teams data fetched successfully')
 
+    // Map only the fields that exist in our database
+    const mappedTeams = data.teams.map(team => ({
+      id: team.id,
+      code: team.code,
+      name: team.name,
+      short_name: team.short_name,
+      strength: team.strength,
+      strength_overall_home: team.strength_overall_home,
+      strength_overall_away: team.strength_overall_away,
+      strength_attack_home: team.strength_attack_home,
+      strength_attack_away: team.strength_attack_away,
+      strength_defence_home: team.strength_defence_home,
+      strength_defence_away: team.strength_defence_away,
+      points: team.points,
+      position: team.position,
+      played: team.played,
+      form: team.form,
+      win: team.win,
+      loss: team.loss,
+      draw: team.draw,
+      pulse_id: team.pulse_id,
+      last_updated: new Date().toISOString()
+    }))
+
     const { error: teamsError } = await supabaseClient
       .from('teams')
-      .upsert(data.teams.map(team => ({
-        ...team,
-        last_updated: new Date().toISOString()
-      })))
+      .upsert(mappedTeams)
+
     if (teamsError) throw teamsError
 
     console.log('Teams data processed successfully')
