@@ -2,7 +2,8 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
-import { Play, RefreshCw, Timer } from "lucide-react";
+import { Play, RefreshCw } from "lucide-react";
+import { ScheduleManager } from "./ScheduleManager";
 
 const functions = [
   { name: "Teams", function: "fetch-teams" },
@@ -98,9 +99,10 @@ export function EdgeFunctionManager() {
                     <Play className="h-4 w-4" />
                   )}
                 </Button>
-                <Button size="sm" variant="outline">
-                  <Timer className="h-4 w-4" />
-                </Button>
+                <ScheduleManager
+                  functionName={func.function}
+                  functionDisplayName={func.name}
+                />
               </div>
             </div>
           </div>

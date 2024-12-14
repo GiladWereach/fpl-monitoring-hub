@@ -591,6 +591,89 @@ export type Database = {
           },
         ]
       }
+      schedule_execution_logs: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          error_details: string | null
+          execution_duration_ms: number | null
+          id: string
+          schedule_id: string
+          started_at: string
+          status: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          error_details?: string | null
+          execution_duration_ms?: number | null
+          id?: string
+          schedule_id: string
+          started_at?: string
+          status: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          error_details?: string | null
+          execution_duration_ms?: number | null
+          id?: string
+          schedule_id?: string
+          started_at?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "schedule_execution_logs_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "schedules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      schedules: {
+        Row: {
+          created_at: string | null
+          enabled: boolean | null
+          event_config: Json | null
+          execution_config: Json
+          function_name: string
+          id: string
+          last_execution_at: string | null
+          next_execution_at: string | null
+          schedule_type: Database["public"]["Enums"]["schedule_type"]
+          time_config: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          enabled?: boolean | null
+          event_config?: Json | null
+          execution_config?: Json
+          function_name: string
+          id?: string
+          last_execution_at?: string | null
+          next_execution_at?: string | null
+          schedule_type: Database["public"]["Enums"]["schedule_type"]
+          time_config?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          enabled?: boolean | null
+          event_config?: Json | null
+          execution_config?: Json
+          function_name?: string
+          id?: string
+          last_execution_at?: string | null
+          next_execution_at?: string | null
+          schedule_type?: Database["public"]["Enums"]["schedule_type"]
+          time_config?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       scoring_rules: {
         Row: {
           assists: number | null
@@ -752,7 +835,9 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      event_trigger_type: "deadline" | "kickoff" | "match_status"
+      schedule_type: "time_based" | "event_based"
+      time_schedule_type: "interval" | "daily" | "weekly" | "monthly" | "cron"
     }
     CompositeTypes: {
       [_ in never]: never
