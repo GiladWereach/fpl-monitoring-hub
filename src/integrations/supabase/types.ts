@@ -56,6 +56,7 @@ export type Database = {
           squad_min_play: number | null
           squad_min_select: number | null
           squad_select: number | null
+          sub_positions_locked: boolean | null
         }
         Insert: {
           element_count?: number | null
@@ -70,6 +71,7 @@ export type Database = {
           squad_min_play?: number | null
           squad_min_select?: number | null
           squad_select?: number | null
+          sub_positions_locked?: boolean | null
         }
         Update: {
           element_count?: number | null
@@ -84,6 +86,7 @@ export type Database = {
           squad_min_play?: number | null
           squad_min_select?: number | null
           squad_select?: number | null
+          sub_positions_locked?: boolean | null
         }
         Relationships: []
       }
