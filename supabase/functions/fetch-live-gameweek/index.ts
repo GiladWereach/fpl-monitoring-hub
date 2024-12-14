@@ -85,47 +85,49 @@ Deno.serve(async (req) => {
     console.log(`Fetched live data for ${data.elements.length} players`)
 
     // Process and upsert live data
-    for (const element of data.elements) {
-      const playerData: LivePlayerData = element
-      
-      const { error: upsertError } = await supabaseClient
-        .from('gameweek_live_performance')
-        .upsert({
-          event_id: currentEvent.id,
-          player_id: playerData.id,
-          modified: true,
-          in_dreamteam: playerData.in_dreamteam,
-          minutes: playerData.stats.minutes,
-          total_points: playerData.stats.total_points,
-          goals_scored: playerData.stats.goals_scored,
-          assists: playerData.stats.assists,
-          clean_sheets: playerData.stats.clean_sheets,
-          goals_conceded: playerData.stats.goals_conceded,
-          own_goals: playerData.stats.own_goals,
-          penalties_saved: playerData.stats.penalties_saved,
-          penalties_missed: playerData.stats.penalties_missed,
-          yellow_cards: playerData.stats.yellow_cards,
-          red_cards: playerData.stats.red_cards,
-          saves: playerData.stats.saves,
-          bonus: playerData.stats.bonus,
-          bps: playerData.stats.bps,
-          influence: parseFloat(playerData.stats.influence),
-          creativity: parseFloat(playerData.stats.creativity),
-          threat: parseFloat(playerData.stats.threat),
-          ict_index: parseFloat(playerData.stats.ict_index),
-          starts: playerData.stats.starts,
-          expected_goals: parseFloat(playerData.stats.expected_goals),
-          expected_assists: parseFloat(playerData.stats.expected_assists),
-          expected_goal_involvements: parseFloat(playerData.stats.expected_goal_involvements),
-          expected_goals_conceded: parseFloat(playerData.stats.expected_goals_conceded),
-          points_breakdown: playerData.explain,
-          last_updated: new Date().toISOString()
-        })
+    const updates = data.elements.map((element: LivePlayerData) => ({
+      event_id: currentEvent.id,
+      player_id: element.id,
+      modified: true,
+      in_dreamteam: element.in_dreamteam,
+      minutes: element.stats.minutes,
+      total_points: element.stats.total_points,
+      goals_scored: element.stats.goals_scored,
+      assists: element.stats.assists,
+      clean_sheets: element.stats.clean_sheets,
+      goals_conceded: element.stats.goals_conceded,
+      own_goals: element.stats.own_goals,
+      penalties_saved: element.stats.penalties_saved,
+      penalties_missed: element.stats.penalties_missed,
+      yellow_cards: element.stats.yellow_cards,
+      red_cards: element.stats.red_cards,
+      saves: element.stats.saves,
+      bonus: element.stats.bonus,
+      bps: element.stats.bps,
+      influence: parseFloat(element.stats.influence),
+      creativity: parseFloat(element.stats.creativity),
+      threat: parseFloat(element.stats.threat),
+      ict_index: parseFloat(element.stats.ict_index),
+      starts: element.stats.starts,
+      expected_goals: parseFloat(element.stats.expected_goals),
+      expected_assists: parseFloat(element.stats.expected_assists),
+      expected_goal_involvements: parseFloat(element.stats.expected_goal_involvements),
+      expected_goals_conceded: parseFloat(element.stats.expected_goals_conceded),
+      points_breakdown: element.explain,
+      last_updated: new Date().toISOString()
+    }))
 
-      if (upsertError) {
-        console.error(`Error upserting player ${playerData.id}:`, upsertError)
-        throw upsertError
-      }
+    // Batch upsert the data
+    const { error: upsertError } = await supabaseClient
+      .from('gameweek_live_performance')
+      .upsert(updates, {
+        onConflict: 'event_id,player_id',
+        ignoreDuplicates: false
+      })
+
+    if (upsertError) {
+      console.error('Error upserting data:', upsertError)
+      throw upsertError
     }
 
     console.log('Live gameweek data processed successfully')
@@ -134,7 +136,8 @@ Deno.serve(async (req) => {
       JSON.stringify({ 
         success: true, 
         message: 'Live gameweek data updated successfully',
-        gameweek: currentEvent.id
+        gameweek: currentEvent.id,
+        updatedPlayers: updates.length
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

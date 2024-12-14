@@ -295,6 +295,130 @@ export type Database = {
         }
         Relationships: []
       }
+      gameweek_live_performance: {
+        Row: {
+          assists: number | null
+          bonus: number | null
+          bps: number | null
+          clean_sheets: number | null
+          creativity: number | null
+          event_id: number | null
+          expected_assists: number | null
+          expected_goal_involvements: number | null
+          expected_goals: number | null
+          expected_goals_conceded: number | null
+          fixture_id: number | null
+          goals_conceded: number | null
+          goals_scored: number | null
+          ict_index: number | null
+          id: number
+          in_dreamteam: boolean | null
+          influence: number | null
+          last_updated: string | null
+          minutes: number | null
+          modified: boolean | null
+          own_goals: number | null
+          penalties_missed: number | null
+          penalties_saved: number | null
+          player_id: number | null
+          points_breakdown: Json | null
+          red_cards: number | null
+          saves: number | null
+          starts: number | null
+          threat: number | null
+          total_points: number | null
+          yellow_cards: number | null
+        }
+        Insert: {
+          assists?: number | null
+          bonus?: number | null
+          bps?: number | null
+          clean_sheets?: number | null
+          creativity?: number | null
+          event_id?: number | null
+          expected_assists?: number | null
+          expected_goal_involvements?: number | null
+          expected_goals?: number | null
+          expected_goals_conceded?: number | null
+          fixture_id?: number | null
+          goals_conceded?: number | null
+          goals_scored?: number | null
+          ict_index?: number | null
+          id?: number
+          in_dreamteam?: boolean | null
+          influence?: number | null
+          last_updated?: string | null
+          minutes?: number | null
+          modified?: boolean | null
+          own_goals?: number | null
+          penalties_missed?: number | null
+          penalties_saved?: number | null
+          player_id?: number | null
+          points_breakdown?: Json | null
+          red_cards?: number | null
+          saves?: number | null
+          starts?: number | null
+          threat?: number | null
+          total_points?: number | null
+          yellow_cards?: number | null
+        }
+        Update: {
+          assists?: number | null
+          bonus?: number | null
+          bps?: number | null
+          clean_sheets?: number | null
+          creativity?: number | null
+          event_id?: number | null
+          expected_assists?: number | null
+          expected_goal_involvements?: number | null
+          expected_goals?: number | null
+          expected_goals_conceded?: number | null
+          fixture_id?: number | null
+          goals_conceded?: number | null
+          goals_scored?: number | null
+          ict_index?: number | null
+          id?: number
+          in_dreamteam?: boolean | null
+          influence?: number | null
+          last_updated?: string | null
+          minutes?: number | null
+          modified?: boolean | null
+          own_goals?: number | null
+          penalties_missed?: number | null
+          penalties_saved?: number | null
+          player_id?: number | null
+          points_breakdown?: Json | null
+          red_cards?: number | null
+          saves?: number | null
+          starts?: number | null
+          threat?: number | null
+          total_points?: number | null
+          yellow_cards?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gameweek_live_performance_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gameweek_live_performance_fixture_id_fkey"
+            columns: ["fixture_id"]
+            isOneToOne: false
+            referencedRelation: "fixtures"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gameweek_live_performance_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       player_fixtures: {
         Row: {
           difficulty: number | null
