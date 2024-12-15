@@ -72,10 +72,12 @@ Deno.serve(async (req) => {
         cardPoints +
         bonusPoints;
 
+      console.log(`Calculated points for player ${perf.player_id} in fixture ${perf.fixture_id}: ${rawTotal}`);
+
       return {
         event_id: perf.event_id,
         player_id: perf.player_id,
-        fixture_id: perf.fixture_id,
+        fixture_id: perf.fixture_id, // Now including fixture_id in the calculation record
         minutes_points: minutesPoints,
         goals_scored_points: goalsPoints,
         clean_sheet_points: cleanSheetPoints,
