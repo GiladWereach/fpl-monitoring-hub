@@ -26,6 +26,7 @@ const MatchCards = ({ gameweek, onMatchSelect, selectedMatchId }: MatchCardsProp
         .order('kickoff_time', { ascending: true });
       
       if (error) throw error;
+      console.log('Fetched matches:', data);
       return data;
     },
     refetchInterval: 30000 // Refetch every 30 seconds
@@ -36,10 +37,25 @@ const MatchCards = ({ gameweek, onMatchSelect, selectedMatchId }: MatchCardsProp
   }
 
   const getMatchStatus = (match: any) => {
-    if (!match.started) return { status: 'UPCOMING', color: 'bg-gray-500' };
-    if (match.started && !match.finished) return { status: 'LIVE', color: 'bg-green-500' };
-    if (match.finished && !match.finished_provisional) return { status: 'CALCULATING', color: 'bg-yellow-500' };
-    if (match.finished_provisional) return { status: 'FINISHED', color: 'bg-blue-500' };
+    console.log('Match status check:', {
+      id: match.id,
+      started: match.started,
+      finished: match.finished,
+      finished_provisional: match.finished_provisional
+    });
+
+    if (!match.started) {
+      return { status: 'UPCOMING', color: 'bg-gray-500' };
+    }
+    if (match.finished_provisional) {
+      return { status: 'FINISHED', color: 'bg-blue-500' };
+    }
+    if (match.finished && !match.finished_provisional) {
+      return { status: 'CALCULATING', color: 'bg-yellow-500' };
+    }
+    if (match.started && !match.finished) {
+      return { status: 'LIVE', color: 'bg-green-500' };
+    }
     return { status: 'POSTPONED', color: 'bg-red-500' };
   };
 

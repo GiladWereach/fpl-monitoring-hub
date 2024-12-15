@@ -52,6 +52,7 @@ export function LiveStatus({ showLabel = true }: LiveStatusProps) {
         .is("finished_provisional", false);
 
       if (error) throw error;
+      console.log('Active matches:', data);
       return data;
     },
     refetchInterval: 30000 // Check every 30 seconds
