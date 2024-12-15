@@ -6,6 +6,12 @@ import { Activity, AlertCircle, Clock } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/ui/card";
 
+interface PerformanceMetrics {
+  execution_time: number;
+  memory_usage?: number;
+  cpu_usage?: number;
+}
+
 export function CalculationsManager() {
   const { data: calculationTypes, isLoading } = useQuery({
     queryKey: ["calculation-types"],
@@ -81,9 +87,13 @@ export function CalculationsManager() {
     new Date(log.start_time).toDateString() === new Date().toDateString()
   )?.length || 0;
 
-  // Calculate average execution time from performance metrics
+  // Calculate average execution time from performance metrics with proper type checking
   const avgExecutionTime = performanceMetrics?.reduce((acc, curr) => {
-    return acc + (curr.performance_metrics?.execution_time || 0);
+    if (typeof curr.performance_metrics === 'object' && curr.performance_metrics !== null) {
+      const metrics = curr.performance_metrics as PerformanceMetrics;
+      return acc + (metrics.execution_time || 0);
+    }
+    return acc;
   }, 0) / (performanceMetrics?.length || 1);
 
   return (
