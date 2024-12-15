@@ -13,13 +13,14 @@ import { Card } from '@/components/ui/card';
 
 interface BonusPointsTrackerProps {
   gameweek: number;
+  matchId?: number | null;
 }
 
-const BonusPointsTracker = ({ gameweek }: BonusPointsTrackerProps) => {
+const BonusPointsTracker = ({ gameweek, matchId }: BonusPointsTrackerProps) => {
   const { data: matches } = useQuery({
     queryKey: ['bonus-matches', gameweek],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const query = supabase
         .from('fixtures')
         .select(`
           id,
@@ -27,9 +28,13 @@ const BonusPointsTracker = ({ gameweek }: BonusPointsTrackerProps) => {
           team_a:teams!fk_fixtures_team_a(short_name)
         `)
         .eq('event', gameweek)
-        .eq('started', true)
-        .order('kickoff_time', { ascending: true });
+        .eq('started', true);
+
+      if (matchId) {
+        query.eq('id', matchId);
+      }
       
+      const { data, error } = await query.order('kickoff_time', { ascending: true });
       if (error) throw error;
       return data;
     },

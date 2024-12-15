@@ -13,15 +13,16 @@ import { Input } from '@/components/ui/input';
 
 interface PlayerPerformanceProps {
   gameweek: number;
+  matchId?: number | null;
 }
 
-const PlayerPerformance = ({ gameweek }: PlayerPerformanceProps) => {
+const PlayerPerformance = ({ gameweek, matchId }: PlayerPerformanceProps) => {
   const [search, setSearch] = useState('');
 
   const { data: performances, isLoading } = useQuery({
-    queryKey: ['player-performances', gameweek],
+    queryKey: ['player-performances', gameweek, matchId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const query = supabase
         .from('match_player_performance')
         .select(`
           *,
@@ -43,13 +44,17 @@ const PlayerPerformance = ({ gameweek }: PlayerPerformanceProps) => {
             event
           )
         `)
-        .eq('fixture.event', gameweek)
-        .order('total_points', { ascending: false });
+        .eq('fixture.event', gameweek);
+
+      if (matchId) {
+        query.eq('match_id', matchId);
+      }
       
+      const { data, error } = await query.order('total_points', { ascending: false });
       if (error) throw error;
       return data;
     },
-    refetchInterval: 60000 // Refetch every minute
+    refetchInterval: 60000
   });
 
   if (isLoading) {
