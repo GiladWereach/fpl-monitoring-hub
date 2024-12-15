@@ -914,6 +914,91 @@ export type Database = {
           },
         ]
       }
+      player_points_calculation: {
+        Row: {
+          assist_points: number | null
+          bonus_points: number | null
+          card_points: number | null
+          clean_sheet_points: number | null
+          event_id: number | null
+          final_total_points: number | null
+          fixture_id: number | null
+          goals_conceded_points: number | null
+          goals_scored_points: number | null
+          id: number
+          last_updated: string | null
+          minutes_points: number | null
+          own_goal_points: number | null
+          penalty_miss_points: number | null
+          penalty_save_points: number | null
+          player_id: number | null
+          raw_total_points: number | null
+          saves_points: number | null
+        }
+        Insert: {
+          assist_points?: number | null
+          bonus_points?: number | null
+          card_points?: number | null
+          clean_sheet_points?: number | null
+          event_id?: number | null
+          final_total_points?: number | null
+          fixture_id?: number | null
+          goals_conceded_points?: number | null
+          goals_scored_points?: number | null
+          id?: number
+          last_updated?: string | null
+          minutes_points?: number | null
+          own_goal_points?: number | null
+          penalty_miss_points?: number | null
+          penalty_save_points?: number | null
+          player_id?: number | null
+          raw_total_points?: number | null
+          saves_points?: number | null
+        }
+        Update: {
+          assist_points?: number | null
+          bonus_points?: number | null
+          card_points?: number | null
+          clean_sheet_points?: number | null
+          event_id?: number | null
+          final_total_points?: number | null
+          fixture_id?: number | null
+          goals_conceded_points?: number | null
+          goals_scored_points?: number | null
+          id?: number
+          last_updated?: string | null
+          minutes_points?: number | null
+          own_goal_points?: number | null
+          penalty_miss_points?: number | null
+          penalty_save_points?: number | null
+          player_id?: number | null
+          raw_total_points?: number | null
+          saves_points?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_points_calculation_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_points_calculation_fixture_id_fkey"
+            columns: ["fixture_id"]
+            isOneToOne: false
+            referencedRelation: "fixtures"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_points_calculation_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       players: {
         Row: {
           assists: number | null
