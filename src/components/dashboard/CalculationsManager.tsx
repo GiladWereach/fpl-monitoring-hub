@@ -1,8 +1,7 @@
-import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Calculator, Clock, Activity } from "lucide-react";
-import { StatusCard } from "./StatusCard";
+import { CalculationStats } from "./CalculationStats";
+import { RegisteredCalculations } from "./RegisteredCalculations";
 
 export function CalculationsManager() {
   const { data: calculationTypes, isLoading } = useQuery({
@@ -71,59 +70,13 @@ export function CalculationsManager() {
         <h2 className="text-2xl font-bold">Calculations Engine</h2>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <StatusCard
-          title="Active Calculations"
-          value={activeCalculations.toString()}
-          status="info"
-          icon={<Calculator className="h-4 w-4" />}
-        />
-        <StatusCard
-          title="Completed Today"
-          value={completedToday.toString()}
-          status="success"
-          icon={<Clock className="h-4 w-4" />}
-        />
-        <StatusCard
-          title="Failed Today"
-          value={failedToday.toString()}
-          status="error"
-          icon={<Activity className="h-4 w-4" />}
-        />
-      </div>
+      <CalculationStats
+        activeCalculations={activeCalculations}
+        completedToday={completedToday}
+        failedToday={failedToday}
+      />
 
-      <div className="glass-card p-6 rounded-lg">
-        <h3 className="text-lg font-semibold mb-4">Registered Calculations</h3>
-        <div className="space-y-4">
-          {calculationTypes?.map((calc) => (
-            <div
-              key={calc.id}
-              className="flex items-center justify-between p-4 bg-background/50 rounded-lg"
-            >
-              <div>
-                <h4 className="font-medium">{calc.name}</h4>
-                <p className="text-sm text-muted-foreground">
-                  {calc.description}
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">
-                  Priority: {calc.priority}
-                </span>
-                <span
-                  className={`px-2 py-1 rounded-full text-xs ${
-                    calc.is_real_time
-                      ? "bg-green-100 text-green-800"
-                      : "bg-blue-100 text-blue-800"
-                  }`}
-                >
-                  {calc.is_real_time ? "Real-time" : "Batch"}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+      <RegisteredCalculations calculationTypes={calculationTypes || []} />
     </div>
   );
 }

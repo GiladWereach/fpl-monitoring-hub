@@ -9,6 +9,7 @@ import Login from "./pages/Login";
 import Players from "./pages/Players";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
+import { CalculationControlCenter } from "./components/dashboard/CalculationControlCenter";
 
 const queryClient = new QueryClient();
 
@@ -71,6 +72,11 @@ const App = () => (
             <Route path="/backend" element={
               <ProtectedRoute>
                 <Index />
+              </ProtectedRoute>
+            } />
+            <Route path="/backend/calculations" element={
+              <ProtectedRoute>
+                <CalculationControlCenter />
               </ProtectedRoute>
             } />
             <Route path="/" element={<Players />} />
