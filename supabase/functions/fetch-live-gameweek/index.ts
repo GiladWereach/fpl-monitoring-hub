@@ -1,9 +1,5 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { corsHeaders } from '../_shared/cors.ts';
 
 interface LivePlayerData {
   id: number;
@@ -38,17 +34,16 @@ interface LivePlayerData {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    console.log('Starting live gameweek data fetch...')
+    console.log('Starting live gameweek data fetch...');
     
-    // Initialize Supabase client
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
+    );
 
     // Find current gameweek
     const { data: currentEvent, error: eventError } = await supabaseClient
@@ -58,12 +53,12 @@ Deno.serve(async (req) => {
       .gt('deadline_time', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
       .order('deadline_time', { ascending: false })
       .limit(1)
-      .single()
+      .single();
 
-    if (eventError) throw eventError
-    if (!currentEvent) throw new Error('No current gameweek found')
+    if (eventError) throw eventError;
+    if (!currentEvent) throw new Error('No current gameweek found');
 
-    console.log(`Current gameweek: ${currentEvent.id}`)
+    console.log(`Current gameweek: ${currentEvent.id}`);
 
     // Check if there are any active matches
     const { data: activeFixtures, error: fixturesError } = await supabaseClient
@@ -71,13 +66,13 @@ Deno.serve(async (req) => {
       .select('*')
       .eq('event', currentEvent.id)
       .eq('started', true)
-      .eq('finished', false)
+      .eq('finished', false);
 
-    if (fixturesError) throw fixturesError
+    if (fixturesError) throw fixturesError;
 
     // If no active matches, check if we should wait
     if (!activeFixtures || activeFixtures.length === 0) {
-      console.log('No active matches found, checking last update time...')
+      console.log('No active matches found, checking last update time...');
       
       const { data: lastUpdate } = await supabaseClient
         .from('gameweek_live_performance')
@@ -85,16 +80,16 @@ Deno.serve(async (req) => {
         .eq('event_id', currentEvent.id)
         .order('last_updated', { ascending: false })
         .limit(1)
-        .single()
+        .single();
 
       // If last update was less than 30 minutes ago, skip update
       if (lastUpdate && lastUpdate.last_updated) {
-        const lastUpdateTime = new Date(lastUpdate.last_updated)
-        const timeSinceLastUpdate = Date.now() - lastUpdateTime.getTime()
-        const thirtyMinutesInMs = 30 * 60 * 1000
+        const lastUpdateTime = new Date(lastUpdate.last_updated);
+        const timeSinceLastUpdate = Date.now() - lastUpdateTime.getTime();
+        const thirtyMinutesInMs = 30 * 60 * 1000;
 
         if (timeSinceLastUpdate < thirtyMinutesInMs) {
-          console.log('Last update was less than 30 minutes ago, skipping update')
+          console.log('Last update was less than 30 minutes ago, skipping update');
           return new Response(
             JSON.stringify({
               success: true,
@@ -105,7 +100,7 @@ Deno.serve(async (req) => {
               headers: { ...corsHeaders, 'Content-Type': 'application/json' },
               status: 200,
             }
-          )
+          );
         }
       }
     }
@@ -114,12 +109,12 @@ Deno.serve(async (req) => {
     const { data: allFixtures, error: allFixturesError } = await supabaseClient
       .from('fixtures')
       .select('finished')
-      .eq('event', currentEvent.id)
+      .eq('event', currentEvent.id);
 
-    if (allFixturesError) throw allFixturesError
+    if (allFixturesError) throw allFixturesError;
 
     if (allFixtures && allFixtures.every(fixture => fixture.finished)) {
-      console.log('All fixtures are finished for this gameweek')
+      console.log('All fixtures are finished for this gameweek');
       return new Response(
         JSON.stringify({
           success: true,
@@ -130,7 +125,7 @@ Deno.serve(async (req) => {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 200,
         }
-      )
+      );
     }
 
     // Fetch live data from FPL API with proper headers
@@ -143,15 +138,15 @@ Deno.serve(async (req) => {
         'Origin': 'https://fantasy.premierleague.com',
         'Connection': 'keep-alive'
       }
-    })
+    });
 
     if (!response.ok) {
-      console.error(`FPL API error: ${response.status}`, await response.text())
-      throw new Error(`FPL API error: ${response.status}`)
+      console.error(`FPL API error: ${response.status}`, await response.text());
+      throw new Error(`FPL API error: ${response.status}`);
     }
 
-    const data = await response.json()
-    console.log(`Fetched live data for ${data.elements.length} players`)
+    const data = await response.json();
+    console.log(`Fetched live data for ${data.elements.length} players`);
 
     // Process and upsert live data
     const updates = data.elements.map((element: LivePlayerData) => ({
@@ -182,9 +177,8 @@ Deno.serve(async (req) => {
       expected_assists: parseFloat(element.stats.expected_assists),
       expected_goal_involvements: parseFloat(element.stats.expected_goal_involvements),
       expected_goals_conceded: parseFloat(element.stats.expected_goals_conceded),
-      points_breakdown: element.explain,
       last_updated: new Date().toISOString()
-    }))
+    }));
 
     // Process and upsert live data
     const { error: upsertError } = await supabaseClient
@@ -192,23 +186,23 @@ Deno.serve(async (req) => {
       .upsert(updates, {
         onConflict: 'event_id,player_id',
         ignoreDuplicates: false
-      })
+      });
 
     if (upsertError) {
-      console.error('Error upserting data:', upsertError)
-      throw upsertError
+      console.error('Error upserting data:', upsertError);
+      throw upsertError;
     }
 
     // Trigger points calculation
-    console.log('Triggering points calculation...')
-    const { error: calcError } = await supabaseClient.functions.invoke('calculate-points')
+    console.log('Triggering points calculation...');
+    const { error: calcError } = await supabaseClient.functions.invoke('calculate-points');
     
     if (calcError) {
-      console.error('Error triggering points calculation:', calcError)
+      console.error('Error triggering points calculation:', calcError);
       // Don't throw, just log - we don't want to fail the whole process
     }
 
-    console.log('Live gameweek data processed successfully')
+    console.log('Live gameweek data processed successfully');
 
     return new Response(
       JSON.stringify({ 
@@ -222,16 +216,16 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
       }
-    )
+    );
 
   } catch (error) {
-    console.error('Error:', error)
+    console.error('Error:', error);
     return new Response(
       JSON.stringify({ success: false, error: error.message }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500,
       }
-    )
+    );
   }
-})
+});
