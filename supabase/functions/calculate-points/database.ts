@@ -49,14 +49,27 @@ export async function upsertPointsCalculations(
 ): Promise<void> {
   if (!calculations.length) return;
 
-  const { error } = await supabaseClient
-    .from('player_points_calculation')
-    .upsert(calculations, {
-      onConflict: 'event_id,player_id',
-      ignoreDuplicates: false
-    });
+  console.log(`Upserting ${calculations.length} point calculations`);
 
-  if (error) throw error;
+  // Process calculations in smaller batches to avoid overwhelming the database
+  const batchSize = 50;
+  for (let i = 0; i < calculations.length; i += batchSize) {
+    const batch = calculations.slice(i, i + batchSize);
+    
+    const { error } = await supabaseClient
+      .from('player_points_calculation')
+      .upsert(batch, {
+        onConflict: 'event_id,player_id',
+        ignoreDuplicates: false
+      });
+
+    if (error) {
+      console.error(`Error upserting batch ${i / batchSize + 1}:`, error);
+      throw error;
+    }
+    
+    console.log(`Successfully upserted batch ${i / batchSize + 1} of ${Math.ceil(calculations.length / batchSize)}`);
+  }
 }
 
 export async function updatePerformanceStatus(
