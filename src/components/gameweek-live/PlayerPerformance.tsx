@@ -39,6 +39,7 @@ const PlayerPerformance = ({ gameweek }: PlayerPerformanceProps) => {
             id,
             started,
             finished,
+            finished_provisional,
             event
           )
         `)

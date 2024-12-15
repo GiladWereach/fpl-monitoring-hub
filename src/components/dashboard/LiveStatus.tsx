@@ -39,6 +39,24 @@ export function LiveStatus({ showLabel = true }: LiveStatusProps) {
     refetchInterval: 60000, // Check every minute
   });
 
+  // Query to check for active matches
+  const { data: activeMatches } = useQuery({
+    queryKey: ["active-matches", currentEvent?.id],
+    enabled: !!currentEvent?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("fixtures")
+        .select("*")
+        .eq("event", currentEvent.id)
+        .eq("started", true)
+        .is("finished", false);
+
+      if (error) throw error;
+      return data;
+    },
+    refetchInterval: 30000 // Check every 30 seconds
+  });
+
   // Query to fetch live data
   const { error: liveError } = useQuery({
     queryKey: ["live-data", currentEvent?.id],
@@ -48,7 +66,7 @@ export function LiveStatus({ showLabel = true }: LiveStatusProps) {
       setLastUpdate(new Date());
       return data;
     },
-    enabled: !!currentEvent && !currentEvent.finished,
+    enabled: !!currentEvent && !!activeMatches?.length,
     refetchInterval: 120000, // Fetch every 2 minutes during active gameweek
     retry: true,
     retryDelay: 30000, // Retry after 30 seconds on failure
@@ -93,7 +111,7 @@ export function LiveStatus({ showLabel = true }: LiveStatusProps) {
   const getStatusColor = () => {
     if (error) return "text-destructive fill-destructive";
     if (!currentEvent) return "text-muted-foreground fill-muted-foreground";
-    if (isActive) return "text-success fill-success";
+    if (isActive && activeMatches?.length) return "text-success fill-success";
     return "text-muted-foreground fill-muted-foreground";
   };
 
@@ -113,7 +131,7 @@ export function LiveStatus({ showLabel = true }: LiveStatusProps) {
               className={cn(
                 "h-3 w-3",
                 getStatusColor(),
-                isActive && "animate-pulse"
+                isActive && activeMatches?.length && "animate-pulse"
               )}
             />
             {showLabel && <span className="text-sm">Live Updates</span>}
