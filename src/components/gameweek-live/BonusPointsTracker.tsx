@@ -69,6 +69,7 @@ const BonusPointsTracker = ({ gameweek, matchId }: BonusPointsTrackerProps) => {
           )
         `)
         .in('fixture_id', matches?.map(m => m.id) || [])
+        .gt('minutes', 0) // Only players with minutes > 0
         .order('bps', { ascending: false });
       
       if (error) throw error;

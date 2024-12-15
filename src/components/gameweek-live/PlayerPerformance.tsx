@@ -78,7 +78,8 @@ const PlayerPerformance = ({ gameweek, matchId }: { gameweek: number; matchId?: 
             )
           )
         `)
-        .eq('event_id', gameweek);
+        .eq('event_id', gameweek)
+        .gt('minutes', 0); // Only players with minutes > 0
 
       if (matchId) {
         query.eq('fixture_id', matchId);
@@ -108,7 +109,21 @@ const PlayerPerformance = ({ gameweek, matchId }: { gameweek: number; matchId?: 
       
       // Convert array to map for easier lookup
       return data.reduce((acc: Record<number, PointsData>, curr) => {
-        acc[curr.player_id] = curr;
+        acc[curr.player_id] = {
+          player_id: curr.player_id,
+          minutes_points: curr.minutes_points,
+          goals_scored_points: curr.goals_scored_points,
+          assists_points: curr.assist_points, // Map assist_points to assists_points
+          clean_sheet_points: curr.clean_sheet_points,
+          goals_conceded_points: curr.goals_conceded_points,
+          own_goal_points: curr.own_goal_points,
+          penalty_save_points: curr.penalty_save_points,
+          penalty_miss_points: curr.penalty_miss_points,
+          saves_points: curr.saves_points,
+          bonus_points: curr.bonus_points,
+          card_points: curr.card_points,
+          final_total_points: curr.final_total_points
+        };
         return acc;
       }, {});
     },
