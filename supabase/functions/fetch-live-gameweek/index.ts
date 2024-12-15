@@ -45,26 +45,45 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Create or update the schedule for this function
+    // First check if a schedule already exists
+    const { data: existingSchedule, error: fetchError } = await supabaseClient
+      .from('schedules')
+      .select('id')
+      .eq('function_name', 'fetch-live-gameweek')
+      .single();
+
+    if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 is "not found" error
+      console.error('Error fetching existing schedule:', fetchError);
+      throw fetchError;
+    }
+
+    // Create or update the schedule
+    const scheduleData = {
+      function_name: 'fetch-live-gameweek',
+      schedule_type: 'time_based',
+      enabled: true,
+      time_config: {
+        type: 'interval',
+        intervalMinutes: 2
+      },
+      execution_config: {
+        retry_count: 3,
+        timeout_seconds: 30,
+        retry_delay_seconds: 60,
+        concurrent_execution: false
+      }
+    };
+
     const { error: scheduleError } = await supabaseClient
       .from('schedules')
-      .upsert({
-        function_name: 'fetch-live-gameweek',
-        schedule_type: 'time_based',
-        enabled: true,
-        time_config: {
-          type: 'interval',
-          intervalMinutes: 2
-        },
-        execution_config: {
-          retry_count: 3,
-          timeout_seconds: 30,
-          retry_delay_seconds: 60,
-          concurrent_execution: false
+      .upsert(
+        existingSchedule 
+          ? { ...scheduleData, id: existingSchedule.id }
+          : scheduleData,
+        { 
+          onConflict: 'id'
         }
-      }, {
-        onConflict: 'function_name'
-      });
+      );
 
     if (scheduleError) {
       console.error('Error creating/updating schedule:', scheduleError);
