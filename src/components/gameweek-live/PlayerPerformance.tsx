@@ -38,9 +38,9 @@ interface PlayerPerformanceData {
     second_name: string;
     web_name: string;
     element_type: number;
-  };
-  team: {
-    short_name: string;
+    team: {
+      short_name: string;
+    };
   };
   points: {
     minutes_points: number;
@@ -74,10 +74,10 @@ const PlayerPerformance = ({ gameweek, matchId }: PlayerPerformanceProps) => {
             first_name,
             second_name,
             web_name,
-            element_type
-          ),
-          team:teams(
-            short_name
+            element_type,
+            team:teams(
+              short_name
+            )
           ),
           points:player_points_calculation!inner(
             minutes_points,
@@ -114,7 +114,7 @@ const PlayerPerformance = ({ gameweek, matchId }: PlayerPerformanceProps) => {
 
   const filteredPerformances = performances?.filter(p => 
     p.player.web_name.toLowerCase().includes(search.toLowerCase()) ||
-    p.team.short_name.toLowerCase().includes(search.toLowerCase())
+    p.player.team.short_name.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -159,7 +159,7 @@ const PlayerPerformance = ({ gameweek, matchId }: PlayerPerformanceProps) => {
                   {perf.player.web_name}
                   {perf.minutes < 1 && <span className="text-gray-500"> (Sub)</span>}
                 </TableCell>
-                <TableCell>{perf.team.short_name}</TableCell>
+                <TableCell>{perf.player.team.short_name}</TableCell>
                 <TableCell className="text-right">{perf.minutes}</TableCell>
                 <TableCell className="text-right">{perf.goals_scored}</TableCell>
                 <TableCell className="text-right">{perf.assists}</TableCell>
