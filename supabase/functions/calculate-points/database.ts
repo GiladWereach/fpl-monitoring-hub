@@ -1,5 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { LivePerformance, Player, ScoringRules, PointsCalculation } from './types';
+import { LivePerformance, Player, ScoringRules, PointsCalculation } from './types.ts';
 
 export async function getSupabaseClient() {
   return createClient(

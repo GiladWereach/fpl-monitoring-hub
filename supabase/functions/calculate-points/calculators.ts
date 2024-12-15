@@ -1,4 +1,4 @@
-import { LivePerformance, Player, ScoringRules } from './types';
+import { LivePerformance, Player, ScoringRules } from './types.ts';
 
 export function calculateMinutesPoints(minutes: number, rules: ScoringRules): number {
   if (minutes === 0) return 0;

@@ -1,4 +1,5 @@
 export interface LivePerformance {
+  id: number;
   event_id: number;
   player_id: number;
   fixture_id: number;
