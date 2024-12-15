@@ -1,8 +1,10 @@
 import { LiveStatus } from "./LiveStatus";
 import { CalculationsManager } from "./CalculationsManager";
 import { RecentActivity } from "./RecentActivity";
+import { PointsCalculationFormula } from "./PointsCalculationFormula";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/AppSidebar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export function CalculationControlCenter() {
   return (
@@ -23,10 +25,21 @@ export function CalculationControlCenter() {
             </div>
           </div>
 
-          <div className="space-y-8">
-            <CalculationsManager />
-            <RecentActivity />
-          </div>
+          <Tabs defaultValue="overview" className="space-y-8">
+            <TabsList>
+              <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="points-formula">Points Formula</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="overview" className="space-y-8">
+              <CalculationsManager />
+              <RecentActivity />
+            </TabsContent>
+
+            <TabsContent value="points-formula">
+              <PointsCalculationFormula />
+            </TabsContent>
+          </Tabs>
         </main>
       </div>
     </SidebarProvider>
