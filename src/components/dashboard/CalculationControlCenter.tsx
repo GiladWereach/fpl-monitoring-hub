@@ -9,8 +9,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Activity, Database, Server } from "lucide-react";
 import { Button } from "../ui/button";
 import { toast } from "@/hooks/use-toast";
+import { useState } from "react";
 
 export function CalculationControlCenter() {
+  const [isCalculating, setIsCalculating] = useState(false);
+
   const { data: currentEvent } = useQuery({
     queryKey: ['current-event'],
     queryFn: async () => {
@@ -37,6 +40,7 @@ export function CalculationControlCenter() {
         .is('finished_provisional', false);
 
       if (error) throw error;
+      console.log('Active matches:', data);
       return data;
     },
     refetchInterval: 30000
@@ -58,7 +62,6 @@ export function CalculationControlCenter() {
       }
 
       console.log("Last calculation data:", data);
-      // Return the first item if exists, otherwise null
       return data?.[0] || null;
     },
     refetchInterval: 60000
@@ -66,6 +69,7 @@ export function CalculationControlCenter() {
 
   const triggerCalculations = async () => {
     try {
+      setIsCalculating(true);
       console.log("Triggering calculations");
       const { error } = await supabase.functions.invoke('calculate-points');
       if (error) throw error;
@@ -81,6 +85,8 @@ export function CalculationControlCenter() {
         description: "Failed to trigger points calculation",
         variant: "destructive",
       });
+    } finally {
+      setIsCalculating(false);
     }
   };
 
@@ -100,8 +106,22 @@ export function CalculationControlCenter() {
           </p>
         </div>
         <div className="flex items-center gap-4">
-          <Button onClick={triggerCalculations}>
-            Trigger Calculations
+          <Button 
+            onClick={triggerCalculations} 
+            disabled={isCalculating}
+            className="gap-2"
+          >
+            {isCalculating ? (
+              <>
+                <Activity className="h-4 w-4 animate-spin" />
+                Calculating...
+              </>
+            ) : (
+              <>
+                <Activity className="h-4 w-4" />
+                Trigger Calculations
+              </>
+            )}
           </Button>
           <LiveStatus />
         </div>
