@@ -1,15 +1,14 @@
 import React from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { Card } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import MatchCards from '@/components/gameweek-live/MatchCards';
-import PlayerPerformance from '@/components/gameweek-live/PlayerPerformance';
-import BonusPointsTracker from '@/components/gameweek-live/BonusPointsTracker';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card } from '@/components/ui/card';
+import PlayerPerformance from '@/components/gameweek-live/PlayerPerformance';
+import BonusPointsTracker from '@/components/gameweek-live/BonusPointsTracker';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
-const GameWeekLive = () => {
+export default function GameWeekLive() {
   const { data: currentGameweek, isLoading: gameweekLoading } = useQuery({
     queryKey: ['current-gameweek'],
     queryFn: async () => {
@@ -34,7 +33,7 @@ const GameWeekLive = () => {
         <h1 className="text-2xl font-bold">
           Gameweek {currentGameweek?.id} Live
         </h1>
-        <Alert variant="info" className="w-auto">
+        <Alert variant="default" className="w-auto">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
             Data updates automatically every minute
@@ -51,7 +50,8 @@ const GameWeekLive = () => {
 
         <TabsContent value="matches">
           <Card className="p-4">
-            <MatchCards gameweek={currentGameweek?.id} />
+            <h2>Match Updates</h2>
+            {/* Match cards component will be implemented here */}
           </Card>
         </TabsContent>
 
@@ -69,6 +69,4 @@ const GameWeekLive = () => {
       </Tabs>
     </div>
   );
-};
-
-export default GameWeekLive;
+}

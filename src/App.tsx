@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import AppSidebar from '@/components/AppSidebar';
+import AppSidebar from '@/components/layout/AppSidebar';
 import Dashboard from '@/pages/Dashboard';
 import BackendDashboard from '@/pages/backend/Dashboard';
 import BackendCalculations from '@/pages/backend/Calculations';
