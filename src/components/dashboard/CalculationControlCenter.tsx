@@ -2,12 +2,10 @@ import { LiveStatus } from "./LiveStatus";
 import { CalculationsManager } from "./CalculationsManager";
 import { RecentActivity } from "./RecentActivity";
 import { PointsCalculationFormula } from "./PointsCalculationFormula";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import AppSidebar from "@/components/layout/AppSidebar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export function CalculationControlCenter() {
-  const content = (
+  return (
     <main className="flex-1 p-8 animate-fade-in">
       <div className="flex items-center justify-between mb-8">
         <div>
@@ -18,7 +16,6 @@ export function CalculationControlCenter() {
         </div>
         <div className="flex items-center gap-4">
           <LiveStatus />
-          <SidebarTrigger />
         </div>
       </div>
 
@@ -38,13 +35,5 @@ export function CalculationControlCenter() {
         </TabsContent>
       </Tabs>
     </main>
-  );
-
-  return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full">
-        <AppSidebar>{content}</AppSidebar>
-      </div>
-    </SidebarProvider>
   );
 }
