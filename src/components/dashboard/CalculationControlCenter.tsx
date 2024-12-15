@@ -45,21 +45,28 @@ export function CalculationControlCenter() {
   const { data: lastCalculation } = useQuery({
     queryKey: ['last-calculation'],
     queryFn: async () => {
+      console.log("Fetching last calculation");
       const { data, error } = await supabase
         .from('calculation_logs')
         .select('*')
         .order('start_time', { ascending: false })
-        .limit(1)
-        .single();
+        .limit(1);
 
-      if (error) throw error;
-      return data;
+      if (error) {
+        console.error("Error fetching last calculation:", error);
+        throw error;
+      }
+
+      console.log("Last calculation data:", data);
+      // Return the first item if exists, otherwise null
+      return data?.[0] || null;
     },
     refetchInterval: 60000
   });
 
   const triggerCalculations = async () => {
     try {
+      console.log("Triggering calculations");
       const { error } = await supabase.functions.invoke('calculate-points');
       if (error) throw error;
       
