@@ -3,19 +3,29 @@ import { ThemeSupa } from '@supabase/auth-ui-shared';
 import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
+import { useSessionContext } from '@supabase/auth-helpers-react';
 
 const Login = () => {
   const navigate = useNavigate();
+  const { session } = useSessionContext();
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session) {
-        navigate('/backend');
-      }
-    });
+    const checkAccess = async () => {
+      if (session?.user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', session.user.id)
+          .single();
 
-    return () => subscription.unsubscribe();
-  }, [navigate]);
+        if (profile?.role === 'admin') {
+          navigate('/backend');
+        }
+      }
+    };
+
+    checkAccess();
+  }, [session, navigate]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">

@@ -3,20 +3,46 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { createClient } from '@supabase/supabase-js';
-import { SessionContextProvider } from '@supabase/auth-helpers-react';
+import { SessionContextProvider, useSessionContext } from '@supabase/auth-helpers-react';
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Players from "./pages/Players";
 import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useState } from "react";
 
 const queryClient = new QueryClient();
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const user = supabase.auth.getUser();
-  if (!user) {
+  const { session } = useSessionContext();
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      if (!session?.user) {
+        setIsAdmin(false);
+        return;
+      }
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', session.user.id)
+        .single();
+
+      setIsAdmin(profile?.role === 'admin');
+    };
+
+    checkAdminStatus();
+  }, [session]);
+
+  if (isAdmin === null) {
+    return null; // Loading state
+  }
+
+  if (!session || !isAdmin) {
     return <Navigate to="/login" />;
   }
+
   return <>{children}</>;
 };
 
