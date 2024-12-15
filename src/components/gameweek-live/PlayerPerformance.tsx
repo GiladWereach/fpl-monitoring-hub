@@ -37,26 +37,29 @@ interface PlayerPerformanceData {
       short_name: string;
     };
   };
-  points: {
-    minutes_points: number;
-    goals_scored_points: number;
-    assists_points: number;
-    clean_sheet_points: number;
-    goals_conceded_points: number;
-    own_goal_points: number;
-    penalty_save_points: number;
-    penalty_miss_points: number;
-    saves_points: number;
-    bonus_points: number;
-    card_points: number;
-    final_total_points: number;
-  };
+}
+
+interface PointsData {
+  player_id: number;
+  minutes_points: number;
+  goals_scored_points: number;
+  assists_points: number;
+  clean_sheet_points: number;
+  goals_conceded_points: number;
+  own_goal_points: number;
+  penalty_save_points: number;
+  penalty_miss_points: number;
+  saves_points: number;
+  bonus_points: number;
+  card_points: number;
+  final_total_points: number;
 }
 
 const PlayerPerformance = ({ gameweek, matchId }: { gameweek: number; matchId?: number | null }) => {
   const [search, setSearch] = useState('');
 
-  const { data: performances, isLoading } = useQuery({
+  // Query for player performances
+  const { data: performances, isLoading: performancesLoading } = useQuery({
     queryKey: ['player-performances', gameweek, matchId],
     queryFn: async () => {
       console.log('Fetching performances for gameweek:', gameweek, 'match:', matchId);
@@ -73,24 +76,9 @@ const PlayerPerformance = ({ gameweek, matchId }: { gameweek: number; matchId?: 
             team:teams(
               short_name
             )
-          ),
-          points:player_points_calculation(
-            minutes_points,
-            goals_scored_points,
-            assists_points,
-            clean_sheet_points,
-            goals_conceded_points,
-            own_goal_points,
-            penalty_save_points,
-            penalty_miss_points,
-            saves_points,
-            bonus_points,
-            card_points,
-            final_total_points
           )
         `)
-        .eq('event_id', gameweek)
-        .eq('player_points_calculation.event_id', gameweek);
+        .eq('event_id', gameweek);
 
       if (matchId) {
         query.eq('fixture_id', matchId);
@@ -104,7 +92,30 @@ const PlayerPerformance = ({ gameweek, matchId }: { gameweek: number; matchId?: 
     refetchInterval: 60000
   });
 
-  if (isLoading) {
+  // Query for points calculations
+  const { data: pointsData, isLoading: pointsLoading } = useQuery({
+    queryKey: ['points-calculations', gameweek],
+    enabled: !!performances?.length,
+    queryFn: async () => {
+      console.log('Fetching points calculations for gameweek:', gameweek);
+      const { data, error } = await supabase
+        .from('player_points_calculation')
+        .select('*')
+        .eq('event_id', gameweek);
+      
+      if (error) throw error;
+      console.log('Fetched points calculations:', data);
+      
+      // Convert array to map for easier lookup
+      return data.reduce((acc: Record<number, PointsData>, curr) => {
+        acc[curr.player_id] = curr;
+        return acc;
+      }, {});
+    },
+    refetchInterval: 60000
+  });
+
+  if (performancesLoading || pointsLoading) {
     return <div>Loading performances...</div>;
   }
 
@@ -168,7 +179,9 @@ const PlayerPerformance = ({ gameweek, matchId }: { gameweek: number; matchId?: 
                 <TableCell className="text-right">{perf.red_cards}</TableCell>
                 <TableCell className="text-right">{perf.saves}</TableCell>
                 <TableCell className="text-right">{perf.bps}</TableCell>
-                <TableCell className="text-right font-bold">{perf.points?.final_total_points}</TableCell>
+                <TableCell className="text-right font-bold">
+                  {pointsData?.[perf.player.id]?.final_total_points ?? 0}
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
