@@ -15,7 +15,7 @@ export interface LivePerformance {
   red_cards: number;
   saves: number;
   bonus: number;
-  explain?: Array<{
+  explain: Array<{
     fixture: number;
     stats: Array<{
       identifier: string;

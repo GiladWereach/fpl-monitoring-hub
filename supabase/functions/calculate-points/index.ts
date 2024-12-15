@@ -49,7 +49,7 @@ Deno.serve(async (req) => {
         return null;
       }
 
-      // Extract fixture ID from the explain array if available
+      // Extract fixture ID from the explain array
       const fixtureId = perf.explain?.[0]?.fixture || null;
       console.log(`Processing player ${perf.player_id} for fixture ${fixtureId}`);
 
