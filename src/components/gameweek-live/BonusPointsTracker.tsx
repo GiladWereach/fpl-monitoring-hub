@@ -18,14 +18,18 @@ interface BonusPointsTrackerProps {
 
 const BonusPointsTracker = ({ gameweek, matchId }: BonusPointsTrackerProps) => {
   const { data: matches } = useQuery({
-    queryKey: ['bonus-matches', gameweek],
+    queryKey: ['bonus-matches', gameweek, matchId],
     queryFn: async () => {
+      console.log('Fetching bonus matches for gameweek:', gameweek, 'match:', matchId);
       const query = supabase
         .from('fixtures')
         .select(`
           id,
           team_h:teams!fk_fixtures_team_h(short_name),
-          team_a:teams!fk_fixtures_team_a(short_name)
+          team_a:teams!fk_fixtures_team_a(short_name),
+          started,
+          finished,
+          finished_provisional
         `)
         .eq('event', gameweek)
         .eq('started', true);
@@ -36,15 +40,17 @@ const BonusPointsTracker = ({ gameweek, matchId }: BonusPointsTrackerProps) => {
       
       const { data, error } = await query.order('kickoff_time', { ascending: true });
       if (error) throw error;
+      console.log('Fetched bonus matches:', data);
       return data;
     },
     refetchInterval: 60000
   });
 
   const { data: bpsData, isLoading } = useQuery({
-    queryKey: ['bonus-points', gameweek],
+    queryKey: ['bonus-points', gameweek, matchId],
     enabled: !!matches?.length,
     queryFn: async () => {
+      console.log('Fetching BPS data for matches:', matches?.map(m => m.id));
       const { data, error } = await supabase
         .from('match_bps_tracking')
         .select(`
@@ -63,6 +69,7 @@ const BonusPointsTracker = ({ gameweek, matchId }: BonusPointsTrackerProps) => {
         .order('bps_score', { ascending: false });
       
       if (error) throw error;
+      console.log('Fetched BPS data:', data);
       return data;
     },
     refetchInterval: 60000

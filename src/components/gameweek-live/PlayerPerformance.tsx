@@ -10,6 +10,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 
 interface PlayerPerformanceProps {
   gameweek: number;
@@ -22,6 +23,7 @@ const PlayerPerformance = ({ gameweek, matchId }: PlayerPerformanceProps) => {
   const { data: performances, isLoading } = useQuery({
     queryKey: ['player-performances', gameweek, matchId],
     queryFn: async () => {
+      console.log('Fetching performances for match:', matchId);
       const query = supabase
         .from('match_player_performance')
         .select(`
@@ -41,7 +43,9 @@ const PlayerPerformance = ({ gameweek, matchId }: PlayerPerformanceProps) => {
             started,
             finished,
             finished_provisional,
-            event
+            event,
+            team_h_score,
+            team_a_score
           )
         `)
         .eq('fixture.event', gameweek);
@@ -52,6 +56,7 @@ const PlayerPerformance = ({ gameweek, matchId }: PlayerPerformanceProps) => {
       
       const { data, error } = await query.order('total_points', { ascending: false });
       if (error) throw error;
+      console.log('Fetched performances:', data);
       return data;
     },
     refetchInterval: 60000
@@ -68,12 +73,17 @@ const PlayerPerformance = ({ gameweek, matchId }: PlayerPerformanceProps) => {
 
   return (
     <div className="space-y-4">
-      <Input
-        placeholder="Search players..."
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        className="max-w-sm"
-      />
+      <div className="flex justify-between items-center">
+        <Input
+          placeholder="Search players..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="max-w-sm"
+        />
+        <Badge variant="outline">
+          {matchId ? 'Showing match details' : 'Showing all matches'}
+        </Badge>
+      </div>
 
       <div className="rounded-md border">
         <Table>
