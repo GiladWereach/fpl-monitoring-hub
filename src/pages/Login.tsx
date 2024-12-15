@@ -12,14 +12,25 @@ const Login = () => {
   useEffect(() => {
     const checkAccess = async () => {
       if (session?.user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', session.user.id)
-          .single();
+        try {
+          console.log('Checking access for user:', session.user.id);
+          const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', session.user.id)
+            .single();
 
-        if (profile?.role === 'admin') {
-          navigate('/backend');
+          if (error) {
+            console.error('Error fetching profile:', error);
+            return;
+          }
+
+          console.log('Profile data:', profile);
+          if (profile?.role === 'admin') {
+            navigate('/backend');
+          }
+        } catch (error) {
+          console.error('Error in checkAccess:', error);
         }
       }
     };

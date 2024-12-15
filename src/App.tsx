@@ -23,13 +23,26 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
         return;
       }
 
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', session.user.id)
-        .single();
+      try {
+        console.log('Checking admin status for user:', session.user.id);
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', session.user.id)
+          .single();
 
-      setIsAdmin(profile?.role === 'admin');
+        if (error) {
+          console.error('Error fetching profile:', error);
+          setIsAdmin(false);
+          return;
+        }
+
+        console.log('Profile data:', profile);
+        setIsAdmin(profile?.role === 'admin');
+      } catch (error) {
+        console.error('Error in checkAdminStatus:', error);
+        setIsAdmin(false);
+      }
     };
 
     checkAdminStatus();
