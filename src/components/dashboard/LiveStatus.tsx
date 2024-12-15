@@ -49,7 +49,7 @@ export function LiveStatus({ showLabel = true }: LiveStatusProps) {
         .select("*")
         .eq("event", currentEvent.id)
         .eq("started", true)
-        .is("finished", false);
+        .is("finished_provisional", false);
 
       if (error) throw error;
       return data;

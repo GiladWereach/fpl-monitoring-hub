@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -12,6 +12,8 @@ import { LiveStatus } from '@/components/dashboard/LiveStatus';
 import { StatusCard } from '@/components/dashboard/StatusCard';
 
 export default function GameWeekLive() {
+  const [selectedMatchId, setSelectedMatchId] = useState<number | null>(null);
+
   const { data: currentGameweek, isLoading: gameweekLoading } = useQuery({
     queryKey: ['current-gameweek'],
     queryFn: async () => {
@@ -35,7 +37,7 @@ export default function GameWeekLive() {
         .select('*')
         .eq('event', currentGameweek.id)
         .eq('started', true)
-        .eq('finished', false);
+        .is('finished_provisional', false);
 
       if (error) throw error;
       return data;
@@ -95,19 +97,29 @@ export default function GameWeekLive() {
 
         <TabsContent value="matches">
           <Card className="p-4">
-            <MatchCards gameweek={currentGameweek?.id} />
+            <MatchCards 
+              gameweek={currentGameweek?.id} 
+              onMatchSelect={setSelectedMatchId}
+              selectedMatchId={selectedMatchId}
+            />
           </Card>
         </TabsContent>
 
         <TabsContent value="performance">
           <Card className="p-4">
-            <PlayerPerformance gameweek={currentGameweek?.id} />
+            <PlayerPerformance 
+              gameweek={currentGameweek?.id} 
+              matchId={selectedMatchId}
+            />
           </Card>
         </TabsContent>
 
         <TabsContent value="bonus">
           <Card className="p-4">
-            <BonusPointsTracker gameweek={currentGameweek?.id} />
+            <BonusPointsTracker 
+              gameweek={currentGameweek?.id}
+              matchId={selectedMatchId}
+            />
           </Card>
         </TabsContent>
       </Tabs>

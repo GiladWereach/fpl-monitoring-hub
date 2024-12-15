@@ -7,9 +7,11 @@ import { format } from 'date-fns';
 
 interface MatchCardsProps {
   gameweek: number;
+  onMatchSelect?: (matchId: number) => void;
+  selectedMatchId?: number;
 }
 
-const MatchCards = ({ gameweek }: MatchCardsProps) => {
+const MatchCards = ({ gameweek, onMatchSelect, selectedMatchId }: MatchCardsProps) => {
   const { data: matches, isLoading } = useQuery({
     queryKey: ['gameweek-matches', gameweek],
     queryFn: async () => {
@@ -47,7 +49,11 @@ const MatchCards = ({ gameweek }: MatchCardsProps) => {
         const { status, color } = getMatchStatus(match);
         
         return (
-          <Card key={match.id} className="p-4 relative">
+          <Card 
+            key={match.id} 
+            className={`p-4 relative cursor-pointer transition-all duration-200 hover:scale-[1.02] ${selectedMatchId === match.id ? 'ring-2 ring-primary' : ''}`}
+            onClick={() => onMatchSelect?.(match.id)}
+          >
             <div className={`absolute top-2 right-2 w-3 h-3 rounded-full ${color}`} />
             
             <div className="flex flex-col space-y-4">
@@ -70,7 +76,7 @@ const MatchCards = ({ gameweek }: MatchCardsProps) => {
                 </div>
               </div>
 
-              {match.started && !match.finished && (
+              {match.started && !match.finished_provisional && (
                 <div className="text-center text-sm text-gray-500">
                   {match.minutes}'
                 </div>
