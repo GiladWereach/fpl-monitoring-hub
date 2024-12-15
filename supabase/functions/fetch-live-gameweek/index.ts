@@ -45,6 +45,32 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
+    // Create or update the schedule for this function
+    const { error: scheduleError } = await supabaseClient
+      .from('schedules')
+      .upsert({
+        function_name: 'fetch-live-gameweek',
+        schedule_type: 'time_based',
+        enabled: true,
+        time_config: {
+          type: 'interval',
+          intervalMinutes: 2
+        },
+        execution_config: {
+          retry_count: 3,
+          timeout_seconds: 30,
+          retry_delay_seconds: 60,
+          concurrent_execution: false
+        }
+      }, {
+        onConflict: 'function_name'
+      });
+
+    if (scheduleError) {
+      console.error('Error creating/updating schedule:', scheduleError);
+      throw scheduleError;
+    }
+
     // Find current gameweek
     const { data: currentEvent, error: eventError } = await supabaseClient
       .from('events')
