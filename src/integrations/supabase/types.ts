@@ -1032,6 +1032,27 @@ export type Database = {
           },
         ]
       }
+      profiles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["user_role"] | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id: string
+          role?: Database["public"]["Enums"]["user_role"] | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["user_role"] | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       schedule_execution_logs: {
         Row: {
           completed_at: string | null
@@ -1279,6 +1300,7 @@ export type Database = {
       event_trigger_type: "deadline" | "kickoff" | "match_status"
       schedule_type: "time_based" | "event_based"
       time_schedule_type: "interval" | "daily" | "weekly" | "monthly" | "cron"
+      user_role: "admin" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
