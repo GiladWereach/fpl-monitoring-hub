@@ -12,6 +12,10 @@ interface PerformanceMetrics {
   cpu_usage?: number;
 }
 
+function isPerformanceMetrics(obj: any): obj is PerformanceMetrics {
+  return obj && typeof obj === 'object' && typeof obj.execution_time === 'number';
+}
+
 export function CalculationsManager() {
   const { data: calculationTypes, isLoading } = useQuery({
     queryKey: ["calculation-types"],
@@ -89,9 +93,8 @@ export function CalculationsManager() {
 
   // Calculate average execution time from performance metrics with proper type checking
   const avgExecutionTime = performanceMetrics?.reduce((acc, curr) => {
-    if (typeof curr.performance_metrics === 'object' && curr.performance_metrics !== null) {
-      const metrics = curr.performance_metrics as PerformanceMetrics;
-      return acc + (metrics.execution_time || 0);
+    if (curr.performance_metrics && isPerformanceMetrics(curr.performance_metrics)) {
+      return acc + curr.performance_metrics.execution_time;
     }
     return acc;
   }, 0) / (performanceMetrics?.length || 1);
