@@ -12,11 +12,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 
-interface PlayerPerformanceProps {
-  gameweek: number;
-  matchId?: number | null;
-}
-
 interface PlayerPerformanceData {
   id: number;
   assists: number;
@@ -58,7 +53,7 @@ interface PlayerPerformanceData {
   };
 }
 
-const PlayerPerformance = ({ gameweek, matchId }: PlayerPerformanceProps) => {
+const PlayerPerformance = ({ gameweek, matchId }: { gameweek: number; matchId?: number | null }) => {
   const [search, setSearch] = useState('');
 
   const { data: performances, isLoading } = useQuery({
@@ -79,7 +74,7 @@ const PlayerPerformance = ({ gameweek, matchId }: PlayerPerformanceProps) => {
               short_name
             )
           ),
-          points:player_points_calculation!inner(
+          points:player_points_calculation(
             minutes_points,
             goals_scored_points,
             assists_points,
@@ -94,7 +89,8 @@ const PlayerPerformance = ({ gameweek, matchId }: PlayerPerformanceProps) => {
             final_total_points
           )
         `)
-        .eq('event_id', gameweek);
+        .eq('event_id', gameweek)
+        .eq('player_points_calculation.event_id', gameweek);
 
       if (matchId) {
         query.eq('fixture_id', matchId);
@@ -172,7 +168,7 @@ const PlayerPerformance = ({ gameweek, matchId }: PlayerPerformanceProps) => {
                 <TableCell className="text-right">{perf.red_cards}</TableCell>
                 <TableCell className="text-right">{perf.saves}</TableCell>
                 <TableCell className="text-right">{perf.bps}</TableCell>
-                <TableCell className="text-right font-bold">{perf.points.final_total_points}</TableCell>
+                <TableCell className="text-right font-bold">{perf.points?.final_total_points}</TableCell>
               </TableRow>
             ))}
           </TableBody>
