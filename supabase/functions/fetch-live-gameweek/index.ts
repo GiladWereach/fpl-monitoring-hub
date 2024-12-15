@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
     // Find current gameweek
     const { data: currentEvent, error: eventError } = await supabaseClient
       .from('events')
-      .select('id')
+      .select('id, deadline_time')
       .lt('deadline_time', new Date().toISOString())
       .gt('deadline_time', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
       .order('deadline_time', { ascending: false })
@@ -64,6 +64,74 @@ Deno.serve(async (req) => {
     if (!currentEvent) throw new Error('No current gameweek found')
 
     console.log(`Current gameweek: ${currentEvent.id}`)
+
+    // Check if there are any active matches
+    const { data: activeFixtures, error: fixturesError } = await supabaseClient
+      .from('fixtures')
+      .select('*')
+      .eq('event', currentEvent.id)
+      .eq('started', true)
+      .eq('finished', false)
+
+    if (fixturesError) throw fixturesError
+
+    // If no active matches, check if we should wait
+    if (!activeFixtures || activeFixtures.length === 0) {
+      console.log('No active matches found, checking last update time...')
+      
+      const { data: lastUpdate } = await supabaseClient
+        .from('gameweek_live_performance')
+        .select('last_updated')
+        .eq('event_id', currentEvent.id)
+        .order('last_updated', { ascending: false })
+        .limit(1)
+        .single()
+
+      // If last update was less than 30 minutes ago, skip update
+      if (lastUpdate && lastUpdate.last_updated) {
+        const lastUpdateTime = new Date(lastUpdate.last_updated)
+        const timeSinceLastUpdate = Date.now() - lastUpdateTime.getTime()
+        const thirtyMinutesInMs = 30 * 60 * 1000
+
+        if (timeSinceLastUpdate < thirtyMinutesInMs) {
+          console.log('Last update was less than 30 minutes ago, skipping update')
+          return new Response(
+            JSON.stringify({
+              success: true,
+              message: 'Skipped update - no active matches and last update was recent',
+              gameweek: currentEvent.id
+            }),
+            {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              status: 200,
+            }
+          )
+        }
+      }
+    }
+
+    // Check if all fixtures are finished
+    const { data: allFixtures, error: allFixturesError } = await supabaseClient
+      .from('fixtures')
+      .select('finished')
+      .eq('event', currentEvent.id)
+
+    if (allFixturesError) throw allFixturesError
+
+    if (allFixtures && allFixtures.every(fixture => fixture.finished)) {
+      console.log('All fixtures are finished for this gameweek')
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: 'All fixtures are finished for this gameweek',
+          gameweek: currentEvent.id
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        }
+      )
+    }
 
     // Fetch live data from FPL API with proper headers
     const response = await fetch(`https://fantasy.premierleague.com/api/event/${currentEvent.id}/live/`, {
@@ -138,7 +206,8 @@ Deno.serve(async (req) => {
         success: true, 
         message: 'Live gameweek data updated successfully',
         gameweek: currentEvent.id,
-        updatedPlayers: updates.length
+        updatedPlayers: updates.length,
+        hasActiveMatches: activeFixtures && activeFixtures.length > 0
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
