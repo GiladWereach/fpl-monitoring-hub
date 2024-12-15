@@ -5,6 +5,7 @@ import { AppSidebar } from "@/components/layout/AppSidebar";
 import { EdgeFunctionManager } from "@/components/dashboard/EdgeFunctionManager";
 import { LiveStatus } from "@/components/dashboard/LiveStatus";
 import { RecentActivity } from "@/components/dashboard/RecentActivity";
+import { CalculationsManager } from "@/components/dashboard/CalculationsManager";
 
 const Index = () => {
   return (
@@ -48,6 +49,10 @@ const Index = () => {
               status="info"
               icon={<Server className="h-4 w-4" />}
             />
+          </div>
+
+          <div className="mt-8">
+            <CalculationsManager />
           </div>
 
           <div className="mt-8">

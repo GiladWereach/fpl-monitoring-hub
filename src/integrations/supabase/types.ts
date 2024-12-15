@@ -9,6 +9,187 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      calculation_logs: {
+        Row: {
+          affected_rows: number | null
+          calculation_type_id: number | null
+          created_at: string | null
+          end_time: string | null
+          error_message: string | null
+          id: number
+          performance_metrics: Json | null
+          start_time: string | null
+          status: string
+        }
+        Insert: {
+          affected_rows?: number | null
+          calculation_type_id?: number | null
+          created_at?: string | null
+          end_time?: string | null
+          error_message?: string | null
+          id?: number
+          performance_metrics?: Json | null
+          start_time?: string | null
+          status: string
+        }
+        Update: {
+          affected_rows?: number | null
+          calculation_type_id?: number | null
+          created_at?: string | null
+          end_time?: string | null
+          error_message?: string | null
+          id?: number
+          performance_metrics?: Json | null
+          start_time?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calculation_logs_calculation_type_id_fkey"
+            columns: ["calculation_type_id"]
+            isOneToOne: false
+            referencedRelation: "calculation_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      calculation_results: {
+        Row: {
+          calculation_type_id: number | null
+          created_at: string | null
+          event_id: number | null
+          id: number
+          is_current: boolean | null
+          reference_id: number | null
+          result_data: Json
+          valid_until: string | null
+        }
+        Insert: {
+          calculation_type_id?: number | null
+          created_at?: string | null
+          event_id?: number | null
+          id?: number
+          is_current?: boolean | null
+          reference_id?: number | null
+          result_data?: Json
+          valid_until?: string | null
+        }
+        Update: {
+          calculation_type_id?: number | null
+          created_at?: string | null
+          event_id?: number | null
+          id?: number
+          is_current?: boolean | null
+          reference_id?: number | null
+          result_data?: Json
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calculation_results_calculation_type_id_fkey"
+            columns: ["calculation_type_id"]
+            isOneToOne: false
+            referencedRelation: "calculation_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calculation_results_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      calculation_schedules: {
+        Row: {
+          calculation_type_id: number | null
+          created_at: string | null
+          frequency_unit: Database["public"]["Enums"]["frequency_unit"] | null
+          frequency_value: number | null
+          id: number
+          is_active: boolean | null
+          last_run: string | null
+          next_run: string | null
+          trigger_type: Database["public"]["Enums"]["calculation_trigger_type"]
+          updated_at: string | null
+        }
+        Insert: {
+          calculation_type_id?: number | null
+          created_at?: string | null
+          frequency_unit?: Database["public"]["Enums"]["frequency_unit"] | null
+          frequency_value?: number | null
+          id?: number
+          is_active?: boolean | null
+          last_run?: string | null
+          next_run?: string | null
+          trigger_type: Database["public"]["Enums"]["calculation_trigger_type"]
+          updated_at?: string | null
+        }
+        Update: {
+          calculation_type_id?: number | null
+          created_at?: string | null
+          frequency_unit?: Database["public"]["Enums"]["frequency_unit"] | null
+          frequency_value?: number | null
+          id?: number
+          is_active?: boolean | null
+          last_run?: string | null
+          next_run?: string | null
+          trigger_type?: Database["public"]["Enums"]["calculation_trigger_type"]
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calculation_schedules_calculation_type_id_fkey"
+            columns: ["calculation_type_id"]
+            isOneToOne: false
+            referencedRelation: "calculation_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      calculation_types: {
+        Row: {
+          category: Database["public"]["Enums"]["calculation_category"]
+          created_at: string | null
+          dependent_tables: string[] | null
+          description: string | null
+          id: number
+          is_real_time: boolean | null
+          last_modified: string | null
+          name: string
+          priority: number | null
+          requires_cache: boolean | null
+          update_frequency: string | null
+        }
+        Insert: {
+          category: Database["public"]["Enums"]["calculation_category"]
+          created_at?: string | null
+          dependent_tables?: string[] | null
+          description?: string | null
+          id?: number
+          is_real_time?: boolean | null
+          last_modified?: string | null
+          name: string
+          priority?: number | null
+          requires_cache?: boolean | null
+          update_frequency?: string | null
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["calculation_category"]
+          created_at?: string | null
+          dependent_tables?: string[] | null
+          description?: string | null
+          id?: number
+          is_real_time?: boolean | null
+          last_modified?: string | null
+          name?: string
+          priority?: number | null
+          requires_cache?: boolean | null
+          update_frequency?: string | null
+        }
+        Relationships: []
+      }
       chips: {
         Row: {
           chip_type: string | null
@@ -1297,7 +1478,14 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
+      calculation_category:
+        | "live_calculations"
+        | "historical_analysis"
+        | "predictive_calculations"
+        | "aggregated_statistics"
+      calculation_trigger_type: "time_based" | "event_based"
       event_trigger_type: "deadline" | "kickoff" | "match_status"
+      frequency_unit: "minutes" | "hours" | "days"
       schedule_type: "time_based" | "event_based"
       time_schedule_type: "interval" | "daily" | "weekly" | "monthly" | "cron"
       user_role: "admin" | "user"
