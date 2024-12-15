@@ -14,19 +14,19 @@ const Login = () => {
       if (session?.user) {
         try {
           console.log('Checking access for user:', session.user.id);
-          const { data: profile, error } = await supabase
+          const { data, error } = await supabase
             .from('profiles')
             .select('role')
             .eq('id', session.user.id)
-            .single();
+            .maybeSingle();
 
           if (error) {
             console.error('Error fetching profile:', error);
             return;
           }
 
-          console.log('Profile data:', profile);
-          if (profile?.role === 'admin') {
+          console.log('Profile data:', data);
+          if (data?.role === 'admin') {
             navigate('/backend');
           }
         } catch (error) {
