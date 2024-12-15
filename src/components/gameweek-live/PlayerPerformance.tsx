@@ -35,13 +35,14 @@ const PlayerPerformance = ({ gameweek }: PlayerPerformanceProps) => {
           team:teams(
             short_name
           ),
-          match:fixtures(
+          fixture:fixtures(
             id,
             started,
-            finished
+            finished,
+            event
           )
         `)
-        .eq('match:fixtures.event', gameweek)
+        .eq('fixture.event', gameweek)
         .order('total_points', { ascending: false });
       
       if (error) throw error;
