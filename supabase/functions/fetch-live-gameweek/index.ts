@@ -186,7 +186,7 @@ Deno.serve(async (req) => {
       last_updated: new Date().toISOString()
     }))
 
-    // Batch upsert the data
+    // Process and upsert live data
     const { error: upsertError } = await supabaseClient
       .from('gameweek_live_performance')
       .upsert(updates, {
@@ -197,6 +197,15 @@ Deno.serve(async (req) => {
     if (upsertError) {
       console.error('Error upserting data:', upsertError)
       throw upsertError
+    }
+
+    // Trigger points calculation
+    console.log('Triggering points calculation...')
+    const { error: calcError } = await supabaseClient.functions.invoke('calculate-points')
+    
+    if (calcError) {
+      console.error('Error triggering points calculation:', calcError)
+      // Don't throw, just log - we don't want to fail the whole process
     }
 
     console.log('Live gameweek data processed successfully')
