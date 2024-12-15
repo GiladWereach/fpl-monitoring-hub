@@ -52,21 +52,24 @@ const BonusPointsTracker = ({ gameweek, matchId }: BonusPointsTrackerProps) => {
     queryFn: async () => {
       console.log('Fetching BPS data for matches:', matches?.map(m => m.id));
       const { data, error } = await supabase
-        .from('match_bps_tracking')
+        .from('gameweek_live_performance')
         .select(`
-          *,
+          id,
+          bps,
+          bonus,
           player:players(
             web_name,
-            element_type
+            element_type,
+            team_id
           ),
-          match:fixtures(
+          fixture:fixtures!inner(
             id,
             team_h:teams!fk_fixtures_team_h(short_name),
             team_a:teams!fk_fixtures_team_a(short_name)
           )
         `)
-        .in('match_id', matches?.map(m => m.id) || [])
-        .order('bps_score', { ascending: false });
+        .in('fixture_id', matches?.map(m => m.id) || [])
+        .order('bps', { ascending: false });
       
       if (error) throw error;
       console.log('Fetched BPS data:', data);
@@ -81,10 +84,10 @@ const BonusPointsTracker = ({ gameweek, matchId }: BonusPointsTrackerProps) => {
 
   // Group BPS data by match
   const bpsByMatch = bpsData?.reduce((acc: any, curr) => {
-    if (!acc[curr.match_id]) {
-      acc[curr.match_id] = [];
+    if (!acc[curr.fixture.id]) {
+      acc[curr.fixture.id] = [];
     }
-    acc[curr.match_id].push(curr);
+    acc[curr.fixture.id].push(curr);
     return acc;
   }, {});
 
@@ -117,12 +120,12 @@ const BonusPointsTracker = ({ gameweek, matchId }: BonusPointsTrackerProps) => {
               {bpsByMatch?.[match.id]?.map((bps: any) => (
                 <TableRow 
                   key={bps.id}
-                  className={getBonusColor(bps.bonus_points)}
+                  className={getBonusColor(bps.bonus)}
                 >
                   <TableCell>{bps.player.web_name}</TableCell>
-                  <TableCell className="text-right">{bps.bps_score}</TableCell>
+                  <TableCell className="text-right">{bps.bps}</TableCell>
                   <TableCell className="text-right font-bold">
-                    {bps.bonus_points}
+                    {bps.bonus}
                   </TableCell>
                 </TableRow>
               ))}

@@ -23,9 +23,9 @@ const PlayerPerformance = ({ gameweek, matchId }: PlayerPerformanceProps) => {
   const { data: performances, isLoading } = useQuery({
     queryKey: ['player-performances', gameweek, matchId],
     queryFn: async () => {
-      console.log('Fetching performances for match:', matchId);
+      console.log('Fetching performances for gameweek:', gameweek, 'match:', matchId);
       const query = supabase
-        .from('match_player_performance')
+        .from('gameweek_live_performance')
         .select(`
           *,
           player:players(
@@ -38,20 +38,25 @@ const PlayerPerformance = ({ gameweek, matchId }: PlayerPerformanceProps) => {
           team:teams(
             short_name
           ),
-          fixture:fixtures(
-            id,
-            started,
-            finished,
-            finished_provisional,
-            event,
-            team_h_score,
-            team_a_score
+          points:player_points_calculation!inner(
+            minutes_points,
+            goals_scored_points,
+            assists_points,
+            clean_sheet_points,
+            goals_conceded_points,
+            own_goal_points,
+            penalty_save_points,
+            penalty_miss_points,
+            saves_points,
+            bonus_points,
+            card_points,
+            final_total_points
           )
         `)
-        .eq('fixture.event', gameweek);
+        .eq('event_id', gameweek);
 
       if (matchId) {
-        query.eq('match_id', matchId);
+        query.eq('fixture_id', matchId);
       }
       
       const { data, error } = await query.order('total_points', { ascending: false });
@@ -114,10 +119,10 @@ const PlayerPerformance = ({ gameweek, matchId }: PlayerPerformanceProps) => {
                   {perf.is_substitute && <span className="text-gray-500"> (Sub)</span>}
                 </TableCell>
                 <TableCell>{perf.team.short_name}</TableCell>
-                <TableCell className="text-right">{perf.minutes_played}</TableCell>
+                <TableCell className="text-right">{perf.minutes}</TableCell>
                 <TableCell className="text-right">{perf.goals_scored}</TableCell>
                 <TableCell className="text-right">{perf.assists}</TableCell>
-                <TableCell className="text-right">{perf.clean_sheet ? '1' : '0'}</TableCell>
+                <TableCell className="text-right">{perf.clean_sheets ? '1' : '0'}</TableCell>
                 <TableCell className="text-right">{perf.goals_conceded}</TableCell>
                 <TableCell className="text-right">{perf.own_goals}</TableCell>
                 <TableCell className="text-right">{perf.penalties_saved}</TableCell>
@@ -126,7 +131,7 @@ const PlayerPerformance = ({ gameweek, matchId }: PlayerPerformanceProps) => {
                 <TableCell className="text-right">{perf.red_cards}</TableCell>
                 <TableCell className="text-right">{perf.saves}</TableCell>
                 <TableCell className="text-right">{perf.bps}</TableCell>
-                <TableCell className="text-right font-bold">{perf.total_points}</TableCell>
+                <TableCell className="text-right font-bold">{perf.points.final_total_points}</TableCell>
               </TableRow>
             ))}
           </TableBody>
