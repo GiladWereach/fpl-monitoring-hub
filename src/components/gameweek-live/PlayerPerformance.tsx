@@ -17,6 +17,48 @@ interface PlayerPerformanceProps {
   matchId?: number | null;
 }
 
+interface PlayerPerformanceData {
+  id: number;
+  assists: number;
+  bonus: number;
+  bps: number;
+  clean_sheets: number;
+  goals_scored: number;
+  goals_conceded: number;
+  own_goals: number;
+  penalties_saved: number;
+  penalties_missed: number;
+  yellow_cards: number;
+  red_cards: number;
+  saves: number;
+  minutes: number;
+  is_substitute: boolean;
+  player: {
+    id: number;
+    first_name: string;
+    second_name: string;
+    web_name: string;
+    element_type: number;
+  };
+  team: {
+    short_name: string;
+  };
+  points: {
+    minutes_points: number;
+    goals_scored_points: number;
+    assists_points: number;
+    clean_sheet_points: number;
+    goals_conceded_points: number;
+    own_goal_points: number;
+    penalty_save_points: number;
+    penalty_miss_points: number;
+    saves_points: number;
+    bonus_points: number;
+    card_points: number;
+    final_total_points: number;
+  };
+}
+
 const PlayerPerformance = ({ gameweek, matchId }: PlayerPerformanceProps) => {
   const [search, setSearch] = useState('');
 
@@ -62,7 +104,7 @@ const PlayerPerformance = ({ gameweek, matchId }: PlayerPerformanceProps) => {
       const { data, error } = await query.order('total_points', { ascending: false });
       if (error) throw error;
       console.log('Fetched performances:', data);
-      return data;
+      return data as PlayerPerformanceData[];
     },
     refetchInterval: 60000
   });
@@ -116,7 +158,7 @@ const PlayerPerformance = ({ gameweek, matchId }: PlayerPerformanceProps) => {
               <TableRow key={perf.id}>
                 <TableCell>
                   {perf.player.web_name}
-                  {perf.is_substitute && <span className="text-gray-500"> (Sub)</span>}
+                  {perf.minutes < 1 && <span className="text-gray-500"> (Sub)</span>}
                 </TableCell>
                 <TableCell>{perf.team.short_name}</TableCell>
                 <TableCell className="text-right">{perf.minutes}</TableCell>
