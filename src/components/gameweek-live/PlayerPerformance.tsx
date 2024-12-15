@@ -32,7 +32,6 @@ interface PlayerPerformanceData {
   red_cards: number;
   saves: number;
   minutes: number;
-  is_substitute: boolean;
   player: {
     id: number;
     first_name: string;
@@ -104,7 +103,7 @@ const PlayerPerformance = ({ gameweek, matchId }: PlayerPerformanceProps) => {
       const { data, error } = await query.order('total_points', { ascending: false });
       if (error) throw error;
       console.log('Fetched performances:', data);
-      return data as PlayerPerformanceData[];
+      return data as unknown as PlayerPerformanceData[];
     },
     refetchInterval: 60000
   });
