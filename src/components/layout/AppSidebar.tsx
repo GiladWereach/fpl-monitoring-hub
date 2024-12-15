@@ -1,11 +1,13 @@
 import {
   Activity,
+  Calculator,
+  ChartBar,
+  Clock,
   Database,
   Home,
   Server,
   Settings,
   Terminal,
-  Calculator,
 } from "lucide-react";
 import {
   Sidebar,
@@ -29,6 +31,13 @@ const menuItems = [
   { title: "Settings", icon: Settings, path: "/settings" },
 ];
 
+const calculationTypes = [
+  { title: "Points Calculations", icon: Calculator },
+  { title: "Effective Ownership", icon: ChartBar },
+  { title: "Price Changes", icon: Activity },
+  { title: "Bonus Predictions", icon: Clock },
+];
+
 export function AppSidebar() {
   return (
     <Sidebar>
@@ -44,6 +53,22 @@ export function AppSidebar() {
                       <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
                     </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel>Calculation Types</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {calculationTypes.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton className="flex items-center gap-3">
+                    <item.icon className="h-4 w-4" />
+                    <span>{item.title}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
