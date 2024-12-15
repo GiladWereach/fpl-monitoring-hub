@@ -3,7 +3,7 @@ import { CalculationsManager } from "./CalculationsManager";
 import { RecentActivity } from "./RecentActivity";
 import { PointsCalculationFormula } from "./PointsCalculationFormula";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/layout/AppSidebar";
+import AppSidebar from "@/components/layout/AppSidebar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export function CalculationControlCenter() {

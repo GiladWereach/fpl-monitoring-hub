@@ -1,7 +1,7 @@
 import { Activity, Database, Server, Circle } from "lucide-react";
 import { StatusCard } from "@/components/dashboard/StatusCard";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/layout/AppSidebar";
+import AppSidebar from "@/components/layout/AppSidebar";
 import { EdgeFunctionManager } from "@/components/dashboard/EdgeFunctionManager";
 import { LiveStatus } from "@/components/dashboard/LiveStatus";
 import { RecentActivity } from "@/components/dashboard/RecentActivity";
