@@ -1,10 +1,5 @@
-import React from 'react';
+import { CalculationControlCenter } from '@/components/dashboard/CalculationControlCenter';
 
 export default function BackendCalculations() {
-  return (
-    <div>
-      <h1 className="text-2xl font-bold mb-4">Calculations</h1>
-      <p>Manage calculation processes and formulas.</p>
-    </div>
-  );
+  return <CalculationControlCenter />;
 }
