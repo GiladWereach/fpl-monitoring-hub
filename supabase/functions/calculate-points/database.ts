@@ -47,10 +47,13 @@ export async function upsertPointsCalculations(
   supabaseClient: any,
   calculations: PointsCalculation[]
 ): Promise<void> {
+  if (!calculations.length) return;
+
   const { error } = await supabaseClient
     .from('player_points_calculation')
     .upsert(calculations, {
-      onConflict: 'event_id,player_id,fixture_id'
+      onConflict: 'event_id,player_id',
+      ignoreDuplicates: false
     });
 
   if (error) throw error;

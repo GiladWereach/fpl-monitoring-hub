@@ -15,6 +15,15 @@ export interface LivePerformance {
   red_cards: number;
   saves: number;
   bonus: number;
+  explain?: Array<{
+    fixture: number;
+    stats: Array<{
+      identifier: string;
+      points: number;
+      value: number;
+      points_modification: number;
+    }>;
+  }>;
 }
 
 export interface Player {
@@ -46,7 +55,7 @@ export interface ScoringRules {
 export interface PointsCalculation {
   event_id: number;
   player_id: number;
-  fixture_id: number;
+  fixture_id: number | null;
   minutes_points: number;
   goals_scored_points: number;
   clean_sheet_points: number;

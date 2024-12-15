@@ -49,6 +49,10 @@ Deno.serve(async (req) => {
         return null;
       }
 
+      // Extract fixture ID from the explain array if available
+      const fixtureId = perf.explain?.[0]?.fixture || null;
+      console.log(`Processing player ${perf.player_id} for fixture ${fixtureId}`);
+
       const minutesPoints = calculateMinutesPoints(perf.minutes, rules);
       const goalsPoints = calculateGoalPoints(perf.goals_scored, player.element_type, rules);
       const cleanSheetPoints = calculateCleanSheetPoints(perf.clean_sheets, player.element_type, rules);
@@ -72,12 +76,12 @@ Deno.serve(async (req) => {
         cardPoints +
         bonusPoints;
 
-      console.log(`Calculated points for player ${perf.player_id} in fixture ${perf.fixture_id}: ${rawTotal}`);
+      console.log(`Calculated points for player ${perf.player_id} in fixture ${fixtureId}: ${rawTotal}`);
 
       return {
         event_id: perf.event_id,
         player_id: perf.player_id,
-        fixture_id: perf.fixture_id, // Now including fixture_id in the calculation record
+        fixture_id: fixtureId,
         minutes_points: minutesPoints,
         goals_scored_points: goalsPoints,
         clean_sheet_points: cleanSheetPoints,
