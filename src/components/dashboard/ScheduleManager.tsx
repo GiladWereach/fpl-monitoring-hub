@@ -13,11 +13,10 @@ import { useForm } from "react-hook-form";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
-import { TimeConfigFields } from "./TimeConfigFields";
 import { ExecutionHistory } from "./ExecutionHistory";
 import { ScheduleFormFields } from "./ScheduleFormFields";
-import { ScheduleFormValues } from "./types";
 import { Form } from "@/components/ui/form";
+import { AdvancedScheduleFormValues } from "./types/scheduling";
 
 interface ScheduleManagerProps {
   functionName: string;
@@ -26,10 +25,11 @@ interface ScheduleManagerProps {
 
 export function ScheduleManager({ functionName, functionDisplayName }: ScheduleManagerProps) {
   const [open, setOpen] = useState(false);
-  const form = useForm<ScheduleFormValues>({
+  const form = useForm<AdvancedScheduleFormValues>({
     defaultValues: {
       enabled: false,
       scheduleType: "time_based",
+      timezone: "UTC",
       timeConfig: {
         type: "interval",
         intervalMinutes: 5,
@@ -38,7 +38,16 @@ export function ScheduleManager({ functionName, functionDisplayName }: ScheduleM
       eventConfig: {
         triggerType: "deadline",
         offsetMinutes: 0
-      }
+      },
+      execution_config: {
+        retry_count: 3,
+        timeout_seconds: 30,
+        retry_delay_seconds: 60,
+        concurrent_execution: false,
+        retry_backoff: "linear",
+        max_retry_delay: 3600
+      },
+      event_conditions: []
     },
   });
 
@@ -46,36 +55,15 @@ export function ScheduleManager({ functionName, functionDisplayName }: ScheduleM
     queryKey: ["schedule", functionName],
     queryFn: async () => {
       console.log(`Fetching schedule for function: ${functionName}`);
-      try {
-        const { data, error } = await supabase
-          .from("schedules")
-          .select("*")
-          .eq("function_name", functionName)
-          .maybeSingle();
+      const { data, error } = await supabase
+        .from("schedules")
+        .select("*")
+        .eq("function_name", functionName)
+        .maybeSingle();
 
-        if (error) {
-          console.error(`Error fetching schedule for ${functionName}:`, error);
-          throw error;
-        }
-
-        if (!data) {
-          console.log(`No schedule found for ${functionName}, using default values`);
-          return null;
-        }
-
-        console.log(`Schedule found for ${functionName}:`, data);
-        return data;
-      } catch (error) {
-        console.error(`Failed to fetch schedule for ${functionName}:`, error);
-        toast({
-          title: "Error",
-          description: "Failed to fetch schedule. Please try again later.",
-          variant: "destructive",
-        });
-        return null;
-      }
-    },
-    retry: false, // Don't retry on 406 errors
+      if (error) throw error;
+      return data;
+    }
   });
 
   React.useEffect(() => {
@@ -84,20 +72,30 @@ export function ScheduleManager({ functionName, functionDisplayName }: ScheduleM
       form.reset({
         enabled: schedule.enabled ?? false,
         scheduleType: schedule.schedule_type ?? "time_based",
-        timeConfig: schedule.time_config as ScheduleFormValues['timeConfig'] ?? {
+        timezone: schedule.timezone ?? "UTC",
+        timeConfig: schedule.time_config ?? {
           type: "interval",
           intervalMinutes: 5,
           hour: 0
         },
-        eventConfig: schedule.event_config as ScheduleFormValues['eventConfig'] ?? {
+        eventConfig: schedule.event_config ?? {
           triggerType: "deadline",
           offsetMinutes: 0
         },
+        execution_config: schedule.execution_config ?? {
+          retry_count: 3,
+          timeout_seconds: 30,
+          retry_delay_seconds: 60,
+          concurrent_execution: false,
+          retry_backoff: "linear",
+          max_retry_delay: 3600
+        },
+        event_conditions: schedule.event_conditions ?? []
       });
     }
   }, [schedule, form, functionName]);
 
-  const onSubmit = async (values: ScheduleFormValues) => {
+  const onSubmit = async (values: AdvancedScheduleFormValues) => {
     try {
       console.log(`Saving schedule for ${functionName}:`, values);
       const { error } = await supabase
@@ -106,8 +104,11 @@ export function ScheduleManager({ functionName, functionDisplayName }: ScheduleM
           function_name: functionName,
           schedule_type: values.scheduleType,
           enabled: values.enabled,
+          timezone: values.timezone,
           time_config: values.scheduleType === "time_based" ? values.timeConfig : null,
           event_config: values.scheduleType === "event_based" ? values.eventConfig : null,
+          event_conditions: values.event_conditions,
+          execution_config: values.execution_config
         });
 
       if (error) throw error;
@@ -142,7 +143,7 @@ export function ScheduleManager({ functionName, functionDisplayName }: ScheduleM
           <Timer className="h-4 w-4" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>Schedule {functionDisplayName}</DialogTitle>
         </DialogHeader>

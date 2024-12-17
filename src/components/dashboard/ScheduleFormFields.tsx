@@ -1,17 +1,20 @@
 import { FormField, FormItem, FormLabel, FormControl, FormDescription } from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { TimeConfigFields } from "./TimeConfigFields";
+import { ExecutionConfigFields } from "./ExecutionConfigFields";
+import { EventConditionsFields } from "./EventConditionsFields";
 import { UseFormReturn } from "react-hook-form";
-import { ScheduleFormValues } from "./types";
+import { AdvancedScheduleFormValues } from "./types/scheduling";
 
 interface ScheduleFormFieldsProps {
-  form: UseFormReturn<ScheduleFormValues>;
+  form: UseFormReturn<AdvancedScheduleFormValues>;
 }
 
 export function ScheduleFormFields({ form }: ScheduleFormFieldsProps) {
   return (
-    <>
+    <div className="space-y-6">
       <FormField
         control={form.control}
         name="enabled"
@@ -32,6 +35,7 @@ export function ScheduleFormFields({ form }: ScheduleFormFieldsProps) {
           </FormItem>
         )}
       />
+
       <FormField
         control={form.control}
         name="scheduleType"
@@ -56,36 +60,31 @@ export function ScheduleFormFields({ form }: ScheduleFormFieldsProps) {
         )}
       />
 
+      <FormField
+        control={form.control}
+        name="timezone"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Timezone</FormLabel>
+            <FormControl>
+              <Input {...field} placeholder="UTC" />
+            </FormControl>
+            <FormDescription>
+              Enter timezone (e.g., 'America/New_York', 'Europe/London')
+            </FormDescription>
+          </FormItem>
+        )}
+      />
+
       {form.watch("scheduleType") === "time_based" && (
         <TimeConfigFields form={form} />
       )}
 
       {form.watch("scheduleType") === "event_based" && (
-        <FormField
-          control={form.control}
-          name="eventConfig.triggerType"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Event Trigger Type</FormLabel>
-              <Select
-                onValueChange={field.onChange}
-                defaultValue={field.value}
-              >
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select trigger type" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="deadline">Deadline</SelectItem>
-                  <SelectItem value="kickoff">Kickoff</SelectItem>
-                  <SelectItem value="match_status">Match Status</SelectItem>
-                </SelectContent>
-              </Select>
-            </FormItem>
-          )}
-        />
+        <EventConditionsFields form={form} />
       )}
-    </>
+
+      <ExecutionConfigFields form={form} />
+    </div>
   );
 }

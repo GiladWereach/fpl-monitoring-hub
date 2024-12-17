@@ -1364,40 +1364,49 @@ export type Database = {
         Row: {
           created_at: string | null
           enabled: boolean | null
+          event_conditions: Json | null
           event_config: Json | null
           execution_config: Json
+          execution_window: Json | null
           function_name: string
           id: string
           last_execution_at: string | null
           next_execution_at: string | null
           schedule_type: Database["public"]["Enums"]["schedule_type"]
           time_config: Json | null
+          timezone: string | null
           updated_at: string | null
         }
         Insert: {
           created_at?: string | null
           enabled?: boolean | null
+          event_conditions?: Json | null
           event_config?: Json | null
           execution_config?: Json
+          execution_window?: Json | null
           function_name: string
           id?: string
           last_execution_at?: string | null
           next_execution_at?: string | null
           schedule_type: Database["public"]["Enums"]["schedule_type"]
           time_config?: Json | null
+          timezone?: string | null
           updated_at?: string | null
         }
         Update: {
           created_at?: string | null
           enabled?: boolean | null
+          event_conditions?: Json | null
           event_config?: Json | null
           execution_config?: Json
+          execution_window?: Json | null
           function_name?: string
           id?: string
           last_execution_at?: string | null
           next_execution_at?: string | null
           schedule_type?: Database["public"]["Enums"]["schedule_type"]
           time_config?: Json | null
+          timezone?: string | null
           updated_at?: string | null
         }
         Relationships: []
