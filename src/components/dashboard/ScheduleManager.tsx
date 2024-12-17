@@ -99,16 +99,18 @@ export function ScheduleManager({ functionName, functionDisplayName }: ScheduleM
     try {
       console.log(`Saving schedule for ${functionName}:`, values);
       const { error } = await supabase
-        .from("schedules")
+        .from('schedules')
         .upsert({
           function_name: functionName,
           schedule_type: values.scheduleType,
           enabled: values.enabled,
           timezone: values.timezone,
-          time_config: values.scheduleType === "time_based" ? values.timeConfig : null,
-          event_config: values.scheduleType === "event_based" ? values.eventConfig : null,
+          time_config: values.scheduleType === 'time_based' ? values.timeConfig : null,
+          event_config: values.scheduleType === 'event_based' ? values.eventConfig : null,
           event_conditions: values.event_conditions,
           execution_config: values.execution_config
+        }, {
+          onConflict: 'function_name'
         });
 
       if (error) throw error;

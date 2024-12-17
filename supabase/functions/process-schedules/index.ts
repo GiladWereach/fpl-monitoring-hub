@@ -51,8 +51,23 @@ Deno.serve(async (req) => {
       try {
         if (!schedule.time_config) continue;
 
-        const shouldExecute = await shouldScheduleExecute(schedule, now);
-        if (!shouldExecute) continue;
+        // Calculate next execution time if it's not set
+        if (!schedule.next_execution_at) {
+          const nextExecution = calculateNextExecution(schedule, now);
+          await supabase
+            .from('schedules')
+            .update({
+              next_execution_at: nextExecution.toISOString()
+            })
+            .eq('id', schedule.id);
+          continue;
+        }
+
+        const nextExecutionDate = new Date(schedule.next_execution_at);
+        if (nextExecutionDate > now) {
+          console.log(`Schedule ${schedule.id} next execution at ${nextExecutionDate} is in the future, skipping...`);
+          continue;
+        }
 
         console.log(`Executing schedule ${schedule.id} for function ${schedule.function_name}`);
 
@@ -86,7 +101,7 @@ Deno.serve(async (req) => {
             .eq('id', log.id);
         }
 
-        // Update schedule's last/next execution time
+        // Calculate and update next execution time
         const nextExecution = calculateNextExecution(schedule, now);
         await supabase
           .from('schedules')
@@ -120,33 +135,6 @@ Deno.serve(async (req) => {
   }
 });
 
-function shouldScheduleExecute(schedule: Schedule, now: Date): boolean {
-  if (!schedule.time_config) return false;
-
-  const lastExecution = schedule.last_execution_at ? new Date(schedule.last_execution_at) : null;
-  
-  switch (schedule.time_config.type) {
-    case 'interval':
-      if (!schedule.time_config.intervalMinutes) return false;
-      if (!lastExecution) return true;
-      
-      const nextInterval = new Date(lastExecution);
-      nextInterval.setMinutes(nextInterval.getMinutes() + schedule.time_config.intervalMinutes);
-      return now >= nextInterval;
-
-    case 'daily':
-      if (typeof schedule.time_config.hour !== 'number') return false;
-      if (now.getHours() !== schedule.time_config.hour) return false;
-      if (lastExecution && lastExecution.getDate() === now.getDate()) return false;
-      return now.getMinutes() === 0;
-
-    // Add other schedule types as needed
-    
-    default:
-      return false;
-  }
-}
-
 function calculateNextExecution(schedule: Schedule, now: Date): Date {
   const nextExecution = new Date(now);
 
@@ -155,18 +143,32 @@ function calculateNextExecution(schedule: Schedule, now: Date): Date {
   switch (schedule.time_config.type) {
     case 'interval':
       if (schedule.time_config.intervalMinutes) {
+        // For interval type, we always add the interval to the current time
         nextExecution.setMinutes(nextExecution.getMinutes() + schedule.time_config.intervalMinutes);
       }
       break;
 
     case 'daily':
       if (typeof schedule.time_config.hour === 'number') {
-        nextExecution.setDate(nextExecution.getDate() + 1);
+        // For daily, set to next occurrence of the specified hour
         nextExecution.setHours(schedule.time_config.hour, 0, 0, 0);
+        if (nextExecution <= now) {
+          nextExecution.setDate(nextExecution.getDate() + 1);
+        }
       }
       break;
 
-    // Add other schedule types as needed
+    case 'weekly':
+      // Add weekly logic if needed
+      break;
+
+    case 'monthly':
+      // Add monthly logic if needed
+      break;
+
+    case 'cron':
+      // Add cron logic if needed
+      break;
   }
 
   return nextExecution;
