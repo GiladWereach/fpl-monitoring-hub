@@ -16,10 +16,10 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { UseFormReturn } from "react-hook-form";
-import { ScheduleFormValues } from "./types";
+import { AdvancedScheduleFormValues } from "./types/scheduling";
 
 interface TimeConfigFieldsProps {
-  form: UseFormReturn<ScheduleFormValues>;
+  form: UseFormReturn<AdvancedScheduleFormValues>;
 }
 
 export function TimeConfigFields({ form }: TimeConfigFieldsProps) {
