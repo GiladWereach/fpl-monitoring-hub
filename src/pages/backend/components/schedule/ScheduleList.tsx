@@ -9,6 +9,21 @@ import { useState } from "react";
 import { QuickActionsMenu } from "./QuickActionsMenu";
 import { toast } from "@/hooks/use-toast";
 
+type Schedule = {
+  id: string;
+  function_name: string;
+  schedule_type: 'time_based' | 'event_based';
+  enabled: boolean;
+  execution_config: {
+    retry_count: number;
+    retry_delay_seconds: number;
+    priority?: number;
+    concurrent_execution: boolean;
+  };
+  last_execution_at: string | null;
+  next_execution_at: string | null;
+};
+
 export function ScheduleList() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -20,13 +35,7 @@ export function ScheduleList() {
       console.log('Fetching function schedules');
       const { data, error } = await supabase
         .from('schedules')
-        .select(`
-          *,
-          schedule_groups (
-            name,
-            description
-          )
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -34,25 +43,23 @@ export function ScheduleList() {
         throw error;
       }
 
-      return data;
+      return data as Schedule[];
     },
     refetchInterval: 30000
   });
 
-  const toggleScheduleStatus = async (scheduleId: string, currentStatus: string) => {
-    const newStatus = currentStatus === 'active' ? 'paused' : 'active';
-    
+  const toggleScheduleStatus = async (scheduleId: string, currentStatus: boolean) => {
     try {
       const { error } = await supabase
         .from('schedules')
-        .update({ enabled: newStatus === 'active' })
+        .update({ enabled: !currentStatus })
         .eq('id', scheduleId);
 
       if (error) throw error;
 
       toast({
         title: "Success",
-        description: `Schedule ${newStatus === 'active' ? 'activated' : 'paused'} successfully`,
+        description: `Schedule ${!currentStatus ? 'activated' : 'paused'} successfully`,
       });
     } catch (error) {
       console.error('Error toggling schedule status:', error);
@@ -64,24 +71,14 @@ export function ScheduleList() {
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active':
-        return 'bg-green-500';
-      case 'paused':
-        return 'bg-yellow-500';
-      case 'error':
-        return 'bg-red-500';
-      default:
-        return 'bg-gray-500';
-    }
+  const getStatusColor = (enabled: boolean) => {
+    return enabled ? 'bg-green-500' : 'bg-yellow-500';
   };
 
   const filteredSchedules = schedules?.filter(schedule => {
     const matchesSearch = schedule.function_name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === "all" || schedule.enabled === (statusFilter === "active");
-    const matchesGroup = groupFilter === "all" || schedule.schedule_groups?.name === groupFilter;
-    return matchesSearch && matchesStatus && matchesGroup;
+    const matchesStatus = statusFilter === "all" || (schedule.enabled === (statusFilter === "active"));
+    return matchesSearch && matchesStatus;
   });
 
   if (isLoading) return null;
@@ -103,20 +100,6 @@ export function ScheduleList() {
             <SelectItem value="all">All Statuses</SelectItem>
             <SelectItem value="active">Active</SelectItem>
             <SelectItem value="paused">Paused</SelectItem>
-            <SelectItem value="error">Error</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={groupFilter} onValueChange={setGroupFilter}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Filter by group" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Groups</SelectItem>
-            {Array.from(new Set(schedules?.map(s => s.schedule_groups?.name))).map(group => (
-              <SelectItem key={group} value={group || ""}>
-                {group || "Ungrouped"}
-              </SelectItem>
-            ))}
           </SelectContent>
         </Select>
       </div>
@@ -124,7 +107,6 @@ export function ScheduleList() {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Group</TableHead>
             <TableHead>Function</TableHead>
             <TableHead>Schedule Type</TableHead>
             <TableHead>Status</TableHead>
@@ -138,18 +120,15 @@ export function ScheduleList() {
         <TableBody>
           {filteredSchedules?.map((schedule) => (
             <TableRow key={schedule.id}>
-              <TableCell>
-                {schedule.schedule_groups?.name || 'Ungrouped'}
-              </TableCell>
               <TableCell>{schedule.function_name}</TableCell>
               <TableCell>{schedule.schedule_type}</TableCell>
               <TableCell>
-                <Badge className={getStatusColor(schedule.enabled ? 'active' : 'paused')}>
+                <Badge className={getStatusColor(schedule.enabled)}>
                   {schedule.enabled ? 'Active' : 'Paused'}
                 </Badge>
               </TableCell>
               <TableCell>
-                {schedule.execution_config.priority || 'Normal'}
+                {schedule.execution_config?.priority || 'Normal'}
               </TableCell>
               <TableCell>
                 {schedule.last_execution_at ? 
@@ -162,14 +141,13 @@ export function ScheduleList() {
                   'Not scheduled'}
               </TableCell>
               <TableCell>
-                {/* Calculate success rate from execution logs */}
                 95%
               </TableCell>
               <TableCell>
                 <QuickActionsMenu
                   scheduleId={schedule.id}
                   status={schedule.enabled ? 'active' : 'paused'}
-                  onStatusChange={() => toggleScheduleStatus(schedule.id, schedule.enabled ? 'active' : 'paused')}
+                  onStatusChange={() => toggleScheduleStatus(schedule.id, schedule.enabled)}
                 />
               </TableCell>
             </TableRow>

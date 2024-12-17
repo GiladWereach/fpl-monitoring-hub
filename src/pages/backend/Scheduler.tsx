@@ -15,8 +15,8 @@ import { supabase } from "@/integrations/supabase/client";
 type NewFunctionForm = {
   name: string;
   group: string;
-  scheduleType: string;
-  initialStatus: string;
+  scheduleType: 'time_based' | 'event_based';
+  initialStatus: 'active' | 'paused';
 };
 
 export default function BackendScheduler() {
@@ -84,21 +84,8 @@ export default function BackendScheduler() {
                   <Input {...form.register("name")} />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Group</label>
-                  <Select onValueChange={(value) => form.setValue("group", value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select group" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="default">Default</SelectItem>
-                      <SelectItem value="analytics">Analytics</SelectItem>
-                      <SelectItem value="maintenance">Maintenance</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
                   <label className="text-sm font-medium">Schedule Type</label>
-                  <Select onValueChange={(value) => form.setValue("scheduleType", value)}>
+                  <Select onValueChange={(value: 'time_based' | 'event_based') => form.setValue("scheduleType", value)}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
@@ -110,7 +97,7 @@ export default function BackendScheduler() {
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Initial Status</label>
-                  <Select onValueChange={(value) => form.setValue("initialStatus", value)}>
+                  <Select onValueChange={(value: 'active' | 'paused') => form.setValue("initialStatus", value)}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
