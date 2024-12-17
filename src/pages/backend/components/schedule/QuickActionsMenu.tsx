@@ -82,7 +82,7 @@ export function QuickActionsMenu({ scheduleId, functionName, status, onStatusCha
       console.log('Created execution log:', log);
 
       // Execute the function
-      const { data, error: functionError } = await supabase.functions.invoke(functionName);
+      const { error: functionError } = await supabase.functions.invoke(functionName);
       
       if (functionError) throw functionError;
 
