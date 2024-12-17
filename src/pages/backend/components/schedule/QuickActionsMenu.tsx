@@ -45,7 +45,7 @@ export function QuickActionsMenu({ scheduleId, status, onStatusChange }: QuickAc
   const handleClone = async () => {
     try {
       const { data: schedule, error: fetchError } = await supabase
-        .from('schedules')
+        .from('function_schedules')
         .select('*')
         .eq('id', scheduleId)
         .single();
@@ -53,12 +53,12 @@ export function QuickActionsMenu({ scheduleId, status, onStatusChange }: QuickAc
       if (fetchError) throw fetchError;
 
       const { error: createError } = await supabase
-        .from('schedules')
+        .from('function_schedules')
         .insert({
           ...schedule,
           id: undefined,
           function_name: `${schedule.function_name}_copy`,
-          enabled: false,
+          status: 'paused',
         });
 
       if (createError) throw createError;
@@ -80,7 +80,7 @@ export function QuickActionsMenu({ scheduleId, status, onStatusChange }: QuickAc
   const handleExport = async () => {
     try {
       const { data: schedule, error } = await supabase
-        .from('schedules')
+        .from('function_schedules')
         .select('*')
         .eq('id', scheduleId)
         .single();

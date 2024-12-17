@@ -44,11 +44,11 @@ export default function BackendScheduler() {
       } : null;
 
       const { error } = await supabase
-        .from('schedules')
+        .from('function_schedules')
         .insert({
           function_name: data.name,
           schedule_type: data.scheduleType,
-          enabled: data.initialStatus === 'active',
+          status: data.initialStatus === 'active' ? 'active' : 'paused',
           time_config: timeConfig,
           event_config: eventConfig,
           execution_config: {
