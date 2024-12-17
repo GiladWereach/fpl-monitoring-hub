@@ -10,7 +10,6 @@ import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
 import { functions } from "@/components/dashboard/utils/functionConfigs";
 
 type NewFunctionForm = {
@@ -26,17 +25,33 @@ export default function BackendScheduler() {
   const onSubmit = async (data: NewFunctionForm) => {
     try {
       console.log("Creating new function schedule:", data);
+      
+      // Create a default time_config based on schedule type
+      const timeConfig = data.scheduleType === 'time_based' ? {
+        type: 'interval',
+        intervalMinutes: 5,
+        hour: 0
+      } : null;
+
+      const eventConfig = data.scheduleType === 'event_based' ? {
+        triggerType: 'deadline',
+        offsetMinutes: 0
+      } : null;
+
       const { error } = await supabase
         .from('schedules')
         .insert({
           function_name: data.name,
           schedule_type: data.scheduleType,
           enabled: data.initialStatus === 'active',
+          time_config: timeConfig,
+          event_config: eventConfig,
           execution_config: {
             retry_count: 3,
             retry_delay_seconds: 60,
-            priority: 1,
-            concurrent_execution: false
+            concurrent_execution: false,
+            retry_backoff: 'linear',
+            max_retry_delay: 3600
           }
         });
 
