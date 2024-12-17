@@ -1,6 +1,11 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { corsHeaders, validateAuth } from './auth.ts';
+import { Schedule } from './types.ts';
 import { processSchedules } from './scheduler.ts';
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -8,7 +13,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    validateAuth(req);
+    console.log('Starting schedule processing...');
     
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',

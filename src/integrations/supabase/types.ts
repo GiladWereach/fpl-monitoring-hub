@@ -425,6 +425,80 @@ export type Database = {
           },
         ]
       }
+      function_schedules: {
+        Row: {
+          active_period_end: string | null
+          active_period_start: string | null
+          base_interval_minutes: number | null
+          created_at: string | null
+          fixed_time: string | null
+          frequency_type: Database["public"]["Enums"]["schedule_frequency"]
+          function_name: string
+          group_id: string | null
+          id: string
+          last_execution_at: string | null
+          match_day_interval_minutes: number | null
+          max_concurrent_executions: number | null
+          next_execution_at: string | null
+          non_match_interval_minutes: number | null
+          retry_count: number | null
+          retry_delay_seconds: number | null
+          status: Database["public"]["Enums"]["schedule_status"] | null
+          timeout_seconds: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          active_period_end?: string | null
+          active_period_start?: string | null
+          base_interval_minutes?: number | null
+          created_at?: string | null
+          fixed_time?: string | null
+          frequency_type: Database["public"]["Enums"]["schedule_frequency"]
+          function_name: string
+          group_id?: string | null
+          id?: string
+          last_execution_at?: string | null
+          match_day_interval_minutes?: number | null
+          max_concurrent_executions?: number | null
+          next_execution_at?: string | null
+          non_match_interval_minutes?: number | null
+          retry_count?: number | null
+          retry_delay_seconds?: number | null
+          status?: Database["public"]["Enums"]["schedule_status"] | null
+          timeout_seconds?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          active_period_end?: string | null
+          active_period_start?: string | null
+          base_interval_minutes?: number | null
+          created_at?: string | null
+          fixed_time?: string | null
+          frequency_type?: Database["public"]["Enums"]["schedule_frequency"]
+          function_name?: string
+          group_id?: string | null
+          id?: string
+          last_execution_at?: string | null
+          match_day_interval_minutes?: number | null
+          max_concurrent_executions?: number | null
+          next_execution_at?: string | null
+          non_match_interval_minutes?: number | null
+          retry_count?: number | null
+          retry_delay_seconds?: number | null
+          status?: Database["public"]["Enums"]["schedule_status"] | null
+          timeout_seconds?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "function_schedules_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "schedule_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       game_settings: {
         Row: {
           cup_qualifying_method: string | null
@@ -1360,6 +1434,30 @@ export type Database = {
           },
         ]
       }
+      schedule_groups: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       schedules: {
         Row: {
           created_at: string | null
@@ -1583,6 +1681,25 @@ export type Database = {
           active: boolean
         }[]
       }
+      get_active_schedules: {
+        Args: {
+          check_time?: string
+        }
+        Returns: {
+          id: string
+          function_name: string
+          next_execution_at: string
+          group_name: string
+          frequency_type: Database["public"]["Enums"]["schedule_frequency"]
+        }[]
+      }
+      update_next_execution_time: {
+        Args: {
+          schedule_id: string
+          execution_time?: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       calculation_category:
@@ -1593,6 +1710,8 @@ export type Database = {
       calculation_trigger_type: "time_based" | "event_based"
       event_trigger_type: "deadline" | "kickoff" | "match_status"
       frequency_unit: "minutes" | "hours" | "days"
+      schedule_frequency: "fixed_interval" | "match_dependent" | "daily"
+      schedule_status: "active" | "paused" | "error"
       schedule_type: "time_based" | "event_based"
       time_schedule_type: "interval" | "daily" | "weekly" | "monthly" | "cron"
       user_role: "admin" | "user"
