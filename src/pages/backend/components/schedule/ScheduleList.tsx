@@ -67,11 +67,16 @@ export function ScheduleList() {
         throw error;
       }
 
-      // Convert the Supabase response to our Schedule type
+      // Convert the Supabase response to our Schedule type with proper type assertion
       return (data as SupabaseSchedule[]).map(schedule => ({
         ...schedule,
-        execution_config: schedule.execution_config as ExecutionConfig
-      }));
+        execution_config: {
+          retry_count: (schedule.execution_config as any)?.retry_count ?? 3,
+          retry_delay_seconds: (schedule.execution_config as any)?.retry_delay_seconds ?? 60,
+          priority: (schedule.execution_config as any)?.priority,
+          concurrent_execution: (schedule.execution_config as any)?.concurrent_execution ?? false
+        }
+      })) as Schedule[];
     },
     refetchInterval: 30000
   });
