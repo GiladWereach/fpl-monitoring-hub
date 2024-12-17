@@ -1573,6 +1573,16 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      get_active_cron_jobs: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          jobname: string
+          schedule: string
+          last_run: string
+          next_run: string
+          active: boolean
+        }[]
+      }
     }
     Enums: {
       calculation_category:
