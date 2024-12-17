@@ -10,7 +10,10 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
     queryKey: ['profile'],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return null;
+      if (!user) {
+        console.log('No user found, redirecting to login');
+        throw new Error('No user found');
+      }
 
       const { data: profile, error } = await supabase
         .from('profiles')
@@ -20,12 +23,17 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
 
       if (error) throw error;
       return profile;
+    },
+    retry: false,
+    onError: () => {
+      navigate('/login');
     }
   });
 
   useEffect(() => {
     if (!isLoading && (!profile || profile.role !== 'admin')) {
-      navigate('/');
+      console.log('User not authorized, redirecting to login');
+      navigate('/login');
     }
   }, [profile, isLoading, navigate]);
 
