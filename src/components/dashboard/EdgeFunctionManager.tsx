@@ -42,6 +42,11 @@ export function EdgeFunctionManager() {
           .insert({
             function_name: functionName,
             schedule_type: "event_based",
+            enabled: true,
+            event_config: {
+              triggerType: "manual",
+              offsetMinutes: 0
+            },
             execution_config: {
               retry_count: 3,
               timeout_seconds: 30,
@@ -118,7 +123,7 @@ export function EdgeFunctionManager() {
 
       toast({
         title: "Success",
-        description: `${data.message}`,
+        description: `${functionName} executed successfully`,
       });
     } catch (error) {
       console.error(`Error invoking ${functionName}:`, error);
@@ -129,7 +134,7 @@ export function EdgeFunctionManager() {
 
       toast({
         title: "Error",
-        description: `Failed to fetch ${functionName} data: ${error.message}`,
+        description: `Failed to execute ${functionName}: ${error.message}`,
         variant: "destructive",
       });
     } finally {
