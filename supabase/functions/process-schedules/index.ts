@@ -1,5 +1,9 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { corsHeaders } from '../_shared/cors.ts';
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
 
 interface Schedule {
   id: string;
@@ -28,27 +32,30 @@ Deno.serve(async (req) => {
   try {
     console.log('Processing schedules...');
     
-    // Validate authorization
+    // Get authorization header
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       console.error('Missing Authorization header');
-      throw new Error('Missing Authorization header');
+      throw new Error('Missing authorization header');
     }
 
-    // Extract and validate the token
+    // Extract token
     const token = authHeader.replace('Bearer ', '');
-    if (token !== Deno.env.get('ANON_KEY')) {
+    
+    // Validate token matches ANON_KEY
+    const validToken = Deno.env.get('ANON_KEY');
+    if (token !== validToken) {
       console.error('Invalid authorization token');
       throw new Error('Invalid authorization token');
     }
 
-    const supabase = createClient(
+    const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    console.log('Fetching enabled time-based schedules...');
-    const { data: schedules, error: schedulesError } = await supabase
+    // Get enabled time-based schedules
+    const { data: schedules, error: schedulesError } = await supabaseClient
       .from('schedules')
       .select('*')
       .eq('enabled', true)
@@ -77,7 +84,7 @@ Deno.serve(async (req) => {
         if (!schedule.next_execution_at) {
           console.log(`Initializing next_execution_at for schedule ${schedule.id}`);
           const nextExecution = calculateNextExecution(schedule, now);
-          const { error: updateError } = await supabase
+          const { error: updateError } = await supabaseClient
             .from('schedules')
             .update({
               next_execution_at: nextExecution.toISOString()
@@ -103,7 +110,7 @@ Deno.serve(async (req) => {
         console.log(`Executing schedule ${schedule.id} for function ${schedule.function_name}`);
 
         // Log execution start
-        const { data: log, error: logError } = await supabase
+        const { data: log, error: logError } = await supabaseClient
           .from('schedule_execution_logs')
           .insert({
             schedule_id: schedule.id,
@@ -121,7 +128,7 @@ Deno.serve(async (req) => {
         // Invoke the function
         const startTime = Date.now();
         console.log(`Invoking function ${schedule.function_name}`);
-        const { data: result, error: invokeError } = await supabase.functions.invoke(
+        const { data: result, error: invokeError } = await supabaseClient.functions.invoke(
           schedule.function_name,
           {
             body: { scheduled: true }
@@ -134,7 +141,7 @@ Deno.serve(async (req) => {
 
         // Update execution log
         if (log) {
-          const { error: logUpdateError } = await supabase
+          const { error: logUpdateError } = await supabaseClient
             .from('schedule_execution_logs')
             .update({
               completed_at: new Date().toISOString(),
@@ -151,7 +158,7 @@ Deno.serve(async (req) => {
 
         // Calculate and update next execution time
         const nextExecution = calculateNextExecution(schedule, now);
-        const { error: scheduleUpdateError } = await supabase
+        const { error: scheduleUpdateError } = await supabaseClient
           .from('schedules')
           .update({
             last_execution_at: now.toISOString(),
