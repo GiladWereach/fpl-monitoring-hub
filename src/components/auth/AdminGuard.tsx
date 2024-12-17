@@ -25,8 +25,10 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
       return profile;
     },
     retry: false,
-    onError: () => {
-      navigate('/login');
+    meta: {
+      errorHandler: () => {
+        navigate('/login');
+      }
     }
   });
 
