@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Button } from "@/components/ui/button";
-import { FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
+import { FormField, FormItem, FormLabel, FormControl, FormDescription } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Minus } from "lucide-react";
 import { UseFormReturn, useFieldArray } from "react-hook-form";
@@ -12,22 +12,22 @@ interface EventConditionsFieldsProps {
 
 const AVAILABLE_FIELDS = {
   fixture: [
-    { label: "Status", value: "status" },
-    { label: "Minutes Played", value: "minutes" },
-    { label: "Home Score", value: "team_h_score" },
-    { label: "Away Score", value: "team_a_score" },
+    { label: "Status", value: "status", description: "Match status (e.g., SCHEDULED, LIVE, FINISHED)" },
+    { label: "Minutes Played", value: "minutes", description: "Minutes elapsed in the match" },
+    { label: "Home Score", value: "team_h_score", description: "Home team score" },
+    { label: "Away Score", value: "team_a_score", description: "Away team score" },
   ],
   event: [
-    { label: "Finished", value: "finished" },
-    { label: "Data Checked", value: "data_checked" },
-    { label: "Is Current", value: "is_current" },
-    { label: "Is Next", value: "is_next" },
+    { label: "Finished", value: "finished", description: "Whether the gameweek is finished" },
+    { label: "Data Checked", value: "data_checked", description: "Whether data has been verified" },
+    { label: "Is Current", value: "is_current", description: "Whether this is the current gameweek" },
+    { label: "Is Next", value: "is_next", description: "Whether this is the next gameweek" },
   ],
   player: [
-    { label: "Minutes", value: "minutes" },
-    { label: "Form", value: "form" },
-    { label: "Status", value: "status" },
-    { label: "Chance of Playing", value: "chance_of_playing_next_round" },
+    { label: "Minutes", value: "minutes", description: "Player's minutes played" },
+    { label: "Form", value: "form", description: "Player's form rating" },
+    { label: "Status", value: "status", description: "Player's availability status" },
+    { label: "Chance of Playing", value: "chance_of_playing_next_round", description: "Probability of playing next game" },
   ]
 };
 
@@ -37,7 +37,34 @@ const FIELD_VALUES = {
   data_checked: ["true", "false"],
   is_current: ["true", "false"],
   is_next: ["true", "false"],
+  form: ["0", "1", "2", "3", "4", "5"],
+  chance_of_playing_next_round: ["0", "25", "50", "75", "100"]
 };
+
+const COMMON_PATTERNS = [
+  {
+    name: "Match Completion",
+    conditions: [
+      { field: "status", operator: "eq", value: "FINISHED" }
+    ],
+    description: "Triggers when a match ends"
+  },
+  {
+    name: "Gameweek Start",
+    conditions: [
+      { field: "is_current", operator: "eq", value: "true" }
+    ],
+    description: "Triggers at the start of a new gameweek"
+  },
+  {
+    name: "Data Verification",
+    conditions: [
+      { field: "finished", operator: "eq", value: "true" },
+      { field: "data_checked", operator: "eq", value: "true" }
+    ],
+    description: "Triggers when gameweek data is verified"
+  }
+];
 
 export function EventConditionsFields({ form }: EventConditionsFieldsProps) {
   const { fields, append, remove } = useFieldArray({
@@ -45,19 +72,47 @@ export function EventConditionsFields({ form }: EventConditionsFieldsProps) {
     name: "event_conditions"
   });
 
+  const handleAddPattern = (pattern: typeof COMMON_PATTERNS[0]) => {
+    pattern.conditions.forEach(condition => {
+      append(condition);
+    });
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold">Event Conditions</h3>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => append({ field: "", operator: "eq", value: "" })}
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Add Condition
-        </Button>
+        <div className="space-x-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => append({ field: "", operator: "eq", value: "" })}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Condition
+          </Button>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <FormLabel>Common Patterns</FormLabel>
+        <div className="flex flex-wrap gap-2">
+          {COMMON_PATTERNS.map((pattern, index) => (
+            <Button
+              key={index}
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={() => handleAddPattern(pattern)}
+            >
+              {pattern.name}
+            </Button>
+          ))}
+        </div>
+        <FormDescription>
+          Click to add pre-configured condition patterns
+        </FormDescription>
       </div>
 
       {fields.map((field, index) => (
