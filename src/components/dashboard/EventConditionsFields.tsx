@@ -78,7 +78,7 @@ export function EventConditionsFields({ form }: EventConditionsFieldsProps) {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="">Select field</SelectItem>
+                    <SelectItem value="_placeholder" disabled>Select field</SelectItem>
                     {Object.entries(AVAILABLE_FIELDS).map(([category, fields]) => (
                       <React.Fragment key={category}>
                         <SelectItem value={`${category}_header`} disabled>
@@ -110,6 +110,7 @@ export function EventConditionsFields({ form }: EventConditionsFieldsProps) {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
+                    <SelectItem value="_placeholder" disabled>Select operator</SelectItem>
                     <SelectItem value="eq">=</SelectItem>
                     <SelectItem value="neq">≠</SelectItem>
                     <SelectItem value="gt">&gt;</SelectItem>
@@ -136,6 +137,7 @@ export function EventConditionsFields({ form }: EventConditionsFieldsProps) {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
+                      <SelectItem value="_placeholder" disabled>Select value</SelectItem>
                       {FIELD_VALUES[fields[index].field as keyof typeof FIELD_VALUES].map((value) => (
                         <SelectItem key={value} value={value}>
                           {value}
