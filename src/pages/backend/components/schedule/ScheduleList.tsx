@@ -8,26 +8,50 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useState } from "react";
 import { QuickActionsMenu } from "./QuickActionsMenu";
 import { toast } from "@/hooks/use-toast";
+import { Json } from "@/integrations/supabase/types";
 
-type Schedule = {
+interface ExecutionConfig {
+  retry_count: number;
+  retry_delay_seconds: number;
+  priority?: number;
+  concurrent_execution: boolean;
+}
+
+interface Schedule {
   id: string;
   function_name: string;
   schedule_type: 'time_based' | 'event_based';
   enabled: boolean;
-  execution_config: {
-    retry_count: number;
-    retry_delay_seconds: number;
-    priority?: number;
-    concurrent_execution: boolean;
-  };
+  execution_config: ExecutionConfig;
   last_execution_at: string | null;
   next_execution_at: string | null;
-};
+  created_at: string;
+  updated_at: string;
+  timezone: string;
+  event_conditions: Json;
+  event_config: Json;
+  execution_window: Json;
+}
+
+interface SupabaseSchedule {
+  id: string;
+  function_name: string;
+  schedule_type: 'time_based' | 'event_based';
+  enabled: boolean;
+  execution_config: Json;
+  last_execution_at: string | null;
+  next_execution_at: string | null;
+  created_at: string;
+  updated_at: string;
+  timezone: string;
+  event_conditions: Json;
+  event_config: Json;
+  execution_window: Json;
+}
 
 export function ScheduleList() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [groupFilter, setGroupFilter] = useState("all");
 
   const { data: schedules, isLoading } = useQuery({
     queryKey: ['function-schedules'],
@@ -43,7 +67,11 @@ export function ScheduleList() {
         throw error;
       }
 
-      return data as Schedule[];
+      // Convert the Supabase response to our Schedule type
+      return (data as SupabaseSchedule[]).map(schedule => ({
+        ...schedule,
+        execution_config: schedule.execution_config as ExecutionConfig
+      }));
     },
     refetchInterval: 30000
   });
@@ -128,7 +156,7 @@ export function ScheduleList() {
                 </Badge>
               </TableCell>
               <TableCell>
-                {schedule.execution_config?.priority || 'Normal'}
+                {schedule.execution_config.priority || 'Normal'}
               </TableCell>
               <TableCell>
                 {schedule.last_execution_at ? 
