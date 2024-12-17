@@ -14,9 +14,6 @@ type ScheduleSettings = {
   timezone: string;
   retryCount: number;
   retryInterval: number;
-  groupId: string;
-  priority: number;
-  description: string;
   notifyOnError: boolean;
   notifyEmail: string;
 };
@@ -34,8 +31,6 @@ export function ScheduleSettingsForm({ scheduleId, onClose }: ScheduleSettingsFo
       timezone: "UTC",
       retryCount: 3,
       retryInterval: 60,
-      priority: 1,
-      description: "",
       notifyOnError: false,
       notifyEmail: "",
     },
@@ -50,14 +45,12 @@ export function ScheduleSettingsForm({ scheduleId, onClose }: ScheduleSettingsFo
           execution_config: {
             retry_count: data.retryCount,
             retry_delay_seconds: data.retryInterval,
-            priority: data.priority,
+            retry_backoff: "linear",
+            max_retry_delay: 3600,
+            timeout_seconds: 30,
+            concurrent_execution: false
           },
-          timezone: data.timezone,
-          description: data.description,
-          notification_config: {
-            notify_on_error: data.notifyOnError,
-            email: data.notifyEmail,
-          }
+          timezone: data.timezone
         })
         .eq("id", scheduleId);
 
@@ -116,10 +109,6 @@ export function ScheduleSettingsForm({ scheduleId, onClose }: ScheduleSettingsFo
                 </Select>
               </div>
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Description</label>
-              <Input {...form.register("description")} />
-            </div>
           </TabsContent>
 
           <TabsContent value="execution" className="space-y-4">
@@ -141,15 +130,6 @@ export function ScheduleSettingsForm({ scheduleId, onClose }: ScheduleSettingsFo
                   {...form.register("retryInterval")}
                 />
               </div>
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Priority Level</label>
-              <Input
-                type="number"
-                min={1}
-                max={5}
-                {...form.register("priority")}
-              />
             </div>
           </TabsContent>
 
