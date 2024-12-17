@@ -23,20 +23,20 @@ export function EdgeFunctionManager() {
   const logFunctionExecution = async (functionName: string, started_at: string) => {
     try {
       // First get or create a manual schedule for this function
-      const { data: schedule, error: scheduleError } = await supabase
+      const { data: schedules, error: scheduleError } = await supabase
         .from("schedules")
         .select("id")
-        .eq("function_name", functionName)
-        .single();
+        .eq("function_name", functionName);
 
-      if (scheduleError && scheduleError.code !== "PGRST116") {
+      if (scheduleError) {
         console.error("Error getting schedule:", scheduleError);
         return;
       }
 
-      let scheduleId = schedule?.id;
+      let scheduleId = schedules?.[0]?.id;
 
       if (!scheduleId) {
+        console.log(`Creating new schedule for ${functionName}`);
         const { data: newSchedule, error: createError } = await supabase
           .from("schedules")
           .insert({
