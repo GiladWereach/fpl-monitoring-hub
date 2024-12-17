@@ -1,5 +1,6 @@
 import { EdgeFunctionManager } from '@/components/dashboard/EdgeFunctionManager';
 import { LiveStatus } from '@/components/dashboard/LiveStatus';
+import { ScheduleStatus } from '@/components/dashboard/ScheduleStatus';
 import { Card } from '@/components/ui/card';
 
 export default function BackendDashboard() {
@@ -14,6 +15,11 @@ export default function BackendDashboard() {
         </div>
         <LiveStatus />
       </div>
+
+      <Card className="p-6">
+        <h2 className="text-xl font-semibold mb-4">Edge Function Schedules</h2>
+        <ScheduleStatus />
+      </Card>
 
       <Card className="p-6">
         <EdgeFunctionManager />

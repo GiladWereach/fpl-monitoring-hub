@@ -71,12 +71,12 @@ export function CalculationControlCenter() {
     try {
       setIsCalculating(true);
       console.log("Triggering calculations");
-      const { error } = await supabase.functions.invoke('calculate-points');
+      const { data, error } = await supabase.functions.invoke('calculate-points');
       if (error) throw error;
       
       toast({
         title: "Success",
-        description: "Points calculation triggered successfully",
+        description: data?.message || "Points calculation triggered successfully",
       });
     } catch (error) {
       console.error('Error triggering calculations:', error);
