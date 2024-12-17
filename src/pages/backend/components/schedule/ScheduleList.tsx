@@ -9,28 +9,43 @@ import { useState } from "react";
 import { QuickActionsMenu } from "./QuickActionsMenu";
 import { toast } from "@/hooks/use-toast";
 import { functions } from "@/components/dashboard/utils/functionConfigs";
+import { Json } from "@/integrations/supabase/types";
+
+interface ExecutionConfig {
+  retry_count: number;
+  retry_delay_seconds: number;
+  concurrent_execution: boolean;
+  retry_backoff: string;
+  max_retry_delay: number;
+}
 
 interface Schedule {
   id: string;
   function_name: string;
   schedule_type: 'time_based' | 'event_based';
   enabled: boolean;
-  execution_config: {
-    retry_count: number;
-    retry_delay_seconds: number;
-    concurrent_execution: boolean;
-    retry_backoff: string;
-    max_retry_delay: number;
-  };
-  time_config: {
+  execution_config: ExecutionConfig;
+  time_config?: {
     type: string;
     intervalMinutes?: number;
     hour?: number;
   } | null;
-  event_config: {
+  event_config?: {
     triggerType: string;
     offsetMinutes: number;
   } | null;
+  last_execution_at: string | null;
+  next_execution_at: string | null;
+}
+
+interface DatabaseSchedule {
+  id: string;
+  function_name: string;
+  schedule_type: 'time_based' | 'event_based';
+  enabled: boolean;
+  execution_config: Json;
+  time_config: Json | null;
+  event_config: Json | null;
   last_execution_at: string | null;
   next_execution_at: string | null;
 }
@@ -53,7 +68,13 @@ export function ScheduleList() {
         throw error;
       }
 
-      return data as Schedule[];
+      // Transform the database response into the Schedule type
+      return (data as DatabaseSchedule[]).map(schedule => ({
+        ...schedule,
+        execution_config: schedule.execution_config as unknown as ExecutionConfig,
+        time_config: schedule.time_config as unknown as Schedule['time_config'],
+        event_config: schedule.event_config as unknown as Schedule['event_config'],
+      }));
     },
     refetchInterval: 30000
   });
