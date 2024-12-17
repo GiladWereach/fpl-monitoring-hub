@@ -28,19 +28,27 @@ Deno.serve(async (req) => {
   try {
     console.log('Processing schedules...');
     
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error('Missing Authorization header');
+    }
+
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Get all enabled schedules
+    // Get all enabled time-based schedules
     const { data: schedules, error: schedulesError } = await supabase
       .from('schedules')
       .select('*')
       .eq('enabled', true)
       .eq('schedule_type', 'time_based');
 
-    if (schedulesError) throw schedulesError;
+    if (schedulesError) {
+      console.error('Error fetching schedules:', schedulesError);
+      throw schedulesError;
+    }
 
     console.log(`Found ${schedules?.length} enabled schedules`);
 
@@ -49,10 +57,14 @@ Deno.serve(async (req) => {
 
     for (const schedule of (schedules as Schedule[] || [])) {
       try {
-        if (!schedule.time_config) continue;
+        if (!schedule.time_config) {
+          console.log(`Schedule ${schedule.id} has no time_config, skipping...`);
+          continue;
+        }
 
         // Calculate next execution time if it's not set
         if (!schedule.next_execution_at) {
+          console.log(`Calculating initial next_execution_at for schedule ${schedule.id}`);
           const nextExecution = calculateNextExecution(schedule, now);
           await supabase
             .from('schedules')
@@ -64,6 +76,8 @@ Deno.serve(async (req) => {
         }
 
         const nextExecutionDate = new Date(schedule.next_execution_at);
+        
+        // Check if it's time to execute
         if (nextExecutionDate > now) {
           console.log(`Schedule ${schedule.id} next execution at ${nextExecutionDate} is in the future, skipping...`);
           continue;
@@ -72,7 +86,7 @@ Deno.serve(async (req) => {
         console.log(`Executing schedule ${schedule.id} for function ${schedule.function_name}`);
 
         // Log execution start
-        const { data: log } = await supabase
+        const { data: log, error: logError } = await supabase
           .from('schedule_execution_logs')
           .insert({
             schedule_id: schedule.id,
@@ -82,10 +96,18 @@ Deno.serve(async (req) => {
           .select()
           .single();
 
+        if (logError) {
+          console.error('Error creating execution log:', logError);
+          continue;
+        }
+
         // Invoke the function
         const startTime = Date.now();
         const { data: result, error: invokeError } = await supabase.functions.invoke(
-          schedule.function_name
+          schedule.function_name,
+          {
+            body: { scheduled: true }
+          }
         );
 
         // Update execution log
@@ -112,6 +134,7 @@ Deno.serve(async (req) => {
           .eq('id', schedule.id);
 
         processedSchedules.push(schedule.id);
+        console.log(`Successfully processed schedule ${schedule.id}`);
       } catch (error) {
         console.error(`Error processing schedule ${schedule.id}:`, error);
       }
@@ -143,14 +166,12 @@ function calculateNextExecution(schedule: Schedule, now: Date): Date {
   switch (schedule.time_config.type) {
     case 'interval':
       if (schedule.time_config.intervalMinutes) {
-        // For interval type, we always add the interval to the current time
         nextExecution.setMinutes(nextExecution.getMinutes() + schedule.time_config.intervalMinutes);
       }
       break;
 
     case 'daily':
       if (typeof schedule.time_config.hour === 'number') {
-        // For daily, set to next occurrence of the specified hour
         nextExecution.setHours(schedule.time_config.hour, 0, 0, 0);
         if (nextExecution <= now) {
           nextExecution.setDate(nextExecution.getDate() + 1);
