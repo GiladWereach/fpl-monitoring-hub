@@ -6,15 +6,15 @@ import { Plus } from "lucide-react";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
 import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
+import { functions } from "@/components/dashboard/utils/functionConfigs";
 
 type NewFunctionForm = {
   name: string;
-  group: string;
   scheduleType: 'time_based' | 'event_based';
   initialStatus: 'active' | 'paused';
 };
@@ -81,7 +81,18 @@ export default function BackendScheduler() {
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Function Name</label>
-                  <Input {...form.register("name")} />
+                  <Select onValueChange={(value) => form.setValue("name", value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select function" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {functions.map((func) => (
+                        <SelectItem key={func.function} value={func.function}>
+                          {func.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Schedule Type</label>
