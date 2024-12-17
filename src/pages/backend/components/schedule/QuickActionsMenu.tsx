@@ -1,46 +1,25 @@
-import { Button } from "@/components/ui/button";
+import { MoreHorizontal, Play, Pause, Copy, Download, Settings, Trash } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreVertical, Play, Pause, FileText, Settings, Copy, Download } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { ScheduleSettingsModal } from "./ScheduleSettingsModal";
-import { supabase } from "@/integrations/supabase/client";
 
 interface QuickActionsMenuProps {
   scheduleId: string;
   status: string;
-  onStatusChange: (status: string) => Promise<void>;
+  onStatusChange: () => void;
 }
 
 export function QuickActionsMenu({ scheduleId, status, onStatusChange }: QuickActionsMenuProps) {
-  const [settingsOpen, setSettingsOpen] = useState(false);
-
-  const handleForceRun = async () => {
-    try {
-      const { error } = await supabase.functions.invoke('process-schedules', {
-        body: { scheduleId, force: true }
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Schedule Triggered",
-        description: "Function execution has been initiated",
-      });
-    } catch (error) {
-      console.error('Error forcing schedule execution:', error);
-      toast({
-        title: "Error",
-        description: "Failed to trigger function execution",
-        variant: "destructive",
-      });
-    }
-  };
+  const [showSettings, setShowSettings] = useState(false);
 
   const handleClone = async () => {
     try {
@@ -64,8 +43,8 @@ export function QuickActionsMenu({ scheduleId, status, onStatusChange }: QuickAc
       if (createError) throw createError;
 
       toast({
-        title: "Schedule Cloned",
-        description: "A copy of the schedule has been created",
+        title: "Success",
+        description: "Schedule cloned successfully",
       });
     } catch (error) {
       console.error('Error cloning schedule:', error);
@@ -87,18 +66,25 @@ export function QuickActionsMenu({ scheduleId, status, onStatusChange }: QuickAc
 
       if (error) throw error;
 
-      const blob = new Blob([JSON.stringify(schedule, null, 2)], { type: "application/json" });
+      const blob = new Blob([JSON.stringify(schedule, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
+      const a = document.createElement('a');
       a.href = url;
       a.download = `schedule-${schedule.function_name}.json`;
+      document.body.appendChild(a);
       a.click();
+      document.body.removeChild(a);
       URL.revokeObjectURL(url);
+
+      toast({
+        title: "Success",
+        description: "Schedule exported successfully",
+      });
     } catch (error) {
       console.error('Error exporting schedule:', error);
       toast({
         title: "Error",
-        description: "Failed to export schedule configuration",
+        description: "Failed to export schedule",
         variant: "destructive",
       });
     }
@@ -108,45 +94,43 @@ export function QuickActionsMenu({ scheduleId, status, onStatusChange }: QuickAc
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon">
-            <MoreVertical className="h-4 w-4" />
+          <Button variant="ghost" className="h-8 w-8 p-0">
+            <MoreHorizontal className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => onStatusChange(status === "active" ? "paused" : "active")}>
-            {status === "active" ? (
-              <Pause className="mr-2 h-4 w-4" />
+          <DropdownMenuItem onClick={onStatusChange}>
+            {status === 'active' ? (
+              <>
+                <Pause className="mr-2 h-4 w-4" />
+                <span>Pause</span>
+              </>
             ) : (
-              <Play className="mr-2 h-4 w-4" />
+              <>
+                <Play className="mr-2 h-4 w-4" />
+                <span>Activate</span>
+              </>
             )}
-            {status === "active" ? "Pause" : "Resume"}
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleForceRun}>
-            <Play className="mr-2 h-4 w-4" />
-            Force Run
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => window.open(`/backend/logs?schedule=${scheduleId}`, "_blank")}>
-            <FileText className="mr-2 h-4 w-4" />
-            View Logs
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setSettingsOpen(true)}>
-            <Settings className="mr-2 h-4 w-4" />
-            Settings
           </DropdownMenuItem>
           <DropdownMenuItem onClick={handleClone}>
             <Copy className="mr-2 h-4 w-4" />
-            Clone
+            <span>Clone</span>
           </DropdownMenuItem>
           <DropdownMenuItem onClick={handleExport}>
             <Download className="mr-2 h-4 w-4" />
-            Export Config
+            <span>Export</span>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => setShowSettings(true)}>
+            <Settings className="mr-2 h-4 w-4" />
+            <span>Settings</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 
       <ScheduleSettingsModal
-        open={settingsOpen}
-        onOpenChange={setSettingsOpen}
+        open={showSettings}
+        onOpenChange={setShowSettings}
         scheduleId={scheduleId}
       />
     </>
