@@ -30,7 +30,7 @@ export type ExecutionConfig = {
 export type EventCondition = {
   field: string;
   operator: 'eq' | 'neq' | 'gt' | 'lt' | 'gte' | 'lte';
-  value: string | number | boolean;
+  value: string;
 };
 
 export interface AdvancedScheduleFormValues {

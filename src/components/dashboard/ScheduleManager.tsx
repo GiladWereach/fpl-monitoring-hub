@@ -16,7 +16,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ExecutionHistory } from "./ExecutionHistory";
 import { ScheduleFormFields } from "./ScheduleFormFields";
 import { Form } from "@/components/ui/form";
-import { AdvancedScheduleFormValues } from "./types/scheduling";
+import { AdvancedScheduleFormValues, TimeConfig, EventConfig, ExecutionConfig, EventCondition } from "./types/scheduling";
 
 interface ScheduleManagerProps {
   functionName: string;
@@ -73,16 +73,16 @@ export function ScheduleManager({ functionName, functionDisplayName }: ScheduleM
         enabled: schedule.enabled ?? false,
         scheduleType: schedule.schedule_type ?? "time_based",
         timezone: schedule.timezone ?? "UTC",
-        timeConfig: schedule.time_config ?? {
+        timeConfig: schedule.time_config as TimeConfig ?? {
           type: "interval",
           intervalMinutes: 5,
           hour: 0
         },
-        eventConfig: schedule.event_config ?? {
+        eventConfig: schedule.event_config as EventConfig ?? {
           triggerType: "deadline",
           offsetMinutes: 0
         },
-        execution_config: schedule.execution_config ?? {
+        execution_config: schedule.execution_config as ExecutionConfig ?? {
           retry_count: 3,
           timeout_seconds: 30,
           retry_delay_seconds: 60,
@@ -90,7 +90,7 @@ export function ScheduleManager({ functionName, functionDisplayName }: ScheduleM
           retry_backoff: "linear",
           max_retry_delay: 3600
         },
-        event_conditions: schedule.event_conditions ?? []
+        event_conditions: (schedule.event_conditions as EventCondition[]) ?? []
       });
     }
   }, [schedule, form, functionName]);
