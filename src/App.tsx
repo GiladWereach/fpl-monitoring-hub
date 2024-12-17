@@ -5,6 +5,9 @@ import BackendDashboard from './pages/backend/Dashboard';
 import BackendCalculations from './pages/backend/Calculations';
 import BackendLogs from './pages/backend/Logs';
 import BackendScheduler from './pages/backend/Scheduler';
+import Home from './pages/Home';
+import About from './pages/About';
+import Contact from './pages/Contact';
 
 export default function App() {
   return (
