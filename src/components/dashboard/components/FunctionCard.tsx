@@ -10,6 +10,8 @@ interface FunctionCardProps {
 }
 
 export function FunctionCard({ name, functionName, loading, onExecute }: FunctionCardProps) {
+  const isLoading = loading === functionName || loading === "all";
+
   return (
     <div className="glass-card p-4 rounded-lg space-y-4">
       <div className="flex items-center justify-between">
@@ -21,7 +23,7 @@ export function FunctionCard({ name, functionName, loading, onExecute }: Functio
             onClick={() => onExecute(functionName)}
             disabled={loading !== null}
           >
-            {loading === functionName ? (
+            {isLoading ? (
               <RefreshCw className="h-4 w-4 animate-spin" />
             ) : (
               <Play className="h-4 w-4" />
