@@ -1,5 +1,5 @@
 import { Card } from "@/components/ui/card";
-import { ScheduleList } from "./components/ScheduleList";
+import { ScheduleList } from "./components/schedule/ScheduleList";
 import { ExecutionList } from "./components/ExecutionList";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
@@ -26,7 +26,22 @@ export default function BackendScheduler() {
   const onSubmit = async (data: NewFunctionForm) => {
     try {
       console.log("Creating new function schedule:", data);
-      // Implementation for creating new function schedule
+      const { error } = await supabase
+        .from('schedules')
+        .insert({
+          function_name: data.name,
+          schedule_type: data.scheduleType,
+          enabled: data.initialStatus === 'active',
+          execution_config: {
+            retry_count: 3,
+            retry_delay_seconds: 60,
+            priority: 1,
+            concurrent_execution: false
+          }
+        });
+
+      if (error) throw error;
+
       toast({
         title: "Success",
         description: "New function schedule created",
@@ -88,9 +103,20 @@ export default function BackendScheduler() {
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="interval">Interval</SelectItem>
-                      <SelectItem value="daily">Daily</SelectItem>
-                      <SelectItem value="weekly">Weekly</SelectItem>
+                      <SelectItem value="time_based">Time Based</SelectItem>
+                      <SelectItem value="event_based">Event Based</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Initial Status</label>
+                  <Select onValueChange={(value) => form.setValue("initialStatus", value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="paused">Paused</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
