@@ -28,9 +28,18 @@ Deno.serve(async (req) => {
   try {
     console.log('Processing schedules...');
     
+    // Validate authorization
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
+      console.error('Missing Authorization header');
       throw new Error('Missing Authorization header');
+    }
+
+    // Extract and validate the token
+    const token = authHeader.replace('Bearer ', '');
+    if (token !== Deno.env.get('ANON_KEY')) {
+      console.error('Invalid authorization token');
+      throw new Error('Invalid authorization token');
     }
 
     const supabase = createClient(
@@ -38,7 +47,7 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Get all enabled time-based schedules
+    console.log('Fetching enabled time-based schedules...');
     const { data: schedules, error: schedulesError } = await supabase
       .from('schedules')
       .select('*')
@@ -57,21 +66,29 @@ Deno.serve(async (req) => {
 
     for (const schedule of (schedules as Schedule[] || [])) {
       try {
+        console.log(`Processing schedule ${schedule.id} (${schedule.function_name})`);
+        
         if (!schedule.time_config) {
           console.log(`Schedule ${schedule.id} has no time_config, skipping...`);
           continue;
         }
 
-        // Calculate next execution time if it's not set
+        // Initialize next_execution_at if not set
         if (!schedule.next_execution_at) {
-          console.log(`Calculating initial next_execution_at for schedule ${schedule.id}`);
+          console.log(`Initializing next_execution_at for schedule ${schedule.id}`);
           const nextExecution = calculateNextExecution(schedule, now);
-          await supabase
+          const { error: updateError } = await supabase
             .from('schedules')
             .update({
               next_execution_at: nextExecution.toISOString()
             })
             .eq('id', schedule.id);
+
+          if (updateError) {
+            console.error(`Error updating next_execution_at for schedule ${schedule.id}:`, updateError);
+            continue;
+          }
+          console.log(`Set initial next_execution_at to ${nextExecution.toISOString()}`);
           continue;
         }
 
@@ -79,7 +96,7 @@ Deno.serve(async (req) => {
         
         // Check if it's time to execute
         if (nextExecutionDate > now) {
-          console.log(`Schedule ${schedule.id} next execution at ${nextExecutionDate} is in the future, skipping...`);
+          console.log(`Schedule ${schedule.id} next execution at ${nextExecutionDate.toISOString()} is in the future, skipping...`);
           continue;
         }
 
@@ -103,6 +120,7 @@ Deno.serve(async (req) => {
 
         // Invoke the function
         const startTime = Date.now();
+        console.log(`Invoking function ${schedule.function_name}`);
         const { data: result, error: invokeError } = await supabase.functions.invoke(
           schedule.function_name,
           {
@@ -110,9 +128,13 @@ Deno.serve(async (req) => {
           }
         );
 
+        if (invokeError) {
+          console.error(`Error invoking function ${schedule.function_name}:`, invokeError);
+        }
+
         // Update execution log
         if (log) {
-          await supabase
+          const { error: logUpdateError } = await supabase
             .from('schedule_execution_logs')
             .update({
               completed_at: new Date().toISOString(),
@@ -121,17 +143,27 @@ Deno.serve(async (req) => {
               execution_duration_ms: Date.now() - startTime
             })
             .eq('id', log.id);
+
+          if (logUpdateError) {
+            console.error('Error updating execution log:', logUpdateError);
+          }
         }
 
         // Calculate and update next execution time
         const nextExecution = calculateNextExecution(schedule, now);
-        await supabase
+        const { error: scheduleUpdateError } = await supabase
           .from('schedules')
           .update({
             last_execution_at: now.toISOString(),
             next_execution_at: nextExecution.toISOString()
           })
           .eq('id', schedule.id);
+
+        if (scheduleUpdateError) {
+          console.error('Error updating schedule execution times:', scheduleUpdateError);
+        } else {
+          console.log(`Updated schedule ${schedule.id} with next execution at ${nextExecution.toISOString()}`);
+        }
 
         processedSchedules.push(schedule.id);
         console.log(`Successfully processed schedule ${schedule.id}`);
