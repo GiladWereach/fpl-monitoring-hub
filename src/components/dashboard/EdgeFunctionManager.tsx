@@ -20,19 +20,113 @@ const functions = [
 export function EdgeFunctionManager() {
   const [loading, setLoading] = useState<string | null>(null);
 
+  const logFunctionExecution = async (functionName: string, started_at: string) => {
+    try {
+      // First get or create a manual schedule for this function
+      const { data: schedule, error: scheduleError } = await supabase
+        .from("schedules")
+        .select("id")
+        .eq("function_name", functionName)
+        .single();
+
+      if (scheduleError && scheduleError.code !== "PGRST116") {
+        console.error("Error getting schedule:", scheduleError);
+        return;
+      }
+
+      let scheduleId = schedule?.id;
+
+      if (!scheduleId) {
+        const { data: newSchedule, error: createError } = await supabase
+          .from("schedules")
+          .insert({
+            function_name: functionName,
+            schedule_type: "event_based",
+            execution_config: {
+              retry_count: 3,
+              timeout_seconds: 30,
+              retry_delay_seconds: 60,
+              concurrent_execution: false
+            }
+          })
+          .select("id")
+          .single();
+
+        if (createError) {
+          console.error("Error creating schedule:", createError);
+          return;
+        }
+
+        scheduleId = newSchedule.id;
+      }
+
+      // Log the execution
+      const { error: logError } = await supabase
+        .from("schedule_execution_logs")
+        .insert({
+          schedule_id: scheduleId,
+          started_at,
+          status: "running"
+        });
+
+      if (logError) {
+        console.error("Error logging execution:", logError);
+      }
+
+      return scheduleId;
+    } catch (error) {
+      console.error("Error in logFunctionExecution:", error);
+    }
+  };
+
+  const updateExecutionLog = async (scheduleId: string, success: boolean, error?: string) => {
+    try {
+      const { error: updateError } = await supabase
+        .from("schedule_execution_logs")
+        .update({
+          completed_at: new Date().toISOString(),
+          status: success ? "completed" : "failed",
+          error_details: error,
+          execution_duration_ms: Date.now() - new Date().getTime()
+        })
+        .eq("schedule_id", scheduleId)
+        .is("completed_at", null);
+
+      if (updateError) {
+        console.error("Error updating execution log:", updateError);
+      }
+    } catch (error) {
+      console.error("Error in updateExecutionLog:", error);
+    }
+  };
+
   const invokeFetchFunction = async (functionName: string) => {
+    const started_at = new Date().toISOString();
+    let scheduleId: string | undefined;
+
     try {
       setLoading(functionName);
+      scheduleId = await logFunctionExecution(functionName, started_at);
+      
       const { data, error } = await supabase.functions.invoke(functionName);
       
       if (error) throw error;
       
+      if (scheduleId) {
+        await updateExecutionLog(scheduleId, true);
+      }
+
       toast({
         title: "Success",
         description: `${data.message}`,
       });
     } catch (error) {
       console.error(`Error invoking ${functionName}:`, error);
+      
+      if (scheduleId) {
+        await updateExecutionLog(scheduleId, false, error.message);
+      }
+
       toast({
         title: "Error",
         description: `Failed to fetch ${functionName} data: ${error.message}`,
@@ -47,19 +141,9 @@ export function EdgeFunctionManager() {
     setLoading("all");
     for (const func of functions) {
       try {
-        const { data, error } = await supabase.functions.invoke(func.function);
-        if (error) throw error;
-        toast({
-          title: "Success",
-          description: `${data.message}`,
-        });
+        await invokeFetchFunction(func.function);
       } catch (error) {
-        console.error(`Error invoking ${func.function}:`, error);
-        toast({
-          title: "Error",
-          description: `Failed to fetch ${func.name} data: ${error.message}`,
-          variant: "destructive",
-        });
+        console.error(`Error in refresh all for ${func.function}:`, error);
       }
     }
     setLoading(null);
