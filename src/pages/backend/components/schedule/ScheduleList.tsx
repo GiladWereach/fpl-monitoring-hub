@@ -8,45 +8,31 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useState } from "react";
 import { QuickActionsMenu } from "./QuickActionsMenu";
 import { toast } from "@/hooks/use-toast";
-import { Json } from "@/integrations/supabase/types";
-
-interface ExecutionConfig {
-  retry_count: number;
-  retry_delay_seconds: number;
-  priority?: number;
-  concurrent_execution: boolean;
-}
+import { functions } from "@/components/dashboard/utils/functionConfigs";
 
 interface Schedule {
   id: string;
   function_name: string;
   schedule_type: 'time_based' | 'event_based';
   enabled: boolean;
-  execution_config: ExecutionConfig;
+  execution_config: {
+    retry_count: number;
+    retry_delay_seconds: number;
+    concurrent_execution: boolean;
+    retry_backoff: string;
+    max_retry_delay: number;
+  };
+  time_config: {
+    type: string;
+    intervalMinutes?: number;
+    hour?: number;
+  } | null;
+  event_config: {
+    triggerType: string;
+    offsetMinutes: number;
+  } | null;
   last_execution_at: string | null;
   next_execution_at: string | null;
-  created_at: string;
-  updated_at: string;
-  timezone: string;
-  event_conditions: Json;
-  event_config: Json;
-  execution_window: Json;
-}
-
-interface SupabaseSchedule {
-  id: string;
-  function_name: string;
-  schedule_type: 'time_based' | 'event_based';
-  enabled: boolean;
-  execution_config: Json;
-  last_execution_at: string | null;
-  next_execution_at: string | null;
-  created_at: string;
-  updated_at: string;
-  timezone: string;
-  event_conditions: Json;
-  event_config: Json;
-  execution_window: Json;
 }
 
 export function ScheduleList() {
@@ -54,9 +40,9 @@ export function ScheduleList() {
   const [statusFilter, setStatusFilter] = useState("all");
 
   const { data: schedules, isLoading } = useQuery({
-    queryKey: ['function-schedules'],
+    queryKey: ['schedules'],
     queryFn: async () => {
-      console.log('Fetching function schedules');
+      console.log('Fetching schedules');
       const { data, error } = await supabase
         .from('schedules')
         .select('*')
@@ -67,16 +53,7 @@ export function ScheduleList() {
         throw error;
       }
 
-      // Convert the Supabase response to our Schedule type with proper type assertion
-      return (data as SupabaseSchedule[]).map(schedule => ({
-        ...schedule,
-        execution_config: {
-          retry_count: (schedule.execution_config as any)?.retry_count ?? 3,
-          retry_delay_seconds: (schedule.execution_config as any)?.retry_delay_seconds ?? 60,
-          priority: (schedule.execution_config as any)?.priority,
-          concurrent_execution: (schedule.execution_config as any)?.concurrent_execution ?? false
-        }
-      })) as Schedule[];
+      return data as Schedule[];
     },
     refetchInterval: 30000
   });
@@ -104,13 +81,30 @@ export function ScheduleList() {
     }
   };
 
-  const getStatusColor = (enabled: boolean) => {
-    return enabled ? 'bg-green-500' : 'bg-yellow-500';
+  const getScheduleDescription = (schedule: Schedule) => {
+    if (schedule.schedule_type === 'time_based' && schedule.time_config) {
+      if (schedule.time_config.type === 'interval') {
+        return `Every ${schedule.time_config.intervalMinutes} minutes`;
+      }
+      return `Daily at ${schedule.time_config.hour}:00`;
+    }
+    if (schedule.schedule_type === 'event_based' && schedule.event_config) {
+      return `${schedule.event_config.triggerType} (${schedule.event_config.offsetMinutes} min offset)`;
+    }
+    return 'Not configured';
+  };
+
+  const getFunctionDisplayName = (functionName: string) => {
+    const func = functions.find(f => f.function === functionName);
+    return func ? func.name : functionName;
   };
 
   const filteredSchedules = schedules?.filter(schedule => {
-    const matchesSearch = schedule.function_name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === "all" || (schedule.enabled === (statusFilter === "active"));
+    const matchesSearch = getFunctionDisplayName(schedule.function_name)
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === "all" || 
+      (schedule.enabled === (statusFilter === "active"));
     return matchesSearch && matchesStatus;
   });
 
@@ -142,26 +136,23 @@ export function ScheduleList() {
           <TableRow>
             <TableHead>Function</TableHead>
             <TableHead>Schedule Type</TableHead>
+            <TableHead>Schedule</TableHead>
             <TableHead>Status</TableHead>
-            <TableHead>Priority</TableHead>
             <TableHead>Last Run</TableHead>
             <TableHead>Next Run</TableHead>
-            <TableHead>Success Rate</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {filteredSchedules?.map((schedule) => (
             <TableRow key={schedule.id}>
-              <TableCell>{schedule.function_name}</TableCell>
+              <TableCell>{getFunctionDisplayName(schedule.function_name)}</TableCell>
               <TableCell>{schedule.schedule_type}</TableCell>
+              <TableCell>{getScheduleDescription(schedule)}</TableCell>
               <TableCell>
-                <Badge className={getStatusColor(schedule.enabled)}>
+                <Badge variant={schedule.enabled ? "default" : "secondary"}>
                   {schedule.enabled ? 'Active' : 'Paused'}
                 </Badge>
-              </TableCell>
-              <TableCell>
-                {schedule.execution_config.priority || 'Normal'}
               </TableCell>
               <TableCell>
                 {schedule.last_execution_at ? 
@@ -172,9 +163,6 @@ export function ScheduleList() {
                 {schedule.next_execution_at ? 
                   format(new Date(schedule.next_execution_at), "MMM d, HH:mm:ss") : 
                   'Not scheduled'}
-              </TableCell>
-              <TableCell>
-                95%
               </TableCell>
               <TableCell>
                 <QuickActionsMenu

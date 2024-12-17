@@ -1,11 +1,12 @@
 export const functions = [
-  { name: "Teams", function: "fetch-teams" },
-  { name: "Events", function: "fetch-events" },
-  { name: "Game Settings", function: "fetch-game-settings" },
-  { name: "Element Types", function: "fetch-element-types" },
-  { name: "Chips", function: "fetch-chips" },
-  { name: "Players", function: "fetch-players" },
-  { name: "Player Details", function: "fetch-player-details" },
-  { name: "Scoring Rules", function: "fetch-scoring-rules" },
-  { name: "Fixtures", function: "fetch-fixtures" },
+  { name: "Fetch Teams", function: "fetch-teams", group: "data-sync" },
+  { name: "Fetch Events", function: "fetch-events", group: "data-sync" },
+  { name: "Fetch Game Settings", function: "fetch-game-settings", group: "data-sync" },
+  { name: "Fetch Element Types", function: "fetch-element-types", group: "data-sync" },
+  { name: "Fetch Chips", function: "fetch-chips", group: "data-sync" },
+  { name: "Fetch Players", function: "fetch-players", group: "data-sync" },
+  { name: "Fetch Player Details", function: "fetch-player-details", group: "data-sync" },
+  { name: "Fetch Scoring Rules", function: "fetch-scoring-rules", group: "data-sync" },
+  { name: "Fetch Fixtures", function: "fetch-fixtures", group: "data-sync" },
+  { name: "Process Schedules", function: "process-schedules", group: "system" }
 ];

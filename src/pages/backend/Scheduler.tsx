@@ -11,6 +11,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { functions } from "@/components/dashboard/utils/functionConfigs";
+import { useQuery } from "@tanstack/react-query";
 
 type NewFunctionForm = {
   name: string;
@@ -22,10 +23,57 @@ export default function BackendScheduler() {
   const [newFunctionOpen, setNewFunctionOpen] = useState(false);
   const form = useForm<NewFunctionForm>();
 
+  // Query to get schedule groups
+  const { data: groups } = useQuery({
+    queryKey: ['schedule-groups'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('schedule_groups')
+        .select('*');
+      
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  // Create default schedule group if none exists
+  const ensureDefaultGroup = async () => {
+    if (!groups || groups.length === 0) {
+      const { error } = await supabase
+        .from('schedule_groups')
+        .insert([
+          { 
+            name: 'data-sync',
+            description: 'Data synchronization functions'
+          },
+          {
+            name: 'system',
+            description: 'System maintenance functions'
+          }
+        ]);
+      
+      if (error) {
+        console.error('Error creating default groups:', error);
+      }
+    }
+  };
+
   const onSubmit = async (data: NewFunctionForm) => {
     try {
       console.log("Creating new function schedule:", data);
+      await ensureDefaultGroup();
       
+      const selectedFunction = functions.find(f => f.function === data.name);
+      if (!selectedFunction) {
+        throw new Error('Function not found');
+      }
+
+      const { data: group } = await supabase
+        .from('schedule_groups')
+        .select('id')
+        .eq('name', selectedFunction.group)
+        .single();
+
       // Create a default time_config based on schedule type
       const timeConfig = data.scheduleType === 'time_based' ? {
         type: 'interval',
