@@ -24,24 +24,89 @@ export function QuickActionsMenu({ scheduleId, functionName, status, onStatusCha
 
   const handleManualTrigger = async () => {
     try {
-      const { data, error } = await supabase.functions.invoke(functionName);
+      console.log(`Manually triggering function: ${functionName}`);
       
-      if (error) throw error;
+      // First, ensure we have a schedule record
+      let targetScheduleId = scheduleId;
+      
+      if (!scheduleId) {
+        console.log('No schedule exists, creating one...');
+        const { data: newSchedule, error: scheduleError } = await supabase
+          .from('schedules')
+          .insert({
+            function_name: functionName,
+            schedule_type: 'event_based',
+            enabled: true,
+            event_config: {
+              triggerType: 'manual',
+              offsetMinutes: 0
+            },
+            execution_config: {
+              retry_count: 3,
+              timeout_seconds: 30,
+              retry_delay_seconds: 60,
+              concurrent_execution: false,
+              retry_backoff: 'linear',
+              max_retry_delay: 3600
+            }
+          })
+          .select()
+          .single();
 
-      // Log the execution
-      await supabase.from('schedule_execution_logs').insert({
-        schedule_id: scheduleId,
-        status: 'completed',
-        started_at: new Date().toISOString(),
-        completed_at: new Date().toISOString()
-      });
+        if (scheduleError) {
+          console.error('Error creating schedule:', scheduleError);
+          throw scheduleError;
+        }
+        
+        targetScheduleId = newSchedule.id;
+        console.log('Created new schedule with ID:', targetScheduleId);
+      }
+
+      // Create execution log entry
+      const startTime = new Date().toISOString();
+      const { data: log, error: logError } = await supabase
+        .from('schedule_execution_logs')
+        .insert({
+          schedule_id: targetScheduleId,
+          started_at: startTime,
+          status: 'running'
+        })
+        .select()
+        .single();
+
+      if (logError) {
+        console.error('Error creating execution log:', logError);
+        throw logError;
+      }
+
+      console.log('Created execution log:', log);
+
+      // Execute the function
+      const { data, error: functionError } = await supabase.functions.invoke(functionName);
+      
+      if (functionError) throw functionError;
+
+      // Update execution log
+      const { error: updateError } = await supabase
+        .from('schedule_execution_logs')
+        .update({
+          status: 'completed',
+          completed_at: new Date().toISOString(),
+          execution_duration_ms: Date.now() - new Date(startTime).getTime()
+        })
+        .eq('id', log.id);
+
+      if (updateError) {
+        console.error('Error updating execution log:', updateError);
+        throw updateError;
+      }
 
       toast({
         title: "Success",
-        description: "Function triggered manually",
+        description: "Function triggered successfully",
       });
     } catch (error) {
-      console.error('Error triggering function:', error);
+      console.error('Error in manual trigger:', error);
       toast({
         title: "Error",
         description: "Failed to trigger function",
@@ -53,7 +118,7 @@ export function QuickActionsMenu({ scheduleId, functionName, status, onStatusCha
   const handleClone = async () => {
     try {
       const { data: schedule, error: fetchError } = await supabase
-        .from('function_schedules')
+        .from('schedules')
         .select('*')
         .eq('id', scheduleId)
         .single();
@@ -61,12 +126,12 @@ export function QuickActionsMenu({ scheduleId, functionName, status, onStatusCha
       if (fetchError) throw fetchError;
 
       const { error: createError } = await supabase
-        .from('function_schedules')
+        .from('schedules')
         .insert({
           ...schedule,
           id: undefined,
           function_name: `${schedule.function_name}_copy`,
-          status: 'paused',
+          enabled: false
         });
 
       if (createError) throw createError;
@@ -88,7 +153,7 @@ export function QuickActionsMenu({ scheduleId, functionName, status, onStatusCha
   const handleExport = async () => {
     try {
       const { data: schedule, error } = await supabase
-        .from('function_schedules')
+        .from('schedules')
         .select('*')
         .eq('id', scheduleId)
         .single();
