@@ -1,12 +1,11 @@
-import { MoreHorizontal, Play, Pause, Copy, Download, Settings, Trash, Zap } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
+import { MoreHorizontal, Play, Pause, Copy, Download, Settings, Trash, Zap } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useState } from "react";
@@ -218,7 +217,6 @@ export function QuickActionsMenu({ scheduleId, functionName, status, onStatusCha
             <Download className="mr-2 h-4 w-4" />
             <span>Export</span>
           </DropdownMenuItem>
-          <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => setShowSettings(true)}>
             <Settings className="mr-2 h-4 w-4" />
             <span>Settings</span>
