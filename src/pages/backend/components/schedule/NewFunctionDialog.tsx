@@ -4,11 +4,12 @@ import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { useForm } from "react-hook-form";
 import { functions } from "@/components/dashboard/utils/functionConfigs";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface NewFunctionFormValues {
   name: string;
-  scheduleType: 'time_based' | 'event_based';
-  initialStatus: 'active' | 'paused';
+  groupId: string;
 }
 
 interface NewFunctionDialogProps {
@@ -19,6 +20,19 @@ interface NewFunctionDialogProps {
 
 export function NewFunctionDialog({ open, onOpenChange, onSubmit }: NewFunctionDialogProps) {
   const form = useForm<NewFunctionFormValues>();
+
+  const { data: groups } = useQuery({
+    queryKey: ['schedule-groups'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('schedule_groups')
+        .select('*')
+        .order('name');
+      
+      if (error) throw error;
+      return data;
+    }
+  });
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -44,34 +58,17 @@ export function NewFunctionDialog({ open, onOpenChange, onSubmit }: NewFunctionD
               </Select>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Schedule Type</label>
-              <Select 
-                onValueChange={(value: 'time_based' | 'event_based') => 
-                  form.setValue("scheduleType", value)
-                }
-              >
+              <label className="text-sm font-medium">Function Group</label>
+              <Select onValueChange={(value) => form.setValue("groupId", value)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select type" />
+                  <SelectValue placeholder="Select group" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="time_based">Time Based</SelectItem>
-                  <SelectItem value="event_based">Event Based</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Initial Status</label>
-              <Select 
-                onValueChange={(value: 'active' | 'paused') => 
-                  form.setValue("initialStatus", value)
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="paused">Paused</SelectItem>
+                  {groups?.map((group) => (
+                    <SelectItem key={group.id} value={group.id}>
+                      {group.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

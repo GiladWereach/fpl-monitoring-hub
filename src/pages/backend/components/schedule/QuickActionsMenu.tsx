@@ -1,4 +1,4 @@
-import { MoreHorizontal, Play, Pause, Copy, Download, Settings, Trash } from "lucide-react";
+import { MoreHorizontal, Play, Pause, Copy, Download, Settings, Trash, Zap } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,12 +14,41 @@ import { ScheduleSettingsModal } from "./ScheduleSettingsModal";
 
 interface QuickActionsMenuProps {
   scheduleId: string;
+  functionName: string;
   status: string;
   onStatusChange: () => void;
 }
 
-export function QuickActionsMenu({ scheduleId, status, onStatusChange }: QuickActionsMenuProps) {
+export function QuickActionsMenu({ scheduleId, functionName, status, onStatusChange }: QuickActionsMenuProps) {
   const [showSettings, setShowSettings] = useState(false);
+
+  const handleManualTrigger = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke(functionName);
+      
+      if (error) throw error;
+
+      // Log the execution
+      await supabase.from('schedule_execution_logs').insert({
+        schedule_id: scheduleId,
+        status: 'completed',
+        started_at: new Date().toISOString(),
+        completed_at: new Date().toISOString()
+      });
+
+      toast({
+        title: "Success",
+        description: "Function triggered manually",
+      });
+    } catch (error) {
+      console.error('Error triggering function:', error);
+      toast({
+        title: "Error",
+        description: "Failed to trigger function",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleClone = async () => {
     try {
@@ -99,6 +128,10 @@ export function QuickActionsMenu({ scheduleId, status, onStatusChange }: QuickAc
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={handleManualTrigger}>
+            <Zap className="mr-2 h-4 w-4" />
+            <span>Trigger Now</span>
+          </DropdownMenuItem>
           <DropdownMenuItem onClick={onStatusChange}>
             {status === 'active' ? (
               <>
