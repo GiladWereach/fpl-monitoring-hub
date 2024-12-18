@@ -3,25 +3,21 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import { SystemHealthMetrics } from "@/types/metrics";
+import { Database } from "@/integrations/supabase/types";
 
-interface SystemAccuracyResponse {
-  id: number;
-  metrics: {
-    health_score: number;
-    performance_indicators?: {
-      response_time?: number;
-      error_rate?: number;
-      uptime?: number;
-    };
-  } | null;
-  period_start: string | null;
-  period_end: string | null;
-  period_type: string | null;
-  created_at: string | null;
+type SystemAccuracyRow = Database['public']['Tables']['system_accuracy']['Row'];
+
+interface SystemMetricsData {
+  health_score: number;
+  performance_indicators?: {
+    response_time?: number;
+    error_rate?: number;
+    uptime?: number;
+  };
 }
 
 export function SystemHealth() {
-  const { data: systemAccuracy } = useQuery<SystemAccuracyResponse>({
+  const { data: systemAccuracy } = useQuery<SystemAccuracyRow>({
     queryKey: ['system-health-metrics'],
     queryFn: async () => {
       console.log('Fetching system health metrics...');
@@ -41,12 +37,14 @@ export function SystemHealth() {
     }
   });
 
+  const metricsData = systemAccuracy?.metrics as SystemMetricsData | null;
+
   const healthMetrics: SystemHealthMetrics = {
-    health_score: systemAccuracy?.metrics?.health_score || 0,
+    health_score: metricsData?.health_score || 0,
     performance_indicators: {
-      response_time: systemAccuracy?.metrics?.performance_indicators?.response_time || 0,
-      error_rate: systemAccuracy?.metrics?.performance_indicators?.error_rate || 0,
-      uptime: systemAccuracy?.metrics?.performance_indicators?.uptime || 100
+      response_time: metricsData?.performance_indicators?.response_time || 0,
+      error_rate: metricsData?.performance_indicators?.error_rate || 0,
+      uptime: metricsData?.performance_indicators?.uptime || 100
     }
   };
 
