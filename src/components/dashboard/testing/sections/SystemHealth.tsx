@@ -37,15 +37,27 @@ export function SystemHealth() {
     }
   });
 
-  const metricsData = systemAccuracy?.metrics as SystemMetricsData | null;
+  // Safely parse the metrics JSON data
+  const metricsData: SystemMetricsData = {
+    health_score: typeof systemAccuracy?.metrics === 'object' && systemAccuracy?.metrics !== null 
+      ? (systemAccuracy.metrics as any)?.health_score || 0 
+      : 0,
+    performance_indicators: typeof systemAccuracy?.metrics === 'object' && systemAccuracy?.metrics !== null
+      ? {
+          response_time: (systemAccuracy.metrics as any)?.performance_indicators?.response_time || 0,
+          error_rate: (systemAccuracy.metrics as any)?.performance_indicators?.error_rate || 0,
+          uptime: (systemAccuracy.metrics as any)?.performance_indicators?.uptime || 100
+        }
+      : {
+          response_time: 0,
+          error_rate: 0,
+          uptime: 100
+        }
+  };
 
   const healthMetrics: SystemHealthMetrics = {
-    health_score: metricsData?.health_score || 0,
-    performance_indicators: {
-      response_time: metricsData?.performance_indicators?.response_time || 0,
-      error_rate: metricsData?.performance_indicators?.error_rate || 0,
-      uptime: metricsData?.performance_indicators?.uptime || 100
-    }
+    health_score: metricsData.health_score,
+    performance_indicators: metricsData.performance_indicators
   };
 
   const getHealthStatus = (score: number) => {
