@@ -34,17 +34,23 @@ export function ExecutionList() {
     queryKey: ['api-metrics'],
     queryFn: async () => {
       console.log('Fetching API metrics');
-      const { data, error } = await supabase
-        .from('api_health_metrics')
-        .select('*');
+      try {
+        const { data, error } = await supabase
+          .from('api_health_metrics')
+          .select('*')
+          .eq('endpoint', 'fetch_schedule');
 
-      if (error) {
-        console.error('Error fetching API metrics:', error);
-        throw error;
+        if (error) {
+          console.error('Error fetching API metrics:', error);
+          throw error;
+        }
+
+        console.log('Fetched metrics:', data);
+        return data || [];
+      } catch (error) {
+        console.error('Failed to fetch metrics:', error);
+        return [];
       }
-
-      console.log('Fetched metrics:', data);
-      return data;
     },
     refetchInterval: 30000
   });
