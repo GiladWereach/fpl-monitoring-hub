@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { Database } from "@/integrations/supabase/types";
 
 export type APIErrorType = 'RATE_LIMIT' | 'AUTH_ERROR' | 'SERVER_ERROR' | 'TIMEOUT' | 'NETWORK' | 'VALIDATION';
 
@@ -20,7 +21,7 @@ export async function logAPIError(error: APIError) {
       .insert({
         error_type: error.type,
         endpoint: error.endpoint,
-        request_params: error.requestParams,
+        request_params: error.requestParams as Database["public"]["Tables"]["api_error_logs"]["Insert"]["request_params"],
         response_code: error.statusCode,
         retry_count: error.retryCount || 0,
         error_details: error.message

@@ -40,7 +40,7 @@ export function APIHealthStatus() {
       return metric.last_error_time;
     }
     return latest;
-  }, null);
+  }, null as string | null);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
