@@ -22,7 +22,7 @@ export function ScheduleFormFields({ form }: ScheduleFormFieldsProps) {
           <FormItem className="flex flex-col sm:flex-row sm:items-center sm:justify-between rounded-lg border p-4">
             <div className="space-y-0.5">
               <FormLabel className="text-base">Enabled</FormLabel>
-              <FormDescription>
+              <FormDescription className="text-sm">
                 Enable or disable this schedule
               </FormDescription>
             </div>
@@ -49,7 +49,7 @@ export function ScheduleFormFields({ form }: ScheduleFormFieldsProps) {
                 value={field.value}
               >
                 <FormControl>
-                  <SelectTrigger>
+                  <SelectTrigger className="h-10">
                     <SelectValue placeholder="Select schedule type" />
                   </SelectTrigger>
                 </FormControl>
@@ -69,9 +69,9 @@ export function ScheduleFormFields({ form }: ScheduleFormFieldsProps) {
             <FormItem>
               <FormLabel>Timezone</FormLabel>
               <FormControl>
-                <Input {...field} placeholder="UTC" />
+                <Input {...field} placeholder="UTC" className="h-10" />
               </FormControl>
-              <FormDescription>
+              <FormDescription className="text-xs">
                 Enter timezone (e.g., 'America/New_York', 'Europe/London')
               </FormDescription>
             </FormItem>
