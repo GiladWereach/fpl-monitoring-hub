@@ -4,8 +4,24 @@ import { Card } from "@/components/ui/card";
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import { SystemHealthMetrics } from "@/types/metrics";
 
+interface SystemAccuracyResponse {
+  id: number;
+  metrics: {
+    health_score: number;
+    performance_indicators?: {
+      response_time?: number;
+      error_rate?: number;
+      uptime?: number;
+    };
+  } | null;
+  period_start: string | null;
+  period_end: string | null;
+  period_type: string | null;
+  created_at: string | null;
+}
+
 export function SystemHealth() {
-  const { data: healthMetrics } = useQuery<SystemHealthMetrics>({
+  const { data: systemAccuracy } = useQuery<SystemAccuracyResponse>({
     queryKey: ['system-health-metrics'],
     queryFn: async () => {
       console.log('Fetching system health metrics...');
@@ -14,26 +30,25 @@ export function SystemHealth() {
         .select('*')
         .order('created_at', { ascending: false })
         .limit(1)
-        .maybeSingle();
+        .single();
 
       if (error) {
         console.error('Error fetching system health metrics:', error);
         throw error;
       }
 
-      // Transform the data to match our SystemHealthMetrics interface
-      const metrics: SystemHealthMetrics = {
-        health_score: data?.metrics?.health_score || 0,
-        performance_indicators: {
-          response_time: data?.metrics?.performance_indicators?.response_time || 0,
-          error_rate: data?.metrics?.performance_indicators?.error_rate || 0,
-          uptime: data?.metrics?.performance_indicators?.uptime || 100
-        }
-      };
-
-      return metrics;
+      return data;
     }
   });
+
+  const healthMetrics: SystemHealthMetrics = {
+    health_score: systemAccuracy?.metrics?.health_score || 0,
+    performance_indicators: {
+      response_time: systemAccuracy?.metrics?.performance_indicators?.response_time || 0,
+      error_rate: systemAccuracy?.metrics?.performance_indicators?.error_rate || 0,
+      uptime: systemAccuracy?.metrics?.performance_indicators?.uptime || 100
+    }
+  };
 
   const getHealthStatus = (score: number) => {
     if (score >= 90) return { color: 'text-green-500', icon: CheckCircle2, text: 'Healthy' };
@@ -41,7 +56,7 @@ export function SystemHealth() {
     return { color: 'text-red-500', icon: AlertTriangle, text: 'Critical' };
   };
 
-  const healthScore = healthMetrics?.health_score || 0;
+  const healthScore = healthMetrics.health_score;
   const status = getHealthStatus(healthScore);
   const Icon = status.icon;
 
@@ -68,19 +83,19 @@ export function SystemHealth() {
           <div className="p-4 bg-background/50 rounded-lg">
             <p className="text-sm text-muted-foreground">Response Time</p>
             <p className="text-2xl font-bold">
-              {healthMetrics?.performance_indicators?.response_time || 0}ms
+              {healthMetrics.performance_indicators?.response_time || 0}ms
             </p>
           </div>
           <div className="p-4 bg-background/50 rounded-lg">
             <p className="text-sm text-muted-foreground">Error Rate</p>
             <p className="text-2xl font-bold">
-              {healthMetrics?.performance_indicators?.error_rate || 0}%
+              {healthMetrics.performance_indicators?.error_rate || 0}%
             </p>
           </div>
           <div className="p-4 bg-background/50 rounded-lg">
             <p className="text-sm text-muted-foreground">Uptime</p>
             <p className="text-2xl font-bold">
-              {healthMetrics?.performance_indicators?.uptime || 100}%
+              {healthMetrics.performance_indicators?.uptime || 100}%
             </p>
           </div>
         </div>
