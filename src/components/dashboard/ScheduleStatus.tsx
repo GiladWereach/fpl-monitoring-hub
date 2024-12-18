@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "../ui/card";
+import { cn } from "@/lib/utils";
 
 export function ScheduleStatus() {
   const { data: schedules } = useQuery({
@@ -18,19 +19,32 @@ export function ScheduleStatus() {
   });
 
   if (!schedules?.length) {
-    return <div>No schedules configured</div>;
+    return <div className="text-center p-4">No schedules configured</div>;
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       {schedules.map((schedule) => (
         <Card key={schedule.id} className="p-4">
-          <h3 className="font-semibold">{schedule.function_name}</h3>
-          <div className="text-sm text-muted-foreground mt-2">
-            <p>Type: {schedule.schedule_type}</p>
-            <p>Status: {schedule.enabled ? 'Enabled' : 'Disabled'}</p>
-            <p>Last run: {schedule.last_execution_at ? new Date(schedule.last_execution_at).toLocaleString() : 'Never'}</p>
-            <p>Next run: {schedule.next_execution_at ? new Date(schedule.next_execution_at).toLocaleString() : 'Not scheduled'}</p>
+          <div className="space-y-2">
+            <h3 className="font-semibold truncate">{schedule.function_name}</h3>
+            <div className="space-y-1 text-sm text-muted-foreground">
+              <div className="flex justify-between items-center">
+                <span>Status:</span>
+                <span className={cn(
+                  "px-2 py-1 rounded-full text-xs",
+                  schedule.enabled ? "bg-success/20 text-success" : "bg-muted text-muted-foreground"
+                )}>
+                  {schedule.enabled ? 'Enabled' : 'Disabled'}
+                </span>
+              </div>
+              <p className="truncate">
+                Last run: {schedule.last_execution_at ? new Date(schedule.last_execution_at).toLocaleString() : 'Never'}
+              </p>
+              <p className="truncate">
+                Next run: {schedule.next_execution_at ? new Date(schedule.next_execution_at).toLocaleString() : 'Not scheduled'}
+              </p>
+            </div>
           </div>
         </Card>
       ))}
