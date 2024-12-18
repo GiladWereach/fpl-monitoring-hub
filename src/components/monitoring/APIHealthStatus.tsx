@@ -38,7 +38,7 @@ export function APIHealthStatus() {
 
   const successRate = totalRequests > 0 
     ? (successCount / totalRequests) * 100 
-    : 0;
+    : 100; // Default to 100% if no requests
 
   const avgResponseTime = metrics?.reduce(
     (acc, metric) => acc + (metric.avg_response_time || 0),
