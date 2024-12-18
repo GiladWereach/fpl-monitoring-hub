@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect, useRef } from "react";
+import { functions } from "@/components/dashboard/utils/functionConfigs";
 
 export function ExecutionList() {
   const { toast } = useToast();
@@ -16,7 +17,12 @@ export function ExecutionList() {
       console.log('Fetching recent executions');
       const { data, error } = await supabase
         .from('schedule_execution_logs')
-        .select('*')
+        .select(`
+          *,
+          schedules (
+            function_name
+          )
+        `)
         .order('started_at', { ascending: false })
         .limit(10);
 
@@ -25,7 +31,14 @@ export function ExecutionList() {
         throw error;
       }
 
-      return data;
+      // Map the function names to their display names
+      return data?.map(execution => {
+        const functionConfig = functions.find(f => f.function === execution.schedules?.function_name);
+        return {
+          ...execution,
+          display_name: functionConfig?.name || execution.schedules?.function_name || 'Unknown Function'
+        };
+      });
     },
     refetchInterval: 30000
   });
@@ -38,7 +51,7 @@ export function ExecutionList() {
         const { data, error } = await supabase
           .from('api_health_metrics')
           .select('*')
-          .eq('endpoint', 'fetch_schedule');
+          .order('created_at', { ascending: false });
 
         if (error) {
           console.error('Error fetching API metrics:', error);
@@ -59,14 +72,13 @@ export function ExecutionList() {
     if (executions && executions.length > 0) {
       const latestExecution = executions[0];
       
-      // Only show notification if this is a new execution
       if (lastExecutionRef.current !== latestExecution.id) {
         lastExecutionRef.current = latestExecution.id;
         
         if (latestExecution.status === 'completed') {
           toast({
             title: "Function Execution Successful",
-            description: `${latestExecution.schedule_id} completed successfully`,
+            description: `${latestExecution.display_name} completed successfully`,
             variant: "default",
           });
         } else if (latestExecution.status === 'failed') {
@@ -79,6 +91,15 @@ export function ExecutionList() {
       }
     }
   }, [executions, toast]);
+
+  const formatExecutionTime = (ms: number | null): string => {
+    if (!ms) return 'In Progress...';
+    
+    if (ms < 1000) return `${ms.toFixed(2)}ms`;
+    if (ms < 60000) return `${(ms / 1000).toFixed(2)}s`;
+    if (ms < 3600000) return `${(ms / 60000).toFixed(2)}m`;
+    return `${(ms / 3600000).toFixed(2)}h`;
+  };
 
   return (
     <Table>
@@ -94,14 +115,12 @@ export function ExecutionList() {
       <TableBody>
         {executions?.map((log) => (
           <TableRow key={log.id}>
-            <TableCell>{log.schedule_id}</TableCell>
+            <TableCell>{log.display_name}</TableCell>
             <TableCell>
               {format(new Date(log.started_at), "MMM d, HH:mm:ss")}
             </TableCell>
             <TableCell>
-              {log.execution_duration_ms ? 
-                `${log.execution_duration_ms}ms` : 
-                'In Progress...'}
+              {formatExecutionTime(log.execution_duration_ms)}
             </TableCell>
             <TableCell>
               <Badge
