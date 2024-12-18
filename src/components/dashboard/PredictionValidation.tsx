@@ -1,11 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { format } from "date-fns";
 import { AlertTriangle, CheckCircle2, Clock } from "lucide-react";
 import { PredictionValidation as PredictionValidationType, SystemAccuracy } from "./types";
-import { Database } from "@/integrations/supabase/types";
+import { MetricsCard } from "./validation/MetricsCard";
+import { ValidationsList } from "./validation/ValidationsList";
 
 interface ValidationMetrics {
   total_predictions: number;
@@ -57,7 +56,7 @@ export function PredictionValidation() {
         .select('*')
         .order('period_start', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (error && error.code !== 'PGRST116') {
         console.error('Error fetching system accuracy:', error);
@@ -150,112 +149,47 @@ export function PredictionValidation() {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="p-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-medium">Accuracy Rate</h3>
-            <CheckCircle2 className="h-4 w-4 text-green-500" />
-          </div>
-          <p className="text-2xl font-bold mt-2">{metrics.accuracy_rate.toFixed(1)}%</p>
-          <p className="text-sm text-muted-foreground mt-1">
-            {metrics.correct_predictions} of {metrics.total_predictions} correct
-          </p>
-        </Card>
-
-        <Card className="p-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-medium">Time Deviation</h3>
-            <Clock className="h-4 w-4 text-blue-500" />
-          </div>
-          <p className="text-2xl font-bold mt-2">{metrics.avg_time_deviation.toFixed(1)}h</p>
-          <p className="text-sm text-muted-foreground mt-1">
-            Average prediction offset
-          </p>
-        </Card>
-
-        <Card className="p-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-medium">Confidence Score</h3>
-            <AlertTriangle className="h-4 w-4 text-yellow-500" />
-          </div>
-          <p className="text-2xl font-bold mt-2">
-            {(metrics.confidence_correlation * 100).toFixed(1)}%
-          </p>
-          <p className="text-sm text-muted-foreground mt-1">
-            Correlation with accuracy
-          </p>
-        </Card>
-
-        <Card className="p-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-medium">System Health</h3>
-            <div className={`h-2 w-2 rounded-full ${
-              metrics.accuracy_rate > 80 ? 'bg-green-500' :
-              metrics.accuracy_rate > 60 ? 'bg-yellow-500' :
-              'bg-red-500'
-            }`} />
-          </div>
-          <p className="text-2xl font-bold mt-2">
-            {systemAccuracy?.metrics?.health_score || 'N/A'}
-          </p>
-          <p className="text-sm text-muted-foreground mt-1">
-            Last updated: {systemAccuracy?.created_at ? 
-              format(new Date(systemAccuracy.created_at), 'MMM d, HH:mm') : 
-              'Never'}
-          </p>
-        </Card>
+        <MetricsCard
+          title="Accuracy Rate"
+          value={`${metrics.accuracy_rate.toFixed(1)}%`}
+          subtitle={`${metrics.correct_predictions} of ${metrics.total_predictions} correct`}
+          icon={CheckCircle2}
+          iconColor="text-green-500"
+        />
+        
+        <MetricsCard
+          title="Time Deviation"
+          value={`${metrics.avg_time_deviation.toFixed(1)}h`}
+          subtitle="Average prediction offset"
+          icon={Clock}
+          iconColor="text-blue-500"
+        />
+        
+        <MetricsCard
+          title="Confidence Score"
+          value={`${(metrics.confidence_correlation * 100).toFixed(1)}%`}
+          subtitle="Correlation with accuracy"
+          icon={AlertTriangle}
+          iconColor="text-yellow-500"
+        />
+        
+        <MetricsCard
+          title="System Health"
+          value={systemAccuracy?.metrics?.health_score?.toString() || 'N/A'}
+          subtitle={`Last updated: ${systemAccuracy?.created_at ? 
+            format(new Date(systemAccuracy.created_at), 'MMM d, HH:mm') : 
+            'Never'}`}
+          icon={AlertTriangle}
+          iconColor="text-yellow-500"
+          indicator={{
+            color: metrics.accuracy_rate > 80 ? 'bg-green-500' :
+                   metrics.accuracy_rate > 60 ? 'bg-yellow-500' :
+                   'bg-red-500'
+          }}
+        />
       </div>
 
-      <Card className="p-6">
-        <h3 className="text-lg font-semibold mb-4">Recent Validations</h3>
-        <ScrollArea className="h-[400px]">
-          <div className="space-y-4">
-            {validations?.map((validation) => (
-              <div
-                key={validation.id}
-                className="flex items-center justify-between p-4 bg-background/50 rounded-lg"
-              >
-                <div className="flex items-center gap-4">
-                  <div className={`h-2 w-2 rounded-full ${
-                    validation.accuracy_metrics?.was_correct ? 
-                    'bg-green-500' : 'bg-red-500'
-                  }`} />
-                  <div>
-                    <p className="font-medium">
-                      {validation.price_predictions?.prediction_type} Prediction
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      Confidence: {validation.price_predictions?.confidence_score}/5
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-8">
-                  <div className="text-right">
-                    <p className="font-medium">
-                      {validation.actual_timestamp ? 
-                        format(new Date(validation.actual_timestamp), 'MMM d, HH:mm') :
-                        'Pending'}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      Actual time
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-medium">
-                      {validation.predicted_timestamp ?
-                        format(new Date(validation.predicted_timestamp), 'MMM d, HH:mm') :
-                        'N/A'}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      Predicted time
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </ScrollArea>
-      </Card>
+      <ValidationsList validations={validations || []} />
     </div>
   );
 }
