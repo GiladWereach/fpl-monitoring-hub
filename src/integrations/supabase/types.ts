@@ -1488,6 +1488,56 @@ export type Database = {
           },
         ]
       }
+      price_predictions: {
+        Row: {
+          confidence_score: number
+          created_at: string | null
+          earliest_expected: string
+          factors: Json
+          id: number
+          latest_expected: string
+          player_id: number | null
+          prediction_type: string
+          probability: number
+          validated_at: string | null
+          was_correct: boolean | null
+        }
+        Insert: {
+          confidence_score: number
+          created_at?: string | null
+          earliest_expected: string
+          factors?: Json
+          id?: number
+          latest_expected: string
+          player_id?: number | null
+          prediction_type: string
+          probability: number
+          validated_at?: string | null
+          was_correct?: boolean | null
+        }
+        Update: {
+          confidence_score?: number
+          created_at?: string | null
+          earliest_expected?: string
+          factors?: Json
+          id?: number
+          latest_expected?: string
+          player_id?: number | null
+          prediction_type?: string
+          probability?: number
+          validated_at?: string | null
+          was_correct?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "price_predictions_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string | null
