@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Database, Server, Activity, Calculator, Clock, Users, BarChart3, AlertTriangle } from 'lucide-react';
 import { StatusCard } from '@/components/dashboard/StatusCard';
 import { RecentActivity } from '@/components/dashboard/RecentActivity';
+import { UpcomingExecutions } from '@/components/dashboard/UpcomingExecutions';
 
 export default function BackendDashboard() {
   const { data: systemMetrics } = useQuery({
@@ -123,14 +124,19 @@ export default function BackendDashboard() {
         />
       </div>
 
-      {/* API Health Metrics */}
-      <Card className="p-6">
-        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-          <Activity className="h-5 w-5" />
-          API Health Metrics
-        </h2>
-        <APIHealthStatus />
-      </Card>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* API Health Metrics */}
+        <Card className="p-6">
+          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <Activity className="h-5 w-5" />
+            API Health Metrics
+          </h2>
+          <APIHealthStatus />
+        </Card>
+
+        {/* Upcoming Executions */}
+        <UpcomingExecutions />
+      </div>
 
       {/* Recent Activity */}
       <Card className="p-6">
