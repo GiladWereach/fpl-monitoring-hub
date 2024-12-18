@@ -1736,6 +1736,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_scheduler_health: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          job_name: string
+          last_run: string
+          next_run: string
+          active: boolean
+        }[]
+      }
       cleanup_old_execution_logs: {
         Args: Record<PropertyKey, never>
         Returns: undefined
