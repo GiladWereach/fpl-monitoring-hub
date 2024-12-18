@@ -8,12 +8,29 @@ interface CalculationStatsProps {
   avgExecutionTime: number;
 }
 
+function formatExecutionTime(ms: number): string {
+  if (ms < 1000) {
+    return `${ms.toFixed(2)}ms`;
+  } else if (ms < 60000) {
+    return `${(ms / 1000).toFixed(2)}s`;
+  } else if (ms < 3600000) {
+    return `${(ms / 60000).toFixed(2)}m`;
+  } else {
+    return `${(ms / 3600000).toFixed(2)}h`;
+  }
+}
+
 export function CalculationStats({
   activeCalculations,
   completedToday,
   failedToday,
   avgExecutionTime,
 }: CalculationStatsProps) {
+  // Ensure avgExecutionTime is a reasonable value (prevent extreme numbers)
+  const normalizedExecutionTime = avgExecutionTime > 0 && avgExecutionTime < 86400000 
+    ? avgExecutionTime  // If less than 24 hours, use actual value
+    : 0;  // Reset to 0 if unreasonable
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       <StatusCard
@@ -60,8 +77,8 @@ export function CalculationStats({
       />
       <StatusCard
         title="Avg. Execution Time"
-        value={`${(avgExecutionTime / 1000).toFixed(2)}s`}
-        status={avgExecutionTime > 5000 ? "warning" : "success"}
+        value={formatExecutionTime(normalizedExecutionTime)}
+        status={normalizedExecutionTime > 5000 ? "warning" : "success"}
         icon={<Zap className="h-4 w-4" />}
         trend={{
           value: -8,
