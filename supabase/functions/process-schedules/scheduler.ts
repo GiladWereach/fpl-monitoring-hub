@@ -27,23 +27,40 @@ export const processSchedules = async (supabaseClient: ReturnType<typeof createC
 
       if (checkError || !existingSchedule) {
         console.log(`Creating schedule record for ${schedule.function_name}`);
+        
+        // Prepare schedule configuration based on type
+        const scheduleConfig = {
+          function_name: schedule.function_name,
+          schedule_type: 'event_based',
+          enabled: true,
+          event_config: {
+            triggerType: 'match_status',
+            offsetMinutes: 0
+          },
+          execution_config: {
+            retry_count: 3,
+            timeout_seconds: 30,
+            retry_delay_seconds: 60,
+            concurrent_execution: false,
+            retry_backoff: 'linear',
+            max_retry_delay: 3600
+          },
+          event_conditions: [
+            {
+              field: "gameweek_active",
+              operator: "eq",
+              value: "true"
+            }
+          ],
+          execution_window: {
+            start_time: "-6 hours",
+            end_time: "+6 hours"
+          }
+        };
+
         const { data: newSchedule, error: createError } = await supabaseClient
           .from('schedules')
-          .insert({
-            function_name: schedule.function_name,
-            schedule_type: 'event_based',
-            enabled: true,
-            event_config: {
-              triggerType: 'manual',
-              offsetMinutes: 0
-            },
-            execution_config: {
-              retry_count: 3,
-              timeout_seconds: 30,
-              retry_delay_seconds: 60,
-              concurrent_execution: false
-            }
-          })
+          .insert(scheduleConfig)
           .select('id')
           .single();
 
