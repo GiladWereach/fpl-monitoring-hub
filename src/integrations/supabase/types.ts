@@ -1441,6 +1441,44 @@ export type Database = {
           },
         ]
       }
+      prediction_validations: {
+        Row: {
+          accuracy_metrics: Json | null
+          actual_timestamp: string | null
+          created_at: string | null
+          id: number
+          predicted_timestamp: string | null
+          prediction_id: number | null
+          system_metrics: Json | null
+        }
+        Insert: {
+          accuracy_metrics?: Json | null
+          actual_timestamp?: string | null
+          created_at?: string | null
+          id?: number
+          predicted_timestamp?: string | null
+          prediction_id?: number | null
+          system_metrics?: Json | null
+        }
+        Update: {
+          accuracy_metrics?: Json | null
+          actual_timestamp?: string | null
+          created_at?: string | null
+          id?: number
+          predicted_timestamp?: string | null
+          prediction_id?: number | null
+          system_metrics?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prediction_validations_prediction_id_fkey"
+            columns: ["prediction_id"]
+            isOneToOne: false
+            referencedRelation: "price_predictions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       price_changes: {
         Row: {
           created_at: string | null
@@ -1753,6 +1791,33 @@ export type Database = {
           saves?: number | null
           short_play?: number | null
           yellow_cards?: number | null
+        }
+        Relationships: []
+      }
+      system_accuracy: {
+        Row: {
+          created_at: string | null
+          id: number
+          metrics: Json | null
+          period_end: string | null
+          period_start: string | null
+          period_type: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: number
+          metrics?: Json | null
+          period_end?: string | null
+          period_start?: string | null
+          period_type?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: number
+          metrics?: Json | null
+          period_end?: string | null
+          period_start?: string | null
+          period_type?: string | null
         }
         Relationships: []
       }
