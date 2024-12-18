@@ -16,8 +16,10 @@ export default function BackendDashboard() {
         <LiveStatus />
       </div>
 
-      {/* System Health Section */}
-      <APIHealthStatus />
+      {/* System Health Section - Grid Layout */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <APIHealthStatus />
+      </div>
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

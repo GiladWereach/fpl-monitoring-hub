@@ -42,7 +42,12 @@ export function CalculationsManager() {
       console.log("Fetching recent calculation logs");
       const { data, error } = await supabase
         .from("calculation_logs")
-        .select("*")
+        .select(`
+          *,
+          calculation_types (
+            name
+          )
+        `)
         .order("start_time", { ascending: false })
         .limit(5);
 
@@ -122,7 +127,7 @@ export function CalculationsManager() {
                   <div className="flex items-center gap-3">
                     <Activity className="h-4 w-4 text-primary animate-pulse" />
                     <div>
-                      <p className="font-medium">Calculation #{log.id}</p>
+                      <p className="font-medium">{log.calculation_types?.name || `Calculation #${log.id}`}</p>
                       <p className="text-sm text-muted-foreground">
                         Started: {new Date(log.start_time).toLocaleTimeString()}
                       </p>

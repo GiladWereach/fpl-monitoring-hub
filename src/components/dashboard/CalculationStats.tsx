@@ -60,7 +60,7 @@ export function CalculationStats({
       />
       <StatusCard
         title="Avg. Execution Time"
-        value={`${(avgExecutionTime / 1000).toFixed(1)}s`}
+        value={`${(avgExecutionTime / 1000).toFixed(2)}s`}
         status={avgExecutionTime > 5000 ? "warning" : "success"}
         icon={<Zap className="h-4 w-4" />}
         trend={{
