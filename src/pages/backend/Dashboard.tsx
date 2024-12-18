@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { LiveStatus } from '@/components/dashboard/LiveStatus';
 import { APIHealthStatus } from '@/components/monitoring/APIHealthStatus';
 import { Card } from '@/components/ui/card';
-import { Database, Server, Activity, Calculator, Clock, Users, BarChart3, AlertTriangle } from 'lucide-react';
+import { Database, Server, Activity, Calculator, Clock, AlertTriangle } from 'lucide-react';
 import { StatusCard } from '@/components/dashboard/StatusCard';
 import { RecentActivity } from '@/components/dashboard/RecentActivity';
 import { UpcomingExecutions } from '@/components/dashboard/UpcomingExecutions';
@@ -124,28 +124,31 @@ export default function BackendDashboard() {
         />
       </div>
 
+      {/* Monitoring Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* API Health Metrics */}
-        <Card className="p-6">
-          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Activity className="h-5 w-5" />
-            API Health Metrics
-          </h2>
-          <APIHealthStatus />
-        </Card>
+        <div className="space-y-6">
+          <Card className="p-6">
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <Activity className="h-5 w-5" />
+              API Health Metrics
+            </h2>
+            <APIHealthStatus />
+          </Card>
+
+          {/* Recent Activity */}
+          <Card className="p-6">
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <Clock className="h-5 w-5" />
+              Recent Activity
+            </h2>
+            <RecentActivity />
+          </Card>
+        </div>
 
         {/* Upcoming Executions */}
         <UpcomingExecutions />
       </div>
-
-      {/* Recent Activity */}
-      <Card className="p-6">
-        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-          <Clock className="h-5 w-5" />
-          Recent Activity
-        </h2>
-        <RecentActivity />
-      </Card>
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
-import { Clock, AlertCircle } from "lucide-react";
+import { Clock, AlertCircle, Calendar } from "lucide-react";
 import { format, isAfter } from "date-fns";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
@@ -30,7 +30,41 @@ export function UpcomingExecutions() {
         throw error;
       }
 
-      return data;
+      // Also fetch function schedules for daily executions
+      const { data: functionSchedules, error: fsError } = await supabase
+        .from('function_schedules')
+        .select('*')
+        .eq('status', 'active')
+        .order('next_execution_at', { ascending: true });
+
+      if (fsError) {
+        console.error('Error fetching function schedules:', fsError);
+        throw fsError;
+      }
+
+      // Combine both types of schedules
+      const allSchedules = [
+        ...(data || []),
+        ...(functionSchedules || []).map(fs => ({
+          id: fs.id,
+          function_name: fs.function_name,
+          next_execution_at: fs.next_execution_at,
+          enabled: fs.status === 'active',
+          schedule_type: 'time_based',
+          time_config: {
+            type: fs.frequency_type === 'fixed_interval' ? 'interval' : 'daily',
+            intervalMinutes: fs.base_interval_minutes,
+            hour: fs.fixed_time ? parseInt(fs.fixed_time.split(':')[0]) : null
+          }
+        }))
+      ];
+
+      // Sort by next execution time
+      return allSchedules.sort((a, b) => {
+        if (!a.next_execution_at) return 1;
+        if (!b.next_execution_at) return -1;
+        return new Date(a.next_execution_at).getTime() - new Date(b.next_execution_at).getTime();
+      });
     },
     refetchInterval: 30000
   });
@@ -67,19 +101,19 @@ export function UpcomingExecutions() {
     if (schedule.schedule_type === 'event_based' && schedule.event_config) {
       return `On ${schedule.event_config.triggerType}`;
     }
-    return 'Custom schedule';
+    return 'Manual trigger';
   };
 
   return (
     <Card className="p-6">
       <div className="flex items-center gap-2 mb-4">
-        <Clock className="h-5 w-5" />
+        <Calendar className="h-5 w-5" />
         <h2 className="text-lg font-semibold">Upcoming Executions</h2>
       </div>
 
       <ScrollArea className="h-[400px] pr-4">
         <div className="space-y-4">
-          {schedules?.length === 0 && (
+          {!schedules?.length && (
             <div className="flex items-center gap-2 text-muted-foreground">
               <AlertCircle className="h-4 w-4" />
               <span>No upcoming executions scheduled</span>
@@ -99,7 +133,10 @@ export function UpcomingExecutions() {
               <div className="text-sm text-muted-foreground space-y-1">
                 <p>{getExecutionDetails(schedule)}</p>
                 {schedule.next_execution_at && (
-                  <p>Next run: {format(new Date(schedule.next_execution_at), "MMM d, yyyy HH:mm:ss")}</p>
+                  <p className="flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    Next run: {format(new Date(schedule.next_execution_at), "MMM d, yyyy HH:mm:ss")}
+                  </p>
                 )}
               </div>
             </div>
