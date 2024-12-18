@@ -1,6 +1,7 @@
 import * as React from "react";
 import { FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { UseFormReturn } from "react-hook-form";
 import { AdvancedScheduleFormValues, EventCondition } from "../types/scheduling";
 import { AVAILABLE_FIELDS, FIELD_VALUES } from "../constants/condition-fields";
@@ -13,19 +14,19 @@ interface ConditionFieldProps {
 
 export function ConditionField({ form, index, field }: ConditionFieldProps) {
   return (
-    <div className="flex items-end gap-2">
+    <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4">
       <FormField
         control={form.control}
         name={`event_conditions.${index}.field`}
         render={({ field: fieldProps }) => (
-          <FormItem className="flex-1">
+          <FormItem className="flex-1 w-full sm:w-auto">
             <FormLabel>Field</FormLabel>
             <Select
               onValueChange={fieldProps.onChange}
               value={fieldProps.value}
             >
               <FormControl>
-                <SelectTrigger>
+                <SelectTrigger className="h-10 sm:h-11">
                   <SelectValue placeholder="Select field" />
                 </SelectTrigger>
               </FormControl>
@@ -53,11 +54,11 @@ export function ConditionField({ form, index, field }: ConditionFieldProps) {
         control={form.control}
         name={`event_conditions.${index}.operator`}
         render={({ field: operatorField }) => (
-          <FormItem className="w-[120px]">
+          <FormItem className="w-full sm:w-[120px]">
             <FormLabel>Operator</FormLabel>
             <Select onValueChange={operatorField.onChange} value={operatorField.value}>
               <FormControl>
-                <SelectTrigger>
+                <SelectTrigger className="h-10 sm:h-11">
                   <SelectValue placeholder="Select operator" />
                 </SelectTrigger>
               </FormControl>
@@ -79,12 +80,12 @@ export function ConditionField({ form, index, field }: ConditionFieldProps) {
         control={form.control}
         name={`event_conditions.${index}.value`}
         render={({ field: valueField }) => (
-          <FormItem className="flex-1">
+          <FormItem className="flex-1 w-full sm:w-auto">
             <FormLabel>Value</FormLabel>
             {FIELD_VALUES[field.field as keyof typeof FIELD_VALUES] ? (
               <Select onValueChange={valueField.onChange} value={valueField.value}>
                 <FormControl>
-                  <SelectTrigger>
+                  <SelectTrigger className="h-10 sm:h-11">
                     <SelectValue placeholder="Select value" />
                   </SelectTrigger>
                 </FormControl>
@@ -99,9 +100,8 @@ export function ConditionField({ form, index, field }: ConditionFieldProps) {
               </Select>
             ) : (
               <FormControl>
-                <input
-                  type="text"
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                <Input
+                  className="h-10 sm:h-11"
                   {...valueField}
                 />
               </FormControl>
