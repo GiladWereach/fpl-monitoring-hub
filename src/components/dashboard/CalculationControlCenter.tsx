@@ -1,22 +1,28 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { EdgeFunctionManager } from "./EdgeFunctionManager";
-import { PricePredictionTesting } from "./testing/PricePredictionTesting";
+import { CalculationsManager } from "./CalculationsManager";
+import { PointsCalculationFormula } from "./PointsCalculationFormula";
+import { PriceChangeMonitor } from "./PriceChangeMonitor";
 
 export function CalculationControlCenter() {
   return (
     <div className="space-y-6">
-      <Tabs defaultValue="functions" className="space-y-6">
+      <Tabs defaultValue="calculations" className="space-y-6">
         <TabsList>
-          <TabsTrigger value="functions">Edge Functions</TabsTrigger>
-          <TabsTrigger value="testing">Testing & Monitoring</TabsTrigger>
+          <TabsTrigger value="calculations">Active Calculations</TabsTrigger>
+          <TabsTrigger value="points">Points Formula</TabsTrigger>
+          <TabsTrigger value="prices">Price Changes</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="functions">
-          <EdgeFunctionManager />
+        <TabsContent value="calculations">
+          <CalculationsManager />
         </TabsContent>
 
-        <TabsContent value="testing">
-          <PricePredictionTesting />
+        <TabsContent value="points">
+          <PointsCalculationFormula />
+        </TabsContent>
+
+        <TabsContent value="prices">
+          <PriceChangeMonitor />
         </TabsContent>
       </Tabs>
     </div>
