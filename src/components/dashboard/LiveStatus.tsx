@@ -1,147 +1,53 @@
-import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Circle } from "lucide-react";
-import { cn } from "@/lib/utils";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { format } from "date-fns";
+import { logAPIError, updateAPIHealthMetrics } from "@/utils/api/errorHandling";
 
-interface LiveStatusProps {
-  showLabel?: boolean;
-}
-
-export function LiveStatus({ showLabel = true }: LiveStatusProps) {
-  const [isActive, setIsActive] = useState(false);
-  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  // Query to check if there's an active gameweek
-  const { data: currentEvent } = useQuery({
-    queryKey: ["current-event"],
+export function LiveStatus() {
+  const { data: status } = useQuery({
+    queryKey: ["live-status"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("events")
-        .select("*")
-        .lt("deadline_time", new Date().toISOString())
-        .gt("deadline_time", new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
-        .order("deadline_time", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      console.log("Fetching live status");
+      const startTime = Date.now();
+      
+      try {
+        const { data, error } = await supabase
+          .from("api_health_metrics")
+          .select("*")
+          .order("last_success_time", { ascending: false })
+          .limit(1)
+          .single();
 
-      if (error) throw error;
-      return data;
+        if (error) throw error;
+
+        const endTime = Date.now();
+        await updateAPIHealthMetrics("fetch_live_status", true, endTime - startTime);
+
+        return data;
+      } catch (error) {
+        console.error("Error fetching live status:", error);
+        await logAPIError({
+          type: "SERVER_ERROR",
+          message: error.message,
+          endpoint: "fetch_live_status",
+          statusCode: error.status || 500,
+          retryCount: 0,
+          requestParams: {}
+        });
+        await updateAPIHealthMetrics("fetch_live_status", false);
+        throw error;
+      }
     },
-    refetchInterval: 60000, // Check every minute
+    refetchInterval: 30000 // Refetch every 30 seconds
   });
-
-  // Query to check for active matches
-  const { data: activeMatches } = useQuery({
-    queryKey: ["active-matches", currentEvent?.id],
-    enabled: !!currentEvent?.id,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("fixtures")
-        .select("*")
-        .eq("event", currentEvent.id)
-        .eq("started", true)
-        .is("finished_provisional", false);
-
-      if (error) throw error;
-      console.log('Active matches:', data);
-      return data;
-    },
-    refetchInterval: 30000 // Check every 30 seconds
-  });
-
-  // Query to fetch live data
-  const { error: liveError } = useQuery({
-    queryKey: ["live-data", currentEvent?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase.functions.invoke("fetch-live-gameweek");
-      if (error) throw error;
-      setLastUpdate(new Date());
-      return data;
-    },
-    enabled: !!currentEvent && !!activeMatches?.length,
-    refetchInterval: 120000, // Fetch every 2 minutes during active gameweek
-    retry: true,
-    retryDelay: 30000, // Retry after 30 seconds on failure
-  });
-
-  // Subscribe to real-time updates
-  useEffect(() => {
-    if (!currentEvent?.id) return;
-
-    const channel = supabase
-      .channel("live-updates")
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "gameweek_live_performance",
-          filter: `event_id=eq.${currentEvent.id}`,
-        },
-        () => {
-          setIsActive(true);
-          setLastUpdate(new Date());
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [currentEvent?.id]);
-
-  // Update error state
-  useEffect(() => {
-    if (liveError) {
-      setError(liveError.message);
-      setIsActive(false);
-    } else {
-      setError(null);
-    }
-  }, [liveError]);
-
-  const getStatusColor = () => {
-    if (error) return "text-destructive fill-destructive";
-    if (!currentEvent) return "text-muted-foreground fill-muted-foreground";
-    if (isActive && activeMatches?.length) return "text-success fill-success";
-    return "text-muted-foreground fill-muted-foreground";
-  };
-
-  const getTooltipContent = () => {
-    if (error) return `Error: ${error}`;
-    if (!currentEvent) return "No active gameweek";
-    if (!lastUpdate) return "Waiting for first update...";
-    return `Last updated: ${format(lastUpdate, "HH:mm:ss")}`;
-  };
 
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger>
-          <div className="flex items-center gap-2">
-            <Circle
-              className={cn(
-                "h-3 w-3",
-                getStatusColor(),
-                isActive && activeMatches?.length && "animate-pulse"
-              )}
-            />
-            {showLabel && <span className="text-sm">Live Updates</span>}
-          </div>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>{getTooltipContent()}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <div className="p-4 rounded-lg bg-background border">
+      <h3 className="text-lg font-semibold mb-2">Live Status</h3>
+      <div className="space-y-2">
+        <p>Last Success: {status?.last_success_time ? new Date(status.last_success_time).toLocaleString() : 'N/A'}</p>
+        <p>Success Rate: {status ? ((status.success_count / (status.success_count + status.error_count)) * 100).toFixed(2) : 0}%</p>
+        <p>Average Response Time: {status?.avg_response_time ? `${status.avg_response_time.toFixed(2)}ms` : 'N/A'}</p>
+      </div>
+    </div>
   );
 }

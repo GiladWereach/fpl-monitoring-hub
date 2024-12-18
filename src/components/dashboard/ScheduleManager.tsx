@@ -16,6 +16,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ExecutionHistory } from "./ExecutionHistory";
 import { ScheduleFormFields } from "./ScheduleFormFields";
 import { Form } from "@/components/ui/form";
+import { logAPIError, updateAPIHealthMetrics } from "@/utils/api/errorHandling";
 import { AdvancedScheduleFormValues, TimeConfig, EventConfig, ExecutionConfig, EventCondition } from "./types/scheduling";
 
 interface ScheduleManagerProps {
@@ -55,14 +56,33 @@ export function ScheduleManager({ functionName, functionDisplayName }: ScheduleM
     queryKey: ["schedule", functionName],
     queryFn: async () => {
       console.log(`Fetching schedule for function: ${functionName}`);
-      const { data, error } = await supabase
-        .from("schedules")
-        .select("*")
-        .eq("function_name", functionName)
-        .maybeSingle();
+      const startTime = Date.now();
+      
+      try {
+        const { data, error } = await supabase
+          .from("schedules")
+          .select("*")
+          .eq("function_name", functionName)
+          .maybeSingle();
 
-      if (error) throw error;
-      return data;
+        const endTime = Date.now();
+        await updateAPIHealthMetrics("fetch_schedule", true, endTime - startTime);
+
+        if (error) throw error;
+        return data;
+      } catch (error) {
+        console.error("Error fetching schedule:", error);
+        await logAPIError({
+          type: "SERVER_ERROR",
+          message: error.message,
+          endpoint: "fetch_schedule",
+          statusCode: error.status || 500,
+          retryCount: 0,
+          requestParams: { functionName }
+        });
+        await updateAPIHealthMetrics("fetch_schedule", false);
+        throw error;
+      }
     }
   });
 
@@ -96,6 +116,7 @@ export function ScheduleManager({ functionName, functionDisplayName }: ScheduleM
   }, [schedule, form, functionName]);
 
   const onSubmit = async (values: AdvancedScheduleFormValues) => {
+    const startTime = Date.now();
     try {
       console.log(`Saving schedule for ${functionName}:`, values);
       const { error } = await supabase
@@ -115,6 +136,9 @@ export function ScheduleManager({ functionName, functionDisplayName }: ScheduleM
 
       if (error) throw error;
 
+      const endTime = Date.now();
+      await updateAPIHealthMetrics("save_schedule", true, endTime - startTime);
+
       toast({
         title: "Success",
         description: "Schedule updated successfully",
@@ -122,6 +146,16 @@ export function ScheduleManager({ functionName, functionDisplayName }: ScheduleM
       setOpen(false);
     } catch (error) {
       console.error("Error saving schedule:", error);
+      await logAPIError({
+        type: "SERVER_ERROR",
+        message: error.message,
+        endpoint: "save_schedule",
+        statusCode: error.status || 500,
+        retryCount: 0,
+        requestParams: { functionName, values }
+      });
+      await updateAPIHealthMetrics("save_schedule", false);
+      
       toast({
         title: "Error",
         description: "Failed to update schedule. Please try again.",
