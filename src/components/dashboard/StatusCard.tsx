@@ -30,10 +30,10 @@ export function StatusCard({
   return (
     <HoverCard>
       <HoverCardTrigger asChild>
-        <Card className="glass-card transition-all duration-200 hover:scale-[1.02]">
+        <Card className="glass-card transition-all duration-200 hover:scale-[1.02] min-w-[240px]">
           <CardContent className="p-4 sm:p-6">
             <div className="flex items-start justify-between gap-4">
-              <div className="min-w-0 flex-1">
+              <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-muted-foreground truncate">{title}</p>
                 <h3 className="mt-2 text-xl sm:text-2xl font-bold truncate">{value}</h3>
                 {trend && (
