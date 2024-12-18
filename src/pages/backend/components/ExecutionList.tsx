@@ -3,8 +3,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
+import { useToast } from "@/hooks/use-toast";
+import { useEffect, useRef } from "react";
 
 export function ExecutionList() {
+  const { toast } = useToast();
+  const lastExecutionRef = useRef<string | null>(null);
+
   const { data: executions } = useQuery({
     queryKey: ['recent-executions'],
     queryFn: async () => {
@@ -24,6 +29,31 @@ export function ExecutionList() {
     },
     refetchInterval: 30000
   });
+
+  useEffect(() => {
+    if (executions && executions.length > 0) {
+      const latestExecution = executions[0];
+      
+      // Only show notification if this is a new execution
+      if (lastExecutionRef.current !== latestExecution.id) {
+        lastExecutionRef.current = latestExecution.id;
+        
+        if (latestExecution.status === 'completed') {
+          toast({
+            title: "Function Execution Successful",
+            description: `${latestExecution.schedule_id} completed successfully`,
+            variant: "default",
+          });
+        } else if (latestExecution.status === 'failed') {
+          toast({
+            title: "Function Execution Failed",
+            description: latestExecution.error_details || "An error occurred during execution",
+            variant: "destructive",
+          });
+        }
+      }
+    }
+  }, [executions, toast]);
 
   return (
     <Table>
