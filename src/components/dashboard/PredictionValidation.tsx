@@ -65,10 +65,17 @@ export function PredictionValidation() {
       }
 
       console.log('System accuracy:', data);
-      return data ? {
+      if (!data) return null;
+      
+      const metrics = data.metrics as { health_score: number; performance_indicators?: { response_time?: number; error_rate?: number; } };
+      
+      return {
         ...data,
-        metrics: data.metrics as SystemAccuracy['metrics']
-      } as SystemAccuracy : null;
+        metrics: {
+          health_score: metrics.health_score,
+          performance_indicators: metrics.performance_indicators
+        }
+      } as SystemAccuracy;
     },
     refetchInterval: 300000
   });
