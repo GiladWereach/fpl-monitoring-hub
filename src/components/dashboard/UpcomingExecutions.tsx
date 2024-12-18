@@ -5,69 +5,97 @@ import { Clock, AlertCircle, Calendar } from "lucide-react";
 import { format, isAfter } from "date-fns";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "@/hooks/use-toast";
 
 export function UpcomingExecutions() {
-  const { data: schedules } = useQuery({
+  const { data: schedules, error } = useQuery({
     queryKey: ['upcoming-executions'],
     queryFn: async () => {
       console.log('Fetching upcoming executions');
-      const { data, error } = await supabase
-        .from('schedules')
-        .select(`
-          id,
-          function_name,
-          next_execution_at,
-          enabled,
-          schedule_type,
-          time_config,
-          event_config
-        `)
-        .order('next_execution_at', { ascending: true })
-        .limit(10);
+      try {
+        // First fetch regular schedules
+        const { data: regularSchedules, error: scheduleError } = await supabase
+          .from('schedules')
+          .select(`
+            id,
+            function_name,
+            next_execution_at,
+            enabled,
+            schedule_type,
+            time_config,
+            event_config
+          `)
+          .order('next_execution_at', { ascending: true })
+          .limit(10);
 
-      if (error) {
-        console.error('Error fetching upcoming executions:', error);
+        if (scheduleError) {
+          console.error('Error fetching schedules:', scheduleError);
+          throw scheduleError;
+        }
+
+        console.log('Regular schedules fetched:', regularSchedules);
+
+        // Then fetch function schedules
+        const { data: functionSchedules, error: fsError } = await supabase
+          .from('function_schedules')
+          .select('*')
+          .eq('status', 'active')
+          .order('next_execution_at', { ascending: true });
+
+        if (fsError) {
+          console.error('Error fetching function schedules:', fsError);
+          throw fsError;
+        }
+
+        console.log('Function schedules fetched:', functionSchedules);
+
+        // Combine and normalize both types of schedules
+        const allSchedules = [
+          ...(regularSchedules || []),
+          ...(functionSchedules || []).map(fs => ({
+            id: fs.id,
+            function_name: fs.function_name,
+            next_execution_at: fs.next_execution_at,
+            enabled: fs.status === 'active',
+            schedule_type: 'time_based',
+            time_config: {
+              type: fs.frequency_type === 'fixed_interval' ? 'interval' : 'daily',
+              intervalMinutes: fs.base_interval_minutes,
+              hour: fs.fixed_time ? parseInt(fs.fixed_time.split(':')[0]) : null
+            }
+          }))
+        ];
+
+        // Sort by next execution time
+        return allSchedules.sort((a, b) => {
+          if (!a.next_execution_at) return 1;
+          if (!b.next_execution_at) return -1;
+          return new Date(a.next_execution_at).getTime() - new Date(b.next_execution_at).getTime();
+        });
+      } catch (error) {
+        console.error('Error in queryFn:', error);
+        toast({
+          title: "Error fetching schedules",
+          description: "Please try again later",
+          variant: "destructive",
+        });
         throw error;
       }
-
-      // Also fetch function schedules for daily executions
-      const { data: functionSchedules, error: fsError } = await supabase
-        .from('function_schedules')
-        .select('*')
-        .eq('status', 'active')
-        .order('next_execution_at', { ascending: true });
-
-      if (fsError) {
-        console.error('Error fetching function schedules:', fsError);
-        throw fsError;
-      }
-
-      // Combine both types of schedules
-      const allSchedules = [
-        ...(data || []),
-        ...(functionSchedules || []).map(fs => ({
-          id: fs.id,
-          function_name: fs.function_name,
-          next_execution_at: fs.next_execution_at,
-          enabled: fs.status === 'active',
-          schedule_type: 'time_based',
-          time_config: {
-            type: fs.frequency_type === 'fixed_interval' ? 'interval' : 'daily',
-            intervalMinutes: fs.base_interval_minutes,
-            hour: fs.fixed_time ? parseInt(fs.fixed_time.split(':')[0]) : null
-          }
-        }))
-      ];
-
-      // Sort by next execution time
-      return allSchedules.sort((a, b) => {
-        if (!a.next_execution_at) return 1;
-        if (!b.next_execution_at) return -1;
-        return new Date(a.next_execution_at).getTime() - new Date(b.next_execution_at).getTime();
-      });
     },
     refetchInterval: 30000
   });
+
+  if (error) {
+    console.error('Query error:', error);
+    return (
+      <Card className="p-6">
+        <div className="flex items-center gap-2 text-destructive">
+          <AlertCircle className="h-5 w-5" />
+          <p>Error loading upcoming executions</p>
+        </div>
+      </Card>
+    );
+  }
 
   const getStatusBadge = (schedule: any) => {
     if (!schedule.enabled) {
