@@ -50,14 +50,16 @@ export function PricePredictions() {
         .order("probability", { ascending: false });
 
       if (error) throw error;
-      return data as (PricePrediction & {
+      
+      // Type assertion to handle the JSON factors field
+      return (data as unknown as (PricePrediction & {
         players: {
           web_name: string;
           now_cost: number;
           selected_by_percent: string;
           team: number;
         };
-      })[];
+      })[]);
     },
     refetchInterval: 60000, // Refresh every minute
   });
