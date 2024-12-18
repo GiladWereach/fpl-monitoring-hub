@@ -116,3 +116,67 @@ export async function triggerPointsCalculation(supabaseClient: any) {
     console.error('Error triggering points calculation:', calcError);
   }
 }
+
+export async function shouldProcessGameweek(supabaseClient: any, eventId: number): Promise<boolean> {
+  try {
+    // Get the current event details
+    const { data: event, error: eventError } = await supabaseClient
+      .from('events')
+      .select('deadline_time, finished')
+      .eq('id', eventId)
+      .single();
+
+    if (eventError) throw eventError;
+
+    const now = new Date();
+    const deadlineTime = new Date(event.deadline_time);
+    
+    // If the gameweek is finished, we don't need to process it
+    if (event.finished) {
+      console.log(`Gameweek ${eventId} is finished, no need to process`);
+      return false;
+    }
+
+    // If we're before the deadline, don't process
+    if (now < deadlineTime) {
+      console.log(`Current time is before gameweek ${eventId} deadline, no need to process`);
+      return false;
+    }
+
+    // Check if there are any active fixtures
+    const { data: fixtures, error: fixturesError } = await supabaseClient
+      .from('fixtures')
+      .select('started, finished')
+      .eq('event', eventId);
+
+    if (fixturesError) throw fixturesError;
+
+    // If any fixture is started but not finished, we should process
+    const hasActiveFixtures = fixtures.some(f => f.started && !f.finished);
+    if (hasActiveFixtures) {
+      console.log(`Gameweek ${eventId} has active fixtures, should process`);
+      return true;
+    }
+
+    // If all fixtures are finished, check if we need one final update
+    const allFixturesFinished = fixtures.every(f => f.finished);
+    if (allFixturesFinished) {
+      // Get the last update time
+      const lastUpdate = await getLastUpdate(supabaseClient, eventId);
+      
+      // If we haven't updated in the last hour after all fixtures finished,
+      // do one final update
+      if (!lastUpdate?.last_updated || 
+          (now.getTime() - new Date(lastUpdate.last_updated).getTime() > 60 * 60 * 1000)) {
+        console.log(`Performing final update for gameweek ${eventId}`);
+        return true;
+      }
+    }
+
+    console.log(`No processing needed for gameweek ${eventId}`);
+    return false;
+  } catch (error) {
+    console.error('Error checking if gameweek should be processed:', error);
+    return false;
+  }
+}

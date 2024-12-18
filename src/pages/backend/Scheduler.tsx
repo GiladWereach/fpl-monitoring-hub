@@ -19,7 +19,6 @@ export default function BackendScheduler() {
     try {
       console.log("Creating new function schedule:", data);
       
-      // Get the group's settings
       const { data: group, error: groupError } = await supabase
         .from('function_schedules')
         .select('*')
@@ -28,7 +27,6 @@ export default function BackendScheduler() {
 
       if (groupError) throw groupError;
 
-      // Use group settings or defaults
       const baseSettings = group || {
         frequency_type: 'fixed_interval',
         base_interval_minutes: 5,
@@ -71,19 +69,25 @@ export default function BackendScheduler() {
   };
 
   return (
-    <div className="container mx-auto p-4 space-y-6">
+    <div className="container mx-auto p-2 sm:p-4 space-y-4 sm:space-y-6">
       <ScheduleHeader onNewFunction={() => setNewFunctionOpen(true)} />
       
-      <APIHealthStatus />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <APIHealthStatus />
+      </div>
 
-      <Card className="p-6">
-        <h2 className="text-xl font-semibold mb-4">Function Schedules</h2>
-        <ScheduleList />
+      <Card className="p-3 sm:p-6">
+        <h2 className="text-lg sm:text-xl font-semibold mb-4">Function Schedules</h2>
+        <div className="overflow-x-auto">
+          <ScheduleList />
+        </div>
       </Card>
 
-      <Card className="p-6">
-        <h2 className="text-xl font-semibold mb-4">Recent Executions</h2>
-        <ExecutionList />
+      <Card className="p-3 sm:p-6">
+        <h2 className="text-lg sm:text-xl font-semibold mb-4">Recent Executions</h2>
+        <div className="overflow-x-auto">
+          <ExecutionList />
+        </div>
       </Card>
 
       <NewFunctionDialog

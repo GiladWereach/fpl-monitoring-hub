@@ -7,7 +7,8 @@ import {
   getActiveFixtures,
   getLastUpdate,
   upsertLivePerformance,
-  triggerPointsCalculation
+  triggerPointsCalculation,
+  shouldProcessGameweek
 } from './database.ts';
 import { mapPlayerDataToUpdate, shouldSkipUpdate } from './utils.ts';
 
@@ -26,7 +27,42 @@ serve(async (req) => {
     
     const supabaseClient = await getSupabaseClient();
     const currentEvent = await getCurrentEvent(supabaseClient);
+    
+    if (!currentEvent) {
+      console.log('No current gameweek found');
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: 'No current gameweek found',
+          shouldProcess: false
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        }
+      );
+    }
+
     console.log(`Current gameweek: ${currentEvent.id}`);
+
+    // Check if we should process this gameweek
+    const shouldProcess = await shouldProcessGameweek(supabaseClient, currentEvent.id);
+    
+    if (!shouldProcess) {
+      console.log('Gameweek should not be processed at this time');
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: 'Gameweek should not be processed at this time',
+          gameweek: currentEvent.id,
+          shouldProcess: false
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        }
+      );
+    }
 
     const activeFixtures = await getActiveFixtures(supabaseClient, currentEvent.id);
 
@@ -40,7 +76,8 @@ serve(async (req) => {
           JSON.stringify({
             success: true,
             message: 'Skipped update - no active matches and last update was recent',
-            gameweek: currentEvent.id
+            gameweek: currentEvent.id,
+            shouldProcess: false
           }),
           {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -64,7 +101,8 @@ serve(async (req) => {
         message: 'Live gameweek data updated successfully',
         gameweek: currentEvent.id,
         updatedPlayers: updates.length,
-        hasActiveMatches: activeFixtures.length > 0
+        hasActiveMatches: activeFixtures.length > 0,
+        shouldProcess: true
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
