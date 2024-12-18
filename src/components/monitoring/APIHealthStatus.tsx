@@ -59,103 +59,93 @@ export function APIHealthStatus() {
   }, null);
 
   return (
-    <div className="space-y-6">
+    <>
       {/* System Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatusCard
-          title="Database Status"
-          value="Connected"
-          status="success"
-          icon={<Database className="h-4 w-4" />}
-          details={[
-            { label: "Active Connections", value: "5" },
-            { label: "Query Performance", value: "Optimal" }
-          ]}
-        />
-        
-        <StatusCard
-          title="Edge Functions"
-          value="8 Active"
-          status="success"
-          icon={<Server className="h-4 w-4" />}
-          details={[
-            { label: "Total Functions", value: "10" },
-            { label: "Health Score", value: "100%" }
-          ]}
-        />
+      <StatusCard
+        title="Database Status"
+        value="Connected"
+        status="success"
+        icon={<Database className="h-4 w-4" />}
+        details={[
+          { label: "Active Connections", value: "5" },
+          { label: "Query Performance", value: "Optimal" }
+        ]}
+      />
+      
+      <StatusCard
+        title="Edge Functions"
+        value="8 Active"
+        status="success"
+        icon={<Server className="h-4 w-4" />}
+        details={[
+          { label: "Total Functions", value: "10" },
+          { label: "Health Score", value: "100%" }
+        ]}
+      />
 
-        <StatusCard
-          title="Calculations"
-          value="0 Running"
-          status="info"
-          icon={<Calculator className="h-4 w-4" />}
-          details={[
-            { label: "Completed Today", value: "24" },
-            { label: "Average Duration", value: "2.3s" }
-          ]}
-        />
+      <StatusCard
+        title="Calculations"
+        value="0 Running"
+        status="info"
+        icon={<Calculator className="h-4 w-4" />}
+        details={[
+          { label: "Completed Today", value: "24" },
+          { label: "Average Duration", value: "2.3s" }
+        ]}
+      />
 
-        <StatusCard
-          title="System Errors"
-          value="0"
-          status="success"
-          icon={<AlertTriangle className="h-4 w-4" />}
-          details={[
-            { label: "Last 24h", value: "0" },
-            { label: "Critical", value: "0" }
-          ]}
-        />
-      </div>
+      <StatusCard
+        title="System Errors"
+        value="0"
+        status="success"
+        icon={<AlertTriangle className="h-4 w-4" />}
+        details={[
+          { label: "Last 24h", value: "0" },
+          { label: "Critical", value: "0" }
+        ]}
+      />
 
       {/* API Health Metrics */}
-      <div className="glass-card rounded-lg p-6">
-        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-          <Activity className="h-5 w-5" />
-          API Health Metrics
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatusCard
-            title="API Success Rate"
-            value={`${successRate.toFixed(1)}%`}
-            status={successRate > 95 ? "success" : successRate > 90 ? "warning" : "error"}
-            icon={<CheckCircle2 className="h-4 w-4" />}
-            details={[
-              { label: "Total Requests", value: totalRequests },
-              { label: "Success Count", value: successCount }
-            ]}
-          />
+      <StatusCard
+        title="API Success Rate"
+        value={`${successRate.toFixed(1)}%`}
+        status={successRate > 95 ? "success" : successRate > 90 ? "warning" : "error"}
+        icon={<CheckCircle2 className="h-4 w-4" />}
+        details={[
+          { label: "Total Requests", value: totalRequests },
+          { label: "Success Count", value: successCount }
+        ]}
+      />
 
-          <StatusCard
-            title="Avg Response Time"
-            value={`${avgResponseTime.toFixed(2)}ms`}
-            status={avgResponseTime < 500 ? "success" : avgResponseTime < 1000 ? "warning" : "error"}
-            icon={<Clock className="h-4 w-4" />}
-            details={[
-              { label: "Slowest Endpoint", value: metrics?.sort((a, b) => (b.avg_response_time || 0) - (a.avg_response_time || 0))[0]?.endpoint || 'N/A' }
-            ]}
-          />
+      <StatusCard
+        title="Avg Response Time"
+        value={`${avgResponseTime.toFixed(2)}ms`}
+        status={avgResponseTime < 500 ? "success" : avgResponseTime < 1000 ? "warning" : "error"}
+        icon={<Clock className="h-4 w-4" />}
+        details={[
+          { label: "Slowest Endpoint", value: metrics?.sort((a, b) => (b.avg_response_time || 0) - (a.avg_response_time || 0))[0]?.endpoint || 'N/A' }
+        ]}
+      />
 
-          <StatusCard
-            title="Recent Errors"
-            value={lastError ? format(new Date(lastError), "HH:mm:ss") : "No errors"}
-            status={!lastError ? "success" : "error"}
-            icon={<AlertTriangle className="h-4 w-4" />}
-            details={[
-              { label: "Error Count", value: metrics?.reduce((acc, m) => acc + (m.error_count || 0), 0) || 0 }
-            ]}
-          />
+      <StatusCard
+        title="Recent Errors"
+        value={lastError ? format(new Date(lastError), "HH:mm:ss") : "No errors"}
+        status={!lastError ? "success" : "error"}
+        icon={<AlertTriangle className="h-4 w-4" />}
+        details={[
+          { label: "Error Count", value: metrics?.reduce((acc, m) => acc + (m.error_count || 0), 0) || 0 }
+        ]}
+      />
 
-          <StatusCard
-            title="Active Endpoints"
-            value={metrics?.length || 0}
-            status="info"
-            icon={<Activity className="h-4 w-4" />}
-            details={[
-              { label: "Most Active", value: mostActiveEndpoint?.endpoint || 'N/A' }
-            ]}
-          />
-        </div>
-      </div>
-    </div>
+      <StatusCard
+        title="Active Endpoints"
+        value={metrics?.length || 0}
+        status="info"
+        icon={<Activity className="h-4 w-4" />}
+        details={[
+          { label: "Most Active", value: mostActiveEndpoint?.endpoint || 'N/A' }
+        ]}
+      />
+    </>
   );
 }
