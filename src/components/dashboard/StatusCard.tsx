@@ -30,15 +30,15 @@ export function StatusCard({
   return (
     <HoverCard>
       <HoverCardTrigger asChild>
-        <Card className="glass-card transition-all duration-200 hover:scale-[1.02] min-w-[240px]">
-          <CardContent className="p-4 sm:p-6">
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex-1 space-y-2">
-                <p className="text-sm font-medium text-muted-foreground truncate">{title}</p>
-                <h3 className="text-xl sm:text-2xl font-bold truncate">{value}</h3>
+        <Card className="glass-card transition-all duration-200 hover:scale-[1.02] w-full">
+          <CardContent className="p-6">
+            <div className="flex items-start justify-between gap-6">
+              <div className="flex-1 space-y-3">
+                <p className="text-sm font-medium text-muted-foreground line-clamp-1">{title}</p>
+                <h3 className="text-2xl font-bold line-clamp-1">{value}</h3>
                 {trend && (
                   <p className={cn(
-                    "text-sm",
+                    "text-sm font-medium",
                     trend.value > 0 ? "text-success" : "text-destructive"
                   )}>
                     {trend.value > 0 ? "↑" : "↓"} {Math.abs(trend.value)}% {trend.label}

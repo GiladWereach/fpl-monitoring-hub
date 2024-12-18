@@ -70,15 +70,15 @@ export default function BackendScheduler() {
   };
 
   return (
-    <div className="container mx-auto p-4 space-y-6 animate-fade-in">
+    <div className="container mx-auto p-6 space-y-8 animate-fade-in">
       <ScheduleHeader onNewFunction={() => setNewFunctionOpen(true)} />
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <APIHealthStatus />
       </div>
 
-      <Card className="p-3 sm:p-6">
-        <h2 className="text-lg sm:text-xl font-semibold mb-4">Function Schedules</h2>
+      <Card className="p-6">
+        <h2 className="text-lg sm:text-xl font-semibold mb-6">Function Schedules</h2>
         <ScrollArea className="h-[400px] w-full">
           <div className="min-w-[600px]">
             <ScheduleList />
@@ -86,8 +86,8 @@ export default function BackendScheduler() {
         </ScrollArea>
       </Card>
 
-      <Card className="p-3 sm:p-6">
-        <h2 className="text-lg sm:text-xl font-semibold mb-4">Recent Executions</h2>
+      <Card className="p-6">
+        <h2 className="text-lg sm:text-xl font-semibold mb-6">Recent Executions</h2>
         <ScrollArea className="h-[400px] w-full">
           <div className="min-w-[600px]">
             <ExecutionList />
