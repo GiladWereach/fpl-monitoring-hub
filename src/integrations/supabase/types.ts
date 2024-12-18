@@ -1731,6 +1731,50 @@ export type Database = {
         }
         Relationships: []
       }
+      transfer_history: {
+        Row: {
+          created_at: string | null
+          current_price: number
+          gameweek: number
+          id: number
+          ownership_percent: number
+          player_id: number | null
+          timestamp: string
+          transfers_in_delta: number
+          transfers_out_delta: number
+        }
+        Insert: {
+          created_at?: string | null
+          current_price: number
+          gameweek: number
+          id?: number
+          ownership_percent: number
+          player_id?: number | null
+          timestamp: string
+          transfers_in_delta: number
+          transfers_out_delta: number
+        }
+        Update: {
+          created_at?: string | null
+          current_price?: number
+          gameweek?: number
+          id?: number
+          ownership_percent?: number
+          player_id?: number | null
+          timestamp?: string
+          transfers_in_delta?: number
+          transfers_out_delta?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transfer_history_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
