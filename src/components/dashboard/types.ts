@@ -1,18 +1,37 @@
-export type TimeConfig = {
-  type?: "interval" | "daily" | "weekly" | "monthly" | "cron";
-  intervalMinutes?: number;
-  cronExpression?: string;
-  hour?: number;
-};
+export interface AccuracyMetrics {
+  was_correct: boolean;
+  timing_deviation?: number;
+  confidence_correlation?: number;
+}
 
-export type EventConfig = {
-  triggerType?: "deadline" | "kickoff" | "match_status";
-  offsetMinutes?: number;
-};
+export interface SystemMetrics {
+  health_score: number;
+  performance_indicators?: {
+    response_time?: number;
+    error_rate?: number;
+  };
+}
 
-export interface ScheduleFormValues {
-  enabled: boolean;
-  scheduleType: "time_based" | "event_based";
-  timeConfig?: TimeConfig;
-  eventConfig?: EventConfig;
+export interface PredictionValidation {
+  id: number;
+  prediction_id: number | null;
+  actual_timestamp: string | null;
+  predicted_timestamp: string | null;
+  accuracy_metrics: AccuracyMetrics | null;
+  system_metrics: SystemMetrics | null;
+  created_at: string | null;
+  price_predictions?: {
+    prediction_type: string;
+    probability: number;
+    confidence_score: number;
+  } | null;
+}
+
+export interface SystemAccuracy {
+  id: number;
+  period_start: string | null;
+  period_end: string | null;
+  period_type: string | null;
+  metrics: SystemMetrics | null;
+  created_at: string | null;
 }

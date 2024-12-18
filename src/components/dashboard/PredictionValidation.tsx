@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { format } from "date-fns";
 import { AlertTriangle, CheckCircle2, Clock } from "lucide-react";
+import { PredictionValidation as PredictionValidationType, SystemAccuracy } from "./types";
 
 interface ValidationMetrics {
   total_predictions: number;
@@ -37,7 +38,7 @@ export function PredictionValidation() {
       }
 
       console.log('Fetched validations:', data);
-      return data;
+      return data as PredictionValidationType[];
     },
     refetchInterval: 60000
   });
@@ -59,12 +60,12 @@ export function PredictionValidation() {
       }
 
       console.log('System accuracy:', data);
-      return data;
+      return data as SystemAccuracy;
     },
     refetchInterval: 300000
   });
 
-  const calculateMetrics = (validations: any[]): ValidationMetrics => {
+  const calculateMetrics = (validations: PredictionValidationType[]): ValidationMetrics => {
     if (!validations?.length) {
       return {
         total_predictions: 0,
@@ -77,8 +78,10 @@ export function PredictionValidation() {
 
     const correct = validations.filter(v => v.accuracy_metrics?.was_correct).length;
     const timeDeviations = validations
-      .map(v => Math.abs(new Date(v.actual_timestamp).getTime() - new Date(v.predicted_timestamp).getTime()))
-      .filter(Boolean);
+      .map(v => v.actual_timestamp && v.predicted_timestamp ? 
+        Math.abs(new Date(v.actual_timestamp).getTime() - new Date(v.predicted_timestamp).getTime()) : 
+        null)
+      .filter((dev): dev is number => dev !== null);
 
     const avgDeviation = timeDeviations.length 
       ? timeDeviations.reduce((a, b) => a + b, 0) / timeDeviations.length / (1000 * 60 * 60) // Convert to hours
@@ -214,7 +217,9 @@ export function PredictionValidation() {
                 <div className="flex items-center gap-8">
                   <div className="text-right">
                     <p className="font-medium">
-                      {format(new Date(validation.actual_timestamp), 'MMM d, HH:mm')}
+                      {validation.actual_timestamp ? 
+                        format(new Date(validation.actual_timestamp), 'MMM d, HH:mm') :
+                        'Pending'}
                     </p>
                     <p className="text-sm text-muted-foreground">
                       Actual time
@@ -222,7 +227,9 @@ export function PredictionValidation() {
                   </div>
                   <div className="text-right">
                     <p className="font-medium">
-                      {format(new Date(validation.predicted_timestamp), 'MMM d, HH:mm')}
+                      {validation.predicted_timestamp ?
+                        format(new Date(validation.predicted_timestamp), 'MMM d, HH:mm') :
+                        'N/A'}
                     </p>
                     <p className="text-sm text-muted-foreground">
                       Predicted time
