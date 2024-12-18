@@ -5,7 +5,7 @@ import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import { SystemHealthMetrics } from "@/types/metrics";
 
 export function SystemHealth() {
-  const { data: healthMetrics } = useQuery<{ metrics: SystemHealthMetrics }>({
+  const { data: healthMetrics } = useQuery<SystemHealthMetrics>({
     queryKey: ['system-health-metrics'],
     queryFn: async () => {
       console.log('Fetching system health metrics...');
@@ -16,8 +16,22 @@ export function SystemHealth() {
         .limit(1)
         .maybeSingle();
 
-      if (error) throw error;
-      return data;
+      if (error) {
+        console.error('Error fetching system health metrics:', error);
+        throw error;
+      }
+
+      // Transform the data to match our SystemHealthMetrics interface
+      const metrics: SystemHealthMetrics = {
+        health_score: data?.metrics?.health_score || 0,
+        performance_indicators: {
+          response_time: data?.metrics?.performance_indicators?.response_time || 0,
+          error_rate: data?.metrics?.performance_indicators?.error_rate || 0,
+          uptime: data?.metrics?.performance_indicators?.uptime || 100
+        }
+      };
+
+      return metrics;
     }
   });
 
@@ -27,7 +41,7 @@ export function SystemHealth() {
     return { color: 'text-red-500', icon: AlertTriangle, text: 'Critical' };
   };
 
-  const healthScore = healthMetrics?.metrics?.health_score || 0;
+  const healthScore = healthMetrics?.health_score || 0;
   const status = getHealthStatus(healthScore);
   const Icon = status.icon;
 
@@ -54,19 +68,19 @@ export function SystemHealth() {
           <div className="p-4 bg-background/50 rounded-lg">
             <p className="text-sm text-muted-foreground">Response Time</p>
             <p className="text-2xl font-bold">
-              {healthMetrics?.metrics?.performance_indicators?.response_time || 0}ms
+              {healthMetrics?.performance_indicators?.response_time || 0}ms
             </p>
           </div>
           <div className="p-4 bg-background/50 rounded-lg">
             <p className="text-sm text-muted-foreground">Error Rate</p>
             <p className="text-2xl font-bold">
-              {healthMetrics?.metrics?.performance_indicators?.error_rate || 0}%
+              {healthMetrics?.performance_indicators?.error_rate || 0}%
             </p>
           </div>
           <div className="p-4 bg-background/50 rounded-lg">
             <p className="text-sm text-muted-foreground">Uptime</p>
             <p className="text-2xl font-bold">
-              {healthMetrics?.metrics?.performance_indicators?.uptime || 100}%
+              {healthMetrics?.performance_indicators?.uptime || 100}%
             </p>
           </div>
         </div>
