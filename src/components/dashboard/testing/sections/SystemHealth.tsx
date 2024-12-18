@@ -2,9 +2,10 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
+import { SystemHealthMetrics } from "@/types/metrics";
 
 export function SystemHealth() {
-  const { data: healthMetrics } = useQuery({
+  const { data: healthMetrics } = useQuery<{ metrics: SystemHealthMetrics }>({
     queryKey: ['system-health-metrics'],
     queryFn: async () => {
       console.log('Fetching system health metrics...');

@@ -1977,6 +1977,26 @@ export type Database = {
           frequency_type: Database["public"]["Enums"]["schedule_frequency"]
         }[]
       }
+      get_collection_metrics: {
+        Args: {
+          hours_ago: number
+        }
+        Returns: {
+          total_records: number
+          collection_rate: number
+          success_rate: number
+        }[]
+      }
+      get_processing_metrics: {
+        Args: {
+          hours_ago: number
+        }
+        Returns: {
+          avg_processing_time: number
+          error_rate: number
+          data_quality_score: number
+        }[]
+      }
       update_next_execution_time: {
         Args: {
           schedule_id: string

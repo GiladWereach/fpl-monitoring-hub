@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { format } from "date-fns";
+import { CollectionMetrics } from "@/types/metrics";
 
 export function DataCollection() {
   const { data: transferHistory } = useQuery({
@@ -30,7 +31,7 @@ export function DataCollection() {
     refetchInterval: 300000 // 5 minutes
   });
 
-  const { data: collectionMetrics } = useQuery({
+  const { data: collectionMetrics } = useQuery<CollectionMetrics>({
     queryKey: ['collection-metrics'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -39,7 +40,7 @@ export function DataCollection() {
         });
       
       if (error) throw error;
-      return data;
+      return data[0];
     }
   });
 

@@ -1,19 +1,19 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
+import { ProcessingMetrics } from "@/types/metrics";
 
 export function ProcessingValidation() {
-  const { data: processingMetrics } = useQuery({
+  const { data: processingMetrics } = useQuery<ProcessingMetrics>({
     queryKey: ['processing-metrics'],
     queryFn: async () => {
-      console.log('Fetching processing metrics...');
       const { data, error } = await supabase
         .rpc('get_processing_metrics', {
           hours_ago: 24
         });
       
       if (error) throw error;
-      return data;
+      return data[0];
     }
   });
 
