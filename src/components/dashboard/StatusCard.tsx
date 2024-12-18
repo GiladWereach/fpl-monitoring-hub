@@ -33,12 +33,12 @@ export function StatusCard({
         <Card className="glass-card transition-all duration-200 hover:scale-[1.02] min-w-[240px]">
           <CardContent className="p-4 sm:p-6">
             <div className="flex items-start justify-between gap-4">
-              <div className="flex-1 min-w-0">
+              <div className="flex-1 space-y-2">
                 <p className="text-sm font-medium text-muted-foreground truncate">{title}</p>
-                <h3 className="mt-2 text-xl sm:text-2xl font-bold truncate">{value}</h3>
+                <h3 className="text-xl sm:text-2xl font-bold truncate">{value}</h3>
                 {trend && (
                   <p className={cn(
-                    "text-sm mt-1",
+                    "text-sm",
                     trend.value > 0 ? "text-success" : "text-destructive"
                   )}>
                     {trend.value > 0 ? "↑" : "↓"} {Math.abs(trend.value)}% {trend.label}
