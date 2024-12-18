@@ -46,7 +46,7 @@ Deno.serve(async (req) => {
     // Get active players
     const { data: players, error: playersError } = await supabase
       .from('players')
-      .select('id')
+      .select('id, web_name')
       .eq('removed', false);
 
     if (playersError) throw playersError;
@@ -59,6 +59,7 @@ Deno.serve(async (req) => {
     // Process each player
     for (const player of players) {
       try {
+        console.log(`Processing player ${player.id} (${player.web_name})...`);
         const metrics = await calculateTransferTrends(supabase, player.id);
         results.push({
           success: true,
@@ -87,7 +88,7 @@ Deno.serve(async (req) => {
     const { error: logError } = await supabase
       .from('calculation_logs')
       .insert({
-        calculation_type_id: 3, // ID for transfer processing
+        calculation_type_id: 3,
         status: 'completed',
         affected_rows: results.length,
         performance_metrics: {
@@ -139,7 +140,8 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: false,
-        error: 'Failed to process transfer data'
+        error: 'Failed to process transfer data',
+        details: error.message
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -154,37 +156,48 @@ async function calculateTransferTrends(
   player_id: number
 ): Promise<TransferDelta> {
   const now = new Date();
-  const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000); // Changed to 7 days
 
-  // Get transfer history for last 24 hours
+  // Get transfer history for last 7 days
   const { data: transfers, error: transferError } = await supabase
     .from('transfer_history')
     .select('*')
     .eq('player_id', player_id)
-    .gte('timestamp', twentyFourHoursAgo.toISOString())
+    .gte('timestamp', sevenDaysAgo.toISOString())
     .order('timestamp', { ascending: true });
 
   if (transferError) throw transferError;
 
-  if (!transfers || transfers.length < 2) {
-    throw new Error('Insufficient data for trend calculation');
+  // Handle insufficient data more gracefully
+  if (!transfers || transfers.length === 0) {
+    return {
+      player_id,
+      start_timestamp: now,
+      end_timestamp: now,
+      net_transfer_delta: 0,
+      ownership_delta: 0,
+      transfer_velocity: 0
+    };
   }
 
+  // Calculate metrics even with just one data point
   const netTransfers = transfers.reduce((acc, curr) => 
     acc + (curr.transfers_in_delta - curr.transfers_out_delta), 0);
 
-  const ownershipDelta = transfers[transfers.length - 1].ownership_percent - 
-                        transfers[0].ownership_percent;
+  const ownershipDelta = transfers.length > 1 ? 
+    transfers[transfers.length - 1].ownership_percent - transfers[0].ownership_percent :
+    0;
 
-  const hoursDifference = 
-    (transfers[transfers.length - 1].timestamp - transfers[0].timestamp) / (1000 * 60 * 60);
+  const hoursDifference = transfers.length > 1 ?
+    (new Date(transfers[transfers.length - 1].timestamp).getTime() - new Date(transfers[0].timestamp).getTime()) / (1000 * 60 * 60) :
+    24; // Default to 24 hours if only one data point
   
   const transferVelocity = netTransfers / hoursDifference;
 
   return {
     player_id,
-    start_timestamp: new Date(transfers[0].timestamp),
-    end_timestamp: new Date(transfers[transfers.length - 1].timestamp),
+    start_timestamp: transfers.length > 1 ? new Date(transfers[0].timestamp) : now,
+    end_timestamp: transfers.length > 1 ? new Date(transfers[transfers.length - 1].timestamp) : now,
     net_transfer_delta: netTransfers,
     ownership_delta: ownershipDelta,
     transfer_velocity
@@ -195,7 +208,6 @@ async function cleanupOldData(supabase: any) {
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-  // Delete data older than 7 days, except for price change points
   const { error: cleanupError } = await supabase
     .from('transfer_history')
     .delete()
