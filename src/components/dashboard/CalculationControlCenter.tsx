@@ -2,6 +2,7 @@ import { LiveStatus } from "./LiveStatus";
 import { CalculationsManager } from "./CalculationsManager";
 import { RecentActivity } from "./RecentActivity";
 import { PointsCalculationFormula } from "./PointsCalculationFormula";
+import { PriceChangeMonitor } from "./PriceChangeMonitor";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StatusCard } from "./StatusCard";
 import { useQuery } from "@tanstack/react-query";
@@ -163,12 +164,17 @@ export function CalculationControlCenter() {
       <Tabs defaultValue="overview" className="space-y-8">
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="price-changes">Price Changes</TabsTrigger>
           <TabsTrigger value="points-formula">Points Formula</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-8">
           <CalculationsManager />
           <RecentActivity />
+        </TabsContent>
+
+        <TabsContent value="price-changes">
+          <PriceChangeMonitor />
         </TabsContent>
 
         <TabsContent value="points-formula">

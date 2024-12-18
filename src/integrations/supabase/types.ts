@@ -1441,6 +1441,53 @@ export type Database = {
           },
         ]
       }
+      price_changes: {
+        Row: {
+          created_at: string | null
+          gameweek: number
+          id: number
+          net_transfers: number
+          new_price: number
+          old_price: number
+          ownership_at_change: number
+          player_id: number | null
+          timestamp: string
+          transfer_velocity: number
+        }
+        Insert: {
+          created_at?: string | null
+          gameweek: number
+          id?: number
+          net_transfers: number
+          new_price: number
+          old_price: number
+          ownership_at_change: number
+          player_id?: number | null
+          timestamp: string
+          transfer_velocity: number
+        }
+        Update: {
+          created_at?: string | null
+          gameweek?: number
+          id?: number
+          net_transfers?: number
+          new_price?: number
+          old_price?: number
+          ownership_at_change?: number
+          player_id?: number | null
+          timestamp?: string
+          transfer_velocity?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "price_changes_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string | null
