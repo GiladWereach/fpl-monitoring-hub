@@ -30,6 +30,25 @@ export function ExecutionList() {
     refetchInterval: 30000
   });
 
+  const { data: metrics } = useQuery({
+    queryKey: ['api-metrics'],
+    queryFn: async () => {
+      console.log('Fetching API metrics');
+      const { data, error } = await supabase
+        .from('api_health_metrics')
+        .select('*');
+
+      if (error) {
+        console.error('Error fetching API metrics:', error);
+        throw error;
+      }
+
+      console.log('Fetched metrics:', data);
+      return data;
+    },
+    refetchInterval: 30000
+  });
+
   useEffect(() => {
     if (executions && executions.length > 0) {
       const latestExecution = executions[0];
