@@ -12,6 +12,7 @@ interface TransferData {
   ownership_percent: number;
   current_price: number;
   gameweek: number;
+  timestamp: string;
 }
 
 Deno.serve(async (req) => {
@@ -64,13 +65,15 @@ Deno.serve(async (req) => {
 
     console.log(`Processing ${players.length} players for transfer history...`);
 
+    const currentTimestamp = new Date().toISOString();
     const transferData: TransferData[] = players.map(player => ({
       player_id: player.id,
       transfers_in_delta: player.transfers_in_event || 0,
       transfers_out_delta: player.transfers_out_event || 0,
       ownership_percent: parseFloat(player.selected_by_percent) || 0,
       current_price: player.now_cost || 0,
-      gameweek: currentEvent.id
+      gameweek: currentEvent.id,
+      timestamp: currentTimestamp
     }));
 
     // Insert transfer history records
