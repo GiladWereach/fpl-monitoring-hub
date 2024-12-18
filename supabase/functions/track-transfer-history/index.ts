@@ -20,12 +20,12 @@ Deno.serve(async (req) => {
   }
 
   try {
+    console.log('Starting transfer history tracking...');
+    
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
-
-    console.log('Starting transfer history tracking...');
 
     // Get current gameweek
     const { data: currentEvent, error: eventError } = await supabase
@@ -34,7 +34,17 @@ Deno.serve(async (req) => {
       .eq('is_current', true)
       .single();
 
-    if (eventError) throw eventError;
+    if (eventError) {
+      console.error('Error fetching current event:', eventError);
+      throw new Error('Failed to fetch current event');
+    }
+
+    if (!currentEvent) {
+      console.error('No current event found');
+      throw new Error('No current event found');
+    }
+
+    console.log('Current event:', currentEvent);
 
     // Get all active players
     const { data: players, error: playersError } = await supabase
@@ -42,7 +52,15 @@ Deno.serve(async (req) => {
       .select('id, now_cost, selected_by_percent, transfers_in_event, transfers_out_event')
       .eq('removed', false);
 
-    if (playersError) throw playersError;
+    if (playersError) {
+      console.error('Error fetching players:', playersError);
+      throw new Error('Failed to fetch players');
+    }
+
+    if (!players || players.length === 0) {
+      console.error('No players found');
+      throw new Error('No players found');
+    }
 
     console.log(`Processing ${players.length} players for transfer history...`);
 
@@ -60,13 +78,18 @@ Deno.serve(async (req) => {
       .from('transfer_history')
       .insert(transferData);
 
-    if (insertError) throw insertError;
+    if (insertError) {
+      console.error('Error inserting transfer history:', insertError);
+      throw new Error('Failed to insert transfer history');
+    }
+
+    console.log(`Successfully inserted ${transferData.length} transfer history records`);
 
     // Log calculation completion
     const { error: logError } = await supabase
       .from('calculation_logs')
       .insert({
-        calculation_type_id: 2, // ID from the calculation_types table
+        calculation_type_id: 2,
         status: 'completed',
         affected_rows: transferData.length,
         performance_metrics: {
@@ -75,7 +98,10 @@ Deno.serve(async (req) => {
         }
       });
 
-    if (logError) throw logError;
+    if (logError) {
+      console.error('Error logging calculation:', logError);
+      // Don't throw here as the main operation succeeded
+    }
 
     console.log('Transfer history tracking completed successfully');
 
@@ -100,21 +126,25 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    await supabase
-      .from('calculation_logs')
-      .insert({
-        calculation_type_id: 2,
-        status: 'error',
-        error_message: error.message,
-        performance_metrics: {
-          execution_time: Date.now() - performance.now()
-        }
-      });
+    try {
+      await supabase
+        .from('calculation_logs')
+        .insert({
+          calculation_type_id: 2,
+          status: 'error',
+          error_message: error.message,
+          performance_metrics: {
+            execution_time: Date.now() - performance.now()
+          }
+        });
+    } catch (logError) {
+      console.error('Failed to log error:', logError);
+    }
 
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: 'Failed to track transfer history' 
+        error: error.message || 'Failed to track transfer history'
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
