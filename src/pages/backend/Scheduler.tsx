@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ScheduleHeader } from "./components/schedule/ScheduleHeader";
 import { ScheduleList } from "./components/schedule/ScheduleList";
 import { NewFunctionDialog } from "./components/schedule/NewFunctionDialog";
+import { APIHealthStatus } from "@/components/monitoring/APIHealthStatus";
 
 export default function BackendScheduler() {
   const [newFunctionOpen, setNewFunctionOpen] = useState(false);
@@ -72,6 +73,8 @@ export default function BackendScheduler() {
   return (
     <div className="container mx-auto p-4 space-y-6">
       <ScheduleHeader onNewFunction={() => setNewFunctionOpen(true)} />
+      
+      <APIHealthStatus />
 
       <Card className="p-6">
         <h2 className="text-xl font-semibold mb-4">Function Schedules</h2>

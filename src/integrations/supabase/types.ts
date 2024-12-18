@@ -9,6 +9,75 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      api_error_logs: {
+        Row: {
+          created_at: string | null
+          endpoint: string
+          error_details: string | null
+          error_type: Database["public"]["Enums"]["api_error_type"]
+          id: number
+          request_params: Json | null
+          response_code: number | null
+          retry_count: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          endpoint: string
+          error_details?: string | null
+          error_type: Database["public"]["Enums"]["api_error_type"]
+          id?: number
+          request_params?: Json | null
+          response_code?: number | null
+          retry_count?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          endpoint?: string
+          error_details?: string | null
+          error_type?: Database["public"]["Enums"]["api_error_type"]
+          id?: number
+          request_params?: Json | null
+          response_code?: number | null
+          retry_count?: number | null
+        }
+        Relationships: []
+      }
+      api_health_metrics: {
+        Row: {
+          avg_response_time: number | null
+          created_at: string | null
+          endpoint: string
+          error_count: number | null
+          error_pattern: Json | null
+          id: number
+          last_error_time: string | null
+          last_success_time: string | null
+          success_count: number | null
+        }
+        Insert: {
+          avg_response_time?: number | null
+          created_at?: string | null
+          endpoint: string
+          error_count?: number | null
+          error_pattern?: Json | null
+          id?: number
+          last_error_time?: string | null
+          last_success_time?: string | null
+          success_count?: number | null
+        }
+        Update: {
+          avg_response_time?: number | null
+          created_at?: string | null
+          endpoint?: string
+          error_count?: number | null
+          error_pattern?: Json | null
+          id?: number
+          last_error_time?: string | null
+          last_success_time?: string | null
+          success_count?: number | null
+        }
+        Relationships: []
+      }
       calculation_logs: {
         Row: {
           affected_rows: number | null
@@ -1702,6 +1771,13 @@ export type Database = {
       }
     }
     Enums: {
+      api_error_type:
+        | "RATE_LIMIT"
+        | "AUTH_ERROR"
+        | "SERVER_ERROR"
+        | "TIMEOUT"
+        | "NETWORK"
+        | "VALIDATION"
       calculation_category:
         | "live_calculations"
         | "historical_analysis"
