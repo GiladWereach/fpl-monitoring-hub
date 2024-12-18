@@ -5,6 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { format } from "date-fns";
 import { AlertTriangle, CheckCircle2, Clock } from "lucide-react";
 import { PredictionValidation as PredictionValidationType, SystemAccuracy } from "./types";
+import { Database } from "@/integrations/supabase/types";
 
 interface ValidationMetrics {
   total_predictions: number;
@@ -38,7 +39,11 @@ export function PredictionValidation() {
       }
 
       console.log('Fetched validations:', data);
-      return data as PredictionValidationType[];
+      return (data as any[]).map(validation => ({
+        ...validation,
+        accuracy_metrics: validation.accuracy_metrics as PredictionValidationType['accuracy_metrics'],
+        system_metrics: validation.system_metrics as PredictionValidationType['system_metrics']
+      })) as PredictionValidationType[];
     },
     refetchInterval: 60000
   });
@@ -60,7 +65,10 @@ export function PredictionValidation() {
       }
 
       console.log('System accuracy:', data);
-      return data as SystemAccuracy;
+      return data ? {
+        ...data,
+        metrics: data.metrics as SystemAccuracy['metrics']
+      } as SystemAccuracy : null;
     },
     refetchInterval: 300000
   });
