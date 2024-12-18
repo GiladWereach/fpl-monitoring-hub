@@ -73,7 +73,7 @@ export default function BackendScheduler() {
     <div className="container mx-auto p-2 sm:p-4 space-y-4 sm:space-y-6">
       <ScheduleHeader onNewFunction={() => setNewFunctionOpen(true)} />
       
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <APIHealthStatus />
       </div>
 
