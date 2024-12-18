@@ -4,6 +4,7 @@ import { RefreshCw } from "lucide-react";
 import { functions } from "./utils/functionConfigs";
 import { executeFetchFunction } from "./utils/functionExecutor";
 import { FunctionList } from "./components/FunctionList";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export function EdgeFunctionManager() {
   const [loading, setLoading] = useState<string | null>(null);
@@ -40,7 +41,11 @@ export function EdgeFunctionManager() {
         </Button>
       </div>
 
-      <FunctionList loading={loading} onExecute={handleExecute} />
+      <ScrollArea className="h-[calc(100vh-200px)]">
+        <div className="min-w-[600px] pr-4">
+          <FunctionList loading={loading} onExecute={handleExecute} />
+        </div>
+      </ScrollArea>
     </div>
   );
 }

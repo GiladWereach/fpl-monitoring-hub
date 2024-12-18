@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Play, RefreshCw } from "lucide-react";
 import { ScheduleManager } from "../ScheduleManager";
+import { Card } from "@/components/ui/card";
 
 interface FunctionCardProps {
   name: string;
@@ -13,10 +14,10 @@ export function FunctionCard({ name, functionName, loading, onExecute }: Functio
   const isLoading = loading === functionName || loading === "all";
 
   return (
-    <div className="glass-card p-4 rounded-lg space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="font-semibold">{name}</h3>
-        <div className="flex gap-2">
+    <Card className="p-4 bg-background">
+      <div className="flex items-center justify-between gap-4">
+        <h3 className="font-semibold truncate">{name}</h3>
+        <div className="flex gap-2 shrink-0">
           <Button
             size="sm"
             variant="outline"
@@ -35,6 +36,6 @@ export function FunctionCard({ name, functionName, loading, onExecute }: Functio
           />
         </div>
       </div>
-    </div>
+    </Card>
   );
 }

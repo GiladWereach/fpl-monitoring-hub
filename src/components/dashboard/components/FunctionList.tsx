@@ -8,7 +8,7 @@ interface FunctionListProps {
 
 export function FunctionList({ loading, onExecute }: FunctionListProps) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 gap-4">
       {functions.map((func) => (
         <FunctionCard
           key={func.function}
