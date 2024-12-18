@@ -8,6 +8,7 @@ import { ScheduleHeader } from "./components/schedule/ScheduleHeader";
 import { ScheduleList } from "./components/schedule/ScheduleList";
 import { NewFunctionDialog } from "./components/schedule/NewFunctionDialog";
 import { APIHealthStatus } from "@/components/monitoring/APIHealthStatus";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function BackendScheduler() {
   const [newFunctionOpen, setNewFunctionOpen] = useState(false);
@@ -78,16 +79,20 @@ export default function BackendScheduler() {
 
       <Card className="p-3 sm:p-6">
         <h2 className="text-lg sm:text-xl font-semibold mb-4">Function Schedules</h2>
-        <div className="overflow-x-auto">
-          <ScheduleList />
-        </div>
+        <ScrollArea className="h-[400px] w-full">
+          <div className="min-w-[600px]">
+            <ScheduleList />
+          </div>
+        </ScrollArea>
       </Card>
 
       <Card className="p-3 sm:p-6">
         <h2 className="text-lg sm:text-xl font-semibold mb-4">Recent Executions</h2>
-        <div className="overflow-x-auto">
-          <ExecutionList />
-        </div>
+        <ScrollArea className="h-[400px] w-full">
+          <div className="min-w-[600px]">
+            <ExecutionList />
+          </div>
+        </ScrollArea>
       </Card>
 
       <NewFunctionDialog

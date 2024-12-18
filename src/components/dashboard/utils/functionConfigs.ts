@@ -15,7 +15,7 @@ export const functions = [
     defaultSchedule: {
       frequency_type: 'match_dependent',
       match_day_interval_minutes: 2,
-      non_match_interval_minutes: 30,
+      non_match_interval_minutes: 60,
       status: 'active'
     }
   },

@@ -9,22 +9,32 @@ export async function getSupabaseClient() {
 }
 
 export async function getCurrentEvent(supabaseClient: any) {
+  console.log('Fetching current event...');
   const { data: currentEvent, error: eventError } = await supabaseClient
     .from('events')
-    .select('id, deadline_time')
+    .select('id, deadline_time, finished')
     .lt('deadline_time', new Date().toISOString())
     .gt('deadline_time', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
     .order('deadline_time', { ascending: false })
     .limit(1)
     .single();
 
-  if (eventError) throw eventError;
-  if (!currentEvent) throw new Error('No current gameweek found');
+  if (eventError) {
+    console.error('Error fetching current event:', eventError);
+    throw eventError;
+  }
+  
+  if (!currentEvent) {
+    console.log('No current gameweek found within the last 7 days');
+    throw new Error('No current gameweek found');
+  }
 
+  console.log('Current event:', currentEvent);
   return currentEvent;
 }
 
 export async function getActiveFixtures(supabaseClient: any, eventId: number) {
+  console.log(`Fetching active fixtures for event ${eventId}`);
   const { data: activeFixtures, error: fixturesError } = await supabaseClient
     .from('fixtures')
     .select('*')
@@ -32,12 +42,18 @@ export async function getActiveFixtures(supabaseClient: any, eventId: number) {
     .eq('started', true)
     .eq('finished', false);
 
-  if (fixturesError) throw fixturesError;
+  if (fixturesError) {
+    console.error('Error fetching active fixtures:', fixturesError);
+    throw fixturesError;
+  }
+  
+  console.log(`Found ${activeFixtures?.length || 0} active fixtures`);
   return activeFixtures || [];
 }
 
 export async function getLastUpdate(supabaseClient: any, eventId: number) {
-  const { data: lastUpdate } = await supabaseClient
+  console.log(`Fetching last update for event ${eventId}`);
+  const { data: lastUpdate, error } = await supabaseClient
     .from('gameweek_live_performance')
     .select('last_updated')
     .eq('event_id', eventId)
@@ -45,6 +61,12 @@ export async function getLastUpdate(supabaseClient: any, eventId: number) {
     .limit(1)
     .single();
 
+  if (error && error.code !== 'PGRST116') { // Ignore "no rows returned" error
+    console.error('Error fetching last update:', error);
+    throw error;
+  }
+
+  console.log('Last update:', lastUpdate);
   return lastUpdate;
 }
 
@@ -119,6 +141,8 @@ export async function triggerPointsCalculation(supabaseClient: any) {
 
 export async function shouldProcessGameweek(supabaseClient: any, eventId: number): Promise<boolean> {
   try {
+    console.log(`Checking if gameweek ${eventId} should be processed...`);
+    
     // Get the current event details
     const { data: event, error: eventError } = await supabaseClient
       .from('events')
@@ -126,7 +150,10 @@ export async function shouldProcessGameweek(supabaseClient: any, eventId: number
       .eq('id', eventId)
       .single();
 
-    if (eventError) throw eventError;
+    if (eventError) {
+      console.error('Error fetching event details:', eventError);
+      throw eventError;
+    }
 
     const now = new Date();
     const deadlineTime = new Date(event.deadline_time);
@@ -149,7 +176,10 @@ export async function shouldProcessGameweek(supabaseClient: any, eventId: number
       .select('started, finished')
       .eq('event', eventId);
 
-    if (fixturesError) throw fixturesError;
+    if (fixturesError) {
+      console.error('Error fetching fixtures:', fixturesError);
+      throw fixturesError;
+    }
 
     // If any fixture is started but not finished, we should process
     const hasActiveFixtures = fixtures.some(f => f.started && !f.finished);
