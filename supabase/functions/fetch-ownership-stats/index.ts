@@ -15,95 +15,33 @@ interface OwnershipStat {
   timestamp: Date;
 }
 
-serve(async (req) => {
-  // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+async function getMongoClient(): Promise<MongoClient> {
+  const username = Deno.env.get('MONGODB_USERNAME');
+  const password = Deno.env.get('MONGODB_PASSWORD');
+  const cluster = Deno.env.get('MONGODB_CLUSTER');
+  const dbName = Deno.env.get('MONGODB_DATABASE');
+
+  console.log('Initializing MongoDB connection with:', {
+    hasUsername: !!username,
+    hasPassword: !!password,
+    hasCluster: !!cluster,
+    hasDbName: !!dbName
+  });
+
+  if (!username || !password || !cluster || !dbName) {
+    throw new Error('MongoDB configuration incomplete');
   }
 
-  let client: MongoClient | null = null;
+  const encodedUsername = encodeURIComponent(username);
+  const encodedPassword = encodeURIComponent(password);
+  const uri = `mongodb+srv://${encodedUsername}:${encodedPassword}@${cluster}.mongodb.net/${dbName}?retryWrites=true&w=majority`;
   
-  try {
-    console.log('Starting ownership stats fetch...');
-
-    // Get environment variables
-    const mongoUri = Deno.env.get('MONGODB_URI');
-    const dbName = Deno.env.get('MONGODB_DATABASE');
-
-    if (!mongoUri || !dbName) {
-      console.error('Missing required environment variables');
-      throw new Error('MongoDB configuration incomplete');
-    }
-
-    console.log('Connecting to MongoDB...');
-
-    // Initialize client and connect using URI
-    client = new MongoClient();
-    await client.connect(mongoUri);
-
-    console.log('Successfully connected to MongoDB');
-    const db = client.database(dbName);
-
-    // Test connection with collection listing
-    const collections = await db.listCollections().toArray();
-    console.log('Available collections:', collections);
-
-    // Fetch latest ownership stats with timeout
-    const ownershipData = await Promise.race([
-      fetchLatestOwnershipStats(db),
-      new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Database operation timeout')), 15000)
-      )
-    ]);
-
-    return new Response(
-      JSON.stringify({ success: true, data: ownershipData }),
-      { headers: corsHeaders }
-    );
-
-  } catch (error) {
-    console.error('Function error:', error);
-    
-    let errorMessage = 'Failed to fetch ownership stats';
-    let errorDetails = error.message;
-    let statusCode = 500;
-
-    // Specific error handling
-    if (error.message.includes('configuration incomplete')) {
-      statusCode = 503;
-      errorMessage = 'Service configuration error';
-    } else if (error.message.includes('timeout')) {
-      statusCode = 504;
-      errorMessage = 'Service timeout';
-    } else if (error.message.includes('No ownership data found')) {
-      statusCode = 404;
-      errorMessage = 'No data available';
-    }
-
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: errorMessage,
-        details: errorDetails
-      }),
-      {
-        headers: corsHeaders,
-        status: statusCode
-      }
-    );
-
-  } finally {
-    // Ensure MongoDB connection is closed
-    if (client) {
-      try {
-        await client.close();
-        console.log('MongoDB connection closed');
-      } catch (closeError) {
-        console.error('Error closing MongoDB connection:', closeError);
-      }
-    }
-  }
-});
+  const client = new MongoClient();
+  await client.connect(uri);
+  console.log('MongoDB connection established');
+  
+  return client;
+}
 
 async function fetchLatestOwnershipStats(db: any): Promise<OwnershipStat[]> {
   console.log('Fetching latest ownership stats...');
@@ -132,3 +70,115 @@ async function fetchLatestOwnershipStats(db: any): Promise<OwnershipStat[]> {
   console.log(`Retrieved ${ownershipData.length} ownership records`);
   return ownershipData;
 }
+
+async function testConnection() {
+  let client: MongoClient | null = null;
+  
+  try {
+    client = await getMongoClient();
+    const dbName = Deno.env.get('MONGODB_DATABASE');
+    if (!dbName) throw new Error('Database name not configured');
+    
+    const db = client.database(dbName);
+    const collections = await db.listCollections().toArray();
+    
+    return {
+      success: true,
+      connected: true,
+      collections: collections.map(c => c.name),
+      database: dbName
+    };
+    
+  } catch (error) {
+    console.error('Connection test failed:', {
+      name: error.name,
+      message: error.message,
+      cause: error.cause
+    });
+    
+    return {
+      success: false,
+      error: error.message,
+      errorType: error.name,
+      connected: false
+    };
+    
+  } finally {
+    if (client) {
+      await client.close();
+      console.log('Test connection closed');
+    }
+  }
+}
+
+serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  let client: MongoClient | null = null;
+  
+  try {
+    const url = new URL(req.url);
+    
+    // Handle test endpoint
+    if (url.pathname.endsWith('/test')) {
+      const result = await testConnection();
+      return new Response(
+        JSON.stringify(result),
+        { headers: corsHeaders, status: result.success ? 200 : 500 }
+      );
+    }
+
+    // Main endpoint logic
+    client = await getMongoClient();
+    const dbName = Deno.env.get('MONGODB_DATABASE');
+    if (!dbName) throw new Error('Database name not configured');
+    
+    const db = client.database(dbName);
+    const ownershipData = await fetchLatestOwnershipStats(db);
+
+    return new Response(
+      JSON.stringify({ success: true, data: ownershipData }),
+      { headers: corsHeaders }
+    );
+
+  } catch (error) {
+    console.error('Function error:', error);
+    
+    let errorMessage = 'Failed to fetch ownership stats';
+    let errorDetails = error.message;
+    let statusCode = 500;
+
+    // Specific error handling
+    if (error.message.includes('configuration incomplete')) {
+      statusCode = 503;
+      errorMessage = 'Service configuration error';
+    } else if (error.message.includes('No ownership data found')) {
+      statusCode = 404;
+      errorMessage = 'No data available';
+    }
+
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: errorMessage,
+        details: errorDetails
+      }),
+      {
+        headers: corsHeaders,
+        status: statusCode
+      }
+    );
+
+  } finally {
+    if (client) {
+      try {
+        await client.close();
+        console.log('MongoDB connection closed');
+      } catch (closeError) {
+        console.error('Error closing MongoDB connection:', closeError);
+      }
+    }
+  }
+});
