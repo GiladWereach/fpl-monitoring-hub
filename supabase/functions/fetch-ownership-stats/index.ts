@@ -27,25 +27,26 @@ serve(async (req) => {
     console.log('Starting ownership stats fetch...');
 
     // Get environment variables
-    const username = Deno.env.get('MONGODB_USERNAME');
-    const password = Deno.env.get('MONGODB_PASSWORD');
-    const cluster = Deno.env.get('MONGODB_CLUSTER');
+    const mongoUri = Deno.env.get('MONGODB_URI');
     const dbName = Deno.env.get('MONGODB_DATABASE');
 
-    if (!username || !password || !cluster || !dbName) {
+    if (!mongoUri || !dbName) {
+      console.error('Missing required environment variables');
       throw new Error('MongoDB configuration incomplete');
     }
 
-    // Construct MongoDB Atlas URI with proper encoding
-    const uri = `mongodb+srv://${encodeURIComponent(username)}:${encodeURIComponent(password)}@${cluster}.mongodb.net/?retryWrites=true&w=majority`;
     console.log('Connecting to MongoDB...');
 
     // Initialize client and connect using URI
     client = new MongoClient();
-    await client.connect(uri);
+    await client.connect(mongoUri);
 
     console.log('Successfully connected to MongoDB');
     const db = client.database(dbName);
+
+    // Test connection with collection listing
+    const collections = await db.listCollections().toArray();
+    console.log('Available collections:', collections);
 
     // Fetch latest ownership stats with timeout
     const ownershipData = await Promise.race([
