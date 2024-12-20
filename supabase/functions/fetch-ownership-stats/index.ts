@@ -14,34 +14,42 @@ serve(async (req) => {
   try {
     console.log('Starting ownership stats fetch...');
     
-    const mongoUri = Deno.env.get('MONGODB_URI');
-    if (!mongoUri) {
-      console.error('MONGODB_URI environment variable is not set');
-      throw new Error('MongoDB URI not configured');
+    // Get MongoDB credentials from environment
+    const username = Deno.env.get('MONGODB_USERNAME');
+    const password = Deno.env.get('MONGODB_PASSWORD');
+    const cluster = Deno.env.get('MONGODB_CLUSTER');
+    const dbName = Deno.env.get('MONGODB_DATABASE');
+
+    if (!username || !password || !cluster || !dbName) {
+      console.error('Missing MongoDB configuration');
+      throw new Error('MongoDB configuration incomplete. Please check all required environment variables.');
     }
 
-    // Validate MongoDB URI format
-    const uriPattern = /^mongodb\+srv:\/\/([^:]+):([^@]+)@([^/]+)\/([^?]+)/;
-    if (!uriPattern.test(mongoUri)) {
-      console.error('Invalid MongoDB URI format');
-      throw new Error('Invalid MongoDB URI format. Expected: mongodb+srv://username:password@cluster/database');
-    }
-
-    // Log sanitized URI for debugging
-    const sanitizedUri = mongoUri.replace(
-      /(mongodb\+srv:\/\/)([^:]+):([^@]+)@/,
-      '$1[username]:[password]@'
-    );
-    console.log('Attempting connection with URI:', sanitizedUri);
+    console.log('Attempting connection with configuration:', {
+      cluster,
+      database: dbName,
+      username: username.substring(0, 3) + '***',
+    });
 
     const client = new MongoClient();
     
     try {
       console.log('Initializing MongoDB connection...');
-      await client.connect(mongoUri);
+      await client.connect({
+        db: dbName,
+        tls: true,
+        servers: [{ 
+          host: cluster, 
+          port: 27017 
+        }],
+        username: username,
+        password: password,
+        logLevel: "debug", // Enable debug logging
+      });
+
       console.log('Successfully connected to MongoDB');
 
-      const db = client.database('fpl_data');
+      const db = client.database(dbName);
       console.log('Accessing database:', db.name);
       
       const collection = db.collection('ownership_stats');
@@ -74,7 +82,7 @@ serve(async (req) => {
       
       if (dbError.message?.includes('bad auth')) {
         console.error('Authentication failed. Please verify:');
-        console.error('1. Username and password are correct and URL-encoded');
+        console.error('1. Username and password are correct');
         console.error('2. Database user exists and has correct permissions');
         console.error('3. IP address is whitelisted in MongoDB Atlas');
         console.error('4. Database and collection names are correct');
