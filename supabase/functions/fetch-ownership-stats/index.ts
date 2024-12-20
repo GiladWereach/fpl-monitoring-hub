@@ -7,21 +7,12 @@ const corsHeaders = {
   'Content-Type': 'application/json'
 };
 
-interface OwnershipStat {
-  event: number;
-  player_id: number;
-  ownership_percentage: number;
-  captain_percentage: number;
-  timestamp: Date;
-}
-
 async function getMongoClient(): Promise<MongoClient> {
   const username = Deno.env.get('MONGODB_USERNAME');
   const password = Deno.env.get('MONGODB_PASSWORD');
   const cluster = Deno.env.get('MONGODB_CLUSTER');
   const dbName = Deno.env.get('MONGODB_DATABASE');
 
-  // Safe logging of configuration
   console.log('Configuration check:', {
     username: username ? `${username.substring(0, 2)}...` : 'missing',
     passwordLength: password?.length || 'missing',
@@ -36,11 +27,8 @@ async function getMongoClient(): Promise<MongoClient> {
   const encodedUsername = encodeURIComponent(username);
   const encodedPassword = encodeURIComponent(password);
   
-  // First try simplified URI
-  const uri = `mongodb+srv://${encodedUsername}:${encodedPassword}@${cluster}.mongodb.net/?retryWrites=true&w=majority`;
-  
-  // Log URI structure (safely)
-  console.log('URI structure:', uri.replace(encodedUsername, '***').replace(encodedPassword, '***'));
+  const uri = `mongodb+srv://${encodedUsername}:${encodedPassword}@${cluster}.jeuit.mongodb.net/${dbName}?retryWrites=true&w=majority`;
+  console.log('Connecting to MongoDB with URI pattern:', uri.replace(encodedUsername, '***').replace(encodedPassword, '***'));
   
   const client = new MongoClient();
   try {
@@ -58,52 +46,10 @@ async function getMongoClient(): Promise<MongoClient> {
   }
 }
 
-async function testConnection() {
-  let client: MongoClient | null = null;
-  
-  try {
-    client = await getMongoClient();
-    const dbName = Deno.env.get('MONGODB_DATABASE');
-    if (!dbName) throw new Error('Database name not configured');
-    
-    const db = client.database(dbName);
-    const collections = await db.listCollections().toArray();
-    
-    return {
-      success: true,
-      connected: true,
-      collections: collections.map(c => c.name),
-      database: dbName
-    };
-    
-  } catch (error) {
-    console.error('Connection test failed:', {
-      name: error.name,
-      message: error.message,
-      cause: error.cause
-    });
-    
-    return {
-      success: false,
-      error: error.message,
-      errorType: error.name,
-      connected: false
-    };
-    
-  } finally {
-    if (client) {
-      await client.close();
-      console.log('Test connection closed');
-    }
-  }
-}
-
-async function fetchLatestOwnershipStats(db: any): Promise<OwnershipStat[]> {
+async function fetchLatestOwnershipStats(db: any) {
   console.log('Fetching latest ownership stats...');
-  
   const collection = db.collection('ownership_stats');
   
-  // Get the latest event
   const latestDoc = await collection
     .find()
     .sort({ event: -1 })
@@ -117,13 +63,20 @@ async function fetchLatestOwnershipStats(db: any): Promise<OwnershipStat[]> {
   const latestEvent = latestDoc[0].event;
   console.log(`Found latest event: ${latestEvent}`);
 
-  // Fetch all ownership data for the latest event
   const ownershipData = await collection
     .find({ event: latestEvent })
     .toArray();
 
   console.log(`Retrieved ${ownershipData.length} ownership records`);
-  return ownershipData;
+
+  return {
+    event: latestEvent,
+    ownership_data: ownershipData.map(stat => ({
+      ...stat,
+      ownership_percentage: Number(stat.ownership_percentage.toFixed(2)),
+      captain_percentage: Number(stat.captain_percentage.toFixed(2))
+    }))
+  };
 }
 
 serve(async (req) => {
@@ -134,27 +87,15 @@ serve(async (req) => {
   let client: MongoClient | null = null;
   
   try {
-    const url = new URL(req.url);
-    
-    // Handle test endpoint
-    if (url.pathname.endsWith('/test')) {
-      const result = await testConnection();
-      return new Response(
-        JSON.stringify(result),
-        { headers: corsHeaders, status: result.success ? 200 : 500 }
-      );
-    }
-
-    // Main endpoint logic
     client = await getMongoClient();
     const dbName = Deno.env.get('MONGODB_DATABASE');
     if (!dbName) throw new Error('Database name not configured');
     
     const db = client.database(dbName);
-    const ownershipData = await fetchLatestOwnershipStats(db);
+    const data = await fetchLatestOwnershipStats(db);
 
     return new Response(
-      JSON.stringify({ success: true, data: ownershipData }),
+      JSON.stringify({ success: true, data }),
       { headers: corsHeaders }
     );
 
@@ -165,7 +106,6 @@ serve(async (req) => {
     let errorDetails = error.message;
     let statusCode = 500;
 
-    // Specific error handling
     if (error.message.includes('configuration incomplete')) {
       statusCode = 503;
       errorMessage = 'Service configuration error';
