@@ -2,6 +2,7 @@ import { APIHealthStatus } from '@/components/monitoring/APIHealthStatus';
 import { RecentActivity } from '@/components/dashboard/RecentActivity';
 import { UpcomingExecutions } from '@/components/dashboard/UpcomingExecutions';
 import { LiveStatus } from '@/components/dashboard/LiveStatus';
+import { OwnershipStats } from '@/components/dashboard/OwnershipStats';
 
 export default function BackendDashboard() {
   return (
@@ -19,6 +20,7 @@ export default function BackendDashboard() {
       {/* System Health Section - Grid Layout */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         <APIHealthStatus />
+        <OwnershipStats />
       </div>
 
       {/* Main Content Grid */}
