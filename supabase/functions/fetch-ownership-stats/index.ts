@@ -1,6 +1,6 @@
 import { serve } from "std/server";
 import { createClient } from "@supabase/supabase-js";
-import { MongoClient } from "mongodb/mod.ts";
+import { MongoClient } from "mongodb";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
