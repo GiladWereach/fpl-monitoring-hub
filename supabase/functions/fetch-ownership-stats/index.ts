@@ -21,10 +21,9 @@ serve(async (req) => {
       throw new Error('MongoDB URI not configured. Please set the MONGODB_URI secret in Supabase.');
     }
 
-    // Initialize MongoDB client
+    console.log('Attempting to connect to MongoDB...');
     const client = new MongoClient();
-    console.log('MongoDB client initialized');
-
+    
     try {
       await client.connect(mongoUri);
       console.log('Connected to MongoDB successfully');
@@ -32,6 +31,7 @@ serve(async (req) => {
       const db = client.database('fpl_data');
       const collection = db.collection('ownership_stats');
 
+      console.log('Fetching ownership data from collection...');
       const ownershipData = await collection
         .find({})
         .sort({ timestamp: -1 })
@@ -56,6 +56,10 @@ serve(async (req) => {
 
     } catch (dbError) {
       console.error('Database operation error:', dbError);
+      // Log specific MongoDB error details
+      if (dbError.message && dbError.message.includes('bad auth')) {
+        console.error('Authentication failed. Please verify MongoDB credentials.');
+      }
       throw dbError;
     }
 
