@@ -36,22 +36,13 @@ serve(async (req) => {
       throw new Error('MongoDB configuration incomplete');
     }
 
-    // Construct MongoDB Atlas URI
-    const uri = `mongodb+srv://${encodeURIComponent(username)}:${encodeURIComponent(password)}@${cluster}/?retryWrites=true&w=majority`;
+    // Construct MongoDB Atlas URI with proper encoding
+    const uri = `mongodb+srv://${encodeURIComponent(username)}:${encodeURIComponent(password)}@${cluster}.mongodb.net/?retryWrites=true&w=majority`;
     console.log('Connecting to MongoDB...');
 
-    // Initialize client with timeout and retry options
+    // Initialize client and connect using URI
     client = new MongoClient();
-    await client.connect({
-      db: dbName,
-      tls: true,
-      servers: [{ host: `${cluster}.mongodb.net`, port: 27017 }],
-      credential: {
-        username: username,
-        password: password,
-        mechanism: "SCRAM-SHA-1"
-      }
-    });
+    await client.connect(uri);
 
     console.log('Successfully connected to MongoDB');
     const db = client.database(dbName);
