@@ -4,9 +4,6 @@ export interface OwnershipStat {
   ownership_percentage: number;
   captain_percentage: number;
   timestamp: Date;
-}
-
-export interface OwnershipStatWithName extends OwnershipStat {
   player_name: string;
   team_name: string;
 }
