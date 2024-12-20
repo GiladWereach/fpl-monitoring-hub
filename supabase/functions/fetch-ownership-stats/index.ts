@@ -7,7 +7,6 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -18,30 +17,36 @@ serve(async (req) => {
     const mongoUri = Deno.env.get('MONGODB_URI');
     if (!mongoUri) {
       console.error('MONGODB_URI environment variable is not set');
-      throw new Error('MongoDB URI not configured. Please set the MONGODB_URI secret in Supabase.');
+      throw new Error('MongoDB URI not configured');
     }
 
-    // Log URI format (without credentials)
+    // Validate MongoDB URI format
+    const uriPattern = /^mongodb\+srv:\/\/([^:]+):([^@]+)@([^/]+)\/([^?]+)/;
+    if (!uriPattern.test(mongoUri)) {
+      console.error('Invalid MongoDB URI format');
+      throw new Error('Invalid MongoDB URI format. Expected: mongodb+srv://username:password@cluster/database');
+    }
+
+    // Log sanitized URI for debugging
     const sanitizedUri = mongoUri.replace(
       /(mongodb\+srv:\/\/)([^:]+):([^@]+)@/,
       '$1[username]:[password]@'
     );
-    console.log('Attempting connection with URI format:', sanitizedUri);
+    console.log('Attempting connection with URI:', sanitizedUri);
 
     const client = new MongoClient();
     
     try {
-      console.log('Initializing connection...');
+      console.log('Initializing MongoDB connection...');
       await client.connect(mongoUri);
-      console.log('Connected to MongoDB successfully');
+      console.log('Successfully connected to MongoDB');
 
       const db = client.database('fpl_data');
-      console.log('Selected database:', db.name);
+      console.log('Accessing database:', db.name);
       
       const collection = db.collection('ownership_stats');
       console.log('Accessing collection:', collection.name);
 
-      console.log('Executing find query...');
       const ownershipData = await collection
         .find({})
         .sort({ timestamp: -1 })
@@ -67,21 +72,19 @@ serve(async (req) => {
     } catch (dbError) {
       console.error('Database operation error:', dbError);
       
-      // Detailed error logging for authentication issues
       if (dbError.message?.includes('bad auth')) {
-        console.error('Authentication failed. Common causes:');
-        console.error('1. Incorrect username or password');
-        console.error('2. IP not whitelisted in MongoDB Atlas');
-        console.error('3. Database user doesn\'t have correct permissions');
+        console.error('Authentication failed. Please verify:');
+        console.error('1. Username and password are correct and URL-encoded');
+        console.error('2. Database user exists and has correct permissions');
+        console.error('3. IP address is whitelisted in MongoDB Atlas');
+        console.error('4. Database and collection names are correct');
       }
 
-      // Log the specific error code and name if available
       if (dbError.code) {
         console.error('Error code:', dbError.code);
         console.error('Error codeName:', dbError.codeName);
       }
 
-      // Always ensure connection is closed on error
       try {
         await client.close();
         console.log('MongoDB connection closed after error');
@@ -89,7 +92,7 @@ serve(async (req) => {
         console.error('Error closing MongoDB connection:', closeError);
       }
 
-      throw dbError;
+      throw new Error(`MongoDB Connection Error: ${dbError.message}`);
     }
 
   } catch (error) {
@@ -98,7 +101,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         error: 'Failed to fetch ownership stats',
-        details: error.message || 'Unknown error in ownership stats fetch'
+        details: error.message
       }),
       {
         headers: { 
