@@ -1,37 +1,13 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
-import { MongoClient } from 'https://deno.land/x/mongo@v0.32.0/mod.ts';
+import { MongoClient } from 'https://deno.land/x/mongo@v0.31.1/mod.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-async function connectToMongo(): Promise<MongoClient> {
-  try {
-    const mongoUri = Deno.env.get('MONGODB_URI');
-    
-    if (!mongoUri) {
-      throw new Error('MONGODB_URI environment variable is not set');
-    }
-    
-    console.log('Attempting to connect to MongoDB...');
-    const client = new MongoClient();
-    
-    await client.connect(mongoUri);
-    
-    // Test the connection with a ping
-    const db = client.database('admin');
-    await db.listCollections().next();
-    console.log('Successfully connected to MongoDB and verified connection');
-    
-    return client;
-  } catch (error) {
-    console.error('MongoDB connection error:', error);
-    throw new Error(`Failed to connect to MongoDB: ${error.message}`);
-  }
-}
-
 Deno.serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -39,28 +15,39 @@ Deno.serve(async (req) => {
   let client: MongoClient | null = null;
 
   try {
-    // Initialize MongoDB client
-    client = await connectToMongo();
-    console.log('Connected to MongoDB');
+    const mongoUri = Deno.env.get('MONGODB_URI');
+    if (!mongoUri) {
+      throw new Error('MONGODB_URI environment variable is not set');
+    }
 
+    console.log('Attempting to connect to MongoDB...');
+    client = new MongoClient();
+    await client.connect(mongoUri);
+    
     const dbName = Deno.env.get('MONGODB_DB_NAME') || 'fpl_data';
     const db = client.database(dbName);
     const collection = db.collection('ownership_stats');
 
-    // Get the latest ownership stats
-    const latestStats = await collection
+    console.log('Fetching latest ownership stats...');
+    const latestData = await collection
       .find({})
       .sort({ event: -1 })
       .limit(1)
       .toArray();
 
-    console.log('Successfully fetched ownership stats:', latestStats);
+    const event = latestData[0]?.event;
+    console.log('Latest event found:', event);
 
+    const ownershipData = await collection
+      .find({ event })
+      .toArray();
+
+    console.log('Successfully fetched ownership data');
     return new Response(
-      JSON.stringify(latestStats),
+      JSON.stringify(ownershipData),
       {
         headers: { 
-          ...corsHeaders, 
+          ...corsHeaders,
           'Content-Type': 'application/json' 
         },
         status: 200,
@@ -76,7 +63,7 @@ Deno.serve(async (req) => {
       }),
       {
         headers: { 
-          ...corsHeaders, 
+          ...corsHeaders,
           'Content-Type': 'application/json' 
         },
         status: 500,
