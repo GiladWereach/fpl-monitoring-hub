@@ -21,11 +21,12 @@ async function getMongoClient(): Promise<MongoClient> {
   const cluster = Deno.env.get('MONGODB_CLUSTER');
   const dbName = Deno.env.get('MONGODB_DATABASE');
 
-  console.log('Initializing MongoDB connection with:', {
-    hasUsername: !!username,
-    hasPassword: !!password,
-    hasCluster: !!cluster,
-    hasDbName: !!dbName
+  // Safe logging of configuration
+  console.log('Configuration check:', {
+    username: username ? `${username.substring(0, 2)}...` : 'missing',
+    passwordLength: password?.length || 'missing',
+    cluster: cluster || 'missing',
+    dbName: dbName || 'missing'
   });
 
   if (!username || !password || !cluster || !dbName) {
@@ -34,41 +35,27 @@ async function getMongoClient(): Promise<MongoClient> {
 
   const encodedUsername = encodeURIComponent(username);
   const encodedPassword = encodeURIComponent(password);
-  const uri = `mongodb+srv://${encodedUsername}:${encodedPassword}@${cluster}.mongodb.net/${dbName}?retryWrites=true&w=majority`;
+  
+  // First try simplified URI
+  const uri = `mongodb+srv://${encodedUsername}:${encodedPassword}@${cluster}.mongodb.net/?retryWrites=true&w=majority`;
+  
+  // Log URI structure (safely)
+  console.log('URI structure:', uri.replace(encodedUsername, '***').replace(encodedPassword, '***'));
   
   const client = new MongoClient();
-  await client.connect(uri);
-  console.log('MongoDB connection established');
-  
-  return client;
-}
-
-async function fetchLatestOwnershipStats(db: any): Promise<OwnershipStat[]> {
-  console.log('Fetching latest ownership stats...');
-  
-  const collection = db.collection('ownership_stats');
-  
-  // Get the latest event
-  const latestDoc = await collection
-    .find()
-    .sort({ event: -1 })
-    .limit(1)
-    .toArray();
-
-  if (!latestDoc.length) {
-    throw new Error('No ownership data found');
+  try {
+    console.log('Attempting MongoDB connection...');
+    await client.connect(uri);
+    console.log('MongoDB connection successful!');
+    return client;
+  } catch (error) {
+    console.error('MongoDB connection error:', {
+      name: error.name,
+      message: error.message,
+      cause: error.cause
+    });
+    throw error;
   }
-
-  const latestEvent = latestDoc[0].event;
-  console.log(`Found latest event: ${latestEvent}`);
-
-  // Fetch all ownership data for the latest event
-  const ownershipData = await collection
-    .find({ event: latestEvent })
-    .toArray();
-
-  console.log(`Retrieved ${ownershipData.length} ownership records`);
-  return ownershipData;
 }
 
 async function testConnection() {
@@ -109,6 +96,34 @@ async function testConnection() {
       console.log('Test connection closed');
     }
   }
+}
+
+async function fetchLatestOwnershipStats(db: any): Promise<OwnershipStat[]> {
+  console.log('Fetching latest ownership stats...');
+  
+  const collection = db.collection('ownership_stats');
+  
+  // Get the latest event
+  const latestDoc = await collection
+    .find()
+    .sort({ event: -1 })
+    .limit(1)
+    .toArray();
+
+  if (!latestDoc.length) {
+    throw new Error('No ownership data found');
+  }
+
+  const latestEvent = latestDoc[0].event;
+  console.log(`Found latest event: ${latestEvent}`);
+
+  // Fetch all ownership data for the latest event
+  const ownershipData = await collection
+    .find({ event: latestEvent })
+    .toArray();
+
+  console.log(`Retrieved ${ownershipData.length} ownership records`);
+  return ownershipData;
 }
 
 serve(async (req) => {
