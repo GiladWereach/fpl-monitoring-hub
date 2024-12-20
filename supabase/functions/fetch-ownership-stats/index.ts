@@ -47,7 +47,7 @@ serve(async (req) => {
     const cluster = Deno.env.get("MONGODB_CLUSTER") || "";
     const database = Deno.env.get("MONGODB_DATABASE") || "";
 
-    const uri = `mongodb+srv://${username}:${password}@${cluster}.jeuit.mongodb.net/${database}?retryWrites=true&w=majority`;
+    const uri = `mongodb+srv://${username}:${password}@${cluster}.jeuit.mongodb.net?retryWrites=true&w=majority`;
     
     mongoClient = new MongoClient(uri, {
       connectTimeoutMS: 5000,
