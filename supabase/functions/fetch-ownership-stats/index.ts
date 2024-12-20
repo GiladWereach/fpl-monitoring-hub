@@ -43,18 +43,14 @@ serve(async (req) => {
     // MongoDB Connection
     console.log('Connecting to MongoDB...');
     
-    // Use the complete MONGODB_URI directly
     const uri = Deno.env.get("MONGODB_URI");
     if (!uri) {
       throw new Error('MONGODB_URI environment variable is not set');
     }
     
-    console.log('Attempting MongoDB connection with URI pattern:', uri.replace(/\/\/.*@/, '//<credentials>@'));
-    
-    mongoClient = new MongoClient(uri);
-
     console.log('Attempting MongoDB connection...');
-    await mongoClient.connect();
+    mongoClient = new MongoClient();
+    await mongoClient.connect(uri);
     console.log('Successfully connected to MongoDB');
 
     const database = Deno.env.get("MONGODB_DATABASE");
