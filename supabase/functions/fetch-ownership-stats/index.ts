@@ -1,5 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
-import { MongoClient, ServerApiVersion } from 'https://deno.land/x/mongo@v0.32.0/mod.ts';
+import { MongoClient } from 'https://deno.land/x/mongo@v0.32.0/mod.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -15,18 +15,13 @@ async function connectToMongo(): Promise<MongoClient> {
     }
     
     console.log('Attempting to connect to MongoDB...');
-    const client = new MongoClient(mongoUri, {
-      serverApi: {
-        version: '1',
-        strict: true,
-        deprecationErrors: true,
-      }
-    });
+    const client = new MongoClient();
     
-    // Test the connection
-    await client.connect();
-    const adminDb = client.database('admin');
-    await adminDb.command({ ping: 1 });
+    await client.connect(mongoUri);
+    
+    // Test the connection with a ping
+    const db = client.database('admin');
+    await db.listCollections().next();
     console.log('Successfully connected to MongoDB and verified connection');
     
     return client;
