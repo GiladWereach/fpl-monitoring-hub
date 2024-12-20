@@ -1,5 +1,5 @@
 import { serve } from "std/server";
-import { MongoClient } from "https://deno.land/x/mongo@v0.31.1/mod.ts";
+import { MongoClient, ServerApiVersion } from "https://deno.land/x/mongo@v0.31.1/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -8,29 +8,28 @@ const corsHeaders = {
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
     console.log('Starting ownership stats fetch...');
     
     // Get MongoDB credentials from environment
-    const username = Deno.env.get('MONGODB_USERNAME');
-    const password = Deno.env.get('MONGODB_PASSWORD');
-    const cluster = Deno.env.get('MONGODB_CLUSTER');
-    const dbName = Deno.env.get('MONGODB_DATABASE');
+    const username = encodeURIComponent(Deno.env.get('MONGODB_USERNAME') || '');
+    const password = encodeURIComponent(Deno.env.get('MONGODB_PASSWORD') || '');
+    const cluster = Deno.env.get('MONGODB_CLUSTER') || '';
+    const dbName = Deno.env.get('MONGODB_DATABASE') || '';
 
     if (!username || !password || !cluster || !dbName) {
       console.error('Missing MongoDB configuration');
       throw new Error('MongoDB configuration incomplete. Please check all required environment variables.');
     }
 
-    console.log('Attempting connection with configuration:', {
-      cluster,
-      database: dbName,
-      username: username.substring(0, 3) + '***',
-    });
+    // Construct MongoDB URI with credentials
+    const uri = `mongodb+srv://${username}:${password}@${cluster}/?retryWrites=true&w=majority&appName=fplbackend`;
+    console.log('Connecting to MongoDB with URI pattern:', uri.replace(password, '***'));
 
+    // Create MongoDB client with recommended options
     const client = new MongoClient();
     
     try {
@@ -42,9 +41,16 @@ serve(async (req) => {
           host: cluster, 
           port: 27017 
         }],
-        username: username,
-        password: password,
-        logLevel: "debug", // Enable debug logging
+        credential: {
+          username: username,
+          password: password,
+          mechanism: "SCRAM-SHA-1"
+        },
+        serverApi: {
+          version: "1",
+          strict: true,
+          deprecationErrors: true,
+        }
       });
 
       console.log('Successfully connected to MongoDB');
@@ -109,14 +115,14 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         error: 'Failed to fetch ownership stats',
-        details: error.message
+        details: error.message || 'Unknown error in ownership stats fetch'
       }),
       {
         headers: { 
           ...corsHeaders,
           'Content-Type': 'application/json' 
         },
-        status: 500,
+        status: 500
       },
     );
   }
