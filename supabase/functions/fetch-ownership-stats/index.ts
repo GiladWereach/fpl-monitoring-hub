@@ -8,6 +8,32 @@ const corsHeaders = {
   'Content-Type': 'application/json'
 };
 
+async function getMongoClient(): Promise<MongoClient> {
+  try {
+    const username = Deno.env.get('MONGODB_USERNAME');
+    const password = Deno.env.get('MONGODB_PASSWORD');
+    
+    if (!username || !password) {
+      throw new Error('MongoDB credentials not configured');
+    }
+
+    const uri = `mongodb+srv://${username}:${password}@fplbackend.jeuit.mongodb.net/?retryWrites=true&w=majority&appName=fplbackend`;
+    
+    const client = new MongoClient();
+    await client.connect(uri);
+    
+    // Test connection with ping
+    const db = client.database('admin');
+    await db.command({ ping: 1 });
+    console.log("Successfully connected to MongoDB");
+
+    return client;
+  } catch (error) {
+    console.error('MongoDB connection error:', error);
+    throw error;
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -42,15 +68,7 @@ serve(async (req) => {
 
     // MongoDB Connection
     console.log('Connecting to MongoDB...');
-    
-    const uri = Deno.env.get("MONGODB_URI");
-    if (!uri) {
-      throw new Error('MONGODB_URI environment variable is not set');
-    }
-    
-    console.log('Attempting MongoDB connection...');
-    mongoClient = new MongoClient();
-    await mongoClient.connect(uri);
+    mongoClient = await getMongoClient();
     console.log('Successfully connected to MongoDB');
 
     const database = Deno.env.get("MONGODB_DATABASE");
