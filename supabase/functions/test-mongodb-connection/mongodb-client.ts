@@ -11,7 +11,7 @@ interface MongoDBConfig {
 export async function createMongoDBClient(config: MongoDBConfig): Promise<MongoClient> {
   // Construct URI if not provided
   const uri = config.uri || 
-    `mongodb+srv://${config.username}:${config.password}@${config.cluster}.mongodb.net/?authSource=admin&retryWrites=true&w=majority`;
+    `mongodb+srv://${config.username}:${config.password}@${config.cluster}.jeuit.mongodb.net/?authSource=admin&retryWrites=true&w=majority`;
 
   console.log('Creating MongoDB client...');
   console.log('Using cluster:', config.cluster);
