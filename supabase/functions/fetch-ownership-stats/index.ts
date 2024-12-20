@@ -21,17 +21,27 @@ serve(async (req) => {
       throw new Error('MongoDB URI not configured. Please set the MONGODB_URI secret in Supabase.');
     }
 
-    console.log('Attempting to connect to MongoDB...');
+    // Log URI format (without credentials)
+    const sanitizedUri = mongoUri.replace(
+      /(mongodb\+srv:\/\/)([^:]+):([^@]+)@/,
+      '$1[username]:[password]@'
+    );
+    console.log('Attempting connection with URI format:', sanitizedUri);
+
     const client = new MongoClient();
     
     try {
+      console.log('Initializing connection...');
       await client.connect(mongoUri);
       console.log('Connected to MongoDB successfully');
 
       const db = client.database('fpl_data');
+      console.log('Selected database:', db.name);
+      
       const collection = db.collection('ownership_stats');
+      console.log('Accessing collection:', collection.name);
 
-      console.log('Fetching ownership data from collection...');
+      console.log('Executing find query...');
       const ownershipData = await collection
         .find({})
         .sort({ timestamp: -1 })
@@ -56,10 +66,29 @@ serve(async (req) => {
 
     } catch (dbError) {
       console.error('Database operation error:', dbError);
-      // Log specific MongoDB error details
-      if (dbError.message && dbError.message.includes('bad auth')) {
-        console.error('Authentication failed. Please verify MongoDB credentials.');
+      
+      // Detailed error logging for authentication issues
+      if (dbError.message?.includes('bad auth')) {
+        console.error('Authentication failed. Common causes:');
+        console.error('1. Incorrect username or password');
+        console.error('2. IP not whitelisted in MongoDB Atlas');
+        console.error('3. Database user doesn\'t have correct permissions');
       }
+
+      // Log the specific error code and name if available
+      if (dbError.code) {
+        console.error('Error code:', dbError.code);
+        console.error('Error codeName:', dbError.codeName);
+      }
+
+      // Always ensure connection is closed on error
+      try {
+        await client.close();
+        console.log('MongoDB connection closed after error');
+      } catch (closeError) {
+        console.error('Error closing MongoDB connection:', closeError);
+      }
+
       throw dbError;
     }
 
