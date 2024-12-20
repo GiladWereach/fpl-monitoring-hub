@@ -6,20 +6,40 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+async function connectToMongo(): Promise<MongoClient> {
+  try {
+    const client = new MongoClient();
+    const mongoUri = Deno.env.get('MONGODB_URI');
+    
+    if (!mongoUri) {
+      throw new Error('MONGODB_URI environment variable is not set');
+    }
+    
+    console.log('Attempting to connect to MongoDB...');
+    await client.connect(mongoUri);
+    console.log('Successfully connected to MongoDB');
+    
+    return client;
+  } catch (error) {
+    console.error('MongoDB connection error:', error);
+    throw new Error(`Failed to connect to MongoDB: ${error.message}`);
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
+  let client: MongoClient | null = null;
+
   try {
     // Initialize MongoDB client
-    const client = new MongoClient();
-    
-    // Connect using the MONGODB_URI secret
-    await client.connect(Deno.env.get('MONGODB_URI') || '');
+    client = await connectToMongo();
     console.log('Connected to MongoDB');
 
-    const db = client.database(Deno.env.get('MONGODB_DB_NAME') || 'fpl_data');
+    const dbName = Deno.env.get('MONGODB_DB_NAME') || 'fpl_data';
+    const db = client.database(dbName);
     const collection = db.collection('ownership_stats');
 
     // Get the latest ownership stats
@@ -29,23 +49,43 @@ Deno.serve(async (req) => {
       .limit(1)
       .toArray();
 
-    await client.close();
+    console.log('Successfully fetched ownership stats:', latestStats);
 
     return new Response(
-      JSON.stringify({ data: latestStats }),
+      JSON.stringify(latestStats),
       {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json' 
+        },
         status: 200,
       },
     );
   } catch (error) {
-    console.error('Error:', error);
+    console.error('Error in fetch-ownership-stats:', error);
+    
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({
+        error: 'Failed to fetch ownership stats',
+        details: error.message
+      }),
       {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json' 
+        },
         status: 500,
       },
     );
+  } finally {
+    // Always close the connection
+    if (client) {
+      try {
+        await client.close();
+        console.log('MongoDB connection closed');
+      } catch (closeError) {
+        console.error('Error closing MongoDB connection:', closeError);
+      }
+    }
   }
 });
