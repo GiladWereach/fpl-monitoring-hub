@@ -17,7 +17,7 @@ async function getMongoClient(): Promise<MongoClient> {
       throw new Error('MongoDB credentials not configured');
     }
 
-    const uri = `mongodb+srv://${username}:${password}@fplbackend.jeuit.mongodb.net/?retryWrites=true&w=majority&appName=fplbackend`;
+    const uri = `mongodb+srv://lovable:SWxtdRzUEsPiqK4Z@fplbackend.jeuit.mongodb.net/?retryWrites=true&w=majority&appName=fplbackend`;
     
     const client = new MongoClient();
     await client.connect(uri);
