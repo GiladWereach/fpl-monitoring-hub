@@ -7,6 +7,8 @@ interface MongoDBConfig {
 }
 
 export async function validateMongoDBConfig(): Promise<MongoDBConfig> {
+  console.log('Starting MongoDB configuration validation...');
+  
   const config = {
     uri: Deno.env.get('MONGODB_URI'),
     cluster: Deno.env.get('MONGODB_CLUSTER'),
@@ -15,7 +17,14 @@ export async function validateMongoDBConfig(): Promise<MongoDBConfig> {
     password: Deno.env.get('MONGODB_PASSWORD'),
   };
 
-  console.log('Validating MongoDB configuration...');
+  // Log config (without sensitive data)
+  console.log('MongoDB configuration:', {
+    uri: config.uri ? '[REDACTED]' : undefined,
+    cluster: config.cluster,
+    database: config.database,
+    username: config.username ? '[REDACTED]' : undefined,
+    password: '[REDACTED]'
+  });
 
   // Check for required fields
   const requiredFields = ['cluster', 'database', 'username', 'password'];

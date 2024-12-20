@@ -1,7 +1,6 @@
-import { MongoClient } from 'https://deno.land/x/mongo@v0.31.1/mod.ts';
+import { corsHeaders } from '../_shared/cors.ts';
 import { validateMongoDBConfig } from './config-validator.ts';
 import { createMongoDBClient } from './mongodb-client.ts';
-import { corsHeaders } from '../_shared/cors.ts';
 
 Deno.serve(async (req) => {
   // Handle CORS
@@ -21,20 +20,18 @@ Deno.serve(async (req) => {
     console.log('MongoDB client created');
 
     try {
-      await client.connect();
-      console.log('Successfully connected to MongoDB');
-
       // Test database access
       const db = client.database(config.database);
-      await db.listCollections().toArray();
-      console.log('Successfully accessed database and listed collections');
+      const collections = await db.listCollections().toArray();
+      console.log('Successfully accessed database and listed collections:', collections.length);
 
       return new Response(
         JSON.stringify({
           success: true,
           message: 'MongoDB connection test successful',
           database: config.database,
-          cluster: config.cluster
+          cluster: config.cluster,
+          collections_count: collections.length
         }),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },

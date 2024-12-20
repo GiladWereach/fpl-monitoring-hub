@@ -9,10 +9,20 @@ interface MongoDBConfig {
 }
 
 export async function createMongoDBClient(config: MongoDBConfig): Promise<MongoClient> {
+  // Construct URI if not provided
   const uri = config.uri || 
     `mongodb+srv://${config.username}:${config.password}@${config.cluster}.mongodb.net/?retryWrites=true&w=majority`;
 
   console.log('Creating MongoDB client...');
+  console.log('Using cluster:', config.cluster);
   
-  return new MongoClient(uri);
+  try {
+    const client = new MongoClient();
+    await client.connect(uri);
+    console.log('MongoDB client created successfully');
+    return client;
+  } catch (error) {
+    console.error('Error creating MongoDB client:', error);
+    throw new Error(`Failed to create MongoDB client: ${error.message}`);
+  }
 }
