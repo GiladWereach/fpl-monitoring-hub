@@ -15,10 +15,10 @@ serve(async (req) => {
     console.log('Starting ownership stats fetch...');
     
     // Get MongoDB credentials from environment
-    const username = encodeURIComponent(Deno.env.get('MONGODB_USERNAME') || '');
-    const password = encodeURIComponent(Deno.env.get('MONGODB_PASSWORD') || '');
-    const cluster = Deno.env.get('MONGODB_CLUSTER') || '';
-    const dbName = Deno.env.get('MONGODB_DATABASE') || '';
+    const username = Deno.env.get('MONGODB_USERNAME');
+    const password = Deno.env.get('MONGODB_PASSWORD');
+    const cluster = Deno.env.get('MONGODB_CLUSTER');
+    const dbName = Deno.env.get('MONGODB_DATABASE');
 
     if (!username || !password || !cluster || !dbName) {
       console.error('Missing MongoDB configuration');
@@ -26,7 +26,7 @@ serve(async (req) => {
     }
 
     // Construct MongoDB URI with credentials
-    const uri = `mongodb+srv://${username}:${password}@${cluster}/?retryWrites=true&w=majority&appName=fplbackend`;
+    const uri = `mongodb+srv://${encodeURIComponent(username)}:${encodeURIComponent(password)}@${cluster}/?retryWrites=true&w=majority&appName=fplbackend`;
     console.log('Connecting to MongoDB with URI pattern:', uri.replace(password, '***'));
 
     // Create MongoDB client with recommended options
