@@ -26,7 +26,7 @@ serve(async (req) => {
   try {
     console.log('Starting ownership stats fetch...');
 
-    // Construct MongoDB URI from environment variables
+    // Get environment variables
     const username = Deno.env.get('MONGODB_USERNAME');
     const password = Deno.env.get('MONGODB_PASSWORD');
     const cluster = Deno.env.get('MONGODB_CLUSTER');
@@ -36,6 +36,7 @@ serve(async (req) => {
       throw new Error('MongoDB configuration incomplete');
     }
 
+    // Construct MongoDB Atlas URI
     const uri = `mongodb+srv://${encodeURIComponent(username)}:${encodeURIComponent(password)}@${cluster}/?retryWrites=true&w=majority`;
     console.log('Connecting to MongoDB...');
 
@@ -44,7 +45,7 @@ serve(async (req) => {
     await client.connect({
       db: dbName,
       tls: true,
-      servers: [{ host: cluster, port: 27017 }],
+      servers: [{ host: `${cluster}.mongodb.net`, port: 27017 }],
       credential: {
         username: username,
         password: password,
