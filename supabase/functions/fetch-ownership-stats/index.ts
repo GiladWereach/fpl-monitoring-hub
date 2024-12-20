@@ -1,5 +1,6 @@
 import { serve } from "std/server";
 import { createClient } from "@supabase/supabase-js";
+import { MongoClient } from "mongodb";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -12,6 +13,8 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  let mongoClient;
+  
   try {
     console.log('Initializing Supabase client...');
     const supabase = createClient(
@@ -37,35 +40,71 @@ serve(async (req) => {
 
     const currentEvent = eventData.id;
 
-    // Get ownership data from players table
-    console.log('Fetching player ownership data...');
-    const { data: players, error: playersError } = await supabase
-      .from('players')
-      .select(`
-        id,
-        web_name,
-        teams (
-          short_name
-        ),
-        selected_by_percent,
-        total_points
-      `)
-      .order('selected_by_percent', { ascending: false })
-      .limit(10);
+    // MongoDB Connection
+    console.log('Connecting to MongoDB...');
+    const username = encodeURIComponent(Deno.env.get("MONGODB_USERNAME") || "");
+    const password = encodeURIComponent(Deno.env.get("MONGODB_PASSWORD") || "");
+    const cluster = Deno.env.get("MONGODB_CLUSTER") || "";
+    const database = Deno.env.get("MONGODB_DATABASE") || "";
 
-    if (playersError) {
-      throw new Error(`Failed to fetch players: ${playersError.message}`);
+    const uri = `mongodb+srv://${username}:${password}@${cluster}.jeuit.mongodb.net/${database}?retryWrites=true&w=majority`;
+    
+    mongoClient = new MongoClient(uri, {
+      connectTimeoutMS: 5000,
+      socketTimeoutMS: 5000,
+    });
+
+    console.log('Attempting MongoDB connection...');
+    await mongoClient.connect();
+    console.log('Successfully connected to MongoDB');
+
+    const db = mongoClient.database(database);
+    const collection = db.collection("ownership_data");
+
+    // Fetch ownership data for current gameweek
+    console.log(`Fetching ownership data for gameweek ${currentEvent}...`);
+    const ownershipData = await collection
+      .find({ gameweek: currentEvent })
+      .toArray();
+
+    if (!ownershipData.length) {
+      console.log('No ownership data found for current gameweek');
+      return new Response(
+        JSON.stringify({
+          success: true,
+          data: {
+            event: currentEvent,
+            ownership_data: []
+          }
+        }),
+        { headers: corsHeaders }
+      );
     }
 
-    // Transform the data
-    const ownershipData = players.map(player => ({
-      player_id: player.id,
-      player_name: player.web_name,
-      team_name: player.teams?.short_name || 'Unknown',
-      ownership_percentage: parseFloat(player.selected_by_percent),
-      captain_percentage: 0, // This would need to be calculated from actual captain data if available
-      total_points: player.total_points
-    }));
+    // Get player details from Supabase
+    console.log('Enriching data with player details...');
+    const playerIds = [...new Set(ownershipData.map(record => record.player_id))];
+    
+    const { data: players, error: playersError } = await supabase
+      .from('players')
+      .select('id, web_name, teams (short_name)')
+      .in('id', playerIds);
+
+    if (playersError) {
+      throw new Error(`Failed to fetch player details: ${playersError.message}`);
+    }
+
+    // Map player details to ownership data
+    const enrichedData = ownershipData.map(record => {
+      const player = players?.find(p => p.id === record.player_id);
+      return {
+        player_id: record.player_id,
+        player_name: player?.web_name || 'Unknown',
+        team_name: player?.teams?.short_name || 'Unknown',
+        ownership_percentage: record.ownership_percentage,
+        captain_percentage: record.captain_percentage || 0
+      };
+    });
 
     console.log('Successfully processed ownership data');
 
@@ -74,7 +113,7 @@ serve(async (req) => {
         success: true,
         data: {
           event: currentEvent,
-          ownership_data: ownershipData
+          ownership_data: enrichedData
         }
       }),
       {
@@ -99,5 +138,14 @@ serve(async (req) => {
         status: 500
       }
     );
+  } finally {
+    if (mongoClient) {
+      try {
+        await mongoClient.close();
+        console.log('MongoDB connection closed');
+      } catch (error) {
+        console.error('Error closing MongoDB connection:', error);
+      }
+    }
   }
 });
