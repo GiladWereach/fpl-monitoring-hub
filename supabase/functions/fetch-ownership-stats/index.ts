@@ -1,5 +1,6 @@
 import { serve } from "std/server";
 import { MongoClient } from "mongodb";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -8,39 +9,35 @@ const corsHeaders = {
 };
 
 async function getMongoClient(): Promise<MongoClient> {
-  const username = Deno.env.get('MONGODB_USERNAME');
-  const password = Deno.env.get('MONGODB_PASSWORD');
-  const cluster = Deno.env.get('MONGODB_CLUSTER');
-  const dbName = Deno.env.get('MONGODB_DATABASE');
-
-  console.log('Configuration check:', {
-    username: username ? `${username.substring(0, 2)}...` : 'missing',
-    passwordLength: password?.length || 'missing',
-    cluster: cluster || 'missing',
-    dbName: dbName || 'missing'
-  });
-
-  if (!username || !password || !cluster || !dbName) {
-    throw new Error('MongoDB configuration incomplete');
-  }
-
-  const encodedUsername = encodeURIComponent(username);
-  const encodedPassword = encodeURIComponent(password);
-  
-  const uri = `mongodb+srv://${encodedUsername}:${encodedPassword}@${cluster}.jeuit.mongodb.net/${dbName}?retryWrites=true&w=majority`;
-  console.log('Connecting to MongoDB with URI pattern:', uri.replace(encodedUsername, '***').replace(encodedPassword, '***'));
-  
-  const client = new MongoClient();
   try {
+    const username = Deno.env.get('MONGODB_USERNAME');
+    const password = Deno.env.get('MONGODB_PASSWORD');
+    const cluster = Deno.env.get('MONGODB_CLUSTER');
+    const dbName = Deno.env.get('MONGODB_DATABASE');
+
+    if (!username || !password || !cluster || !dbName) {
+      throw new Error('MongoDB configuration incomplete');
+    }
+
+    const uri = `mongodb+srv://${encodeURIComponent(username)}:${encodeURIComponent(password)}@${cluster}.jeuit.mongodb.net/${dbName}?authMechanism=SCRAM-SHA-1&ssl=true&retryWrites=true&w=majority`;
+
     console.log('Attempting MongoDB connection...');
-    await client.connect(uri);
+    
+    const client = new MongoClient();
+    await client.connect(uri, {
+      tls: true,
+      tlsInsecure: false,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 5000
+    });
+    
     console.log('MongoDB connection successful!');
     return client;
   } catch (error) {
-    console.error('MongoDB connection error:', {
+    console.error('Connection error details:', {
       name: error.name,
       message: error.message,
-      cause: error.cause
+      stack: error.stack
     });
     throw error;
   }
@@ -67,15 +64,51 @@ async function fetchLatestOwnershipStats(db: any) {
     .find({ event: latestEvent })
     .toArray();
 
-  console.log(`Retrieved ${ownershipData.length} ownership records`);
+  // Initialize Supabase client
+  const supabaseUrl = Deno.env.get('SUPABASE_URL');
+  const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  
+  if (!supabaseUrl || !supabaseKey) {
+    throw new Error('Supabase configuration missing');
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseKey);
+
+  // Fetch player details from Supabase
+  const playerIds = ownershipData.map(stat => stat.player_id);
+  const { data: players, error } = await supabase
+    .from('players')
+    .select('id, web_name, teams (short_name)')
+    .in('id', playerIds);
+
+  if (error) {
+    console.error('Error fetching player details:', error);
+    throw error;
+  }
+
+  // Create a map of player details
+  const playerMap = new Map(
+    players.map(player => [
+      player.id,
+      { 
+        player_name: player.web_name,
+        team_name: player.teams?.short_name || 'Unknown'
+      }
+    ])
+  );
+
+  // Combine ownership data with player details
+  const enrichedData = ownershipData.map(stat => ({
+    ...stat,
+    player_name: playerMap.get(stat.player_id)?.player_name || 'Unknown Player',
+    team_name: playerMap.get(stat.player_id)?.team_name || 'Unknown Team',
+    ownership_percentage: Number(stat.ownership_percentage.toFixed(2)),
+    captain_percentage: Number(stat.captain_percentage.toFixed(2))
+  }));
 
   return {
     event: latestEvent,
-    ownership_data: ownershipData.map(stat => ({
-      ...stat,
-      ownership_percentage: Number(stat.ownership_percentage.toFixed(2)),
-      captain_percentage: Number(stat.captain_percentage.toFixed(2))
-    }))
+    ownership_data: enrichedData
   };
 }
 
@@ -102,38 +135,22 @@ serve(async (req) => {
   } catch (error) {
     console.error('Function error:', error);
     
-    let errorMessage = 'Failed to fetch ownership stats';
-    let errorDetails = error.message;
-    let statusCode = 500;
-
-    if (error.message.includes('configuration incomplete')) {
-      statusCode = 503;
-      errorMessage = 'Service configuration error';
-    } else if (error.message.includes('No ownership data found')) {
-      statusCode = 404;
-      errorMessage = 'No data available';
-    }
-
     return new Response(
       JSON.stringify({
         success: false,
-        error: errorMessage,
-        details: errorDetails
+        error: 'Failed to fetch ownership stats',
+        details: error.message
       }),
       {
         headers: corsHeaders,
-        status: statusCode
+        status: 500
       }
     );
 
   } finally {
     if (client) {
-      try {
-        await client.close();
-        console.log('MongoDB connection closed');
-      } catch (closeError) {
-        console.error('Error closing MongoDB connection:', closeError);
-      }
+      await client.close();
+      console.log('MongoDB connection closed');
     }
   }
 });
