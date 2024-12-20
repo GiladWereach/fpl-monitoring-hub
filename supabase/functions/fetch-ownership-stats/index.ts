@@ -42,21 +42,25 @@ serve(async (req) => {
 
     // MongoDB Connection
     console.log('Connecting to MongoDB...');
-    const username = encodeURIComponent(Deno.env.get("MONGODB_USERNAME") || "");
-    const password = encodeURIComponent(Deno.env.get("MONGODB_PASSWORD") || "");
-    const cluster = Deno.env.get("MONGODB_CLUSTER") || "";
-    const database = Deno.env.get("MONGODB_DATABASE") || "";
-
-    const uri = `mongodb+srv://${username}:${password}@${cluster}.jeuit.mongodb.net?retryWrites=true&w=majority`;
     
-    mongoClient = new MongoClient(uri, {
-      connectTimeoutMS: 5000,
-      socketTimeoutMS: 5000,
-    });
+    // Use the complete MONGODB_URI directly
+    const uri = Deno.env.get("MONGODB_URI");
+    if (!uri) {
+      throw new Error('MONGODB_URI environment variable is not set');
+    }
+    
+    console.log('Attempting MongoDB connection with URI pattern:', uri.replace(/\/\/.*@/, '//<credentials>@'));
+    
+    mongoClient = new MongoClient(uri);
 
     console.log('Attempting MongoDB connection...');
     await mongoClient.connect();
     console.log('Successfully connected to MongoDB');
+
+    const database = Deno.env.get("MONGODB_DATABASE");
+    if (!database) {
+      throw new Error('MONGODB_DATABASE environment variable is not set');
+    }
 
     const db = mongoClient.database(database);
     const collection = db.collection("ownership_data");
