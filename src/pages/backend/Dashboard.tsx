@@ -3,6 +3,7 @@ import { RecentActivity } from '@/components/dashboard/RecentActivity';
 import { UpcomingExecutions } from '@/components/dashboard/UpcomingExecutions';
 import { LiveStatus } from '@/components/dashboard/LiveStatus';
 import { OwnershipStats } from '@/components/dashboard/OwnershipStats';
+import { MongoDBConnectionTest } from '@/components/dashboard/testing/MongoDBConnectionTest';
 
 export default function BackendDashboard() {
   return (
@@ -22,6 +23,9 @@ export default function BackendDashboard() {
         <APIHealthStatus />
         <OwnershipStats />
       </div>
+
+      {/* MongoDB Connection Test */}
+      <MongoDBConnectionTest />
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
