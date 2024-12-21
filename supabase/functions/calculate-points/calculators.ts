@@ -34,7 +34,7 @@ export function calculateGoalsConcededPoints(goalsConceded: number, position: nu
   
   // For every 2 goals conceded, -1 point
   const points = Math.floor(goalsConceded / 2) * -1;
-  return position === 1 ? points : points; // Both GKP and DEF get same points now
+  return position === 1 ? points : points;
 }
 
 export function calculateSavePoints(saves: number, position: number, rules: ScoringRules): number {
@@ -56,5 +56,6 @@ export function calculatePenaltyPoints(
 
 export function calculateBonusPoints(bonus: number): number {
   // Simply return the actual bonus points value
+  // This will be 3 for highest BPS, 2 for second highest, 1 for third highest
   return bonus;
 }

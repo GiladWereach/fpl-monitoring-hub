@@ -43,16 +43,6 @@ Deno.serve(async (req) => {
     const playerIds = [...new Set(performances.map(p => p.player_id))];
     const playerMap = await getPlayers(supabaseClient, playerIds);
 
-    // Group performances by fixture to calculate bonus points correctly
-    const fixturePerformances = performances.reduce((acc: Record<number, any[]>, curr) => {
-      const fixtureId = curr.fixture_id;
-      if (!acc[fixtureId]) {
-        acc[fixtureId] = [];
-      }
-      acc[fixtureId].push(curr);
-      return acc;
-    }, {});
-
     const pointsCalculations = performances.map(perf => {
       const player = playerMap.get(perf.player_id);
       if (!player) {
@@ -60,9 +50,7 @@ Deno.serve(async (req) => {
         return null;
       }
 
-      // Get all BPS values for this fixture for bonus point calculation
-      const fixtureBps = fixturePerformances[perf.fixture_id].map(p => p.bps);
-      console.log(`Processing player ${perf.player_id} for fixture ${perf.fixture_id}, BPS: ${perf.bps}, All BPS in fixture:`, fixtureBps);
+      console.log(`Processing player ${perf.player_id}, bonus points: ${perf.bonus}`);
 
       const minutesPoints = calculateMinutesPoints(perf.minutes, rules);
       const goalsPoints = calculateGoalPoints(perf.goals_scored, player.element_type, rules);
@@ -73,7 +61,7 @@ Deno.serve(async (req) => {
       const penaltyPoints = calculatePenaltyPoints(perf.penalties_saved, perf.penalties_missed, rules);
       const ownGoalPoints = perf.own_goals * rules.own_goals;
       const cardPoints = calculateCardPoints(perf.yellow_cards, perf.red_cards, rules);
-      const bonusPoints = calculateBonusPoints(perf.bps, fixtureBps);
+      const bonusPoints = calculateBonusPoints(perf.bonus);
 
       const rawTotal = 
         minutesPoints +
@@ -119,7 +107,7 @@ Deno.serve(async (req) => {
         raw_total_points: rawTotal,
         final_total_points: rawTotal, // No multipliers yet
       };
-    }).filter(Boolean) as PointsCalculation[];
+    }).filter(Boolean);
 
     await upsertPointsCalculations(supabaseClient, pointsCalculations);
     await updatePerformanceStatus(supabaseClient, performances.map(p => p.id));
