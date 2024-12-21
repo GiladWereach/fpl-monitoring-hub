@@ -76,6 +76,11 @@ export const executeFetchFunction = async (functionName: string) => {
       .eq('endpoint', functionName)
       .maybeSingle();
 
+    // Ensure we have a valid error_pattern object
+    const currentErrorPattern = typeof currentMetrics?.error_pattern === 'object' && currentMetrics?.error_pattern !== null 
+      ? currentMetrics.error_pattern 
+      : {};
+
     // Update metrics for error case
     const newMetrics = {
       endpoint: functionName,
@@ -85,7 +90,7 @@ export const executeFetchFunction = async (functionName: string) => {
       last_success_time: currentMetrics?.last_success_time,
       last_error_time: new Date().toISOString(),
       error_pattern: {
-        ...(currentMetrics?.error_pattern || {}),
+        ...currentErrorPattern,
         last_error: error.message
       }
     };
