@@ -46,7 +46,10 @@ export function ScheduleFilters({
         <SelectContent>
           <SelectItem value="all">All Groups</SelectItem>
           {groups.map((group) => (
-            <SelectItem key={group} value={group || ""}>
+            <SelectItem 
+              key={group || "ungrouped"} 
+              value={group || "ungrouped"}
+            >
               {group || "Ungrouped"}
             </SelectItem>
           ))}
