@@ -1964,6 +1964,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      cleanup_old_metrics: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       get_active_cron_jobs: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -1984,6 +1988,21 @@ export type Database = {
           next_execution_at: string
           group_name: string
           frequency_type: Database["public"]["Enums"]["schedule_frequency"]
+        }[]
+      }
+      get_aggregated_metrics: {
+        Args: {
+          hours_lookback?: number
+        }
+        Returns: {
+          endpoint: string
+          total_successes: number
+          total_errors: number
+          avg_response_time: number
+          success_rate: number
+          latest_success: string
+          latest_error: string
+          health_status: string
         }[]
       }
       get_collection_metrics: {
