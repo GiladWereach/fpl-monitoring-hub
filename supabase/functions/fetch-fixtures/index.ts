@@ -10,13 +10,15 @@ const corsHeaders = {
 
 const MAX_RETRIES = 3;
 const INITIAL_BACKOFF = 1000; // 1 second
-const TIMEOUT = 10000; // 10 seconds
+const TIMEOUT = 30000; // 30 seconds - increased timeout
 
 async function fetchWithRetry(url: string, headers: Record<string, string>, retryCount = 0): Promise<Response> {
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), TIMEOUT);
 
+    logDebug('fetch-fixtures', `Attempt ${retryCount + 1}/${MAX_RETRIES} to fetch data`);
+    
     const response = await fetch(url, { 
       headers,
       signal: controller.signal 
@@ -24,9 +26,17 @@ async function fetchWithRetry(url: string, headers: Record<string, string>, retr
     
     clearTimeout(timeoutId);
     
+    // Log response details for debugging
+    logDebug('fetch-fixtures', `Response status: ${response.status}`);
+    logDebug('fetch-fixtures', `Response headers: ${JSON.stringify(Object.fromEntries(response.headers))}`);
+    
     if (response.ok) {
       const contentType = response.headers.get('content-type');
+      logDebug('fetch-fixtures', `Content-Type: ${contentType}`);
+      
       if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        logError('fetch-fixtures', `Invalid content type. Response body: ${text}`);
         throw new Error('Invalid content type received from FPL API');
       }
       return response;
@@ -40,9 +50,12 @@ async function fetchWithRetry(url: string, headers: Record<string, string>, retr
       return fetchWithRetry(url, headers, retryCount + 1);
     }
 
-    throw new Error(`FPL API error: ${response.status}`);
+    const errorText = await response.text();
+    logError('fetch-fixtures', `FPL API error response: ${errorText}`);
+    throw new Error(`FPL API error: ${response.status}. Response: ${errorText}`);
   } catch (error) {
     if (error.name === 'AbortError') {
+      logError('fetch-fixtures', 'Request timeout');
       throw new Error('Request timeout');
     }
 
@@ -107,12 +120,22 @@ Deno.serve(async (req) => {
     let fixtures;
     try {
       const text = await response.text();
+      logDebug(functionName, `Raw response length: ${text.length}`);
+      
       if (!text) {
         throw new Error('Empty response from FPL API');
       }
-      fixtures = JSON.parse(text);
+      
+      try {
+        fixtures = JSON.parse(text);
+      } catch (parseError) {
+        logError(functionName, `JSON parse error. Response text: ${text.substring(0, 200)}...`);
+        throw new Error(`Failed to parse JSON: ${parseError.message}`);
+      }
+      
       if (!Array.isArray(fixtures)) {
-        throw new Error('Invalid fixtures data format');
+        logError(functionName, `Invalid data format. Received: ${typeof fixtures}`);
+        throw new Error('Invalid fixtures data format - expected array');
       }
     } catch (error) {
       logError(functionName, 'Failed to parse fixtures JSON:', error);
