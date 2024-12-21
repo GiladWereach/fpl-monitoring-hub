@@ -1,6 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { determineScheduleWindow } from '../shared/scheduling-service.ts';
 import { logExecution } from '../shared/monitoring-service.ts';
+import { logDebug, logError, logInfo } from '../shared/logging-service.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -25,7 +26,7 @@ Deno.serve(async (req) => {
     
     // Handle schedule inquiry
     if (body.getSchedule) {
-      console.log(`[${functionName}] Getting collection schedule...`);
+      logInfo(functionName, 'Getting collection schedule...');
       const schedule = await determineScheduleWindow(supabaseClient, functionName);
       return new Response(
         JSON.stringify(schedule),
@@ -33,7 +34,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`[${functionName}] Starting fixtures data fetch...`);
+    logInfo(functionName, 'Starting fixtures data fetch...');
     
     // Enhanced browser-like headers
     const headers = {
@@ -49,18 +50,19 @@ Deno.serve(async (req) => {
       'Connection': 'keep-alive'
     };
 
-    console.log(`[${functionName}] Fetching data from FPL API...`);
+    logDebug(functionName, 'Fetching data from FPL API...');
     const response = await fetch('https://fantasy.premierleague.com/api/fixtures/', {
       headers: headers
     });
     
     if (!response.ok) {
-      console.error(`[${functionName}] FPL API error: ${response.status}`, await response.text());
+      const errorText = await response.text();
+      logError(functionName, `FPL API error: ${response.status}`, errorText);
       throw new Error(`FPL API error: ${response.status}`);
     }
 
     const fixtures = await response.json();
-    console.log(`[${functionName}] Fetched ${fixtures.length} fixtures`);
+    logInfo(functionName, `Fetched ${fixtures.length} fixtures`);
 
     const { error: fixturesError } = await supabaseClient
       .from('fixtures')
@@ -70,17 +72,21 @@ Deno.serve(async (req) => {
       })));
 
     if (fixturesError) {
-      console.error(`[${functionName}] Error upserting fixtures:`, fixturesError);
+      logError(functionName, 'Error upserting fixtures:', fixturesError);
       throw fixturesError;
     }
 
     const executionTime = Date.now() - startTime;
     await logExecution(supabaseClient, functionName, {
       duration_ms: executionTime,
-      success: true
+      success: true,
+      collection_stats: {
+        records_processed: fixtures.length,
+        records_updated: fixtures.length
+      }
     });
 
-    console.log(`[${functionName}] Fixtures data processed successfully in ${executionTime}ms`);
+    logInfo(functionName, `Fixtures data processed successfully in ${executionTime}ms`);
 
     return new Response(
       JSON.stringify({ 
@@ -93,7 +99,7 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     const executionTime = Date.now() - startTime;
-    console.error(`[${functionName}] Error:`, error);
+    logError(functionName, 'Error:', error);
     
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',

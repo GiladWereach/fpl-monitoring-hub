@@ -1,15 +1,21 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { logDebug } from './logging-service.ts';
 
 export interface ScheduleWindow {
   intervalMinutes: number;
   reason: string;
+  matchStatus: {
+    hasActiveMatches: boolean;
+    isPostMatch: boolean;
+    nextMatchTime?: Date;
+  };
 }
 
 export async function determineScheduleWindow(
   supabaseClient: ReturnType<typeof createClient>,
   functionName: string
 ): Promise<ScheduleWindow> {
-  console.log(`[${functionName}] Determining schedule window...`);
+  logDebug(functionName, 'Determining schedule window...');
   
   try {
     // Check for active matches
@@ -25,10 +31,14 @@ export async function determineScheduleWindow(
     }
 
     if (activeMatches && activeMatches.length > 0) {
-      console.log(`[${functionName}] Active matches found, using 2-minute intervals`);
+      logDebug(functionName, `Found ${activeMatches.length} active matches`);
       return {
         intervalMinutes: 2,
-        reason: 'Live matches in progress'
+        reason: 'Live matches in progress',
+        matchStatus: {
+          hasActiveMatches: true,
+          isPostMatch: false
+        }
       };
     }
 
@@ -54,26 +64,52 @@ export async function determineScheduleWindow(
       threeHoursAfterMatch.setHours(threeHoursAfterMatch.getHours() + 3);
       
       if (new Date() <= threeHoursAfterMatch) {
-        console.log(`[${functionName}] Within 3-hour post-match window, using 30-minute intervals`);
+        logDebug(functionName, 'Within 3-hour post-match window');
         return {
           intervalMinutes: 30,
-          reason: 'Post-match window (within 3 hours of match completion)'
+          reason: 'Post-match window (within 3 hours of match completion)',
+          matchStatus: {
+            hasActiveMatches: false,
+            isPostMatch: true
+          }
         };
       }
     }
 
-    // Default to daily updates
-    console.log(`[${functionName}] Outside match and post-match windows, using daily intervals`);
+    // Check for upcoming matches
+    const { data: upcomingMatches, error: upcomingError } = await supabaseClient
+      .from('fixtures')
+      .select('*')
+      .gt('kickoff_time', new Date().toISOString())
+      .order('kickoff_time')
+      .limit(1);
+
+    if (upcomingError) {
+      console.error(`[${functionName}] Error checking upcoming matches:`, upcomingError);
+      throw upcomingError;
+    }
+
+    // Default to daily updates with next match info if available
+    logDebug(functionName, 'No active or recent matches');
     return {
       intervalMinutes: 1440, // 24 hours
-      reason: 'No recent or upcoming matches'
+      reason: 'Outside match and post-match windows',
+      matchStatus: {
+        hasActiveMatches: false,
+        isPostMatch: false,
+        nextMatchTime: upcomingMatches?.[0]?.kickoff_time ? new Date(upcomingMatches[0].kickoff_time) : undefined
+      }
     };
   } catch (error) {
     console.error(`[${functionName}] Error determining schedule window:`, error);
     // Default to 30 minutes if there's an error, to be safe
     return {
       intervalMinutes: 30,
-      reason: 'Error occurred, using safe default interval'
+      reason: 'Error occurred, using safe default interval',
+      matchStatus: {
+        hasActiveMatches: false,
+        isPostMatch: false
+      }
     };
   }
 }
