@@ -34,5 +34,15 @@ export async function validateMongoDBConfig(): Promise<MongoDBConfig> {
     throw new Error(`Missing required MongoDB configuration: ${missingFields.join(', ')}`);
   }
 
+  // Validate cluster format
+  if (!config.cluster.match(/^[a-zA-Z0-9-]+$/)) {
+    throw new Error('Invalid cluster name format');
+  }
+
+  // Validate database name format
+  if (!config.database.match(/^[a-zA-Z0-9-_]+$/)) {
+    throw new Error('Invalid database name format');
+  }
+
   return config as MongoDBConfig;
 }
