@@ -23,9 +23,25 @@ export function APIHealthStatus() {
     refetchInterval: 30000 // 30 seconds in milliseconds
   });
 
+  // Helper function to format duration
+  const formatDuration = (ms: number) => {
+    if (ms < 1000) return `${Math.round(ms)}ms`;
+    if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
+    if (ms < 3600000) return `${Math.round(ms / 60000)}m`;
+    return `${Math.round(ms / 3600000)}h`;
+  };
+
+  // Calculate overall system health
+  const overallHealth = metrics?.reduce((acc, curr) => {
+    if (curr.health_status === 'error') return 'error';
+    if (curr.health_status === 'warning' && acc !== 'error') return 'warning';
+    return acc;
+  }, 'success');
+
+  const avgResponseTime = metrics?.reduce((acc, curr) => acc + curr.avg_response_time, 0) / (metrics?.length || 1);
+
   return (
     <>
-      {/* System Overview Cards */}
       <StatusCard
         title="Database Status"
         value="Connected"
@@ -39,90 +55,34 @@ export function APIHealthStatus() {
       
       <StatusCard
         title="Edge Functions"
-        value="8 Active"
+        value={`${metrics?.length || 0} Active`}
         status="success"
         icon={<Server className="h-4 w-4" />}
         details={[
-          { label: "Total Functions", value: "10" },
-          { label: "Health Score", value: "100%" }
+          { label: "Avg Response Time", value: formatDuration(avgResponseTime || 0) },
+          { label: "Health Score", value: `${Math.round((metrics?.filter(m => m.health_status === 'success').length || 0) / (metrics?.length || 1) * 100)}%` }
         ]}
       />
 
       <StatusCard
-        title="Calculations"
-        value="0 Running"
-        status="info"
-        icon={<Calculator className="h-4 w-4" />}
+        title="System Health"
+        value={overallHealth === 'success' ? 'Healthy' : overallHealth === 'warning' ? 'Warning' : 'Issues Detected'}
+        status={overallHealth || 'info'}
+        icon={<Activity className="h-4 w-4" />}
         details={[
-          { label: "Completed Today", value: "24" },
-          { label: "Average Duration", value: "2.3s" }
+          { label: "Total Endpoints", value: metrics?.length.toString() || "0" },
+          { label: "Healthy Endpoints", value: metrics?.filter(m => m.health_status === 'success').length.toString() || "0" }
         ]}
       />
 
       <StatusCard
         title="System Errors"
-        value="0"
-        status="success"
+        value={metrics?.filter(m => m.health_status === 'error').length.toString() || "0"}
+        status={metrics?.some(m => m.health_status === 'error') ? 'error' : 'success'}
         icon={<AlertTriangle className="h-4 w-4" />}
         details={[
-          { label: "Last 24h", value: "0" },
-          { label: "Critical", value: "0" }
-        ]}
-      />
-
-      {/* API Health Metrics */}
-      {metrics?.map((metric) => (
-        <StatusCard
-          key={`${metric.endpoint}-success`}
-          title={`${metric.endpoint} Success Rate`}
-          value={`${metric.success_rate}%`}
-          status={metric.health_status === 'success' ? "success" : 
-                 metric.health_status === 'warning' ? "warning" : "error"}
-          icon={<CheckCircle2 className="h-4 w-4" />}
-          details={[
-            { label: "Total Requests", value: (metric.total_successes + metric.total_errors).toString() },
-            { label: "Success Count", value: metric.total_successes.toString() }
-          ]}
-        />
-      ))}
-
-      {metrics?.map((metric) => (
-        <StatusCard
-          key={`${metric.endpoint}-time`}
-          title={`${metric.endpoint} Response Time`}
-          value={`${metric.avg_response_time}ms`}
-          status={metric.avg_response_time < 500 ? "success" : 
-                 metric.avg_response_time < 1000 ? "warning" : "error"}
-          icon={<Clock className="h-4 w-4" />}
-          details={[
-            { label: "Latest Success", value: metric.latest_success ? 
-              format(new Date(metric.latest_success), "HH:mm:ss") : 'Never' }
-          ]}
-        />
-      ))}
-
-      {metrics?.map((metric) => (
-        <StatusCard
-          key={`${metric.endpoint}-errors`}
-          title={`${metric.endpoint} Recent Errors`}
-          value={metric.latest_error ? 
-            format(new Date(metric.latest_error), "HH:mm:ss") : 
-            "No errors"}
-          status={!metric.latest_error ? "success" : "error"}
-          icon={<AlertTriangle className="h-4 w-4" />}
-          details={[
-            { label: "Error Count", value: metric.total_errors.toString() }
-          ]}
-        />
-      ))}
-
-      <StatusCard
-        title="Active Endpoints"
-        value={metrics?.length.toString() || "0"}
-        status="info"
-        icon={<Activity className="h-4 w-4" />}
-        details={[
-          { label: "Total Endpoints", value: metrics?.length.toString() || "0" }
+          { label: "Last 24h", value: metrics?.reduce((acc, curr) => acc + curr.total_errors, 0).toString() || "0" },
+          { label: "Critical", value: metrics?.filter(m => m.health_status === 'error').length.toString() || "0" }
         ]}
       />
     </>

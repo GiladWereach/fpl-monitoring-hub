@@ -3,6 +3,8 @@ import { Play, RefreshCw } from "lucide-react";
 import { ScheduleManager } from "../ScheduleManager";
 import { Card } from "@/components/ui/card";
 import { format } from "date-fns";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface FunctionCardProps {
   name: string;
@@ -15,11 +17,61 @@ interface FunctionCardProps {
 export function FunctionCard({ name, functionName, loading, onExecute, schedule }: FunctionCardProps) {
   const isLoading = loading === functionName || loading === "all";
 
+  const { data: metrics } = useQuery({
+    queryKey: ["function-metrics", functionName],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('api_health_metrics')
+        .select('*')
+        .eq('endpoint', functionName)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error) {
+        console.error(`Error fetching metrics for ${functionName}:`, error);
+        return null;
+      }
+
+      return data;
+    },
+    refetchInterval: 30000
+  });
+
+  const formatDuration = (ms: number) => {
+    if (ms < 1000) return `${Math.round(ms)}ms`;
+    if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
+    if (ms < 3600000) return `${Math.round(ms / 60000)}m`;
+    return `${Math.round(ms / 3600000)}h`;
+  };
+
+  const getHealthStatus = (metrics: any) => {
+    if (!metrics) return 'info';
+    if (metrics.error_count > metrics.success_count) return 'error';
+    if (metrics.avg_response_time > 5000) return 'warning';
+    return 'success';
+  };
+
   return (
     <Card className="p-4 bg-background">
       <div className="space-y-4">
         <div className="flex items-center justify-between gap-4">
-          <h3 className="font-semibold truncate">{name}</h3>
+          <div className="flex-1">
+            <h3 className="font-semibold truncate">{name}</h3>
+            {metrics && (
+              <div className="flex items-center gap-2 mt-1">
+                <span className={`h-2 w-2 rounded-full ${
+                  getHealthStatus(metrics) === 'success' ? 'bg-success' :
+                  getHealthStatus(metrics) === 'warning' ? 'bg-warning' :
+                  getHealthStatus(metrics) === 'error' ? 'bg-destructive' :
+                  'bg-muted'
+                }`} />
+                <span className="text-sm text-muted-foreground">
+                  {metrics.avg_response_time ? formatDuration(metrics.avg_response_time) : 'No data'}
+                </span>
+              </div>
+            )}
+          </div>
           <div className="flex gap-2 shrink-0">
             <Button
               size="sm"
@@ -70,6 +122,26 @@ export function FunctionCard({ name, functionName, loading, onExecute, schedule 
                     'Not scheduled'}
                 </span>
               </div>
+              {metrics && (
+                <>
+                  <div className="flex justify-between">
+                    <span>Success Rate:</span>
+                    <span>
+                      {metrics.success_count + metrics.error_count > 0 
+                        ? `${Math.round((metrics.success_count / (metrics.success_count + metrics.error_count)) * 100)}%`
+                        : 'N/A'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Last Error:</span>
+                    <span>
+                      {metrics.last_error_time 
+                        ? format(new Date(metrics.last_error_time), "MMM d, HH:mm:ss")
+                        : 'None'}
+                    </span>
+                  </div>
+                </>
+              )}
             </>
           ) : (
             <div className="italic">No schedule configured</div>
