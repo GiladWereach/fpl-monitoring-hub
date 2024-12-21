@@ -20,7 +20,7 @@ export function APIHealthStatus() {
       console.log("Fetched metrics:", data);
       return data;
     },
-    refetchInterval: 30000 // 30 minutes in milliseconds
+    refetchInterval: 30000 // 30 seconds in milliseconds
   });
 
   return (
@@ -73,7 +73,7 @@ export function APIHealthStatus() {
       {/* API Health Metrics */}
       {metrics?.map((metric) => (
         <StatusCard
-          key={metric.endpoint}
+          key={`${metric.endpoint}-success`}
           title={`${metric.endpoint} Success Rate`}
           value={`${metric.success_rate}%`}
           status={metric.health_status === 'success' ? "success" : 
