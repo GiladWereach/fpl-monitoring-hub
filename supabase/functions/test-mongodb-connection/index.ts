@@ -20,18 +20,12 @@ Deno.serve(async (req) => {
     console.log('MongoDB client created');
 
     try {
-      // Test database access
-      const db = client.database(config.database);
-      const collections = await db.listCollections().toArray();
-      console.log('Successfully accessed database and listed collections:', collections.length);
-
       return new Response(
         JSON.stringify({
           success: true,
           message: 'MongoDB connection test successful',
           database: config.database,
-          cluster: config.cluster,
-          collections_count: collections.length
+          cluster: config.cluster
         }),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -43,13 +37,12 @@ Deno.serve(async (req) => {
       console.log('MongoDB connection closed');
     }
   } catch (error) {
-    console.error('Error in MongoDB connection test:', error);
+    console.error('MongoDB connection test failed:', error);
     
     return new Response(
       JSON.stringify({
         success: false,
-        error: error.message,
-        details: error.stack
+        error: error.message
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

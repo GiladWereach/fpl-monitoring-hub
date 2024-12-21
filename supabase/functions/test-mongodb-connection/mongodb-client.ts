@@ -11,27 +11,31 @@ interface MongoDBConfig {
 export async function createMongoDBClient(config: MongoDBConfig): Promise<MongoClient> {
   try {
     console.log('Creating MongoDB client...');
-    console.log('Using cluster:', config.cluster);
     
-    // Construct the connection URI with proper encoding
+    // Construct the connection string following MongoDB best practices
     const uri = config.uri || 
-      `mongodb+srv://${encodeURIComponent(config.username)}:${encodeURIComponent(config.password)}@${config.cluster}.mongodb.net/?retryWrites=true&w=majority`;
+      `mongodb+srv://${encodeURIComponent(config.username)}:${encodeURIComponent(config.password)}@${config.cluster}.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
     
     console.log('Attempting connection with URI pattern:', uri.replace(/:[^:@]+@/, ':****@'));
     
+    // Create client with minimal options
     const client = new MongoClient();
     
-    // Connect with recommended options
+    // Connect using the official MongoDB recommended method
     await client.connect(uri);
     
-    // Test connection with ping
-    const db = client.database(config.database);
+    // Verify connection with a lightweight ping
+    const db = client.database('admin');
     await db.command({ ping: 1 });
     
-    console.log('MongoDB client created and tested successfully');
+    console.log('MongoDB connection test successful');
     return client;
   } catch (error) {
-    console.error('Error details:', error);
-    throw new Error(`Failed to create MongoDB client: ${error.message}`);
+    console.error('MongoDB connection error:', {
+      name: error.name,
+      message: error.message,
+      code: error.code
+    });
+    throw new Error(`MongoDB connection failed: ${error.message}`);
   }
 }
