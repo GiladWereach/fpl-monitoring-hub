@@ -15,7 +15,6 @@ export async function validateMongoDBConfig(): Promise<MongoDBConfig> {
     password: Deno.env.get('MONGODB_PASSWORD'),
   };
 
-  // Log sanitized config
   console.log('MongoDB configuration:', {
     uri: config.uri ? '[REDACTED]' : undefined,
     cluster: config.cluster,
@@ -24,12 +23,11 @@ export async function validateMongoDBConfig(): Promise<MongoDBConfig> {
     password: '[REDACTED]'
   });
 
-  // Validate required fields
   const requiredFields = ['cluster', 'database', 'username', 'password'];
   const missingFields = requiredFields.filter(field => !config[field]);
 
   if (missingFields.length > 0) {
-    throw new Error(`Missing MongoDB configuration: ${missingFields.join(', ')}`);
+    throw new Error(`Missing MongoDB configuration fields: ${missingFields.join(', ')}`);
   }
 
   return config as MongoDBConfig;

@@ -17,7 +17,7 @@ Deno.serve(async (req) => {
 
     // Create client and test connection
     const client = await createMongoDBClient(config);
-    console.log('MongoDB client created');
+    console.log('MongoDB client created successfully');
 
     try {
       return new Response(
@@ -37,12 +37,18 @@ Deno.serve(async (req) => {
       console.log('MongoDB connection closed');
     }
   } catch (error) {
-    console.error('MongoDB connection test failed:', error);
+    console.error('MongoDB connection test failed:', {
+      error: error.message,
+      type: error?.constructor?.name,
+      code: error?.code
+    });
     
     return new Response(
       JSON.stringify({
         success: false,
-        error: error.message
+        error: error.message,
+        code: error?.code,
+        type: error?.constructor?.name
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
