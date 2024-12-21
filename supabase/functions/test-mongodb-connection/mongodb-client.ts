@@ -9,34 +9,29 @@ interface MongoDBConfig {
 }
 
 export async function createMongoDBClient(config: MongoDBConfig): Promise<MongoClient> {
-  // Construct URI if not provided
-  const uri = config.uri || 
-    `mongodb+srv://${encodeURIComponent(config.username)}:${encodeURIComponent(config.password)}@${config.cluster}.jeuit.mongodb.net/?retryWrites=true&w=majority&appName=fplbackend`;
-
-  console.log('Creating MongoDB client...');
-  console.log('Using cluster:', config.cluster);
-  
   try {
+    console.log('Creating MongoDB client...');
+    console.log('Using cluster:', config.cluster);
+    
+    // Construct the connection URI with proper encoding
+    const uri = config.uri || 
+      `mongodb+srv://${encodeURIComponent(config.username)}:${encodeURIComponent(config.password)}@${config.cluster}.mongodb.net/?retryWrites=true&w=majority`;
+    
+    console.log('Attempting connection with URI pattern:', uri.replace(/:[^:@]+@/, ':****@'));
+    
     const client = new MongoClient();
     
     // Connect with recommended options
-    await client.connect(uri, {
-      tls: true,
-      serverApi: {
-        version: '1',
-        strict: true,
-        deprecationErrors: true
-      }
-    });
+    await client.connect(uri);
     
     // Test connection with ping
-    const adminDb = client.database('admin');
-    await adminDb.command({ ping: 1 });
+    const db = client.database(config.database);
+    await db.command({ ping: 1 });
     
     console.log('MongoDB client created and tested successfully');
     return client;
   } catch (error) {
-    console.error('Error creating MongoDB client:', error);
+    console.error('Error details:', error);
     throw new Error(`Failed to create MongoDB client: ${error.message}`);
   }
 }

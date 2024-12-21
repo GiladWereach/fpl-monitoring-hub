@@ -22,7 +22,7 @@ export async function validateMongoDBConfig(): Promise<MongoDBConfig> {
     uri: config.uri ? '[REDACTED]' : undefined,
     cluster: config.cluster,
     database: config.database,
-    username: config.username ? '[REDACTED]' : undefined,
+    username: '[REDACTED]',
     password: '[REDACTED]'
   });
 
@@ -34,14 +34,17 @@ export async function validateMongoDBConfig(): Promise<MongoDBConfig> {
     throw new Error(`Missing required MongoDB configuration: ${missingFields.join(', ')}`);
   }
 
-  // Validate cluster format
-  if (!config.cluster.match(/^[a-zA-Z0-9-]+$/)) {
-    throw new Error('Invalid cluster name format');
+  // Basic validation
+  if (!config.cluster) {
+    throw new Error('MongoDB cluster name is required');
   }
 
-  // Validate database name format
-  if (!config.database.match(/^[a-zA-Z0-9-_]+$/)) {
-    throw new Error('Invalid database name format');
+  if (!config.database) {
+    throw new Error('MongoDB database name is required');
+  }
+
+  if (!config.username || !config.password) {
+    throw new Error('MongoDB credentials are required');
   }
 
   return config as MongoDBConfig;
