@@ -11,49 +11,8 @@ import {
 } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-
-interface PlayerPerformanceData {
-  id: number;
-  assists: number;
-  bonus: number;
-  bps: number;
-  clean_sheets: number;
-  goals_scored: number;
-  goals_conceded: number;
-  own_goals: number;
-  penalties_saved: number;
-  penalties_missed: number;
-  yellow_cards: number;
-  red_cards: number;
-  saves: number;
-  minutes: number;
-  player: {
-    id: number;
-    first_name: string;
-    second_name: string;
-    web_name: string;
-    element_type: number;
-    team: {
-      short_name: string;
-    };
-  };
-}
-
-interface PointsData {
-  player_id: number;
-  minutes_points: number;
-  goals_scored_points: number;
-  assists_points: number;
-  clean_sheet_points: number;
-  goals_conceded_points: number;
-  own_goal_points: number;
-  penalty_save_points: number;
-  penalty_miss_points: number;
-  saves_points: number;
-  bonus_points: number;
-  card_points: number;
-  final_total_points: number;
-}
+import { PlayerPerformanceData, PointsData } from './types';
+import { getRowClassName } from './utils/table-utils';
 
 const PlayerPerformance = ({ gameweek, matchId }: { gameweek: number; matchId?: number | null }) => {
   const [search, setSearch] = useState('');
@@ -79,7 +38,7 @@ const PlayerPerformance = ({ gameweek, matchId }: { gameweek: number; matchId?: 
           )
         `)
         .eq('event_id', gameweek)
-        .gt('minutes', 0); // Only players with minutes > 0
+        .gt('minutes', 0);
 
       if (matchId) {
         query.eq('fixture_id', matchId);
@@ -91,6 +50,28 @@ const PlayerPerformance = ({ gameweek, matchId }: { gameweek: number; matchId?: 
       return data as unknown as PlayerPerformanceData[];
     },
     refetchInterval: 60000
+  });
+
+  // Query for match details when matchId is provided
+  const { data: matchDetails } = useQuery({
+    queryKey: ['match-details', matchId],
+    enabled: !!matchId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('fixtures')
+        .select(`
+          team_h:teams!fk_fixtures_team_h(short_name),
+          team_a:teams!fk_fixtures_team_a(short_name)
+        `)
+        .eq('id', matchId)
+        .single();
+      
+      if (error) throw error;
+      return {
+        homeTeam: data.team_h.short_name,
+        awayTeam: data.team_a.short_name
+      };
+    }
   });
 
   // Query for points calculations
@@ -113,7 +94,7 @@ const PlayerPerformance = ({ gameweek, matchId }: { gameweek: number; matchId?: 
           player_id: curr.player_id,
           minutes_points: curr.minutes_points,
           goals_scored_points: curr.goals_scored_points,
-          assists_points: curr.assist_points, // Map assist_points to assists_points
+          assists_points: curr.assist_points,
           clean_sheet_points: curr.clean_sheet_points,
           goals_conceded_points: curr.goals_conceded_points,
           own_goal_points: curr.own_goal_points,
@@ -176,7 +157,10 @@ const PlayerPerformance = ({ gameweek, matchId }: { gameweek: number; matchId?: 
           </TableHeader>
           <TableBody>
             {filteredPerformances?.map((perf) => (
-              <TableRow key={perf.id}>
+              <TableRow 
+                key={perf.id}
+                className={getRowClassName(perf, matchId, matchDetails?.homeTeam, matchDetails?.awayTeam)}
+              >
                 <TableCell>
                   {perf.player.web_name}
                   {perf.minutes < 1 && <span className="text-gray-500"> (Sub)</span>}

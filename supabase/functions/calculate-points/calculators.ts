@@ -54,19 +54,7 @@ export function calculatePenaltyPoints(
   return (penaltiesSaved * rules.penalties_saved) + (penaltiesMissed * rules.penalties_missed);
 }
 
-export function calculateBonusPoints(bps: number, allBpsInFixture: number[]): number {
-  // Sort BPS in descending order and get unique values
-  const uniqueBps = [...new Set(allBpsInFixture)].sort((a, b) => b - a);
-  
-  // Get top 3 unique BPS values
-  const topThreeBps = uniqueBps.slice(0, 3);
-  
-  // Assign bonus points based on position in unique BPS values
-  const bpsIndex = topThreeBps.indexOf(bps);
-  switch (bpsIndex) {
-    case 0: return 3; // Highest unique BPS
-    case 1: return 2; // Second highest unique BPS
-    case 2: return 1; // Third highest unique BPS
-    default: return 0; // Not in top 3
-  }
+export function calculateBonusPoints(bonus: number): number {
+  // Simply return the actual bonus points value
+  return bonus;
 }
