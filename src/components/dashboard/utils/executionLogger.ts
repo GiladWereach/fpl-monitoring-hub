@@ -2,35 +2,37 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const logFunctionExecution = async (functionName: string, started_at: string) => {
   try {
+    // First try to find an existing schedule in the schedules table
     const { data: schedules, error: scheduleError } = await supabase
       .from("schedules")
       .select("id")
-      .eq("function_name", functionName);
+      .eq("function_name", functionName)
+      .single();
 
-    if (scheduleError) {
+    if (scheduleError && scheduleError.code !== 'PGRST116') {
       console.error("Error getting schedule:", scheduleError);
       return;
     }
 
-    let scheduleId = schedules?.[0]?.id;
+    let scheduleId = schedules?.id;
 
+    // If no schedule exists, create one
     if (!scheduleId) {
       console.log(`Creating new schedule for ${functionName}`);
       const { data: newSchedule, error: createError } = await supabase
         .from("schedules")
         .insert({
           function_name: functionName,
-          schedule_type: "event_based",
+          schedule_type: "time_based",
           enabled: true,
-          event_config: {
-            triggerType: "manual",
-            offsetMinutes: 0
-          },
+          timezone: "UTC",
           execution_config: {
             retry_count: 3,
             timeout_seconds: 30,
             retry_delay_seconds: 60,
-            concurrent_execution: false
+            concurrent_execution: false,
+            retry_backoff: "linear",
+            max_retry_delay: 3600
           }
         })
         .select("id")
@@ -42,8 +44,10 @@ export const logFunctionExecution = async (functionName: string, started_at: str
       }
 
       scheduleId = newSchedule.id;
+      console.log(`Created new schedule with ID: ${scheduleId}`);
     }
 
+    // Log the execution
     const { error: logError } = await supabase
       .from("schedule_execution_logs")
       .insert({
@@ -54,6 +58,8 @@ export const logFunctionExecution = async (functionName: string, started_at: str
 
     if (logError) {
       console.error("Error logging execution:", logError);
+    } else {
+      console.log(`Successfully logged execution for schedule ${scheduleId}`);
     }
 
     return scheduleId;
@@ -64,6 +70,8 @@ export const logFunctionExecution = async (functionName: string, started_at: str
 
 export const updateExecutionLog = async (scheduleId: string, success: boolean, error?: string) => {
   try {
+    console.log(`Updating execution log for schedule ${scheduleId}, success: ${success}`);
+    
     const { error: updateError } = await supabase
       .from("schedule_execution_logs")
       .update({
@@ -77,6 +85,8 @@ export const updateExecutionLog = async (scheduleId: string, success: boolean, e
 
     if (updateError) {
       console.error("Error updating execution log:", updateError);
+    } else {
+      console.log(`Successfully updated execution log for schedule ${scheduleId}`);
     }
   } catch (error) {
     console.error("Error in updateExecutionLog:", error);

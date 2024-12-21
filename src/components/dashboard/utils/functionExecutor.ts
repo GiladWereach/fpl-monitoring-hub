@@ -13,6 +13,10 @@ export const executeFetchFunction = async (functionName: string) => {
     console.log(`Executing function: ${functionName}`);
     scheduleId = await logFunctionExecution(functionName, started_at);
     
+    if (!scheduleId) {
+      throw new Error("Failed to create or find schedule for execution logging");
+    }
+
     const { data, error } = await supabase.functions.invoke(functionName);
     
     if (error) throw error;
