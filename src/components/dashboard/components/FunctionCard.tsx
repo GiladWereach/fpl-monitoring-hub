@@ -20,22 +20,18 @@ export function FunctionCard({ name, functionName, loading, onExecute, schedule 
   const { data: metrics } = useQuery({
     queryKey: ["function-metrics", functionName],
     queryFn: async () => {
-      console.log(`Fetching metrics for ${functionName}`);
+      console.log(`Fetching aggregated metrics for ${functionName}`);
       const { data, error } = await supabase
-        .from('api_health_metrics')
-        .select('*')
-        .eq('endpoint', functionName)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .rpc('get_aggregated_metrics', { hours_lookback: 24 });
 
       if (error) {
         console.error(`Error fetching metrics for ${functionName}:`, error);
         return null;
       }
 
-      console.log(`Metrics data for ${functionName}:`, data);
-      return data;
+      const functionMetrics = data?.find(m => m.endpoint === functionName);
+      console.log(`Metrics data for ${functionName}:`, functionMetrics);
+      return functionMetrics;
     },
     refetchInterval: 30000
   });
@@ -49,9 +45,7 @@ export function FunctionCard({ name, functionName, loading, onExecute, schedule 
 
   const getHealthStatus = (metrics: any) => {
     if (!metrics) return 'info';
-    if (metrics.error_count > metrics.success_count) return 'error';
-    if (metrics.avg_response_time > 5000) return 'warning';
-    return 'success';
+    return metrics.health_status;
   };
 
   return (
@@ -127,16 +121,16 @@ export function FunctionCard({ name, functionName, loading, onExecute, schedule 
                   <div className="flex justify-between">
                     <span>Success Rate:</span>
                     <span>
-                      {metrics.success_count + metrics.error_count > 0 
-                        ? `${Math.round((metrics.success_count / (metrics.success_count + metrics.error_count)) * 100)}%`
+                      {metrics.total_successes + metrics.total_errors > 0 
+                        ? `${Math.round((metrics.total_successes / (metrics.total_successes + metrics.total_errors)) * 100)}%`
                         : 'N/A'}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span>Last Error:</span>
                     <span>
-                      {metrics.last_error_time 
-                        ? format(new Date(metrics.last_error_time), "MMM d, HH:mm:ss")
+                      {metrics.latest_error 
+                        ? format(new Date(metrics.latest_error), "MMM d, HH:mm:ss")
                         : 'None'}
                     </span>
                   </div>
