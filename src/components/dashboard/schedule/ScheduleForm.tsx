@@ -10,9 +10,15 @@ interface ScheduleFormProps {
   form: UseFormReturn<AdvancedScheduleFormValues>;
   onSubmit: (values: AdvancedScheduleFormValues) => Promise<void>;
   isDataCollectionFunction?: boolean;
+  isCoreDataFunction?: boolean;
 }
 
-export function ScheduleForm({ form, onSubmit, isDataCollectionFunction }: ScheduleFormProps) {
+export function ScheduleForm({ 
+  form, 
+  onSubmit, 
+  isDataCollectionFunction,
+  isCoreDataFunction 
+}: ScheduleFormProps) {
   if (isDataCollectionFunction) {
     return (
       <Alert>
@@ -23,6 +29,22 @@ export function ScheduleForm({ form, onSubmit, isDataCollectionFunction }: Sched
             <li>During matches: Updates every 2 minutes</li>
             <li>During live gameweek: Updates every 30 minutes</li>
             <li>Outside gameweek: Updates once daily</li>
+          </ul>
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  if (isCoreDataFunction) {
+    return (
+      <Alert>
+        <InfoIcon className="h-4 w-4" />
+        <AlertDescription>
+          This function is part of the Core Data Collection process:
+          <ul className="list-disc list-inside mt-2">
+            <li>Runs daily at 3 AM UTC</li>
+            <li>Part of sequential data update process</li>
+            <li>Automatic retry on failure</li>
           </ul>
         </AlertDescription>
       </Alert>

@@ -12,21 +12,27 @@ interface ScheduleManagerProps {
 }
 
 export function ScheduleManager({ functionName, functionDisplayName }: ScheduleManagerProps) {
-  const { data: schedule } = useQuery({
+  const { data: schedule, isLoading } = useQuery({
     queryKey: ['schedule', functionName],
     queryFn: async () => {
+      console.log(`Fetching schedule for ${functionName}`);
       const { data, error } = await supabase
-        .from('function_schedules')
+        .from('schedules')
         .select('*')
         .eq('function_name', functionName)
-        .single();
+        .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error(`Error fetching schedule for ${functionName}:`, error);
+        throw error;
+      }
+      
+      console.log(`Schedule data for ${functionName}:`, data);
       return data;
     }
   });
 
-  // Auto-update schedule based on match timings
+  // Auto-update schedule based on match timings for specific functions
   useEffect(() => {
     if (functionName === 'fetch-live-gameweek' || functionName === 'fetch-fixtures') {
       const updateInterval = setInterval(async () => {
@@ -41,11 +47,24 @@ export function ScheduleManager({ functionName, functionDisplayName }: ScheduleM
     }
   }, [functionName]);
 
+  // Check if this is a core data function
+  const isCoreDataFunction = [
+    'fetch-players',
+    'fetch-player-details',
+    'fetch-teams',
+    'fetch-events'
+  ].includes(functionName);
+
+  if (isLoading) {
+    return null;
+  }
+
   return (
     <ScheduleDialog 
       functionName={functionName} 
       functionDisplayName={functionDisplayName}
       currentSchedule={schedule}
+      isCoreDataFunction={isCoreDataFunction}
     />
   );
 }

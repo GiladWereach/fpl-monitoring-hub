@@ -16,12 +16,14 @@ interface ScheduleDialogProps {
   functionName: string;
   functionDisplayName: string;
   currentSchedule?: any;
+  isCoreDataFunction?: boolean;
 }
 
 export function ScheduleDialog({ 
   functionName, 
   functionDisplayName,
-  currentSchedule 
+  currentSchedule,
+  isCoreDataFunction 
 }: ScheduleDialogProps) {
   const [open, setOpen] = useState(false);
   const { form, onSubmit } = useScheduleForm({
@@ -50,6 +52,11 @@ export function ScheduleDialog({
                 (Auto-managed based on match timings)
               </span>
             )}
+            {isCoreDataFunction && (
+              <span className="text-sm font-normal text-muted-foreground ml-2">
+                (Daily Core Data Collection - 3 AM UTC)
+              </span>
+            )}
           </DialogTitle>
         </DialogHeader>
         <div className="max-h-[80vh] overflow-y-auto">
@@ -57,6 +64,7 @@ export function ScheduleDialog({
             form={form} 
             onSubmit={onSubmit}
             isDataCollectionFunction={isDataCollectionFunction}
+            isCoreDataFunction={isCoreDataFunction}
           />
           <ExecutionHistory functionName={functionName} />
         </div>
