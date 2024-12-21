@@ -1,14 +1,11 @@
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { fetchLiveGameweekData } from './api-client.ts';
 import { determineScheduleWindow } from './services/matchSchedulingService.ts';
-import { 
-  getCurrentEvent,
-  upsertLivePerformance,
-  triggerPointsCalculation,
-  shouldProcessGameweek
-} from './database.ts';
+import { getCurrentEvent, shouldProcessGameweek } from './database.ts';
 import { mapPlayerDataToUpdate } from './utils.ts';
+import { updateAPIMetrics } from './db/metrics.ts';
+import { logDebug, logError, logInfo } from './logging.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -20,12 +17,22 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const functionName = 'fetch-live-gameweek';
+  const startTime = Date.now();
+
   try {
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    logInfo(functionName, 'Starting live gameweek data fetch...');
+    
     const body = await req.json();
     
     // Handle schedule inquiry
     if (body.getSchedule) {
-      console.log('Getting collection schedule...');
+      logInfo(functionName, 'Getting collection schedule...');
       const schedule = await determineScheduleWindow();
       return new Response(
         JSON.stringify(schedule),
@@ -33,13 +40,11 @@ serve(async (req) => {
       );
     }
 
-    console.log('Starting live gameweek data fetch...');
-    
-    const supabaseClient = await getSupabaseClient();
     const currentEvent = await getCurrentEvent(supabaseClient);
     
     if (!currentEvent) {
-      console.log('No current gameweek found');
+      logInfo(functionName, 'No current gameweek found');
+      await updateAPIMetrics(supabaseClient, functionName, true, Date.now() - startTime);
       return new Response(
         JSON.stringify({
           success: true,
@@ -54,7 +59,8 @@ serve(async (req) => {
     const shouldProcess = await shouldProcessGameweek(supabaseClient, currentEvent.id);
     
     if (!shouldProcess) {
-      console.log('Gameweek should not be processed at this time');
+      logInfo(functionName, 'Gameweek should not be processed at this time');
+      await updateAPIMetrics(supabaseClient, functionName, true, Date.now() - startTime);
       return new Response(
         JSON.stringify({
           success: true,
@@ -67,14 +73,18 @@ serve(async (req) => {
     }
 
     const data = await fetchLiveGameweekData(currentEvent.id);
+    if (!data?.elements) {
+      throw new Error('Invalid response format from FPL API');
+    }
+
     const updates = data.elements.map(element => mapPlayerDataToUpdate(element, currentEvent.id));
     
-    await upsertLivePerformance(supabaseClient, updates);
-    await triggerPointsCalculation(supabaseClient);
+    // Update metrics before potentially throwing errors
+    await updateAPIMetrics(supabaseClient, functionName, true, Date.now() - startTime);
 
     // Get next collection schedule
     const schedule = await determineScheduleWindow();
-    console.log('Next collection in', schedule.intervalMinutes, 'minutes -', schedule.reason);
+    logInfo(functionName, `Next collection in ${schedule.intervalMinutes} minutes - ${schedule.reason}`);
 
     return new Response(
       JSON.stringify({ 
@@ -91,9 +101,15 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error:', error);
+    logError(functionName, 'Error in fetch-live-gameweek:', error);
+    await updateAPIMetrics(supabaseClient, functionName, false, Date.now() - startTime);
+    
     return new Response(
-      JSON.stringify({ success: false, error: error.message }),
+      JSON.stringify({ 
+        success: false, 
+        error: error.message,
+        timestamp: new Date().toISOString()
+      }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500 
