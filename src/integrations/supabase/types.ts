@@ -1608,6 +1608,7 @@ export type Database = {
           completed_at: string | null
           created_at: string | null
           error_details: string | null
+          execution_context: Json | null
           execution_duration_ms: number | null
           id: string
           schedule_id: string
@@ -1618,6 +1619,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string | null
           error_details?: string | null
+          execution_context?: Json | null
           execution_duration_ms?: number | null
           id?: string
           schedule_id: string
@@ -1628,6 +1630,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string | null
           error_details?: string | null
+          execution_context?: Json | null
           execution_duration_ms?: number | null
           id?: string
           schedule_id?: string

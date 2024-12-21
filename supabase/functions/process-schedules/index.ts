@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { processSchedules } from './scheduler.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -19,92 +20,9 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Get active schedules that need processing
-    const { data: schedules, error: schedulesError } = await supabaseClient
-      .from('function_schedules')
-      .select(`
-        *,
-        schedule_groups (
-          name,
-          description
-        )
-      `)
-      .eq('status', 'active')
-      .lte('next_execution_at', new Date().toISOString());
-
-    if (schedulesError) {
-      throw schedulesError;
-    }
-
-    console.log(`Found ${schedules?.length || 0} schedules to process`);
-    const processedSchedules = [];
-
-    // Process each schedule
-    for (const schedule of (schedules || [])) {
-      try {
-        console.log(`Processing schedule for ${schedule.function_name}`);
-        
-        // Execute the function
-        const { error: invokeError } = await supabaseClient.functions.invoke(
-          schedule.function_name,
-          {
-            body: { scheduled: true }
-          }
-        );
-
-        if (invokeError) throw invokeError;
-
-        // Determine next execution time based on function type
-        let nextExecutionTime = new Date();
-        if (schedule.function_name === 'fetch-live-gameweek' || schedule.function_name === 'fetch-fixtures') {
-          // Invoke the function to get the next interval
-          const { data: scheduleData } = await supabaseClient.functions.invoke(
-            schedule.function_name,
-            { body: { getSchedule: true } }
-          );
-
-          const intervalMinutes = scheduleData?.intervalMinutes || 30;
-          nextExecutionTime.setMinutes(nextExecutionTime.getMinutes() + intervalMinutes);
-          
-          console.log(`Next execution for ${schedule.function_name} in ${intervalMinutes} minutes`);
-        } else {
-          // Use default interval for other functions
-          nextExecutionTime.setMinutes(nextExecutionTime.getMinutes() + (schedule.base_interval_minutes || 30));
-        }
-
-        // Update schedule
-        await supabaseClient
-          .from('function_schedules')
-          .update({
-            last_execution_at: new Date().toISOString(),
-            next_execution_at: nextExecutionTime.toISOString(),
-            consecutive_failures: 0,
-            last_error: null
-          })
-          .eq('id', schedule.id);
-
-        processedSchedules.push({
-          id: schedule.id,
-          function: schedule.function_name,
-          success: true,
-          nextExecution: nextExecutionTime
-        });
-
-      } catch (error) {
-        console.error(`Error processing ${schedule.function_name}:`, error);
-        
-        // Update error status
-        await supabaseClient
-          .from('function_schedules')
-          .update({
-            consecutive_failures: (schedule.consecutive_failures || 0) + 1,
-            last_error: error.message
-          })
-          .eq('id', schedule.id);
-      }
-    }
-
+    const processedSchedules = await processSchedules(supabaseClient);
     const processingTime = Date.now() - startTime;
+
     console.log(`Schedule processing completed in ${processingTime}ms`);
 
     return new Response(
