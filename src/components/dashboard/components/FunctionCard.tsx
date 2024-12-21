@@ -20,19 +20,21 @@ export function FunctionCard({ name, functionName, loading, onExecute, schedule 
   const { data: metrics } = useQuery({
     queryKey: ["function-metrics", functionName],
     queryFn: async () => {
+      console.log(`Fetching metrics for ${functionName}`);
       const { data, error } = await supabase
         .from('api_health_metrics')
         .select('*')
         .eq('endpoint', functionName)
         .order('created_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error(`Error fetching metrics for ${functionName}:`, error);
         return null;
       }
 
+      console.log(`Metrics data for ${functionName}:`, data);
       return data;
     },
     refetchInterval: 30000
@@ -58,19 +60,17 @@ export function FunctionCard({ name, functionName, loading, onExecute, schedule 
         <div className="flex items-center justify-between gap-4">
           <div className="flex-1">
             <h3 className="font-semibold truncate">{name}</h3>
-            {metrics && (
-              <div className="flex items-center gap-2 mt-1">
-                <span className={`h-2 w-2 rounded-full ${
-                  getHealthStatus(metrics) === 'success' ? 'bg-success' :
-                  getHealthStatus(metrics) === 'warning' ? 'bg-warning' :
-                  getHealthStatus(metrics) === 'error' ? 'bg-destructive' :
-                  'bg-muted'
-                }`} />
-                <span className="text-sm text-muted-foreground">
-                  {metrics.avg_response_time ? formatDuration(metrics.avg_response_time) : 'No data'}
-                </span>
-              </div>
-            )}
+            <div className="flex items-center gap-2 mt-1">
+              <span className={`h-2 w-2 rounded-full ${
+                getHealthStatus(metrics) === 'success' ? 'bg-success' :
+                getHealthStatus(metrics) === 'warning' ? 'bg-warning' :
+                getHealthStatus(metrics) === 'error' ? 'bg-destructive' :
+                'bg-muted'
+              }`} />
+              <span className="text-sm text-muted-foreground">
+                {metrics?.avg_response_time ? formatDuration(metrics.avg_response_time) : 'No data'}
+              </span>
+            </div>
           </div>
           <div className="flex gap-2 shrink-0">
             <Button
