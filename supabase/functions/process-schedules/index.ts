@@ -20,27 +20,44 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Log scheduler invocation
-    await supabaseClient
+    // Log scheduler invocation with context
+    const { error: metricError } = await supabaseClient
       .from('api_health_metrics')
       .upsert({
         endpoint: 'process-schedules',
         success_count: 1,
         avg_response_time: 0,
-        last_success_time: new Date().toISOString()
+        last_success_time: new Date().toISOString(),
+        execution_context: JSON.stringify({
+          invocation_time: new Date().toISOString(),
+          request_headers: Object.fromEntries(req.headers.entries())
+        })
       });
+
+    if (metricError) {
+      console.error('Error logging metrics:', metricError);
+    }
 
     const processedSchedules = await processSchedules(supabaseClient);
     const processingTime = Date.now() - startTime;
 
-    // Update metrics with actual processing time
-    await supabaseClient
+    // Update metrics with actual processing time and results
+    const { error: updateError } = await supabaseClient
       .from('api_health_metrics')
       .update({ 
         avg_response_time: processingTime,
-        last_success_time: new Date().toISOString()
+        last_success_time: new Date().toISOString(),
+        execution_metrics: JSON.stringify({
+          processing_time_ms: processingTime,
+          schedules_processed: processedSchedules.length,
+          timestamp: new Date().toISOString()
+        })
       })
       .eq('endpoint', 'process-schedules');
+
+    if (updateError) {
+      console.error('Error updating metrics:', updateError);
+    }
 
     console.log(`Schedule processing completed in ${processingTime}ms`);
     console.log(`Processed ${processedSchedules.length} schedules`);
@@ -50,7 +67,12 @@ Deno.serve(async (req) => {
         success: true,
         processed: processedSchedules.length,
         schedules: processedSchedules,
-        processingTime
+        processingTime,
+        metrics: {
+          total_time_ms: processingTime,
+          schedules_count: processedSchedules.length,
+          timestamp: new Date().toISOString()
+        }
       }),
       { 
         headers: { 
@@ -69,23 +91,37 @@ Deno.serve(async (req) => {
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
       );
 
-      // Log error in api_error_logs
+      // Log comprehensive error information
       await supabaseClient
         .from('api_error_logs')
         .insert({
           endpoint: 'process-schedules',
           error_type: 'SERVER_ERROR',
           error_details: error.message,
-          response_code: 500
+          response_code: 500,
+          error_context: JSON.stringify({
+            error_message: error.message,
+            error_stack: error.stack,
+            timestamp: new Date().toISOString(),
+            request_context: {
+              method: req.method,
+              headers: Object.fromEntries(req.headers.entries())
+            }
+          })
         });
 
-      // Update health metrics
+      // Update health metrics with error information
       await supabaseClient
         .from('api_health_metrics')
         .upsert({
           endpoint: 'process-schedules',
           error_count: 1,
-          last_error_time: new Date().toISOString()
+          last_error_time: new Date().toISOString(),
+          error_context: JSON.stringify({
+            last_error: error.message,
+            error_stack: error.stack,
+            timestamp: new Date().toISOString()
+          })
         });
 
     } catch (logError) {
@@ -96,7 +132,8 @@ Deno.serve(async (req) => {
       JSON.stringify({ 
         success: false, 
         error: error.message,
-        details: error.stack
+        details: error.stack,
+        timestamp: new Date().toISOString()
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

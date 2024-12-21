@@ -499,12 +499,14 @@ export type Database = {
           active_period_end: string | null
           active_period_start: string | null
           base_interval_minutes: number | null
+          consecutive_failures: number | null
           created_at: string | null
           fixed_time: string | null
           frequency_type: Database["public"]["Enums"]["schedule_frequency"]
           function_name: string
           group_id: string | null
           id: string
+          last_error: string | null
           last_execution_at: string | null
           match_day_interval_minutes: number | null
           max_concurrent_executions: number | null
@@ -520,12 +522,14 @@ export type Database = {
           active_period_end?: string | null
           active_period_start?: string | null
           base_interval_minutes?: number | null
+          consecutive_failures?: number | null
           created_at?: string | null
           fixed_time?: string | null
           frequency_type: Database["public"]["Enums"]["schedule_frequency"]
           function_name: string
           group_id?: string | null
           id?: string
+          last_error?: string | null
           last_execution_at?: string | null
           match_day_interval_minutes?: number | null
           max_concurrent_executions?: number | null
@@ -541,12 +545,14 @@ export type Database = {
           active_period_end?: string | null
           active_period_start?: string | null
           base_interval_minutes?: number | null
+          consecutive_failures?: number | null
           created_at?: string | null
           fixed_time?: string | null
           frequency_type?: Database["public"]["Enums"]["schedule_frequency"]
           function_name?: string
           group_id?: string | null
           id?: string
+          last_error?: string | null
           last_execution_at?: string | null
           match_day_interval_minutes?: number | null
           max_concurrent_executions?: number | null
