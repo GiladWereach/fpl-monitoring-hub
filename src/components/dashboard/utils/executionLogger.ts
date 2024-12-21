@@ -9,7 +9,7 @@ export const logFunctionExecution = async (functionName: string, started_at: str
       .from("schedules")
       .select("id")
       .eq("function_name", functionName)
-      .maybeSingle();
+      .single();
 
     if (findError && findError.code !== 'PGRST116') {
       console.error("Error checking for existing schedule:", findError);
@@ -18,9 +18,11 @@ export const logFunctionExecution = async (functionName: string, started_at: str
 
     let scheduleId = existingSchedule?.id;
 
-    // If no schedule exists, create one
+    // If no schedule exists, create one with proper error handling
     if (!scheduleId) {
       console.log(`No schedule found for ${functionName}, creating new schedule`);
+      
+      // Create new schedule with proper defaults
       const { data: newSchedule, error: createError } = await supabase
         .from("schedules")
         .insert({
@@ -49,11 +51,15 @@ export const logFunctionExecution = async (functionName: string, started_at: str
         throw createError;
       }
 
+      if (!newSchedule?.id) {
+        throw new Error("Failed to create schedule - no ID returned");
+      }
+
       scheduleId = newSchedule.id;
       console.log(`Successfully created new schedule with ID: ${scheduleId}`);
     }
 
-    // Verify schedule exists before logging
+    // Double check the schedule exists before proceeding
     const { data: verifySchedule, error: verifyError } = await supabase
       .from("schedules")
       .select("id")
@@ -65,7 +71,7 @@ export const logFunctionExecution = async (functionName: string, started_at: str
       throw new Error("Schedule verification failed");
     }
 
-    // Create execution log
+    // Create execution log with verified schedule ID
     console.log(`Creating execution log for schedule ${scheduleId}`);
     const { error: logError } = await supabase
       .from("schedule_execution_logs")
