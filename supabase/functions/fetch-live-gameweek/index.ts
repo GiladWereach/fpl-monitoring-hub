@@ -1,16 +1,14 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { fetchLiveGameweekData } from './api-client.ts';
+import { determineCollectionSchedule } from './services/schedulingService.ts';
 import { 
-  getSupabaseClient, 
   getCurrentEvent,
-  getActiveFixtures,
-  getLastUpdate,
   upsertLivePerformance,
   triggerPointsCalculation,
   shouldProcessGameweek
 } from './database.ts';
-import { mapPlayerDataToUpdate, shouldSkipUpdate } from './utils.ts';
+import { mapPlayerDataToUpdate } from './utils.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -23,6 +21,18 @@ serve(async (req) => {
   }
 
   try {
+    const body = await req.json();
+    
+    // Handle schedule inquiry
+    if (body.getSchedule) {
+      console.log('Getting collection schedule...');
+      const schedule = await determineCollectionSchedule();
+      return new Response(
+        JSON.stringify(schedule),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     console.log('Starting live gameweek data fetch...');
     
     const supabaseClient = await getSupabaseClient();
@@ -36,14 +46,9 @@ serve(async (req) => {
           message: 'No current gameweek found',
           shouldProcess: false
         }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200,
-        }
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-
-    console.log(`Current gameweek: ${currentEvent.id}`);
 
     // Check if we should process this gameweek
     const shouldProcess = await shouldProcessGameweek(supabaseClient, currentEvent.id);
@@ -57,34 +62,8 @@ serve(async (req) => {
           gameweek: currentEvent.id,
           shouldProcess: false
         }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200,
-        }
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
-    }
-
-    const activeFixtures = await getActiveFixtures(supabaseClient, currentEvent.id);
-
-    if (!activeFixtures.length) {
-      console.log('No active matches found, checking last update time...');
-      const lastUpdate = await getLastUpdate(supabaseClient, currentEvent.id);
-
-      if (shouldSkipUpdate(lastUpdate)) {
-        console.log('Last update was less than 30 minutes ago, skipping update');
-        return new Response(
-          JSON.stringify({
-            success: true,
-            message: 'Skipped update - no active matches and last update was recent',
-            gameweek: currentEvent.id,
-            shouldProcess: false
-          }),
-          {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 200,
-          }
-        );
-      }
     }
 
     const data = await fetchLiveGameweekData(currentEvent.id);
@@ -93,7 +72,9 @@ serve(async (req) => {
     await upsertLivePerformance(supabaseClient, updates);
     await triggerPointsCalculation(supabaseClient);
 
-    console.log('Live gameweek data processed successfully');
+    // Get next collection schedule
+    const schedule = await determineCollectionSchedule();
+    console.log('Next collection in', schedule.intervalMinutes, 'minutes -', schedule.reason);
 
     return new Response(
       JSON.stringify({ 
@@ -101,26 +82,21 @@ serve(async (req) => {
         message: 'Live gameweek data updated successfully',
         gameweek: currentEvent.id,
         updatedPlayers: updates.length,
-        hasActiveMatches: activeFixtures.length > 0,
-        shouldProcess: true
+        nextCollection: {
+          intervalMinutes: schedule.intervalMinutes,
+          reason: schedule.reason
+        }
       }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
     console.error('Error:', error);
     return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: error.message,
-        details: error.stack
-      }),
-      {
+      JSON.stringify({ success: false, error: error.message }),
+      { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500,
+        status: 500 
       }
     );
   }
