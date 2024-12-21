@@ -1,18 +1,16 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { fetchLiveGameweekData } from './api-client.ts';
-import { determineScheduleWindow } from './services/matchSchedulingService.ts';
-import { getCurrentEvent, shouldProcessGameweek } from './database.ts';
+import { getCurrentEvent } from './db/events.ts';
+import { upsertLivePerformance } from './db/performance.ts';
 import { mapPlayerDataToUpdate } from './utils.ts';
-import { updateAPIMetrics } from './db/metrics.ts';
-import { logDebug, logError, logInfo } from './logging.ts';
+import { logDebug, logError } from './logging.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -21,51 +19,21 @@ serve(async (req) => {
   const startTime = Date.now();
 
   try {
+    logDebug(functionName, 'Starting live gameweek data fetch...');
+    
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    logInfo(functionName, 'Starting live gameweek data fetch...');
-    
-    const body = await req.json();
-    
-    // Handle schedule inquiry
-    if (body.getSchedule) {
-      logInfo(functionName, 'Getting collection schedule...');
-      const schedule = await determineScheduleWindow();
-      return new Response(
-        JSON.stringify(schedule),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
     const currentEvent = await getCurrentEvent(supabaseClient);
     
     if (!currentEvent) {
-      logInfo(functionName, 'No current gameweek found');
-      await updateAPIMetrics(supabaseClient, functionName, true, Date.now() - startTime);
+      logDebug(functionName, 'No current gameweek found');
       return new Response(
         JSON.stringify({
           success: true,
           message: 'No current gameweek found',
-          shouldProcess: false
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Check if we should process this gameweek
-    const shouldProcess = await shouldProcessGameweek(supabaseClient, currentEvent.id);
-    
-    if (!shouldProcess) {
-      logInfo(functionName, 'Gameweek should not be processed at this time');
-      await updateAPIMetrics(supabaseClient, functionName, true, Date.now() - startTime);
-      return new Response(
-        JSON.stringify({
-          success: true,
-          message: 'Gameweek should not be processed at this time',
-          gameweek: currentEvent.id,
           shouldProcess: false
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -78,13 +46,10 @@ serve(async (req) => {
     }
 
     const updates = data.elements.map(element => mapPlayerDataToUpdate(element, currentEvent.id));
-    
-    // Update metrics before potentially throwing errors
-    await updateAPIMetrics(supabaseClient, functionName, true, Date.now() - startTime);
+    await upsertLivePerformance(supabaseClient, updates);
 
-    // Get next collection schedule
-    const schedule = await determineScheduleWindow();
-    logInfo(functionName, `Next collection in ${schedule.intervalMinutes} minutes - ${schedule.reason}`);
+    const processingTime = Date.now() - startTime;
+    logDebug(functionName, `Processing completed in ${processingTime}ms`);
 
     return new Response(
       JSON.stringify({ 
@@ -92,17 +57,13 @@ serve(async (req) => {
         message: 'Live gameweek data updated successfully',
         gameweek: currentEvent.id,
         updatedPlayers: updates.length,
-        nextCollection: {
-          intervalMinutes: schedule.intervalMinutes,
-          reason: schedule.reason
-        }
+        processingTime
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
     logError(functionName, 'Error in fetch-live-gameweek:', error);
-    await updateAPIMetrics(supabaseClient, functionName, false, Date.now() - startTime);
     
     return new Response(
       JSON.stringify({ 

@@ -1,7 +1,9 @@
-import { getSupabaseClient } from './client.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { logDebug, logError } from '../logging.ts';
 
-export async function getCurrentEvent(supabaseClient: any) {
-  console.log('Fetching current event...');
+export async function getCurrentEvent(supabaseClient: ReturnType<typeof createClient>) {
+  logDebug('fetch-live-gameweek', 'Fetching current event...');
+  
   const { data: currentEvent, error: eventError } = await supabaseClient
     .from('events')
     .select('id, deadline_time, finished')
@@ -12,31 +14,15 @@ export async function getCurrentEvent(supabaseClient: any) {
     .single();
 
   if (eventError) {
-    console.error('Error fetching current event:', eventError);
+    logError('fetch-live-gameweek', 'Error fetching current event:', eventError);
     throw eventError;
   }
   
   if (!currentEvent) {
-    console.log('No current gameweek found within the last 7 days');
+    logDebug('fetch-live-gameweek', 'No current gameweek found');
     return null;
   }
 
-  console.log('Current event:', currentEvent);
+  logDebug('fetch-live-gameweek', 'Current event:', currentEvent);
   return currentEvent;
-}
-
-export async function getEventDetails(supabaseClient: any, eventId: number) {
-  console.log(`Fetching details for event ${eventId}`);
-  const { data: event, error } = await supabaseClient
-    .from('events')
-    .select('deadline_time, finished')
-    .eq('id', eventId)
-    .single();
-
-  if (error) {
-    console.error('Error fetching event details:', error);
-    throw error;
-  }
-
-  return event;
 }

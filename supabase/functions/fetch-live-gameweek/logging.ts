@@ -5,7 +5,3 @@ export function logDebug(functionName: string, message: string, data?: any) {
 export function logError(functionName: string, message: string, error?: any) {
   console.error(`[${functionName}] ERROR - ${message}`, error);
 }
-
-export function logInfo(functionName: string, message: string) {
-  console.info(`[${functionName}] ${message}`);
-}
