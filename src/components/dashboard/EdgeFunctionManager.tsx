@@ -5,9 +5,24 @@ import { functions } from "./utils/functionConfigs";
 import { executeFetchFunction } from "./utils/functionExecutor";
 import { FunctionList } from "./components/FunctionList";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 export function EdgeFunctionManager() {
   const [loading, setLoading] = useState<string | null>(null);
+
+  const { data: schedules } = useQuery({
+    queryKey: ['function-schedules'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('function_schedules')
+        .select('*')
+        .order('function_name');
+      
+      if (error) throw error;
+      return data;
+    }
+  });
 
   const handleExecute = async (functionName: string) => {
     setLoading(functionName);
@@ -43,7 +58,11 @@ export function EdgeFunctionManager() {
 
       <ScrollArea className="h-[calc(100vh-200px)]">
         <div className="min-w-[600px] pr-4">
-          <FunctionList loading={loading} onExecute={handleExecute} />
+          <FunctionList 
+            loading={loading} 
+            onExecute={handleExecute} 
+            schedules={schedules || []}
+          />
         </div>
       </ScrollArea>
     </div>

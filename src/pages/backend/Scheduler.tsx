@@ -9,6 +9,7 @@ import { ScheduleList } from "./components/schedule/ScheduleList";
 import { NewFunctionDialog } from "./components/schedule/NewFunctionDialog";
 import { APIHealthStatus } from "@/components/monitoring/APIHealthStatus";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { EdgeFunctionManager } from "@/components/dashboard/EdgeFunctionManager";
 
 export default function BackendScheduler() {
   const [newFunctionOpen, setNewFunctionOpen] = useState(false);
@@ -76,6 +77,15 @@ export default function BackendScheduler() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <APIHealthStatus />
       </div>
+
+      <Card className="p-6">
+        <h2 className="text-lg sm:text-xl font-semibold mb-6">Edge Functions</h2>
+        <ScrollArea className="h-[400px] w-full">
+          <div className="min-w-[600px]">
+            <EdgeFunctionManager />
+          </div>
+        </ScrollArea>
+      </Card>
 
       <Card className="p-6">
         <h2 className="text-lg sm:text-xl font-semibold mb-6">Function Schedules</h2>
