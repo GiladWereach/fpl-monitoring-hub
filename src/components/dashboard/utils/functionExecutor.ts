@@ -19,7 +19,10 @@ export const executeFetchFunction = async (functionName: string) => {
 
     const { data, error } = await supabase.functions.invoke(functionName);
     
-    if (error) throw error;
+    if (error) {
+      console.error(`Error executing ${functionName}:`, error);
+      throw error;
+    }
     
     const endTime = Date.now();
     await updateAPIHealthMetrics(functionName, true, endTime - startTime);

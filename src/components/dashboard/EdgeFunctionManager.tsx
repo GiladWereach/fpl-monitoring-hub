@@ -14,26 +14,40 @@ export function EdgeFunctionManager() {
   const { data: schedules } = useQuery({
     queryKey: ['function-schedules'],
     queryFn: async () => {
+      console.log('Fetching function schedules');
       const { data, error } = await supabase
-        .from('function_schedules')
+        .from('schedules')
         .select('*')
         .order('function_name');
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching schedules:', error);
+        throw error;
+      }
+      
+      console.log('Fetched schedules:', data);
       return data;
     }
   });
 
   const handleExecute = async (functionName: string) => {
     setLoading(functionName);
-    await executeFetchFunction(functionName);
-    setLoading(null);
+    try {
+      console.log(`Executing function: ${functionName}`);
+      await executeFetchFunction(functionName);
+      console.log(`Successfully executed function: ${functionName}`);
+    } catch (error) {
+      console.error(`Error executing function ${functionName}:`, error);
+    } finally {
+      setLoading(null);
+    }
   };
 
   const refreshAll = async () => {
     setLoading("all");
     for (const func of functions) {
       try {
+        console.log(`Refreshing function: ${func.function}`);
         await executeFetchFunction(func.function);
       } catch (error) {
         console.error(`Error in refresh all for ${func.function}:`, error);
