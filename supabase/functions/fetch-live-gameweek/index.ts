@@ -1,7 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { fetchLiveGameweekData } from './api-client.ts';
-import { determineCollectionSchedule } from './services/schedulingService.ts';
+import { determineScheduleWindow } from './services/matchSchedulingService.ts';
 import { 
   getCurrentEvent,
   upsertLivePerformance,
@@ -26,7 +26,7 @@ serve(async (req) => {
     // Handle schedule inquiry
     if (body.getSchedule) {
       console.log('Getting collection schedule...');
-      const schedule = await determineCollectionSchedule();
+      const schedule = await determineScheduleWindow();
       return new Response(
         JSON.stringify(schedule),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -73,7 +73,7 @@ serve(async (req) => {
     await triggerPointsCalculation(supabaseClient);
 
     // Get next collection schedule
-    const schedule = await determineCollectionSchedule();
+    const schedule = await determineScheduleWindow();
     console.log('Next collection in', schedule.intervalMinutes, 'minutes -', schedule.reason);
 
     return new Response(
