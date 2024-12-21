@@ -10,12 +10,25 @@ const corsHeaders = {
 
 const MAX_RETRIES = 3;
 const INITIAL_BACKOFF = 1000; // 1 second
+const TIMEOUT = 10000; // 10 seconds
 
 async function fetchWithRetry(url: string, headers: Record<string, string>, retryCount = 0): Promise<Response> {
   try {
-    const response = await fetch(url, { headers });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), TIMEOUT);
+
+    const response = await fetch(url, { 
+      headers,
+      signal: controller.signal 
+    });
+    
+    clearTimeout(timeoutId);
     
     if (response.ok) {
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('Invalid content type received from FPL API');
+      }
       return response;
     }
 
@@ -29,6 +42,10 @@ async function fetchWithRetry(url: string, headers: Record<string, string>, retr
 
     throw new Error(`FPL API error: ${response.status}`);
   } catch (error) {
+    if (error.name === 'AbortError') {
+      throw new Error('Request timeout');
+    }
+
     if (retryCount < MAX_RETRIES) {
       const backoffTime = INITIAL_BACKOFF * Math.pow(2, retryCount);
       logInfo('fetch-fixtures', `Request failed, retrying in ${backoffTime}ms (attempt ${retryCount + 1}/${MAX_RETRIES})`);
@@ -71,7 +88,7 @@ Deno.serve(async (req) => {
     // Enhanced browser-like headers
     const headers = {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
-      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+      'Accept': 'application/json',
       'Accept-Language': 'en-US,en;q=0.9',
       'Accept-Encoding': 'gzip, deflate, br',
       'Cache-Control': 'no-cache',
@@ -79,16 +96,28 @@ Deno.serve(async (req) => {
       'sec-ch-ua': '"Not A(Brand";v="99", "Google Chrome";v="121", "Chromium";v="121"',
       'sec-ch-ua-mobile': '?0',
       'sec-ch-ua-platform': '"Windows"',
-      'Sec-Fetch-Dest': 'document',
-      'Sec-Fetch-Mode': 'navigate',
-      'Sec-Fetch-Site': 'none',
-      'Sec-Fetch-User': '?1',
-      'Upgrade-Insecure-Requests': '1',
+      'Sec-Fetch-Dest': 'empty',
+      'Sec-Fetch-Mode': 'cors',
+      'Sec-Fetch-Site': 'same-origin',
     };
 
     logDebug(functionName, 'Fetching data from FPL API with enhanced headers...');
     const response = await fetchWithRetry('https://fantasy.premierleague.com/api/fixtures/', headers);
-    const fixtures = await response.json();
+    
+    let fixtures;
+    try {
+      const text = await response.text();
+      if (!text) {
+        throw new Error('Empty response from FPL API');
+      }
+      fixtures = JSON.parse(text);
+      if (!Array.isArray(fixtures)) {
+        throw new Error('Invalid fixtures data format');
+      }
+    } catch (error) {
+      logError(functionName, 'Failed to parse fixtures JSON:', error);
+      throw new Error(`Failed to parse fixtures data: ${error.message}`);
+    }
     
     logInfo(functionName, `Fetched ${fixtures.length} fixtures successfully`);
 
