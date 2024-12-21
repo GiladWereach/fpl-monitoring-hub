@@ -16,6 +16,26 @@ interface BonusPointsTrackerProps {
   matchId?: number | null;
 }
 
+const calculateBonusPoints = (bps: number, allBpsInFixture: number[]): number => {
+  // Sort BPS in descending order and get unique values
+  const uniqueBps = [...new Set(allBpsInFixture)].sort((a, b) => b - a);
+  
+  // Get index of current BPS in unique sorted array
+  const bpsIndex = uniqueBps.indexOf(bps);
+  
+  // If not in top 3 unique BPS values, no bonus points
+  if (bpsIndex >= 3) return 0;
+  
+  // Assign bonus points based on position in unique BPS values
+  // If same BPS, they get the same points
+  switch (bpsIndex) {
+    case 0: return 3; // Highest unique BPS
+    case 1: return 2; // Second highest unique BPS
+    case 2: return 1; // Third highest unique BPS
+    default: return 0;
+  }
+};
+
 const BonusPointsTracker = ({ gameweek, matchId }: BonusPointsTrackerProps) => {
   const { data: matches } = useQuery({
     queryKey: ['bonus-matches', gameweek, matchId],
@@ -103,37 +123,46 @@ const BonusPointsTracker = ({ gameweek, matchId }: BonusPointsTrackerProps) => {
 
   return (
     <div className="space-y-6">
-      {matches?.map((match) => (
-        <Card key={match.id} className="p-4">
-          <h3 className="font-semibold mb-4">
-            {match.team_h.short_name} vs {match.team_a.short_name}
-          </h3>
-          
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Player</TableHead>
-                <TableHead className="text-right">BPS</TableHead>
-                <TableHead className="text-right">Bonus</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {bpsByMatch?.[match.id]?.map((bps: any) => (
-                <TableRow 
-                  key={bps.id}
-                  className={getBonusColor(bps.bonus)}
-                >
-                  <TableCell>{bps.player.web_name}</TableCell>
-                  <TableCell className="text-right">{bps.bps}</TableCell>
-                  <TableCell className="text-right font-bold">
-                    {bps.bonus}
-                  </TableCell>
+      {matches?.map((match) => {
+        // Get all BPS values for this match
+        const matchBpsValues = bpsByMatch?.[match.id]?.map((p: any) => p.bps) || [];
+        
+        return (
+          <Card key={match.id} className="p-4">
+            <h3 className="font-semibold mb-4">
+              {match.team_h.short_name} vs {match.team_a.short_name}
+              {match.finished_provisional && <span className="text-sm text-gray-500 ml-2">(Provisional)</span>}
+            </h3>
+            
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Player</TableHead>
+                  <TableHead className="text-right">BPS</TableHead>
+                  <TableHead className="text-right">Bonus</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </Card>
-      ))}
+              </TableHeader>
+              <TableBody>
+                {bpsByMatch?.[match.id]?.map((bps: any) => {
+                  const calculatedBonus = calculateBonusPoints(bps.bps, matchBpsValues);
+                  return (
+                    <TableRow 
+                      key={bps.id}
+                      className={getBonusColor(calculatedBonus)}
+                    >
+                      <TableCell>{bps.player.web_name}</TableCell>
+                      <TableCell className="text-right">{bps.bps}</TableCell>
+                      <TableCell className="text-right font-bold">
+                        {calculatedBonus}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </Card>
+        );
+      })}
     </div>
   );
 };
