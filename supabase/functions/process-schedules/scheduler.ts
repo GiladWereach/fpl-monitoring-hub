@@ -18,64 +18,30 @@ export const processSchedules = async (supabaseClient: ReturnType<typeof createC
     try {
       console.log(`Processing schedule ${schedule.id} for function ${schedule.function_name}`);
       
-      // First ensure the schedule exists in the schedules table
-      const { data: existingSchedule, error: checkError } = await supabaseClient
-        .from('schedules')
-        .select('id')
-        .eq('function_name', schedule.function_name)
-        .single();
+      // Check if there are active matches for match_dependent schedules
+      let shouldExecute = true;
+      if (schedule.frequency_type === 'match_dependent') {
+        const { data: activeMatches, error: matchError } = await supabaseClient
+          .from('fixtures')
+          .select('*')
+          .eq('started', true)
+          .eq('finished', false);
 
-      if (checkError || !existingSchedule) {
-        console.log(`Creating schedule record for ${schedule.function_name}`);
-        
-        // Prepare schedule configuration based on type
-        const scheduleConfig = {
-          function_name: schedule.function_name,
-          schedule_type: 'event_based',
-          enabled: true,
-          event_config: {
-            triggerType: 'match_status',
-            offsetMinutes: 0
-          },
-          execution_config: {
-            retry_count: 3,
-            timeout_seconds: 30,
-            retry_delay_seconds: 60,
-            concurrent_execution: false,
-            retry_backoff: 'linear',
-            max_retry_delay: 3600
-          },
-          event_conditions: [
-            {
-              field: "gameweek_active",
-              operator: "eq",
-              value: "true"
-            }
-          ],
-          execution_window: {
-            start_time: "-6 hours",
-            end_time: "+6 hours"
-          }
-        };
-
-        const { data: newSchedule, error: createError } = await supabaseClient
-          .from('schedules')
-          .insert(scheduleConfig)
-          .select('id')
-          .single();
-
-        if (createError) {
-          console.error('Error creating schedule:', createError);
+        if (matchError) {
+          console.error('Error checking active matches:', matchError);
           continue;
         }
-        
-        console.log(`Created schedule with id ${newSchedule.id}`);
-        
-        // Create execution log with the new schedule id
+
+        console.log(`Found ${activeMatches?.length || 0} active matches for ${schedule.function_name}`);
+        shouldExecute = true; // We'll always execute, but the interval will be different
+      }
+
+      if (shouldExecute) {
+        // Create execution log
         const { data: log, error: logError } = await supabaseClient
           .from('schedule_execution_logs')
           .insert({
-            schedule_id: newSchedule.id,
+            schedule_id: schedule.id,
             started_at: new Date().toISOString(),
             status: 'running'
           })
@@ -114,67 +80,20 @@ export const processSchedules = async (supabaseClient: ReturnType<typeof createC
           }
         }
 
-        processedSchedules.push(newSchedule.id);
-        console.log(`Successfully processed schedule ${newSchedule.id}`);
-      } else {
-        // Use existing schedule id
-        const { data: log, error: logError } = await supabaseClient
-          .from('schedule_execution_logs')
-          .insert({
-            schedule_id: existingSchedule.id,
-            started_at: new Date().toISOString(),
-            status: 'running'
-          })
-          .select()
-          .single();
+        processedSchedules.push(schedule.id);
+        console.log(`Successfully processed schedule ${schedule.id}`);
 
-        if (logError) {
-          console.error('Error creating execution log:', logError);
-          continue;
+        // Update next execution time
+        const { error: nextTimeError } = await supabaseClient
+          .rpc('update_next_execution_time', {
+            schedule_id: schedule.id,
+            execution_time: new Date().toISOString()
+          });
+
+        if (nextTimeError) {
+          console.error('Error updating next execution time:', nextTimeError);
         }
-
-        // Execute the function
-        const startTime = Date.now();
-        console.log(`Invoking function ${schedule.function_name}`);
-        const { error: invokeError } = await supabaseClient.functions.invoke(
-          schedule.function_name,
-          {
-            body: { scheduled: true }
-          }
-        );
-
-        // Update execution log
-        if (log) {
-          const { error: logUpdateError } = await supabaseClient
-            .from('schedule_execution_logs')
-            .update({
-              completed_at: new Date().toISOString(),
-              status: invokeError ? 'failed' : 'completed',
-              error_details: invokeError?.message,
-              execution_duration_ms: Date.now() - startTime
-            })
-            .eq('id', log.id);
-
-          if (logUpdateError) {
-            console.error('Error updating execution log:', logUpdateError);
-          }
-        }
-
-        processedSchedules.push(existingSchedule.id);
-        console.log(`Successfully processed schedule ${existingSchedule.id}`);
       }
-
-      // Update next execution time
-      const { error: nextTimeError } = await supabaseClient
-        .rpc('update_next_execution_time', {
-          schedule_id: schedule.id,
-          execution_time: new Date().toISOString()
-        });
-
-      if (nextTimeError) {
-        console.error('Error updating next execution time:', nextTimeError);
-      }
-
     } catch (error) {
       console.error(`Error processing schedule ${schedule.id}:`, error);
     }

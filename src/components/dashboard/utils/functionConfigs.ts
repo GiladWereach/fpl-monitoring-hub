@@ -7,7 +7,17 @@ export const functions = [
   { name: "Fetch Players", function: "fetch-players", group: "data-sync" },
   { name: "Fetch Player Details", function: "fetch-player-details", group: "data-sync" },
   { name: "Fetch Scoring Rules", function: "fetch-scoring-rules", group: "data-sync" },
-  { name: "Fetch Fixtures", function: "fetch-fixtures", group: "data-sync" },
+  { 
+    name: "Fetch Fixtures", 
+    function: "fetch-fixtures", 
+    group: "data-sync",
+    defaultSchedule: {
+      frequency_type: 'match_dependent',
+      match_day_interval_minutes: 2,
+      non_match_interval_minutes: 30,
+      status: 'active'
+    }
+  },
   { 
     name: "Fetch Live Gameweek", 
     function: "fetch-live-gameweek", 
@@ -15,7 +25,7 @@ export const functions = [
     defaultSchedule: {
       frequency_type: 'match_dependent',
       match_day_interval_minutes: 2,
-      non_match_interval_minutes: 60,
+      non_match_interval_minutes: 30,
       status: 'active'
     }
   },
