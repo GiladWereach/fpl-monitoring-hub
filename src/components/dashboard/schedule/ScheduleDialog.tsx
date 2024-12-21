@@ -15,14 +15,23 @@ import { useScheduleForm } from "./useScheduleForm";
 interface ScheduleDialogProps {
   functionName: string;
   functionDisplayName: string;
+  currentSchedule?: any;
 }
 
-export function ScheduleDialog({ functionName, functionDisplayName }: ScheduleDialogProps) {
+export function ScheduleDialog({ 
+  functionName, 
+  functionDisplayName,
+  currentSchedule 
+}: ScheduleDialogProps) {
   const [open, setOpen] = useState(false);
   const { form, onSubmit } = useScheduleForm({
     functionName,
     onSuccess: () => setOpen(false),
   });
+
+  const isDataCollectionFunction = 
+    functionName === 'fetch-live-gameweek' || 
+    functionName === 'fetch-fixtures';
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -34,10 +43,21 @@ export function ScheduleDialog({ functionName, functionDisplayName }: ScheduleDi
       </DialogTrigger>
       <DialogContent className="sm:max-w-[600px] w-[95vw] md:w-auto">
         <DialogHeader>
-          <DialogTitle>Schedule {functionDisplayName}</DialogTitle>
+          <DialogTitle>
+            Schedule {functionDisplayName}
+            {isDataCollectionFunction && (
+              <span className="text-sm font-normal text-muted-foreground ml-2">
+                (Auto-managed based on match timings)
+              </span>
+            )}
+          </DialogTitle>
         </DialogHeader>
         <div className="max-h-[80vh] overflow-y-auto">
-          <ScheduleForm form={form} onSubmit={onSubmit} />
+          <ScheduleForm 
+            form={form} 
+            onSubmit={onSubmit}
+            isDataCollectionFunction={isDataCollectionFunction}
+          />
           <ExecutionHistory functionName={functionName} />
         </div>
       </DialogContent>
