@@ -4,6 +4,8 @@ import { StatusCard } from "@/components/dashboard/StatusCard";
 import { Activity, AlertTriangle, CheckCircle2, Clock, Database, Server, Calculator } from "lucide-react";
 import { format } from "date-fns";
 
+type HealthStatus = "success" | "warning" | "error" | "info";
+
 export function APIHealthStatus() {
   const { data: metrics } = useQuery({
     queryKey: ["api-health-metrics"],
@@ -32,11 +34,11 @@ export function APIHealthStatus() {
   };
 
   // Calculate overall system health
-  const overallHealth = metrics?.reduce((acc, curr) => {
+  const overallHealth: HealthStatus = metrics?.reduce((acc: HealthStatus, curr) => {
     if (curr.health_status === 'error') return 'error';
     if (curr.health_status === 'warning' && acc !== 'error') return 'warning';
     return acc;
-  }, 'success');
+  }, 'success' as HealthStatus);
 
   const avgResponseTime = metrics?.reduce((acc, curr) => acc + curr.avg_response_time, 0) / (metrics?.length || 1);
 
