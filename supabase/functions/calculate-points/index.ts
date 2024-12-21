@@ -72,8 +72,10 @@ Deno.serve(async (req) => {
         assistPoints +
         penaltyPoints +
         ownGoalPoints +
-        cardPoints +
-        bonusPoints;
+        cardPoints;
+
+      // Add bonus points to both raw and final total
+      const finalTotal = rawTotal + bonusPoints;
 
       console.log(`Calculated points breakdown for player ${perf.player_id}:`, {
         minutesPoints,
@@ -86,7 +88,8 @@ Deno.serve(async (req) => {
         ownGoalPoints,
         cardPoints,
         bonusPoints,
-        rawTotal
+        rawTotal,
+        finalTotal
       });
 
       return {
@@ -105,7 +108,7 @@ Deno.serve(async (req) => {
         card_points: cardPoints,
         bonus_points: bonusPoints,
         raw_total_points: rawTotal,
-        final_total_points: rawTotal, // No multipliers yet
+        final_total_points: finalTotal,
       };
     }).filter(Boolean);
 

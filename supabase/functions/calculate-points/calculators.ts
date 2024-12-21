@@ -55,7 +55,7 @@ export function calculatePenaltyPoints(
 }
 
 export function calculateBonusPoints(bonus: number): number {
-  // Simply return the actual bonus points value
-  // This will be 3 for highest BPS, 2 for second highest, 1 for third highest
+  // Return the actual bonus points value (3, 2, or 1)
+  // This value comes directly from the FPL API and represents the correct bonus points
   return bonus;
 }
