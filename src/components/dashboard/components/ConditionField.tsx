@@ -31,10 +31,10 @@ export function ConditionField({ form, index, field }: ConditionFieldProps) {
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
-                <SelectItem value="_placeholder" disabled>Select field</SelectItem>
+                <SelectItem value="select_field" disabled>Select field</SelectItem>
                 {Object.entries(AVAILABLE_FIELDS).map(([category, fields]) => (
                   <React.Fragment key={category}>
-                    <SelectItem value={`${category}_header`} disabled>
+                    <SelectItem value={`header_${category}`} disabled>
                       {category.toUpperCase()}
                     </SelectItem>
                     {fields.map((f) => (
@@ -63,7 +63,7 @@ export function ConditionField({ form, index, field }: ConditionFieldProps) {
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
-                <SelectItem value="_placeholder" disabled>Select operator</SelectItem>
+                <SelectItem value="select_operator" disabled>Select operator</SelectItem>
                 <SelectItem value="eq">=</SelectItem>
                 <SelectItem value="neq">≠</SelectItem>
                 <SelectItem value="gt">&gt;</SelectItem>
@@ -90,7 +90,7 @@ export function ConditionField({ form, index, field }: ConditionFieldProps) {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="_placeholder" disabled>Select value</SelectItem>
+                  <SelectItem value="select_value" disabled>Select value</SelectItem>
                   {FIELD_VALUES[field.field as keyof typeof FIELD_VALUES].map((value) => (
                     <SelectItem key={value} value={value}>
                       {value}
