@@ -1,4 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { determineScheduleWindow } from '../shared/scheduling-service.ts';
+import { logExecution } from '../shared/monitoring-service.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -10,38 +12,29 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const functionName = 'fetch-fixtures';
+  const startTime = Date.now();
+  
   try {
-    const body = await req.json();
-    
-    // Handle schedule inquiry
-    if (body.getSchedule) {
-      const supabaseClient = createClient(
-        Deno.env.get('SUPABASE_URL') ?? '',
-        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-      );
-
-      // Check for active matches
-      const { data: activeMatches } = await supabaseClient
-        .from('fixtures')
-        .select('*')
-        .eq('started', true)
-        .eq('finished', false);
-
-      const intervalMinutes = activeMatches?.length ? 2 : 30;
-      
-      return new Response(
-        JSON.stringify({ intervalMinutes, reason: activeMatches?.length ? 'Active matches' : 'No active matches' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    console.log('Starting fixtures data fetch...');
-    
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
+    const body = await req.json();
+    
+    // Handle schedule inquiry
+    if (body.getSchedule) {
+      console.log(`[${functionName}] Getting collection schedule...`);
+      const schedule = await determineScheduleWindow(supabaseClient, functionName);
+      return new Response(
+        JSON.stringify(schedule),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log(`[${functionName}] Starting fixtures data fetch...`);
+    
     // Enhanced browser-like headers
     const headers = {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -56,18 +49,18 @@ Deno.serve(async (req) => {
       'Connection': 'keep-alive'
     };
 
-    console.log('Fetching data from FPL API...');
+    console.log(`[${functionName}] Fetching data from FPL API...`);
     const response = await fetch('https://fantasy.premierleague.com/api/fixtures/', {
       headers: headers
     });
     
     if (!response.ok) {
-      console.error(`FPL API error: ${response.status}`, await response.text());
+      console.error(`[${functionName}] FPL API error: ${response.status}`, await response.text());
       throw new Error(`FPL API error: ${response.status}`);
     }
 
     const fixtures = await response.json();
-    console.log(`Fetched ${fixtures.length} fixtures`);
+    console.log(`[${functionName}] Fetched ${fixtures.length} fixtures`);
 
     const { error: fixturesError } = await supabaseClient
       .from('fixtures')
@@ -77,24 +70,48 @@ Deno.serve(async (req) => {
       })));
 
     if (fixturesError) {
-      console.error('Error upserting fixtures:', fixturesError);
+      console.error(`[${functionName}] Error upserting fixtures:`, fixturesError);
       throw fixturesError;
     }
 
-    console.log('Fixtures data processed successfully');
+    const executionTime = Date.now() - startTime;
+    await logExecution(supabaseClient, functionName, {
+      duration_ms: executionTime,
+      success: true
+    });
+
+    console.log(`[${functionName}] Fixtures data processed successfully in ${executionTime}ms`);
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: `Successfully processed ${fixtures.length} fixtures` 
+        message: `Successfully processed ${fixtures.length} fixtures`,
+        executionTime
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
-    console.error('Error:', error);
+    const executionTime = Date.now() - startTime;
+    console.error(`[${functionName}] Error:`, error);
+    
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    await logExecution(supabaseClient, functionName, {
+      duration_ms: executionTime,
+      success: false,
+      error: error.message
+    });
+
     return new Response(
-      JSON.stringify({ success: false, error: error.message }),
+      JSON.stringify({ 
+        success: false, 
+        error: error.message,
+        executionTime 
+      }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500 
