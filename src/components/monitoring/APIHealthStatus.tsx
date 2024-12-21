@@ -25,38 +25,55 @@ export function APIHealthStatus() {
     refetchInterval: 30000
   });
 
-  // Calculate totals across all endpoints
-  const totalRequests = metrics?.reduce(
-    (acc, metric) => acc + (metric.success_count || 0) + (metric.error_count || 0),
-    0
-  ) || 0;
-
-  const successCount = metrics?.reduce(
-    (acc, metric) => acc + (metric.success_count || 0),
-    0
-  ) || 0;
-
-  const successRate = totalRequests > 0 
-    ? (successCount / totalRequests) * 100 
-    : 100;
-
-  const avgResponseTime = metrics?.reduce(
-    (acc, metric) => acc + (metric.avg_response_time || 0),
-    0
-  ) / (metrics?.length || 1);
-
-  const lastError = metrics?.reduce((latest, metric) => {
-    if (!latest || (metric.last_error_time && new Date(metric.last_error_time) > new Date(latest))) {
-      return metric.last_error_time;
+  // Calculate aggregated metrics
+  const calculateMetrics = () => {
+    if (!metrics?.length) {
+      return {
+        totalRequests: 0,
+        successCount: 0,
+        successRate: 100,
+        avgResponseTime: 0,
+        lastError: null,
+        mostActiveEndpoint: 'N/A'
+      };
     }
-    return latest;
-  }, null as string | null);
 
-  const mostActiveEndpoint = metrics?.reduce((most, current) => {
-    const currentTotal = (current.success_count || 0) + (current.error_count || 0);
-    const mostTotal = (most?.success_count || 0) + (most?.error_count || 0);
-    return currentTotal > mostTotal ? current : most;
-  }, null);
+    const totalRequests = metrics.reduce((acc, m) => acc + (m.success_count || 0) + (m.error_count || 0), 0);
+    const successCount = metrics.reduce((acc, m) => acc + (m.success_count || 0), 0);
+    const successRate = totalRequests > 0 ? (successCount / totalRequests) * 100 : 100;
+    
+    // Calculate weighted average response time
+    const totalSuccesses = metrics.reduce((acc, m) => acc + (m.success_count || 0), 0);
+    const weightedResponseTime = metrics.reduce((acc, m) => 
+      acc + ((m.avg_response_time || 0) * (m.success_count || 0)), 0);
+    const avgResponseTime = totalSuccesses > 0 ? weightedResponseTime / totalSuccesses : 0;
+
+    // Find the most recent error
+    const lastError = metrics
+      .filter(m => m.last_error_time)
+      .sort((a, b) => new Date(b.last_error_time || 0).getTime() - new Date(a.last_error_time || 0).getTime())[0];
+
+    // Find most active endpoint
+    const endpointCounts = metrics.reduce((acc, m) => {
+      const total = (m.success_count || 0) + (m.error_count || 0);
+      acc[m.endpoint] = (acc[m.endpoint] || 0) + total;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const mostActiveEndpoint = Object.entries(endpointCounts)
+      .sort(([,a], [,b]) => b - a)[0]?.[0] || 'N/A';
+
+    return {
+      totalRequests,
+      successCount,
+      successRate,
+      avgResponseTime,
+      lastError,
+      mostActiveEndpoint
+    };
+  };
+
+  const aggregatedMetrics = calculateMetrics();
 
   return (
     <>
@@ -108,42 +125,44 @@ export function APIHealthStatus() {
       {/* API Health Metrics */}
       <StatusCard
         title="API Success Rate"
-        value={`${successRate.toFixed(1)}%`}
-        status={successRate > 95 ? "success" : successRate > 90 ? "warning" : "error"}
+        value={`${aggregatedMetrics.successRate.toFixed(1)}%`}
+        status={aggregatedMetrics.successRate > 95 ? "success" : aggregatedMetrics.successRate > 90 ? "warning" : "error"}
         icon={<CheckCircle2 className="h-4 w-4" />}
         details={[
-          { label: "Total Requests", value: totalRequests },
-          { label: "Success Count", value: successCount }
+          { label: "Total Requests", value: aggregatedMetrics.totalRequests.toString() },
+          { label: "Success Count", value: aggregatedMetrics.successCount.toString() }
         ]}
       />
 
       <StatusCard
         title="Avg Response Time"
-        value={`${avgResponseTime.toFixed(2)}ms`}
-        status={avgResponseTime < 500 ? "success" : avgResponseTime < 1000 ? "warning" : "error"}
+        value={`${aggregatedMetrics.avgResponseTime.toFixed(2)}ms`}
+        status={aggregatedMetrics.avgResponseTime < 500 ? "success" : aggregatedMetrics.avgResponseTime < 1000 ? "warning" : "error"}
         icon={<Clock className="h-4 w-4" />}
         details={[
-          { label: "Slowest Endpoint", value: metrics?.sort((a, b) => (b.avg_response_time || 0) - (a.avg_response_time || 0))[0]?.endpoint || 'N/A' }
+          { label: "Most Active Endpoint", value: aggregatedMetrics.mostActiveEndpoint }
         ]}
       />
 
       <StatusCard
         title="Recent Errors"
-        value={lastError ? format(new Date(lastError), "HH:mm:ss") : "No errors"}
-        status={!lastError ? "success" : "error"}
+        value={aggregatedMetrics.lastError ? 
+          format(new Date(aggregatedMetrics.lastError.last_error_time!), "HH:mm:ss") : 
+          "No errors"}
+        status={!aggregatedMetrics.lastError ? "success" : "error"}
         icon={<AlertTriangle className="h-4 w-4" />}
         details={[
-          { label: "Error Count", value: metrics?.reduce((acc, m) => acc + (m.error_count || 0), 0) || 0 }
+          { label: "Error Count", value: metrics?.reduce((acc, m) => acc + (m.error_count || 0), 0).toString() || "0" }
         ]}
       />
 
       <StatusCard
         title="Active Endpoints"
-        value={metrics?.length || 0}
+        value={Object.keys(metrics?.reduce((acc, m) => ({ ...acc, [m.endpoint]: true }), {}) || {}).length.toString()}
         status="info"
         icon={<Activity className="h-4 w-4" />}
         details={[
-          { label: "Most Active", value: mostActiveEndpoint?.endpoint || 'N/A' }
+          { label: "Most Active", value: aggregatedMetrics.mostActiveEndpoint }
         ]}
       />
     </>
