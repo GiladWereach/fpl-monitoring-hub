@@ -18,7 +18,7 @@ describe('Match Window Detection', () => {
   it('should fallback to UTC on invalid timezone', async () => {
     const window = await detectMatchWindow({ timezone: 'Invalid/Timezone' });
     expect(window.timezone).toBe('Invalid/Timezone');
-    expect(window.type).toBe('none');
+    expect(window.type).toBe('idle');
   });
 
   it('should detect live match window', async () => {

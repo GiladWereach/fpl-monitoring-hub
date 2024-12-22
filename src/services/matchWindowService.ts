@@ -16,6 +16,7 @@ export async function detectMatchWindow({ timezone = 'UTC' }: { timezone?: strin
   end?: Date;
   activeMatches?: number;
   nextKickoff?: Date;
+  timezone: string;
 }> {
   console.log('Detecting match window...');
   
@@ -29,13 +30,13 @@ export async function detectMatchWindow({ timezone = 'UTC' }: { timezone?: strin
 
     if (!currentEvent) {
       console.log('No current gameweek found');
-      return { type: 'idle' };
+      return { type: 'idle', timezone };
     }
 
     // Check if we're in a gameweek transition
     if (currentEvent.transition_status === 'in_progress') {
       console.log('Gameweek transition in progress');
-      return { type: 'idle' };
+      return { type: 'idle', timezone };
     }
 
     const now = new Date();
@@ -75,7 +76,8 @@ export async function detectMatchWindow({ timezone = 'UTC' }: { timezone?: strin
         start: firstMatch,
         end: windowEnd,
         activeMatches: activeMatches.length,
-        nextKickoff
+        nextKickoff,
+        timezone
       };
     }
 
@@ -90,7 +92,8 @@ export async function detectMatchWindow({ timezone = 'UTC' }: { timezone?: strin
           start: preMatchStart,
           end: nextKickoff,
           activeMatches: 0,
-          nextKickoff
+          nextKickoff,
+          timezone
         };
       }
     }
@@ -118,7 +121,8 @@ export async function detectMatchWindow({ timezone = 'UTC' }: { timezone?: strin
           start: matchEnd,
           end: postMatchEnd,
           activeMatches: 0,
-          nextKickoff
+          nextKickoff,
+          timezone
         };
       }
     }
@@ -126,10 +130,11 @@ export async function detectMatchWindow({ timezone = 'UTC' }: { timezone?: strin
     // No active window
     return { 
       type: 'idle',
-      nextKickoff
+      nextKickoff,
+      timezone
     };
   } catch (error) {
     console.error('Error detecting match window:', error);
-    return { type: 'idle' };
+    return { type: 'idle', timezone };
   }
 }
