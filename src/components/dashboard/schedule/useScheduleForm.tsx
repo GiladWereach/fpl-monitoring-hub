@@ -45,19 +45,38 @@ export function useScheduleForm({ functionName, onSuccess }: UseScheduleFormProp
       const startTime = Date.now();
       
       try {
-        const { data, error } = await supabase
+        // Get the most recent metrics for this endpoint
+        const { data: metrics, error: metricsError } = await supabase
+          .from("api_health_metrics")
+          .select("*")
+          .eq("endpoint", functionName)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (metricsError && metricsError.code !== 'PGRST116') {
+          console.error("Error fetching metrics:", metricsError);
+          throw metricsError;
+        }
+
+        // Get the schedule
+        const { data: scheduleData, error: scheduleError } = await supabase
           .from("schedules")
           .select("*")
           .eq("function_name", functionName)
           .maybeSingle();
 
+        if (scheduleError) {
+          console.error("Error fetching schedule:", scheduleError);
+          throw scheduleError;
+        }
+
         const endTime = Date.now();
         await updateAPIHealthMetrics("fetch_schedule", true, endTime - startTime);
 
-        if (error) throw error;
-        return data;
+        return scheduleData;
       } catch (error) {
-        console.error("Error fetching schedule:", error);
+        console.error("Error in schedule fetch:", error);
         await logAPIError({
           type: "SERVER_ERROR",
           message: error.message,
