@@ -45,7 +45,7 @@ const MatchCards = ({ gameweek, onMatchSelect, selectedMatchId }: MatchCardsProp
     return <div>Loading matches...</div>;
   }
 
-  const getMatchStatus = (match: any) => {
+  const getMatchStatusInfo = (match: any) => {
     const kickoff = new Date(match.kickoff_time);
     const now = new Date();
     
@@ -54,30 +54,30 @@ const MatchCards = ({ gameweek, onMatchSelect, selectedMatchId }: MatchCardsProp
       const preMatchStart = new Date(kickoff);
       preMatchStart.setHours(preMatchStart.getHours() - 2);
       if (now >= preMatchStart) {
-        return { status: 'PRE-MATCH', color: 'bg-yellow-500' };
+        return { status: 'PRE-MATCH', color: 'bg-yellow-500', isPreMatch: true };
       }
     }
 
     // Standard status checks
     if (!match.started) {
-      return { status: 'UPCOMING', color: 'bg-gray-500' };
+      return { status: 'UPCOMING', color: 'bg-gray-500', isPreMatch: false };
     }
     if (match.finished_provisional) {
-      return { status: 'FINISHED', color: 'bg-blue-500' };
+      return { status: 'FINISHED', color: 'bg-blue-500', isPreMatch: false };
     }
     if (match.finished && !match.finished_provisional) {
-      return { status: 'CALCULATING', color: 'bg-yellow-500' };
+      return { status: 'CALCULATING', color: 'bg-yellow-500', isPreMatch: false };
     }
     if (match.started && !match.finished) {
-      return { status: 'LIVE', color: 'bg-green-500' };
+      return { status: 'LIVE', color: 'bg-green-500', isPreMatch: false };
     }
-    return { status: 'POSTPONED', color: 'bg-red-500' };
+    return { status: 'POSTPONED', color: 'bg-red-500', isPreMatch: false };
   };
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {matches?.map((match) => {
-        const { status, color } = getMatchStatus(match);
+        const { status, color } = getMatchStatusInfo(match);
         const isSelected = selectedMatchId === match.id;
         
         return (
