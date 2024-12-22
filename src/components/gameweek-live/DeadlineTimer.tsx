@@ -2,7 +2,6 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format, formatDistanceToNowStrict } from 'date-fns';
-import { formatInTimeZone } from 'date-fns-tz';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Clock, AlertCircle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -30,7 +29,7 @@ export function DeadlineTimer() {
     },
     refetchInterval: (query) => {
       if (!query.state.data) return false;
-      const deadline = new Date(query.state.data.deadline_time + 'Z'); // Append Z to treat as UTC
+      const deadline = new Date(query.state.data.deadline_time);
       const now = new Date();
       // Refresh every minute if within 1 hour of deadline
       if (deadline > now && deadline.getTime() - now.getTime() < 60 * 60 * 1000) {
@@ -48,22 +47,23 @@ export function DeadlineTimer() {
     return null;
   }
 
-  // Parse the deadline_time as UTC by appending 'Z'
-  const deadlineTime = new Date(nextDeadline.deadline_time + 'Z');
+  // Parse the deadline_time directly as UTC
+  const deadlineTime = new Date(nextDeadline.deadline_time);
   const now = new Date();
   const hasDeadlinePassed = deadlineTime < now;
-
-  // Format the deadline time in UTC
-  const formattedDeadlineTime = format(deadlineTime, 'HH:mm');
-  const formattedDeadlineDate = format(deadlineTime, 'dd MMM yyyy');
 
   console.log('Deadline parsing debug:', {
     rawDeadline: nextDeadline.deadline_time,
     parsedDeadline: deadlineTime.toISOString(),
-    formattedTime: formattedDeadlineTime,
-    formattedDate: formattedDeadlineDate,
-    hasDeadlinePassed
+    formattedTime: format(deadlineTime, 'HH:mm'),
+    formattedDate: format(deadlineTime, 'dd MMM yyyy'),
+    hasDeadlinePassed,
+    currentTime: now.toISOString()
   });
+
+  // Format times in UTC
+  const formattedDeadlineTime = format(deadlineTime, 'HH:mm');
+  const formattedDeadlineDate = format(deadlineTime, 'dd MMM yyyy');
 
   return (
     <Card className="mb-4">
