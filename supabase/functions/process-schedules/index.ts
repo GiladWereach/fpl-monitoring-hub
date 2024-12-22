@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { processSchedules } from './scheduler.ts';
+import { logDebug, logError } from '../shared/logging-service.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -12,7 +13,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    console.log('Starting schedule processing...');
+    logDebug('process-schedules', 'Starting schedule processing...');
     const startTime = Date.now();
     
     const supabaseClient = createClient(
@@ -23,7 +24,7 @@ Deno.serve(async (req) => {
     const processedSchedules = await processSchedules(supabaseClient);
     const processingTime = Date.now() - startTime;
 
-    console.log(`Schedule processing completed in ${processingTime}ms`);
+    logDebug('process-schedules', `Schedule processing completed in ${processingTime}ms`);
 
     return new Response(
       JSON.stringify({
@@ -36,9 +37,13 @@ Deno.serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error in schedule processing:', error);
+    logError('process-schedules', 'Error in schedule processing:', error);
     return new Response(
-      JSON.stringify({ success: false, error: error.message }),
+      JSON.stringify({ 
+        success: false, 
+        error: error.message,
+        timestamp: new Date().toISOString()
+      }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500 

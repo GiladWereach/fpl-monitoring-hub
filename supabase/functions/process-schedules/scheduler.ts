@@ -1,127 +1,93 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { Schedule, ProcessedSchedule } from './types.ts';
-import { processSchedule } from './schedule-processor.ts';
+import { calculateNextExecutionTime } from './schedule-calculator.ts';
 import { logDebug, logError } from '../shared/logging-service.ts';
 
-async function getActiveFixtures(supabaseClient: ReturnType<typeof createClient>) {
-  const { data: fixtures, error } = await supabaseClient
-    .from('fixtures')
-    .select('*')
-    .eq('started', true)
-    .eq('finished', false);
-
-  if (error) {
-    logError('process-schedules', 'Error fetching active fixtures:', error);
-    throw error;
-  }
-
-  return fixtures || [];
-}
-
-async function getCurrentEvent(supabaseClient: ReturnType<typeof createClient>) {
-  const { data: event, error } = await supabaseClient
-    .from('events')
-    .select('*')
-    .eq('is_current', true)
-    .single();
-
-  if (error) {
-    logError('process-schedules', 'Error fetching current event:', error);
-    throw error;
-  }
-
-  return event;
-}
-
-async function determineScheduleInterval(
-  supabaseClient: ReturnType<typeof createClient>,
-  schedule: Schedule
-): Promise<number> {
-  logDebug('process-schedules', `Determining interval for schedule: ${schedule.function_name}`);
-
-  if (schedule.schedule_type !== 'match_dependent') {
-    return schedule.base_interval_minutes || 1440; // Default to daily
-  }
-
-  const activeFixtures = await getActiveFixtures(supabaseClient);
-  const currentEvent = await getCurrentEvent(supabaseClient);
-
-  if (!currentEvent) {
-    logDebug('process-schedules', 'No current event found, using non-match interval');
-    return schedule.non_match_interval_minutes || 1440;
-  }
-
-  if (activeFixtures.length > 0) {
-    logDebug('process-schedules', `Active matches found (${activeFixtures.length}), using match-day interval`);
-    return schedule.match_day_interval_minutes || 2;
-  }
-
-  // Check if we're in a live gameweek
-  const { data: unfinishedFixtures } = await supabaseClient
-    .from('fixtures')
-    .select('*')
-    .eq('event', currentEvent.id)
-    .eq('finished', false);
-
-  if (unfinishedFixtures && unfinishedFixtures.length > 0) {
-    logDebug('process-schedules', 'Live gameweek period, using non-match interval');
-    return schedule.non_match_interval_minutes || 30;
-  }
-
-  logDebug('process-schedules', 'No live matches or gameweek, using daily intervals');
-  return 1440; // Default to daily
-}
-
-export const processSchedules = async (supabaseClient: ReturnType<typeof createClient>) => {
-  logDebug('process-schedules', 'Starting schedule processing...');
+export async function processSchedules(supabaseClient: ReturnType<typeof createClient>) {
+  logDebug('scheduler', 'Starting schedule processing...');
   
   try {
+    // Get all active schedules that are due for execution
     const { data: activeSchedules, error: schedulesError } = await supabaseClient
-      .from('schedules')
-      .select('*')
-      .eq('enabled', true)
+      .from('function_schedules')
+      .select(`
+        *,
+        schedule_groups (
+          name,
+          description
+        )
+      `)
+      .eq('status', 'active')
       .or('next_execution_at.is.null,next_execution_at.lte.now()');
 
     if (schedulesError) {
-      logError('process-schedules', 'Error fetching schedules:', schedulesError);
+      logError('scheduler', 'Error fetching schedules:', schedulesError);
       throw schedulesError;
     }
 
-    logDebug('process-schedules', `Found ${activeSchedules?.length || 0} active schedules to process`);
-    const processedSchedules: ProcessedSchedule[] = [];
+    logDebug('scheduler', `Found ${activeSchedules?.length || 0} schedules to process`);
+    const processedSchedules = [];
 
     for (const schedule of (activeSchedules || [])) {
       try {
-        const interval = await determineScheduleInterval(supabaseClient, schedule);
-        logDebug('process-schedules', `Determined interval for ${schedule.function_name}: ${interval} minutes`);
+        logDebug('scheduler', `Processing schedule for ${schedule.function_name}`);
         
-        const result = await processSchedule(supabaseClient, {
-          ...schedule,
-          current_interval: interval
-        });
-        processedSchedules.push(result);
+        // Execute the function
+        const startTime = Date.now();
+        const { error: invokeError } = await supabaseClient.functions.invoke(schedule.function_name);
         
-        // Update next execution time based on determined interval
-        const nextExecution = new Date();
-        nextExecution.setMinutes(nextExecution.getMinutes() + interval);
+        if (invokeError) {
+          logError('scheduler', `Error executing ${schedule.function_name}:`, invokeError);
+          throw invokeError;
+        }
+
+        const executionTime = Date.now() - startTime;
+        logDebug('scheduler', `Successfully executed ${schedule.function_name} in ${executionTime}ms`);
+
+        // Calculate and set next execution time
+        const nextExecutionTime = await calculateNextExecutionTime(supabaseClient, schedule);
         
-        await supabaseClient
-          .from('schedules')
+        // Update schedule with execution results
+        const { error: updateError } = await supabaseClient
+          .from('function_schedules')
           .update({
             last_execution_at: new Date().toISOString(),
-            next_execution_at: nextExecution.toISOString()
+            next_execution_at: nextExecutionTime.toISOString(),
+            consecutive_failures: 0,
+            last_error: null
           })
           .eq('id', schedule.id);
 
-        logDebug('process-schedules', `Successfully processed ${schedule.function_name}, next run at ${nextExecution.toISOString()}`);
+        if (updateError) {
+          logError('scheduler', `Error updating schedule ${schedule.id}:`, updateError);
+          throw updateError;
+        }
+
+        processedSchedules.push({
+          id: schedule.id,
+          function: schedule.function_name,
+          success: true,
+          duration: executionTime,
+          nextExecution: nextExecutionTime
+        });
+
       } catch (error) {
-        logError('process-schedules', `Failed to process schedule ${schedule.id}:`, error);
+        logError('scheduler', `Failed to process schedule ${schedule.id}:`, error);
+        
+        // Update failure count and error message
+        await supabaseClient
+          .from('function_schedules')
+          .update({
+            consecutive_failures: schedule.consecutive_failures + 1,
+            last_error: error.message,
+            status: schedule.consecutive_failures >= 5 ? 'error' : 'active'
+          })
+          .eq('id', schedule.id);
       }
     }
 
     return processedSchedules;
   } catch (error) {
-    logError('process-schedules', 'Fatal error in processSchedules:', error);
+    logError('scheduler', 'Fatal error in processSchedules:', error);
     throw error;
   }
-};
+}
