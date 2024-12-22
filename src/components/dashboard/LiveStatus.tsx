@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/tooltip';
 import { AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { supabase } from '@/integrations/supabase/client';
 
 interface LiveStatusProps {
   showLabel?: boolean;

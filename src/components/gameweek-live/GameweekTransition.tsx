@@ -31,15 +31,15 @@ export const GameweekTransition = () => {
       console.log('Transition status:', { current, next });
       return { current, next };
     },
-    refetchInterval: current => 
-      current?.current.transition_status === 'in_progress' ? 5000 : false
+    refetchInterval: (data) => 
+      data?.current?.transition_status === 'in_progress' ? 5000 : false
   });
 
   if (isLoading) {
     return null;
   }
 
-  if (!transitionStatus?.current.transition_status) {
+  if (!transitionStatus?.current?.transition_status) {
     return null;
   }
 
