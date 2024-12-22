@@ -1,7 +1,8 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Badge } from '@/components/ui/badge';
-import { getMatchStatus } from '@/services/matchStatusService';
+import { detectMatchWindow } from '@/services/matchWindowService';
+import { format } from 'date-fns';
 
 interface LiveStatusProps {
   showLabel?: boolean;
@@ -9,9 +10,9 @@ interface LiveStatusProps {
 }
 
 export const LiveStatus = ({ showLabel = true, showWindow = false }: LiveStatusProps) => {
-  const { data: status, isLoading } = useQuery({
-    queryKey: ['match-status'],
-    queryFn: getMatchStatus,
+  const { data: matchWindow, isLoading } = useQuery({
+    queryKey: ['match-window'],
+    queryFn: detectMatchWindow,
     refetchInterval: 30000 // Refresh every 30 seconds
   });
 
@@ -20,22 +21,34 @@ export const LiveStatus = ({ showLabel = true, showWindow = false }: LiveStatusP
   }
 
   const getStatusVariant = () => {
-    if (status?.activeMatches > 0) return "success";
-    if (status?.isPreMatch) return "warning";
-    if (status?.isPostMatch) return "default";
-    return "secondary";
+    switch (matchWindow?.type) {
+      case 'live':
+        return "success";
+      case 'pre':
+        return "warning";
+      case 'post':
+        return "default";
+      default:
+        return "secondary";
+    }
   };
 
   const getStatusLabel = () => {
-    if (status?.activeMatches > 0) return `Live (${status.activeMatches} matches)`;
-    if (status?.isPreMatch) return "Pre-match";
-    if (status?.isPostMatch) return "Post-match";
-    if (status?.nextKickoff) {
-      const timeUntil = Math.floor((status.nextKickoff.getTime() - Date.now()) / (1000 * 60));
-      if (timeUntil < 60) return `Next match in ${timeUntil}m`;
-      return `Next match in ${Math.floor(timeUntil / 60)}h`;
+    switch (matchWindow?.type) {
+      case 'live':
+        return `Live (${matchWindow.activeMatches} matches)`;
+      case 'pre':
+        return "Pre-match";
+      case 'post':
+        return "Post-match";
+      default:
+        if (matchWindow?.nextKickoff) {
+          const timeUntil = Math.floor((matchWindow.nextKickoff.getTime() - Date.now()) / (1000 * 60));
+          if (timeUntil < 60) return `Next match in ${timeUntil}m`;
+          return `Next match in ${Math.floor(timeUntil / 60)}h`;
+        }
+        return "Idle";
     }
-    return "Idle";
   };
 
   return (
@@ -49,9 +62,9 @@ export const LiveStatus = ({ showLabel = true, showWindow = false }: LiveStatusP
           {getStatusLabel()}
         </span>
       )}
-      {showWindow && status?.currentWindow && (
+      {showWindow && matchWindow?.start && matchWindow?.end && (
         <span className="text-xs text-muted-foreground">
-          ({new Date(status.currentWindow.start).toLocaleTimeString()} - {new Date(status.currentWindow.end).toLocaleTimeString()})
+          ({format(matchWindow.start, 'HH:mm')} - {format(matchWindow.end, 'HH:mm')})
         </span>
       )}
     </div>
