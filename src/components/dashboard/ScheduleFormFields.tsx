@@ -40,7 +40,7 @@ export function ScheduleFormFields({ form }: ScheduleFormFieldsProps) {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <FormField
           control={form.control}
-          name="scheduleType"
+          name="schedule_type"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Schedule Type</FormLabel>
@@ -79,11 +79,11 @@ export function ScheduleFormFields({ form }: ScheduleFormFieldsProps) {
         />
       </div>
 
-      {form.watch("scheduleType") === "time_based" && (
+      {form.watch("schedule_type") === "time_based" && (
         <TimeConfigFields form={form} />
       )}
 
-      {form.watch("scheduleType") === "event_based" && (
+      {form.watch("schedule_type") === "event_based" && (
         <EventConditionsFields form={form} />
       )}
 

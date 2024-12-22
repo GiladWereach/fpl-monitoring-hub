@@ -27,7 +27,7 @@ export function TimeConfigFields({ form }: TimeConfigFieldsProps) {
     <>
       <FormField
         control={form.control}
-        name="timeConfig.type"
+        name="time_config.type"
         render={({ field }) => (
           <FormItem>
             <FormLabel>Time Schedule Type</FormLabel>
@@ -47,10 +47,10 @@ export function TimeConfigFields({ form }: TimeConfigFieldsProps) {
         )}
       />
 
-      {form.watch("timeConfig.type") === "daily" && (
+      {form.watch("time_config.type") === "daily" && (
         <FormField
           control={form.control}
-          name="timeConfig.hour"
+          name="time_config.hour"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Hour (UTC)</FormLabel>
@@ -70,11 +70,11 @@ export function TimeConfigFields({ form }: TimeConfigFieldsProps) {
         />
       )}
 
-      {form.watch("timeConfig.type") === "match_dependent" && (
+      {form.watch("time_config.type") === "match_dependent" && (
         <>
           <FormField
             control={form.control}
-            name="timeConfig.matchDayIntervalMinutes"
+            name="time_config.matchDayIntervalMinutes"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Match Day Interval (minutes)</FormLabel>
@@ -94,7 +94,7 @@ export function TimeConfigFields({ form }: TimeConfigFieldsProps) {
           />
           <FormField
             control={form.control}
-            name="timeConfig.nonMatchIntervalMinutes"
+            name="time_config.nonMatchIntervalMinutes"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Non-Match Interval (minutes)</FormLabel>

@@ -17,15 +17,15 @@ export function useScheduleForm({ functionName, onSuccess }: UseScheduleFormProp
   const form = useForm<AdvancedScheduleFormValues>({
     defaultValues: {
       enabled: false,
-      scheduleType: "time_based",
+      schedule_type: "time_based",
       timezone: "UTC",
-      timeConfig: {
+      time_config: {
         type: "daily",
         hour: 3,
         matchDayIntervalMinutes: 2,
         nonMatchIntervalMinutes: 30
       },
-      eventConfig: {
+      event_config: {
         triggerType: "deadline",
         offsetMinutes: 0
       },
@@ -103,15 +103,15 @@ export function useScheduleForm({ functionName, onSuccess }: UseScheduleFormProp
       console.log(`Setting form values for ${functionName}:`, schedule);
       form.reset({
         enabled: schedule.enabled ?? false,
-        scheduleType: schedule.schedule_type,
+        schedule_type: schedule.schedule_type,
         timezone: schedule.timezone ?? "UTC",
-        timeConfig: schedule.time_config ?? {
+        time_config: schedule.time_config ?? {
           type: "daily",
           hour: 3,
           matchDayIntervalMinutes: 2,
           nonMatchIntervalMinutes: 30
         },
-        eventConfig: schedule.event_config ?? {
+        event_config: schedule.event_config ?? {
           triggerType: "deadline",
           offsetMinutes: 0
         },
@@ -136,11 +136,11 @@ export function useScheduleForm({ functionName, onSuccess }: UseScheduleFormProp
         .from('schedules')
         .upsert({
           function_name: functionName,
-          schedule_type: values.scheduleType,
+          schedule_type: values.schedule_type,
           enabled: values.enabled,
           timezone: values.timezone,
-          time_config: values.scheduleType === 'time_based' ? values.timeConfig : null,
-          event_config: values.scheduleType === 'event_based' ? values.eventConfig : null,
+          time_config: values.schedule_type === 'time_based' ? values.time_config : null,
+          event_config: values.schedule_type === 'event_based' ? values.event_config : null,
           event_conditions: values.event_conditions,
           execution_config: values.execution_config
         }, {
