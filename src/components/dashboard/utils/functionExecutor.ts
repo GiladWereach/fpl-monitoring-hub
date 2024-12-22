@@ -23,7 +23,7 @@ interface EdgeFunctionResponse {
 
 export const executeFetchFunction = async (functionName: string, options: { 
   isTest?: boolean,
-  scheduleType?: string 
+  scheduleType?: "time_based" | "event_based" 
 } = {}) => {
   const started_at = new Date().toISOString();
   let scheduleId: string | undefined;
@@ -31,12 +31,11 @@ export const executeFetchFunction = async (functionName: string, options: {
   let attempt = 1;
   const maxAttempts = 3;
 
-  // For test executions, use test utilities
   if (options.isTest) {
     console.log(`Running test execution for ${functionName}`);
     const testSuites = [{
       functionName,
-      scheduleTypes: options.scheduleType ? [options.scheduleType] : ['time_based', 'event_based', 'match_dependent']
+      scheduleTypes: options.scheduleType ? [options.scheduleType] : ['time_based', 'event_based'] as const
     }];
     
     const testResults = await runScheduleTests(testSuites);

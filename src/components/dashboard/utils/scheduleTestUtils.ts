@@ -13,6 +13,13 @@ interface ExecutionConfig {
   max_retry_delay: number;
 }
 
+interface TestResult {
+  success: boolean;
+  error?: string;
+  executionTime?: number;
+  retryCount?: number;
+}
+
 export async function testScheduleExecution(
   functionName: string, 
   scheduleType: "time_based" | "event_based"
@@ -30,21 +37,19 @@ export async function testScheduleExecution(
       max_retry_delay: 3600
     };
 
-    // Create test schedule
     const { data: schedule, error: scheduleError } = await supabase
       .from('schedules')
       .insert({
         function_name: functionName,
         schedule_type: scheduleType,
         enabled: true,
-        execution_config: executionConfig
+        execution_config: executionConfig as unknown as Json
       })
       .select()
-      .single();
+      .maybeSingle();
 
     if (scheduleError) throw scheduleError;
 
-    // Execute the schedule
     const { data: executionResult, error: executionError } = await supabase.functions.invoke(
       'process-schedules',
       {
@@ -166,11 +171,4 @@ export async function verifyRetryMechanism(functionName: string): Promise<TestRe
       retryCount
     };
   }
-}
-
-interface TestResult {
-  success: boolean;
-  error?: string;
-  executionTime?: number;
-  retryCount?: number;
 }

@@ -32,7 +32,7 @@ export const logAPIError = async (error: APIError): Promise<void> => {
         error_details: error.message,
         response_code: error.statusCode,
         retry_count: error.retryCount,
-        request_params: error.requestParams
+        request_params: error.requestParams as Json
       });
 
     if (insertError) {
