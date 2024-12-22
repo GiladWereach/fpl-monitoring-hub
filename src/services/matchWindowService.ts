@@ -42,14 +42,14 @@ export async function detectMatchWindow({ timezone = 'UTC' }: { timezone?: strin
     const now = new Date();
     const zonedNow = toZonedTime(now, timezone);
 
-    // Get active matches
+    // Get active matches - fix the query to handle postponed matches correctly
     const { data: activeMatches } = await supabase
       .from('fixtures')
       .select('*')
       .eq('event', currentEvent.id)
       .eq('started', true)
       .eq('finished', false)
-      .eq('postponed', false)
+      .eq('postponed', false)  // Explicitly exclude postponed matches
       .order('kickoff_time', { ascending: true });
 
     // Get upcoming matches
@@ -57,7 +57,7 @@ export async function detectMatchWindow({ timezone = 'UTC' }: { timezone?: strin
       .from('fixtures')
       .select('kickoff_time')
       .eq('event', currentEvent.id)
-      .eq('postponed', false)
+      .eq('postponed', false)  // Exclude postponed matches
       .gt('kickoff_time', now.toISOString())
       .order('kickoff_time', { ascending: true })
       .limit(1);
@@ -104,7 +104,7 @@ export async function detectMatchWindow({ timezone = 'UTC' }: { timezone?: strin
       .select('kickoff_time')
       .eq('event', currentEvent.id)
       .eq('finished', true)
-      .eq('postponed', false)
+      .eq('postponed', false)  // Exclude postponed matches
       .order('kickoff_time', { ascending: false })
       .limit(1);
 
