@@ -37,6 +37,8 @@ async function determineScheduleInterval(
   supabaseClient: ReturnType<typeof createClient>,
   schedule: Schedule
 ): Promise<number> {
+  logDebug('process-schedules', `Determining interval for schedule: ${schedule.function_name}`);
+
   if (schedule.schedule_type !== 'match_dependent') {
     return schedule.base_interval_minutes || 1440; // Default to daily
   }
@@ -45,11 +47,12 @@ async function determineScheduleInterval(
   const currentEvent = await getCurrentEvent(supabaseClient);
 
   if (!currentEvent) {
+    logDebug('process-schedules', 'No current event found, using non-match interval');
     return schedule.non_match_interval_minutes || 1440;
   }
 
   if (activeFixtures.length > 0) {
-    logDebug('process-schedules', `Active matches found, using ${schedule.match_day_interval_minutes} minute intervals`);
+    logDebug('process-schedules', `Active matches found (${activeFixtures.length}), using match-day interval`);
     return schedule.match_day_interval_minutes || 2;
   }
 
@@ -61,7 +64,7 @@ async function determineScheduleInterval(
     .eq('finished', false);
 
   if (unfinishedFixtures && unfinishedFixtures.length > 0) {
-    logDebug('process-schedules', `Live gameweek period, using ${schedule.non_match_interval_minutes} minute intervals`);
+    logDebug('process-schedules', 'Live gameweek period, using non-match interval');
     return schedule.non_match_interval_minutes || 30;
   }
 
@@ -90,6 +93,8 @@ export const processSchedules = async (supabaseClient: ReturnType<typeof createC
     for (const schedule of (activeSchedules || [])) {
       try {
         const interval = await determineScheduleInterval(supabaseClient, schedule);
+        logDebug('process-schedules', `Determined interval for ${schedule.function_name}: ${interval} minutes`);
+        
         const result = await processSchedule(supabaseClient, {
           ...schedule,
           current_interval: interval
@@ -108,6 +113,7 @@ export const processSchedules = async (supabaseClient: ReturnType<typeof createC
           })
           .eq('id', schedule.id);
 
+        logDebug('process-schedules', `Successfully processed ${schedule.function_name}, next run at ${nextExecution.toISOString()}`);
       } catch (error) {
         logError('process-schedules', `Failed to process schedule ${schedule.id}:`, error);
       }

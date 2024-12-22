@@ -52,6 +52,8 @@ export async function processSchedule(
 
     if (!success) {
       logError('process-schedules', `Error executing ${schedule.function_name}:`, invokeError);
+    } else {
+      logDebug('process-schedules', `Successfully executed ${schedule.function_name} in ${executionDuration}ms`);
     }
 
     return {
@@ -59,7 +61,7 @@ export async function processSchedule(
       function: schedule.function_name,
       success,
       duration: executionDuration,
-      nextExecution: null, // Will be set by the scheduler
+      nextExecution: null,
       context: {
         schedule_type: schedule.schedule_type,
         interval: schedule.current_interval
