@@ -2,9 +2,11 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CalculationStats } from "./CalculationStats";
 import { RegisteredCalculations } from "./RegisteredCalculations";
-import { Activity, AlertCircle, Clock } from "lucide-react";
+import { Activity, AlertCircle, Clock, Play } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { toast } from "@/hooks/use-toast";
 
 interface PerformanceMetrics {
   execution_time: number;
@@ -75,6 +77,29 @@ export function CalculationsManager() {
     },
   });
 
+  const handleManualCalculation = async () => {
+    try {
+      console.log("Triggering manual points calculation");
+      const { error } = await supabase.functions.invoke('calculate-points', {
+        body: { manual: true }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Points calculation triggered successfully",
+      });
+    } catch (error) {
+      console.error("Error triggering calculation:", error);
+      toast({
+        title: "Error",
+        description: "Failed to trigger points calculation",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (isLoading) {
     return <div>Loading calculations...</div>;
   }
@@ -96,7 +121,6 @@ export function CalculationsManager() {
     new Date(log.start_time).toDateString() === new Date().toDateString()
   )?.length || 0;
 
-  // Calculate average execution time from performance metrics with proper type checking
   const avgExecutionTime = performanceMetrics?.reduce((acc, curr) => {
     if (curr.performance_metrics && isPerformanceMetrics(curr.performance_metrics)) {
       return acc + curr.performance_metrics.execution_time;
@@ -108,6 +132,13 @@ export function CalculationsManager() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Calculations Engine</h2>
+        <Button 
+          onClick={handleManualCalculation}
+          className="gap-2"
+        >
+          <Play className="h-4 w-4" />
+          Calculate Points Now
+        </Button>
       </div>
 
       <CalculationStats
