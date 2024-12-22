@@ -1,25 +1,16 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { Schedule, ProcessedSchedule } from './types.ts';
-import { createExecutionLog, updateExecutionLog } from './execution-logger.ts';
-import { checkActiveMatches } from './match-service.ts';
+import { logDebug, logError } from '../shared/logging-service.ts';
 
 export async function processSchedule(
   supabaseClient: ReturnType<typeof createClient>,
-  schedule: Schedule
+  schedule: Schedule & { current_interval: number }
 ): Promise<ProcessedSchedule> {
-  console.log(`Processing schedule ${schedule.id} for function ${schedule.function_name}`);
+  logDebug('process-schedules', `Processing schedule ${schedule.id} for function ${schedule.function_name}`);
   
   try {
-    const executionContext = {
-      schedule_type: schedule.schedule_type,
-      time_config: schedule.time_config,
-      execution_config: schedule.execution_config
-    };
-
-    const log = await createExecutionLog(supabaseClient, schedule.id, executionContext);
-    
     const startTime = Date.now();
-    console.log(`Invoking function ${schedule.function_name}`);
+    logDebug('process-schedules', `Invoking function ${schedule.function_name}`);
     
     const timeoutMs = (schedule.execution_config?.timeout_seconds || 30) * 1000;
     
@@ -28,7 +19,11 @@ export async function processSchedule(
       {
         body: { 
           scheduled: true,
-          context: executionContext
+          interval: schedule.current_interval,
+          context: {
+            schedule_type: schedule.schedule_type,
+            execution_config: schedule.execution_config
+          }
         }
       }
     );
@@ -38,67 +33,41 @@ export async function processSchedule(
     });
 
     const { error: invokeError } = await Promise.race([functionPromise, timeoutPromise]);
-
     const executionDuration = Date.now() - startTime;
     const success = !invokeError;
 
-    if (log) {
-      await updateExecutionLog(
-        supabaseClient,
-        log.id,
-        success,
-        executionDuration,
-        invokeError?.message
-      );
-    }
-
-    let nextExecutionTime: Date | null = null;
-    const now = new Date();
-
-    if (schedule.schedule_type === 'match_dependent') {
-      const hasActiveMatches = await checkActiveMatches(supabaseClient);
-      const intervalMinutes = hasActiveMatches ? 2 : 30;
-      nextExecutionTime = new Date(now.getTime() + intervalMinutes * 60 * 1000);
-    } 
-    else if (schedule.schedule_type === 'daily' && schedule.time_config?.hour !== undefined) {
-      nextExecutionTime = new Date();
-      nextExecutionTime.setUTCHours(schedule.time_config.hour, 0, 0, 0);
-      
-      if (nextExecutionTime <= now) {
-        nextExecutionTime.setDate(nextExecutionTime.getDate() + 1);
-      }
-    }
-
+    // Log execution details
     await supabaseClient
-      .from('schedules')
-      .update({
-        last_execution_at: now.toISOString(),
-        next_execution_at: nextExecutionTime?.toISOString(),
-        consecutive_failures: success ? 0 : (schedule.consecutive_failures + 1),
-        last_error: success ? null : invokeError?.message
-      })
-      .eq('id', schedule.id);
+      .from('schedule_execution_logs')
+      .insert({
+        schedule_id: schedule.id,
+        status: success ? 'completed' : 'failed',
+        error_details: invokeError?.message,
+        execution_duration_ms: executionDuration,
+        execution_context: {
+          interval: schedule.current_interval,
+          schedule_type: schedule.schedule_type
+        }
+      });
+
+    if (!success) {
+      logError('process-schedules', `Error executing ${schedule.function_name}:`, invokeError);
+    }
 
     return {
       id: schedule.id,
       function: schedule.function_name,
       success,
       duration: executionDuration,
-      nextExecution: nextExecutionTime,
-      context: executionContext
+      nextExecution: null, // Will be set by the scheduler
+      context: {
+        schedule_type: schedule.schedule_type,
+        interval: schedule.current_interval
+      }
     };
 
   } catch (error) {
-    console.error(`Error processing schedule ${schedule.id}:`, error);
-    
-    await supabaseClient
-      .from('schedules')
-      .update({
-        consecutive_failures: schedule.consecutive_failures + 1,
-        last_error: error.message
-      })
-      .eq('id', schedule.id);
-
+    logError('process-schedules', `Error processing schedule ${schedule.id}:`, error);
     throw error;
   }
 }
