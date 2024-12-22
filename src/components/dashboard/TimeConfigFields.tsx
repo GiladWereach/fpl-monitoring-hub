@@ -74,7 +74,7 @@ export function TimeConfigFields({ form }: TimeConfigFieldsProps) {
         <>
           <FormField
             control={form.control}
-            name="timeConfig.matchDayInterval"
+            name="timeConfig.matchDayIntervalMinutes"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Match Day Interval (minutes)</FormLabel>
@@ -83,6 +83,7 @@ export function TimeConfigFields({ form }: TimeConfigFieldsProps) {
                     type="number"
                     min={1}
                     {...field}
+                    value={field.value || ""}
                     onChange={(e) => field.onChange(parseInt(e.target.value))}
                   />
                 </FormControl>
@@ -93,7 +94,7 @@ export function TimeConfigFields({ form }: TimeConfigFieldsProps) {
           />
           <FormField
             control={form.control}
-            name="timeConfig.nonMatchInterval"
+            name="timeConfig.nonMatchIntervalMinutes"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Non-Match Interval (minutes)</FormLabel>
@@ -102,6 +103,7 @@ export function TimeConfigFields({ form }: TimeConfigFieldsProps) {
                     type="number"
                     min={1}
                     {...field}
+                    value={field.value || ""}
                     onChange={(e) => field.onChange(parseInt(e.target.value))}
                   />
                 </FormControl>

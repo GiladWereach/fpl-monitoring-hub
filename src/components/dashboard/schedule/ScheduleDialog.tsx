@@ -17,23 +17,21 @@ interface ScheduleDialogProps {
   functionDisplayName: string;
   currentSchedule?: any;
   isCoreDataFunction?: boolean;
+  isMatchDependentFunction?: boolean;
 }
 
 export function ScheduleDialog({ 
   functionName, 
   functionDisplayName,
   currentSchedule,
-  isCoreDataFunction 
+  isCoreDataFunction,
+  isMatchDependentFunction
 }: ScheduleDialogProps) {
   const [open, setOpen] = useState(false);
   const { form, onSubmit } = useScheduleForm({
     functionName,
     onSuccess: () => setOpen(false),
   });
-
-  const isDataCollectionFunction = 
-    functionName === 'fetch-live-gameweek' || 
-    functionName === 'fetch-fixtures';
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -47,7 +45,7 @@ export function ScheduleDialog({
         <DialogHeader>
           <DialogTitle>
             Schedule {functionDisplayName}
-            {isDataCollectionFunction && (
+            {isMatchDependentFunction && (
               <span className="text-sm font-normal text-muted-foreground ml-2">
                 (Auto-managed based on match timings)
               </span>
@@ -63,7 +61,7 @@ export function ScheduleDialog({
           <ScheduleForm 
             form={form} 
             onSubmit={onSubmit}
-            isDataCollectionFunction={isDataCollectionFunction}
+            isDataCollectionFunction={isMatchDependentFunction}
             isCoreDataFunction={isCoreDataFunction}
           />
           <ExecutionHistory functionName={functionName} />

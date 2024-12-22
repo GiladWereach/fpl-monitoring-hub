@@ -1,10 +1,10 @@
 export type RetryBackoffStrategy = 'linear' | 'exponential' | 'fixed';
 
 export type TimeConfig = {
-  type: 'interval' | 'daily' | 'weekly' | 'monthly' | 'cron';
-  intervalMinutes?: number;
-  cronExpression?: string;
+  type: 'daily' | 'match_dependent';
   hour?: number;
+  matchDayIntervalMinutes?: number;
+  nonMatchIntervalMinutes?: number;
 };
 
 export type EventConfig = {
@@ -37,7 +37,7 @@ export interface AdvancedScheduleFormValues {
   enabled: boolean;
   scheduleType: 'time_based' | 'event_based';
   timezone: string;
-  timeConfig?: TimeConfig;
+  timeConfig: TimeConfig;
   eventConfig?: EventConfig;
   execution_window?: ExecutionWindow;
   event_conditions: EventCondition[];
