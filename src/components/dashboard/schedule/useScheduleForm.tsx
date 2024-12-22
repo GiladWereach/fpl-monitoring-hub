@@ -4,7 +4,6 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { AdvancedScheduleFormValues, TimeConfig, EventConfig, ExecutionConfig, EventCondition } from "../types/scheduling";
-import { logAPIError, updateAPIHealthMetrics } from "@/utils/api/errorHandling";
 
 interface UseScheduleFormProps {
   functionName: string;
@@ -18,9 +17,10 @@ export function useScheduleForm({ functionName, onSuccess }: UseScheduleFormProp
       scheduleType: "time_based",
       timezone: "UTC",
       timeConfig: {
-        type: "interval",
-        intervalMinutes: 5,
-        hour: 0
+        type: "daily",
+        hour: 3, // Default to 3 AM UTC
+        matchDayIntervalMinutes: 2,
+        nonMatchIntervalMinutes: 30
       },
       eventConfig: {
         triggerType: "deadline",
@@ -51,10 +51,9 @@ export function useScheduleForm({ functionName, onSuccess }: UseScheduleFormProp
           .select("*")
           .eq("endpoint", functionName)
           .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
+          .limit(1);
 
-        if (metricsError && metricsError.code !== 'PGRST116') {
+        if (metricsError) {
           console.error("Error fetching metrics:", metricsError);
           throw metricsError;
         }
@@ -99,9 +98,10 @@ export function useScheduleForm({ functionName, onSuccess }: UseScheduleFormProp
         scheduleType: schedule.schedule_type ?? "time_based",
         timezone: schedule.timezone ?? "UTC",
         timeConfig: schedule.time_config as TimeConfig ?? {
-          type: "interval",
-          intervalMinutes: 5,
-          hour: 0
+          type: "daily",
+          hour: 3,
+          matchDayIntervalMinutes: 2,
+          nonMatchIntervalMinutes: 30
         },
         eventConfig: schedule.event_config as EventConfig ?? {
           triggerType: "deadline",
