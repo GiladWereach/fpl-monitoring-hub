@@ -1,10 +1,6 @@
-import { supabase } from '@/integrations/supabase/client';
-
-export type MatchWindow = {
-  start: Date;
-  end: Date;
-  type: 'pre' | 'live' | 'post';
-};
+import { supabase } from "@/integrations/supabase/client";
+import { addHours, subHours, isWithinInterval } from "date-fns";
+import { formatInTimeZone, toZonedTime } from 'date-fns-tz';
 
 export type MatchStatus = {
   isMatchDay: boolean;
@@ -16,6 +12,14 @@ export type MatchStatus = {
   deadlineTime: Date | null;
   hasPostponedMatches?: boolean;
   postponedMatchCount?: number;
+  matchesInExtraTime?: number;
+  abandonedMatches?: number;
+};
+
+export type MatchWindow = {
+  start: Date;
+  end: Date;
+  type: 'pre' | 'live' | 'post';
 };
 
 export async function getMatchStatus(): Promise<MatchStatus> {
@@ -32,7 +36,7 @@ export async function getMatchStatus(): Promise<MatchStatus> {
 
   const deadlineTime = currentGameweek?.deadline_time ? new Date(currentGameweek.deadline_time) : null;
   
-  // Get active and upcoming matches
+  // Get active matches with detailed status
   const { data: matches } = await supabase
     .from('fixtures')
     .select('*')
@@ -62,6 +66,12 @@ export async function getMatchStatus(): Promise<MatchStatus> {
   let currentWindow: MatchWindow | null = null;
   let isPreMatch = false;
   let isPostMatch = false;
+  let matchesInExtraTime = 0;
+
+  // Calculate matches in extra time (over 90 minutes)
+  if (matches) {
+    matchesInExtraTime = matches.filter(match => match.minutes > 90).length;
+  }
 
   if (matches && matches.length > 0) {
     // We have active matches
@@ -69,6 +79,7 @@ export async function getMatchStatus(): Promise<MatchStatus> {
     const lastMatch = new Date(matches[matches.length - 1].kickoff_time);
     
     // Add 2.5 hours after last kickoff for post-match window
+    // This accounts for potential extra time and delays
     const windowEnd = new Date(lastMatch);
     windowEnd.setHours(windowEnd.getHours() + 2.5);
 
@@ -102,7 +113,7 @@ export async function getMatchStatus(): Promise<MatchStatus> {
 
     if (recentMatches?.[0]) {
       const matchEnd = new Date(recentMatches[0].kickoff_time);
-      matchEnd.setMinutes(matchEnd.getMinutes() + 115); // 90 mins + extra time
+      matchEnd.setMinutes(matchEnd.getMinutes() + 115); // 90 mins + potential extra time
       
       const postMatchEnd = new Date(matchEnd);
       postMatchEnd.setHours(postMatchEnd.getHours() + 3);
@@ -118,6 +129,15 @@ export async function getMatchStatus(): Promise<MatchStatus> {
     }
   }
 
+  // Count abandoned matches if any
+  const { data: abandonedMatchesData } = await supabase
+    .from('fixtures')
+    .select('id')
+    .eq('started', true)
+    .eq('finished', false)
+    .gt('minutes', 0)
+    .eq('postponed', true);
+
   return {
     isMatchDay: Boolean(currentWindow),
     currentWindow,
@@ -127,12 +147,14 @@ export async function getMatchStatus(): Promise<MatchStatus> {
     isPostMatch,
     deadlineTime,
     hasPostponedMatches: Boolean(postponedMatches?.length),
-    postponedMatchCount: postponedMatches?.length || 0
+    postponedMatchCount: postponedMatches?.length || 0,
+    matchesInExtraTime,
+    abandonedMatches: abandonedMatchesData?.length || 0
   };
 }
 
 // Utility to check if we're within a specific window
-export function isWithinWindow(window: MatchWindow): boolean {
+export function isWithinMatchWindow(window: MatchWindow): boolean {
   const now = new Date();
   return now >= window.start && now <= window.end;
 }

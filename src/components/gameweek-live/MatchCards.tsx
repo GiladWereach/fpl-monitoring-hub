@@ -79,6 +79,10 @@ const MatchCards = ({ gameweek, onMatchSelect, selectedMatchId }: MatchCardsProp
       return { status: 'CALCULATING', color: 'bg-yellow-500', isPreMatch: false };
     }
     if (match.started && !match.finished) {
+      // Check for extra time
+      if (match.minutes > 90) {
+        return { status: 'EXTRA TIME', color: 'bg-purple-500', isPreMatch: false };
+      }
       return { status: 'LIVE', color: 'bg-green-500', isPreMatch: false };
     }
     return { status: 'UNKNOWN', color: 'bg-gray-500', isPreMatch: false };
@@ -127,7 +131,7 @@ const MatchCards = ({ gameweek, onMatchSelect, selectedMatchId }: MatchCardsProp
 
               {match.started && !match.finished_provisional && !match.postponed && (
                 <div className="text-center text-sm text-gray-500">
-                  {match.minutes}'
+                  {match.minutes > 90 ? `${match.minutes}' (ET)` : `${match.minutes}'`}
                 </div>
               )}
 
