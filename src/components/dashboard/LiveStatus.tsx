@@ -3,16 +3,22 @@ import { useQuery } from '@tanstack/react-query';
 import { Badge } from '@/components/ui/badge';
 import { detectMatchWindow } from '@/services/matchWindowService';
 import { format } from 'date-fns';
+import { formatInTimeZone } from 'date-fns-tz';
 
 interface LiveStatusProps {
   showLabel?: boolean;
   showWindow?: boolean;
+  timezone?: string;
 }
 
-export const LiveStatus = ({ showLabel = true, showWindow = false }: LiveStatusProps) => {
+export const LiveStatus = ({ 
+  showLabel = true, 
+  showWindow = false,
+  timezone = 'UTC'
+}: LiveStatusProps) => {
   const { data: matchWindow, isLoading } = useQuery({
-    queryKey: ['match-window'],
-    queryFn: detectMatchWindow,
+    queryKey: ['match-window', timezone],
+    queryFn: () => detectMatchWindow({ timezone }),
     refetchInterval: 30000 // Refresh every 30 seconds
   });
 
@@ -43,7 +49,9 @@ export const LiveStatus = ({ showLabel = true, showWindow = false }: LiveStatusP
         return "Post-match";
       default:
         if (matchWindow?.nextKickoff) {
-          const timeUntil = Math.floor((matchWindow.nextKickoff.getTime() - Date.now()) / (1000 * 60));
+          const timeUntil = Math.floor(
+            (matchWindow.nextKickoff.getTime() - Date.now()) / (1000 * 60)
+          );
           if (timeUntil < 60) return `Next match in ${timeUntil}m`;
           return `Next match in ${Math.floor(timeUntil / 60)}h`;
         }
@@ -64,7 +72,9 @@ export const LiveStatus = ({ showLabel = true, showWindow = false }: LiveStatusP
       )}
       {showWindow && matchWindow?.start && matchWindow?.end && (
         <span className="text-xs text-muted-foreground">
-          ({format(matchWindow.start, 'HH:mm')} - {format(matchWindow.end, 'HH:mm')})
+          ({formatInTimeZone(matchWindow.start, timezone, 'HH:mm')} - {
+            formatInTimeZone(matchWindow.end, timezone, 'HH:mm')
+          })
         </span>
       )}
     </div>
