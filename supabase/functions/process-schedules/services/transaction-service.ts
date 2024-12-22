@@ -3,28 +3,29 @@ import { logDebug, logError } from '../../shared/logging-service.ts';
 
 export async function executeInTransaction<T>(
   supabaseClient: ReturnType<typeof createClient>,
-  operation: () => Promise<T>,
+  operation: (client: ReturnType<typeof createClient>) => Promise<T>,
   context: string
 ): Promise<T> {
-  console.log(`Starting transaction for operation: ${context}`);
+  const transactionId = crypto.randomUUID();
+  logDebug('transaction-service', `Starting transaction ${transactionId} for operation: ${context}`);
   
   try {
     // Begin transaction
     await supabaseClient.rpc('begin_transaction');
-    logDebug('transaction-service', `Transaction started for ${context}`);
+    logDebug('transaction-service', `Transaction ${transactionId} started for ${context}`);
 
     // Execute the operation
-    const result = await operation();
+    const result = await operation(supabaseClient);
 
     // Commit transaction
     await supabaseClient.rpc('commit_transaction');
-    logDebug('transaction-service', `Transaction committed for ${context}`);
+    logDebug('transaction-service', `Transaction ${transactionId} committed for ${context}`);
 
     return result;
   } catch (error) {
     // Rollback on error
     await supabaseClient.rpc('rollback_transaction');
-    logError('transaction-service', `Transaction rolled back for ${context}:`, error);
+    logError('transaction-service', `Transaction ${transactionId} rolled back for ${context}:`, error);
     throw error;
   }
 }
@@ -33,7 +34,7 @@ export async function cleanupOldData(supabaseClient: ReturnType<typeof createCli
   logDebug('cleanup-service', 'Starting cleanup of old data');
   
   try {
-    // Clean up old execution logs
+    // Clean up old execution logs (keep last 7 days)
     const { error: logsError } = await supabaseClient
       .from('schedule_execution_logs')
       .delete()
@@ -48,6 +49,14 @@ export async function cleanupOldData(supabaseClient: ReturnType<typeof createCli
       .lt('expires_at', new Date().toISOString());
 
     if (locksError) throw locksError;
+
+    // Clean up old metrics (keep last 30 days)
+    const { error: metricsError } = await supabaseClient
+      .from('api_health_metrics')
+      .delete()
+      .lt('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
+
+    if (metricsError) throw metricsError;
 
     logDebug('cleanup-service', 'Cleanup completed successfully');
   } catch (error) {
