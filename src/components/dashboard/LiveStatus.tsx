@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { detectMatchWindow } from '@/services/matchWindowService';
 import { format } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
+import { Tooltip } from '@/components/ui/tooltip';
 
 interface LiveStatusProps {
   showLabel?: boolean;
@@ -61,10 +62,12 @@ export const LiveStatus = ({
 
   return (
     <div className="flex items-center gap-2">
-      <Badge 
-        variant={getStatusVariant()} 
-        className="h-2 w-2 rounded-full p-0" 
-      />
+      <Tooltip content={getStatusLabel()}>
+        <Badge 
+          variant={getStatusVariant()} 
+          className="h-2 w-2 rounded-full p-0" 
+        />
+      </Tooltip>
       {showLabel && (
         <span className="text-sm text-muted-foreground">
           {getStatusLabel()}

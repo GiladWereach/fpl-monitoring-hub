@@ -49,8 +49,16 @@ const MatchCards = ({ gameweek, onMatchSelect, selectedMatchId }: MatchCardsProp
     const kickoff = new Date(match.kickoff_time);
     const now = new Date();
     
-    // Check for postponed matches first
+    // Check for postponed/abandoned matches first
     if (match.postponed) {
+      if (match.started && match.minutes > 0) {
+        return { 
+          status: 'ABANDONED', 
+          color: 'bg-red-500', 
+          isPreMatch: false,
+          reason: match.postponement_reason || 'Match abandoned'
+        };
+      }
       return { 
         status: 'POSTPONED', 
         color: 'bg-red-500', 
@@ -81,7 +89,12 @@ const MatchCards = ({ gameweek, onMatchSelect, selectedMatchId }: MatchCardsProp
     if (match.started && !match.finished) {
       // Check for extra time
       if (match.minutes > 90) {
-        return { status: 'EXTRA TIME', color: 'bg-purple-500', isPreMatch: false };
+        const extraMinutes = match.minutes - 90;
+        return { 
+          status: `ET ${extraMinutes}'`, 
+          color: 'bg-purple-500', 
+          isPreMatch: false 
+        };
       }
       return { status: 'LIVE', color: 'bg-green-500', isPreMatch: false };
     }

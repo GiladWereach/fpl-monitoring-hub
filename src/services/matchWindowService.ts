@@ -42,22 +42,44 @@ export async function detectMatchWindow({ timezone = 'UTC' }: { timezone?: strin
     const now = new Date();
     const zonedNow = toZonedTime(now, timezone);
 
-    // Get active matches - fix the query to handle postponed matches correctly
+    // Get active matches with detailed status
     const { data: activeMatches } = await supabase
       .from('fixtures')
-      .select('*')
-      .eq('event', currentEvent.id)
+      .select(`
+        *,
+        team_h:teams!fk_fixtures_team_h(name),
+        team_a:teams!fk_fixtures_team_a(name)
+      `)
       .eq('started', true)
       .eq('finished', false)
-      .eq('postponed', false)  // Explicitly exclude postponed matches
+      .eq('postponed', false)
       .order('kickoff_time', { ascending: true });
+
+    // Check for matches in extra time
+    const matchesInExtraTime = activeMatches?.filter(match => match.minutes > 90) || [];
+    if (matchesInExtraTime.length > 0) {
+      console.log(`${matchesInExtraTime.length} matches in extra time`);
+    }
+
+    // Check for abandoned matches
+    const { data: abandonedMatches } = await supabase
+      .from('fixtures')
+      .select('*')
+      .eq('started', true)
+      .eq('finished', false)
+      .gt('minutes', 0)
+      .eq('postponed', true);
+
+    if (abandonedMatches?.length) {
+      console.log(`${abandonedMatches.length} abandoned matches found`);
+    }
 
     // Get upcoming matches
     const { data: upcomingMatches } = await supabase
       .from('fixtures')
       .select('kickoff_time')
       .eq('event', currentEvent.id)
-      .eq('postponed', false)  // Exclude postponed matches
+      .eq('postponed', false)
       .gt('kickoff_time', now.toISOString())
       .order('kickoff_time', { ascending: true })
       .limit(1);
@@ -68,8 +90,11 @@ export async function detectMatchWindow({ timezone = 'UTC' }: { timezone?: strin
     if (activeMatches && activeMatches.length > 0) {
       const firstMatch = new Date(activeMatches[0].kickoff_time);
       const lastMatch = new Date(activeMatches[activeMatches.length - 1].kickoff_time);
+      
+      // Add extra buffer for matches in extra time
+      const extraTimeBuffer = matchesInExtraTime.length > 0 ? 0.5 : 0; // 30 minutes extra
       const windowEnd = new Date(lastMatch);
-      windowEnd.setHours(windowEnd.getHours() + 2.5); // 2.5 hours after last kickoff for extra time
+      windowEnd.setHours(windowEnd.getHours() + 2.5 + extraTimeBuffer);
 
       return {
         type: 'live',
@@ -101,16 +126,18 @@ export async function detectMatchWindow({ timezone = 'UTC' }: { timezone?: strin
     // Check for post-match window (within 3 hours of last finished match)
     const { data: recentMatches } = await supabase
       .from('fixtures')
-      .select('kickoff_time')
+      .select('kickoff_time, minutes')
       .eq('event', currentEvent.id)
       .eq('finished', true)
-      .eq('postponed', false)  // Exclude postponed matches
+      .eq('postponed', false)
       .order('kickoff_time', { ascending: false })
       .limit(1);
 
     if (recentMatches?.[0]) {
       const matchEnd = new Date(recentMatches[0].kickoff_time);
-      matchEnd.setMinutes(matchEnd.getMinutes() + 115); // 90 mins + potential extra time
+      // Add actual match duration instead of fixed 90 minutes
+      const matchDuration = Math.max(90, recentMatches[0].minutes || 90);
+      matchEnd.setMinutes(matchEnd.getMinutes() + matchDuration + 5); // +5 for stoppage time
       
       const postMatchEnd = new Date(matchEnd);
       postMatchEnd.setHours(postMatchEnd.getHours() + 3);
