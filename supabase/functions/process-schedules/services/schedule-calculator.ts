@@ -1,14 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { logDebug, logError } from '../shared/logging-service.ts';
-
-interface ScheduleWindow {
-  intervalMinutes: number;
-  reason: string;
-  matchStatus?: {
-    hasActiveMatches: boolean;
-    isMatchDay: boolean;
-  };
-}
+import { logDebug, logError } from '../../shared/logging-service.ts';
 
 export async function calculateNextExecutionTime(
   supabaseClient: ReturnType<typeof createClient>,
