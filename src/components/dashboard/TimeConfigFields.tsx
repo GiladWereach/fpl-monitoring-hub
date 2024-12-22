@@ -38,11 +38,8 @@ export function TimeConfigFields({ form }: TimeConfigFieldsProps) {
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
-                <SelectItem value="interval">Interval</SelectItem>
                 <SelectItem value="daily">Daily</SelectItem>
-                <SelectItem value="weekly">Weekly</SelectItem>
-                <SelectItem value="monthly">Monthly</SelectItem>
-                <SelectItem value="cron">Cron</SelectItem>
+                <SelectItem value="match_dependent">Match Dependent</SelectItem>
               </SelectContent>
             </Select>
             <FormMessage />
@@ -50,29 +47,7 @@ export function TimeConfigFields({ form }: TimeConfigFieldsProps) {
         )}
       />
 
-      {form.watch("timeConfig.type") === "interval" && (
-        <FormField
-          control={form.control}
-          name="timeConfig.intervalMinutes"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Interval (minutes)</FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  min={5}
-                  {...field}
-                  onChange={(e) => field.onChange(parseInt(e.target.value))}
-                />
-              </FormControl>
-              <FormDescription>Minimum 5 minutes interval</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      )}
-
-      {["daily", "weekly", "monthly"].includes(form.watch("timeConfig.type") || "") && (
+      {form.watch("timeConfig.type") === "daily" && (
         <FormField
           control={form.control}
           name="timeConfig.hour"
@@ -95,21 +70,47 @@ export function TimeConfigFields({ form }: TimeConfigFieldsProps) {
         />
       )}
 
-      {form.watch("timeConfig.type") === "cron" && (
-        <FormField
-          control={form.control}
-          name="timeConfig.cronExpression"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Cron Expression</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormDescription>Standard cron expression format</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+      {form.watch("timeConfig.type") === "match_dependent" && (
+        <>
+          <FormField
+            control={form.control}
+            name="timeConfig.matchDayInterval"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Match Day Interval (minutes)</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    min={1}
+                    {...field}
+                    onChange={(e) => field.onChange(parseInt(e.target.value))}
+                  />
+                </FormControl>
+                <FormDescription>Interval during active matches (default: 2)</FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="timeConfig.nonMatchInterval"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Non-Match Interval (minutes)</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    min={1}
+                    {...field}
+                    onChange={(e) => field.onChange(parseInt(e.target.value))}
+                  />
+                </FormControl>
+                <FormDescription>Interval during live gameweek (default: 30)</FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </>
       )}
     </>
   );

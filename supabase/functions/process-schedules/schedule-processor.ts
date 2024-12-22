@@ -55,28 +55,22 @@ export async function processSchedule(
     let nextExecutionTime: Date | null = null;
     const now = new Date();
 
-    // Calculate next execution time based on schedule type
-    if (schedule.frequency_type === 'match_dependent') {
+    if (schedule.schedule_type === 'match_dependent') {
       const hasActiveMatches = await checkActiveMatches(supabaseClient);
-      const intervalMinutes = hasActiveMatches ? 
-        schedule.match_day_interval_minutes || 2 : 
-        schedule.non_match_interval_minutes || 30;
-      
+      const intervalMinutes = hasActiveMatches ? 2 : 30;
       nextExecutionTime = new Date(now.getTime() + intervalMinutes * 60 * 1000);
     } 
-    else if (schedule.frequency_type === 'daily' && schedule.fixed_time) {
+    else if (schedule.schedule_type === 'daily' && schedule.time_config?.hour !== undefined) {
       nextExecutionTime = new Date();
-      const [hours] = schedule.fixed_time.split(':').map(Number);
-      nextExecutionTime.setUTCHours(hours, 0, 0, 0);
+      nextExecutionTime.setUTCHours(schedule.time_config.hour, 0, 0, 0);
       
       if (nextExecutionTime <= now) {
         nextExecutionTime.setDate(nextExecutionTime.getDate() + 1);
       }
     }
 
-    // Update schedule status
     await supabaseClient
-      .from('function_schedules')
+      .from('schedules')
       .update({
         last_execution_at: now.toISOString(),
         next_execution_at: nextExecutionTime?.toISOString(),
@@ -98,7 +92,7 @@ export async function processSchedule(
     console.error(`Error processing schedule ${schedule.id}:`, error);
     
     await supabaseClient
-      .from('function_schedules')
+      .from('schedules')
       .update({
         consecutive_failures: schedule.consecutive_failures + 1,
         last_error: error.message

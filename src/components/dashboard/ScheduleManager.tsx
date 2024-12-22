@@ -3,8 +3,6 @@ import { Timer } from "lucide-react";
 import { ScheduleDialog } from "./schedule/ScheduleDialog";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { determineScheduleFrequency } from "@/utils/scheduleManager";
-import { useEffect } from "react";
 
 interface ScheduleManagerProps {
   functionName: string;
@@ -32,21 +30,6 @@ export function ScheduleManager({ functionName, functionDisplayName }: ScheduleM
     }
   });
 
-  // Auto-update schedule based on match timings for specific functions
-  useEffect(() => {
-    if (functionName === 'fetch-live-gameweek' || functionName === 'fetch-fixtures') {
-      const updateInterval = setInterval(async () => {
-        try {
-          await determineScheduleFrequency(functionName);
-        } catch (error) {
-          console.error(`Error updating schedule for ${functionName}:`, error);
-        }
-      }, 5 * 60 * 1000); // Check every 5 minutes
-
-      return () => clearInterval(updateInterval);
-    }
-  }, [functionName]);
-
   // Check if this is a core data function
   const isCoreDataFunction = [
     'fetch-players',
@@ -54,6 +37,11 @@ export function ScheduleManager({ functionName, functionDisplayName }: ScheduleM
     'fetch-teams',
     'fetch-events'
   ].includes(functionName);
+
+  // Check if this is a match-dependent function
+  const isMatchDependentFunction = 
+    functionName === 'fetch-live-gameweek' || 
+    functionName === 'fetch-fixtures';
 
   if (isLoading) {
     return null;
@@ -65,6 +53,7 @@ export function ScheduleManager({ functionName, functionDisplayName }: ScheduleM
       functionDisplayName={functionDisplayName}
       currentSchedule={schedule}
       isCoreDataFunction={isCoreDataFunction}
+      isMatchDependentFunction={isMatchDependentFunction}
     />
   );
 }
