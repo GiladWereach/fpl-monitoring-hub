@@ -19,7 +19,7 @@ export function useScheduleForm({ functionName, onSuccess }: UseScheduleFormProp
       timezone: "UTC",
       timeConfig: {
         type: "daily",
-        hour: 3, // Default to 3 AM UTC
+        hour: 3,
         matchDayIntervalMinutes: 2,
         nonMatchIntervalMinutes: 30
       },
@@ -46,19 +46,6 @@ export function useScheduleForm({ functionName, onSuccess }: UseScheduleFormProp
       const startTime = Date.now();
       
       try {
-        // Get the most recent metrics for this endpoint
-        const { data: metrics, error: metricsError } = await supabase
-          .from("api_health_metrics")
-          .select("*")
-          .eq("endpoint", functionName)
-          .order('created_at', { ascending: false })
-          .limit(1);
-
-        if (metricsError) {
-          console.error("Error fetching metrics:", metricsError);
-          throw metricsError;
-        }
-
         // Get the schedule
         const { data: scheduleData, error: scheduleError } = await supabase
           .from("schedules")
@@ -88,7 +75,8 @@ export function useScheduleForm({ functionName, onSuccess }: UseScheduleFormProp
         await updateAPIHealthMetrics("fetch_schedule", false);
         throw error;
       }
-    }
+    },
+    retry: 1
   });
 
   React.useEffect(() => {

@@ -1,10 +1,6 @@
-import { testScheduleExecution, verifyRetryMechanism } from './scheduleTestUtils';
+import { testScheduleExecution, verifyRetryMechanism } from './testing/scheduleTestUtils';
 import { toast } from "@/hooks/use-toast";
-
-interface TestSuite {
-  functionName: string;
-  scheduleTypes: Array<"time_based" | "event_based">;
-}
+import { TestSuite } from '../types/scheduling';
 
 export async function runScheduleTests(testSuites: TestSuite[]) {
   console.log('Starting schedule test suite execution');
