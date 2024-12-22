@@ -3,69 +3,106 @@ import { toast } from "@/hooks/use-toast";
 import { logFunctionExecution, updateExecutionLog } from "./executionLogger";
 import { logAPIError, updateAPIHealthMetrics } from "@/utils/api/errorHandling";
 import { APIError } from "@/utils/api/errorHandling";
+import { 
+  handleSchedulerError, 
+  calculateBackoff, 
+  cleanupResources,
+  SchedulerError,
+  errorClassification 
+} from "@/utils/errorHandling";
 
 export const executeFetchFunction = async (functionName: string) => {
   const started_at = new Date().toISOString();
   let scheduleId: string | undefined;
   const startTime = Date.now();
+  let attempt = 1;
+  const maxAttempts = 3; // This could be configurable
 
   try {
     console.log(`Executing function: ${functionName}`);
     scheduleId = await logFunctionExecution(functionName, started_at);
     
     if (!scheduleId) {
-      throw new Error("Failed to create or find schedule for execution logging");
+      throw new SchedulerError({
+        ...errorClassification.VALIDATION_ERROR,
+        message: "Failed to create or find schedule for execution logging"
+      });
     }
 
-    // Get current metrics first
-    const { data: currentMetrics } = await supabase
-      .from('api_health_metrics')
-      .select('*')
-      .eq('endpoint', functionName)
-      .maybeSingle();
+    while (attempt <= maxAttempts) {
+      try {
+        // Get current metrics first
+        const { data: currentMetrics } = await supabase
+          .from('api_health_metrics')
+          .select('*')
+          .eq('endpoint', functionName)
+          .maybeSingle();
 
-    const { data, error } = await supabase.functions.invoke(functionName);
-    
-    if (error) {
-      console.error(`Error executing ${functionName}:`, error);
-      throw error;
+        const { data, error } = await Promise.race([
+          supabase.functions.invoke(functionName),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new SchedulerError(errorClassification.TIMEOUT_ERROR)), 30000)
+          )
+        ]);
+        
+        if (error) throw error;
+        
+        const endTime = Date.now();
+        const duration = endTime - startTime;
+
+        // Calculate new metrics
+        const newMetrics = {
+          endpoint: functionName,
+          success_count: (currentMetrics?.success_count || 0) + 1,
+          error_count: currentMetrics?.error_count || 0,
+          avg_response_time: currentMetrics 
+            ? ((currentMetrics.avg_response_time * currentMetrics.success_count) + duration) / (currentMetrics.success_count + 1)
+            : duration,
+          last_success_time: new Date().toISOString(),
+          last_error_time: currentMetrics?.last_error_time,
+          error_pattern: currentMetrics?.error_pattern || {}
+        };
+
+        // Update metrics
+        const { error: metricsError } = await supabase
+          .from('api_health_metrics')
+          .upsert(newMetrics);
+
+        if (metricsError) {
+          console.error(`Error updating metrics for ${functionName}:`, metricsError);
+        }
+        
+        if (scheduleId) {
+          await updateExecutionLog(scheduleId, true);
+        }
+
+        await cleanupResources(functionName);
+
+        toast({
+          title: "Success",
+          description: `${functionName} executed successfully`,
+        });
+
+        return { success: true, data };
+      } catch (error) {
+        await handleSchedulerError(error, { functionName, attempt, maxAttempts });
+        
+        // If we get here, the error was retryable and we haven't exceeded maxAttempts
+        const backoffDelay = calculateBackoff(attempt, 'exponential');
+        console.log(`Retrying ${functionName} after ${backoffDelay}ms (attempt ${attempt}/${maxAttempts})`);
+        await new Promise(resolve => setTimeout(resolve, backoffDelay));
+        
+        attempt++;
+      }
     }
-    
-    const endTime = Date.now();
-    const duration = endTime - startTime;
 
-    // Calculate new metrics
-    const newMetrics = {
-      endpoint: functionName,
-      success_count: (currentMetrics?.success_count || 0) + 1,
-      error_count: currentMetrics?.error_count || 0,
-      avg_response_time: currentMetrics 
-        ? ((currentMetrics.avg_response_time * currentMetrics.success_count) + duration) / (currentMetrics.success_count + 1)
-        : duration,
-      last_success_time: new Date().toISOString(),
-      last_error_time: currentMetrics?.last_error_time,
-      error_pattern: currentMetrics?.error_pattern || {}
-    };
-
-    // Update metrics
-    const { error: metricsError } = await supabase
-      .from('api_health_metrics')
-      .upsert(newMetrics);
-
-    if (metricsError) {
-      console.error(`Error updating metrics for ${functionName}:`, metricsError);
-    }
-    
-    if (scheduleId) {
-      await updateExecutionLog(scheduleId, true);
-    }
-
-    toast({
-      title: "Success",
-      description: `${functionName} executed successfully`,
+    // If we get here, we've exhausted all retries
+    throw new SchedulerError({
+      code: 'MAX_RETRIES_EXCEEDED',
+      message: `Failed to execute ${functionName} after ${maxAttempts} attempts`,
+      severity: 'high',
+      retryable: false
     });
-
-    return { success: true, data };
   } catch (error) {
     console.error(`Error executing ${functionName}:`, error);
     
@@ -91,7 +128,7 @@ export const executeFetchFunction = async (functionName: string) => {
       last_error_time: new Date().toISOString(),
       error_pattern: {
         ...currentErrorPattern,
-        last_error: error.message
+        last_error: error instanceof Error ? error.message : String(error)
       }
     };
 
@@ -101,22 +138,24 @@ export const executeFetchFunction = async (functionName: string) => {
 
     const apiError: APIError = {
       type: 'SERVER_ERROR',
-      message: error.message,
+      message: error instanceof Error ? error.message : String(error),
       endpoint: functionName,
-      statusCode: error.status || 500,
-      retryCount: 0,
+      statusCode: error instanceof SchedulerError ? 500 : 500,
+      retryCount: attempt - 1,
       requestParams: {}
     };
 
     await logAPIError(apiError);
     
     if (scheduleId) {
-      await updateExecutionLog(scheduleId, false, error.message);
+      await updateExecutionLog(scheduleId, false, error instanceof Error ? error.message : String(error));
     }
+
+    await cleanupResources(functionName);
 
     toast({
       title: "Error",
-      description: `Failed to execute ${functionName}: ${error.message}`,
+      description: `Failed to execute ${functionName}: ${error instanceof Error ? error.message : String(error)}`,
       variant: "destructive",
     });
 
