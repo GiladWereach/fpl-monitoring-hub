@@ -72,10 +72,10 @@ export interface TestResult {
 
 export interface AdvancedScheduleFormValues {
   enabled: boolean;
-  scheduleType: 'time_based' | 'event_based';
+  schedule_type: 'time_based' | 'event_based';
   timezone: string;
-  timeConfig: TimeConfig;
-  eventConfig?: EventConfig;
+  time_config: TimeConfig;
+  event_config?: EventConfig;
   execution_config: ExecutionConfig;
   event_conditions: EventCondition[];
 }
