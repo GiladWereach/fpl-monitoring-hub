@@ -6,6 +6,12 @@ export function logDebug(functionName: string, message: string, ...args: any[]) 
 export function logError(functionName: string, message: string, error: any) {
   const timestamp = new Date().toISOString();
   console.error(`[${timestamp}] [${functionName}] ERROR: ${message}`, error);
+  
+  // Additional error details
+  if (error?.response) {
+    console.error(`[${timestamp}] [${functionName}] Response status:`, error.response.status);
+    console.error(`[${timestamp}] [${functionName}] Response data:`, error.response.data);
+  }
 }
 
 export function logWarning(functionName: string, message: string, ...args: any[]) {
