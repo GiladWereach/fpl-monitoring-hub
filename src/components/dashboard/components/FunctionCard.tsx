@@ -23,7 +23,7 @@ export function FunctionCard({ name, functionName, loading, onExecute, schedule 
     queryFn: async () => {
       console.log(`Fetching data for ${functionName}`);
       
-      // Fetch metrics
+      // Fetch metrics using RPC function
       const { data: metricsData, error: metricsError } = await supabase
         .rpc('get_aggregated_metrics', { hours_lookback: 24 });
 
@@ -42,7 +42,7 @@ export function FunctionCard({ name, functionName, loading, onExecute, schedule 
     },
     refetchInterval: 30000,
     staleTime: 25000, // Prevent unnecessary refreshes
-    keepPreviousData: true // Prevent jumping
+    placeholderData: (previousData) => previousData // Replace keepPreviousData with placeholderData
   });
 
   const formatDuration = (ms: number) => {
