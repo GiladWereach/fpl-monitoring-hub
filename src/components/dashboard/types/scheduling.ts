@@ -38,6 +38,15 @@ export type TestSuite = {
   scheduleTypes: Array<"time_based" | "event_based">;
 };
 
+export interface TestResult {
+  success: boolean;
+  executionTime?: number;
+  retryCount?: number;
+  error?: string;
+  functionName?: string;
+  scheduleType?: string;
+}
+
 export interface AdvancedScheduleFormValues {
   enabled: boolean;
   scheduleType: 'time_based' | 'event_based';
