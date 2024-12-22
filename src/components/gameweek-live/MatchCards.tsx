@@ -49,6 +49,16 @@ const MatchCards = ({ gameweek, onMatchSelect, selectedMatchId }: MatchCardsProp
     const kickoff = new Date(match.kickoff_time);
     const now = new Date();
     
+    // Check for postponed matches first
+    if (match.postponed) {
+      return { 
+        status: 'POSTPONED', 
+        color: 'bg-red-500', 
+        isPreMatch: false,
+        reason: match.postponement_reason
+      };
+    }
+    
     // Pre-match window check
     if (!match.started && matchStatus?.isPreMatch) {
       const preMatchStart = new Date(kickoff);
@@ -71,13 +81,13 @@ const MatchCards = ({ gameweek, onMatchSelect, selectedMatchId }: MatchCardsProp
     if (match.started && !match.finished) {
       return { status: 'LIVE', color: 'bg-green-500', isPreMatch: false };
     }
-    return { status: 'POSTPONED', color: 'bg-red-500', isPreMatch: false };
+    return { status: 'UNKNOWN', color: 'bg-gray-500', isPreMatch: false };
   };
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {matches?.map((match) => {
-        const { status, color } = getMatchStatusInfo(match);
+        const { status, color, reason } = getMatchStatusInfo(match);
         const isSelected = selectedMatchId === match.id;
         
         return (
@@ -95,7 +105,9 @@ const MatchCards = ({ gameweek, onMatchSelect, selectedMatchId }: MatchCardsProp
                 <span className="text-sm text-gray-500">
                   {format(new Date(match.kickoff_time), 'MMM d, HH:mm')}
                 </span>
-                <Badge variant="outline">{status}</Badge>
+                <Badge variant={status === 'POSTPONED' ? 'destructive' : 'outline'}>
+                  {status}
+                </Badge>
               </div>
 
               <div className="flex justify-between items-center">
@@ -103,16 +115,25 @@ const MatchCards = ({ gameweek, onMatchSelect, selectedMatchId }: MatchCardsProp
                   <p className="font-semibold">{match.team_h.name}</p>
                 </div>
                 <div className="px-4 text-xl font-bold">
-                  {match.started ? `${match.team_h_score ?? 0} - ${match.team_a_score ?? 0}` : 'vs'}
+                  {match.started && !match.postponed ? 
+                    `${match.team_h_score ?? 0} - ${match.team_a_score ?? 0}` : 
+                    'vs'
+                  }
                 </div>
                 <div className="flex-1 text-right">
                   <p className="font-semibold">{match.team_a.name}</p>
                 </div>
               </div>
 
-              {match.started && !match.finished_provisional && (
+              {match.started && !match.finished_provisional && !match.postponed && (
                 <div className="text-center text-sm text-gray-500">
                   {match.minutes}'
+                </div>
+              )}
+
+              {match.postponed && reason && (
+                <div className="text-center text-sm text-red-500 mt-2">
+                  {reason}
                 </div>
               )}
             </div>

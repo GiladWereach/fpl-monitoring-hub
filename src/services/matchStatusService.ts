@@ -14,6 +14,8 @@ export type MatchStatus = {
   isPreMatch: boolean;
   isPostMatch: boolean;
   deadlineTime: Date | null;
+  hasPostponedMatches?: boolean;
+  postponedMatchCount?: number;
 };
 
 export async function getMatchStatus(): Promise<MatchStatus> {
@@ -36,12 +38,21 @@ export async function getMatchStatus(): Promise<MatchStatus> {
     .select('*')
     .eq('started', true)
     .eq('finished', false)
+    .eq('postponed', false)
     .order('kickoff_time', { ascending: true });
+
+  // Check for postponed matches
+  const { data: postponedMatches } = await supabase
+    .from('fixtures')
+    .select('*')
+    .eq('postponed', true)
+    .order('original_kickoff_time', { ascending: true });
 
   const { data: upcomingMatches } = await supabase
     .from('fixtures')
     .select('kickoff_time')
     .gt('kickoff_time', now.toISOString())
+    .eq('postponed', false)
     .order('kickoff_time', { ascending: true })
     .limit(1);
 
@@ -85,6 +96,7 @@ export async function getMatchStatus(): Promise<MatchStatus> {
       .from('fixtures')
       .select('kickoff_time')
       .eq('finished', true)
+      .eq('postponed', false)
       .order('kickoff_time', { ascending: false })
       .limit(1);
 
@@ -113,7 +125,9 @@ export async function getMatchStatus(): Promise<MatchStatus> {
     nextKickoff,
     isPreMatch,
     isPostMatch,
-    deadlineTime
+    deadlineTime,
+    hasPostponedMatches: Boolean(postponedMatches?.length),
+    postponedMatchCount: postponedMatches?.length || 0
   };
 }
 
