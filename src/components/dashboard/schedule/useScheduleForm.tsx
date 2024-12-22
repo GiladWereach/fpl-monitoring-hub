@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { AdvancedScheduleFormValues, ScheduleData } from "../types/scheduling";
+import { AdvancedScheduleFormValues, ScheduleData, convertScheduleData } from "../types/scheduling";
 import { logAPIError, updateAPIHealthMetrics } from "@/utils/api/errorHandling";
 
 interface UseScheduleFormProps {
@@ -62,7 +62,8 @@ export function useScheduleForm({ functionName, onSuccess }: UseScheduleFormProp
         const endTime = Date.now();
         await updateAPIHealthMetrics("fetch_schedule", true, endTime - startTime);
 
-        return scheduleData as ScheduleData;
+        // Convert the raw data to our strongly typed ScheduleData
+        return scheduleData ? convertScheduleData(scheduleData) : null;
       } catch (error) {
         console.error("Error in schedule fetch:", error);
         
