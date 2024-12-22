@@ -3,6 +3,7 @@ import { toast } from "@/hooks/use-toast";
 import { logFunctionExecution, updateExecutionLog } from "./executionLogger";
 import { logAPIError, updateAPIHealthMetrics } from "@/utils/api/errorHandling";
 import { APIError } from "@/utils/api/errorHandling";
+import { runScheduleTests, generateTestReport } from './scheduleTestRunner';
 import { 
   handleSchedulerError, 
   calculateBackoff, 
@@ -20,12 +21,30 @@ interface EdgeFunctionResponse {
   error: Error | null;
 }
 
-export const executeFetchFunction = async (functionName: string) => {
+export const executeFetchFunction = async (functionName: string, options: { 
+  isTest?: boolean,
+  scheduleType?: string 
+} = {}) => {
   const started_at = new Date().toISOString();
   let scheduleId: string | undefined;
   const startTime = Date.now();
   let attempt = 1;
   const maxAttempts = 3;
+
+  // For test executions, use test utilities
+  if (options.isTest) {
+    console.log(`Running test execution for ${functionName}`);
+    const testSuites = [{
+      functionName,
+      scheduleTypes: options.scheduleType ? [options.scheduleType] : ['time_based', 'event_based', 'match_dependent']
+    }];
+    
+    const testResults = await runScheduleTests(testSuites);
+    const report = generateTestReport(testResults);
+    
+    console.log(`Test execution completed for ${functionName}:`, report);
+    return { success: report.failedTests === 0, data: report };
+  }
 
   // Check rate limit
   if (!rateLimiterService.tryAcquire(functionName)) {
