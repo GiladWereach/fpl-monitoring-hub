@@ -1,4 +1,31 @@
-export type RetryBackoffStrategy = 'linear' | 'exponential' | 'fixed';
+export type NotificationConfig = {
+  email?: string | null;
+  webhook_url?: string | null;
+  notify_on_failure: boolean;
+  notify_on_success: boolean;
+};
+
+export type ExecutionWindow = {
+  start_time?: string | null;
+  end_time?: string | null;
+  days_of_week?: number[] | null;
+};
+
+export type ResourceUsage = {
+  cpu_time_ms?: number;
+  memory_mb?: number;
+  network_bytes?: number;
+};
+
+export type ScheduleGroup = {
+  id: string;
+  name: string;
+  description?: string;
+  priority: number;
+  color?: string;
+  created_at: string;
+  updated_at: string;
+};
 
 export type TimeConfig = {
   type: 'daily' | 'match_dependent';
@@ -12,18 +39,12 @@ export type EventConfig = {
   offsetMinutes: number;
 };
 
-export type ExecutionWindow = {
-  start_time?: string | null;
-  end_time?: string | null;
-  days_of_week?: number[] | null;
-};
-
 export type ExecutionConfig = {
   retry_count: number;
   timeout_seconds: number;
   retry_delay_seconds: number;
   concurrent_execution: boolean;
-  retry_backoff: RetryBackoffStrategy;
+  retry_backoff: 'linear' | 'exponential' | 'fixed';
   max_retry_delay: number;
 };
 
@@ -32,6 +53,20 @@ export type EventCondition = {
   operator: 'eq' | 'neq' | 'gt' | 'lt' | 'gte' | 'lte';
   value: string;
 };
+
+export interface TestSuite {
+  functionName: string;
+  scheduleTypes: Array<"time_based" | "event_based">;
+}
+
+export interface TestResult {
+  success: boolean;
+  executionTime?: number;
+  retryCount?: number;
+  error?: string;
+  functionName?: string;
+  scheduleType?: string;
+}
 
 export interface AdvancedScheduleFormValues {
   enabled: boolean;
