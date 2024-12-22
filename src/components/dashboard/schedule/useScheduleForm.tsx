@@ -48,7 +48,6 @@ export function useScheduleForm({ functionName, onSuccess }: UseScheduleFormProp
       const startTime = Date.now();
       
       try {
-        // Get the schedule with proper error handling
         const { data: scheduleData, error: scheduleError } = await supabase
           .from("schedules")
           .select("*")
@@ -67,7 +66,6 @@ export function useScheduleForm({ functionName, onSuccess }: UseScheduleFormProp
       } catch (error) {
         console.error("Error in schedule fetch:", error);
         
-        // Log the error with detailed context
         await logAPIError({
           type: "SERVER_ERROR",
           message: error.message,
@@ -77,18 +75,14 @@ export function useScheduleForm({ functionName, onSuccess }: UseScheduleFormProp
           requestParams: { functionName }
         });
 
-        // Update metrics to reflect the failure
         await updateAPIHealthMetrics("fetch_schedule", false);
 
-        // If not already retrying, attempt one retry
         if (!isRetrying) {
           setIsRetrying(true);
-          // Retry after a short delay
           await new Promise(resolve => setTimeout(resolve, 1000));
           return useScheduleForm({ functionName, onSuccess }).form.getValues();
         }
 
-        // Show user-friendly error message
         toast({
           title: "Error fetching schedule",
           description: "Failed to load schedule data. Please try again later.",
