@@ -30,7 +30,7 @@ export function DeadlineTimer() {
     },
     refetchInterval: (query) => {
       if (!query.state.data) return false;
-      const deadline = new Date(query.state.data.deadline_time);
+      const deadline = new Date(query.state.data.deadline_time + 'Z'); // Append Z to treat as UTC
       const now = new Date();
       // Refresh every minute if within 1 hour of deadline
       if (deadline > now && deadline.getTime() - now.getTime() < 60 * 60 * 1000) {
@@ -48,14 +48,22 @@ export function DeadlineTimer() {
     return null;
   }
 
-  // Convert deadline_time string to Date object
-  const deadlineTime = new Date(nextDeadline.deadline_time);
+  // Parse the deadline_time as UTC by appending 'Z'
+  const deadlineTime = new Date(nextDeadline.deadline_time + 'Z');
   const now = new Date();
   const hasDeadlinePassed = deadlineTime < now;
 
   // Format the deadline time in UTC
-  const formattedDeadlineTime = formatInTimeZone(deadlineTime, 'UTC', 'HH:mm');
+  const formattedDeadlineTime = format(deadlineTime, 'HH:mm');
   const formattedDeadlineDate = format(deadlineTime, 'dd MMM yyyy');
+
+  console.log('Deadline parsing debug:', {
+    rawDeadline: nextDeadline.deadline_time,
+    parsedDeadline: deadlineTime.toISOString(),
+    formattedTime: formattedDeadlineTime,
+    formattedDate: formattedDeadlineDate,
+    hasDeadlinePassed
+  });
 
   return (
     <Card className="mb-4">
