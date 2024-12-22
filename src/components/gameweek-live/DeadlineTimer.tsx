@@ -48,9 +48,14 @@ export function DeadlineTimer() {
     return null;
   }
 
+  // Convert deadline_time string to Date object
   const deadlineTime = new Date(nextDeadline.deadline_time);
   const now = new Date();
   const hasDeadlinePassed = deadlineTime < now;
+
+  // Format the deadline time in UTC
+  const formattedDeadlineTime = formatInTimeZone(deadlineTime, 'UTC', 'HH:mm');
+  const formattedDeadlineDate = format(deadlineTime, 'dd MMM yyyy');
 
   return (
     <Card className="mb-4">
@@ -59,7 +64,7 @@ export function DeadlineTimer() {
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              Deadline passed at {format(deadlineTime, 'HH:mm')} on {format(deadlineTime, 'dd MMM yyyy')}
+              Deadline passed at {formattedDeadlineTime} UTC on {formattedDeadlineDate}
             </AlertDescription>
           </Alert>
         ) : (
@@ -67,7 +72,7 @@ export function DeadlineTimer() {
             <Clock className="h-4 w-4 text-muted-foreground" />
             <div className="flex flex-col">
               <p className="text-sm text-muted-foreground">
-                Deadline: {formatInTimeZone(deadlineTime, 'UTC', 'HH:mm')} UTC on {format(deadlineTime, 'dd MMM yyyy')}
+                Deadline: {formattedDeadlineTime} UTC on {formattedDeadlineDate}
               </p>
               <p className="font-medium">
                 Time remaining: {formatDistanceToNowStrict(deadlineTime)}
