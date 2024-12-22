@@ -1,23 +1,14 @@
 import { corsHeaders } from '../_shared/cors.ts';
-import {
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { 
   calculateMinutesPoints,
   calculateGoalPoints,
   calculateCleanSheetPoints,
   calculateGoalsConcededPoints,
-  calculateSavePoints,
-  calculateCardPoints,
-  calculatePenaltyPoints,
-  calculateBonusPoints
-} from './calculators.ts';
-import {
-  getSupabaseClient,
-  getScoringRules,
-  getLivePerformances,
-  getPlayers,
-  upsertPointsCalculations,
-  updatePerformanceStatus
-} from './database.ts';
-import { PointsCalculation } from './types.ts';
+  calculateBonusPoints,
+  calculateCardPoints
+} from './calculators/index.ts';
+import { logDebug, logError } from './logging.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -27,38 +18,44 @@ Deno.serve(async (req) => {
   try {
     console.log('Starting points calculation...');
     
-    const supabaseClient = await getSupabaseClient();
-    const rules = await getScoringRules(supabaseClient);
-    const performances = await getLivePerformances(supabaseClient);
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
 
-    console.log(`Found ${performances.length} performances to process`);
+    // Get scoring rules
+    const { data: rules, error: rulesError } = await supabaseClient
+      .from('scoring_rules')
+      .select('*')
+      .limit(1)
+      .single();
 
-    if (!performances.length) {
-      return new Response(
-        JSON.stringify({ success: true, message: 'No new performances to process' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    if (rulesError) throw rulesError;
 
-    const playerIds = [...new Set(performances.map(p => p.player_id))];
-    const playerMap = await getPlayers(supabaseClient, playerIds);
+    // Get performances that need points calculated
+    const { data: performances, error: perfError } = await supabaseClient
+      .from('gameweek_live_performance')
+      .select(`
+        *,
+        player:players (
+          element_type
+        )
+      `)
+      .eq('modified', true);
 
-    const pointsCalculations = performances.map(perf => {
-      const player = playerMap.get(perf.player_id);
-      if (!player) {
-        console.error(`No player found for ID ${perf.player_id}`);
-        return null;
-      }
+    if (perfError) throw perfError;
 
-      console.log(`Processing player ${perf.player_id}, bonus points: ${perf.bonus}`);
+    logDebug('calculate-points', `Processing ${performances?.length || 0} performances`);
 
-      const minutesPoints = calculateMinutesPoints(perf.minutes, rules);
-      const goalsPoints = calculateGoalPoints(perf.goals_scored, player.element_type, rules);
-      const cleanSheetPoints = calculateCleanSheetPoints(perf.clean_sheets, player.element_type, rules);
-      const goalsConcededPoints = calculateGoalsConcededPoints(perf.goals_conceded, player.element_type, rules);
-      const savesPoints = calculateSavePoints(perf.saves, player.element_type, rules);
+    const pointsCalculations = performances?.map(perf => {
+      const minutes = typeof perf.minutes === 'number' ? perf.minutes : 0;
+      const minutesPoints = calculateMinutesPoints(minutes, rules);
+      const goalsPoints = calculateGoalPoints(perf.goals_scored, perf.player.element_type, rules);
+      const cleanSheetPoints = calculateCleanSheetPoints(perf.clean_sheets, perf.player.element_type, rules);
+      const goalsConcededPoints = calculateGoalsConcededPoints(perf.goals_conceded, perf.player.element_type, rules);
       const assistPoints = perf.assists * rules.assists;
-      const penaltyPoints = calculatePenaltyPoints(perf.penalties_saved, perf.penalties_missed, rules);
+      const penaltySavePoints = perf.penalties_saved * rules.penalties_saved;
+      const penaltyMissPoints = perf.penalties_missed * rules.penalties_missed;
       const ownGoalPoints = perf.own_goals * rules.own_goals;
       const cardPoints = calculateCardPoints(perf.yellow_cards, perf.red_cards, rules);
       const bonusPoints = calculateBonusPoints(perf.bonus);
@@ -68,23 +65,22 @@ Deno.serve(async (req) => {
         goalsPoints +
         cleanSheetPoints +
         goalsConcededPoints +
-        savesPoints +
         assistPoints +
-        penaltyPoints +
+        penaltySavePoints +
+        penaltyMissPoints +
         ownGoalPoints +
         cardPoints;
 
-      // Add bonus points to both raw and final total
       const finalTotal = rawTotal + bonusPoints;
 
-      console.log(`Calculated points breakdown for player ${perf.player_id}:`, {
+      logDebug('calculate-points', `Points breakdown for player ${perf.player_id}:`, {
         minutesPoints,
         goalsPoints,
         cleanSheetPoints,
         goalsConcededPoints,
-        savesPoints,
         assistPoints,
-        penaltyPoints,
+        penaltySavePoints,
+        penaltyMissPoints,
         ownGoalPoints,
         cardPoints,
         bonusPoints,
@@ -100,28 +96,39 @@ Deno.serve(async (req) => {
         goals_scored_points: goalsPoints,
         clean_sheet_points: cleanSheetPoints,
         goals_conceded_points: goalsConcededPoints,
-        saves_points: savesPoints,
         assist_points: assistPoints,
-        penalty_save_points: perf.penalties_saved * rules.penalties_saved,
-        penalty_miss_points: perf.penalties_missed * rules.penalties_missed,
+        penalty_save_points: penaltySavePoints,
+        penalty_miss_points: penaltyMissPoints,
         own_goal_points: ownGoalPoints,
         card_points: cardPoints,
         bonus_points: bonusPoints,
         raw_total_points: rawTotal,
-        final_total_points: finalTotal,
+        final_total_points: finalTotal
       };
-    }).filter(Boolean);
+    });
 
-    await upsertPointsCalculations(supabaseClient, pointsCalculations);
-    await updatePerformanceStatus(supabaseClient, performances.map(p => p.id));
+    if (pointsCalculations?.length) {
+      const { error: upsertError } = await supabaseClient
+        .from('player_points_calculation')
+        .upsert(pointsCalculations, {
+          onConflict: 'event_id,player_id'
+        });
 
-    console.log(`Successfully processed ${pointsCalculations.length} calculations`);
+      if (upsertError) throw upsertError;
+
+      // Update modified flag
+      const { error: updateError } = await supabaseClient
+        .from('gameweek_live_performance')
+        .update({ modified: false })
+        .in('id', performances.map(p => p.id));
+
+      if (updateError) throw updateError;
+    }
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: `Processed ${pointsCalculations.length} calculations`,
-        processed: pointsCalculations.length
+        message: `Processed ${pointsCalculations?.length || 0} calculations`
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -130,7 +137,7 @@ Deno.serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error:', error);
+    logError('calculate-points', 'Error:', error);
     return new Response(
       JSON.stringify({ success: false, error: error.message }),
       {
