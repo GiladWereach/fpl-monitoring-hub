@@ -27,12 +27,20 @@ export async function detectMatchWindow(
   options: MatchWindowOptions = DEFAULT_OPTIONS
 ): Promise<MatchWindow> {
   console.log('Detecting match window with options:', options);
-  const now = new Date();
-  const localNow = options.timezone ? 
-    toZonedTime(now, options.timezone) : 
-    now;
-
+  
   try {
+    const now = new Date();
+    let localNow: Date;
+    
+    try {
+      localNow = options.timezone ? 
+        toZonedTime(now, options.timezone) : 
+        now;
+    } catch (tzError) {
+      console.error('Invalid timezone specified:', tzError);
+      localNow = now; // Fallback to UTC
+    }
+
     // Check for active matches
     const { data: activeMatches, error: activeError } = await supabase
       .from('fixtures')
@@ -42,7 +50,7 @@ export async function detectMatchWindow(
 
     if (activeError) {
       console.error('Error fetching active matches:', activeError);
-      throw activeError;
+      throw new Error(`Failed to fetch active matches: ${activeError.message}`);
     }
 
     // If we have active matches, we're in a live window
@@ -72,13 +80,19 @@ export async function detectMatchWindow(
 
     if (upcomingError) {
       console.error('Error fetching upcoming matches:', upcomingError);
-      throw upcomingError;
+      throw new Error(`Failed to fetch upcoming matches: ${upcomingError.message}`);
     }
 
     if (upcomingMatches && upcomingMatches.length > 0) {
-      const nextKickoff = options.timezone ?
-        toZonedTime(new Date(upcomingMatches[0].kickoff_time), options.timezone) :
-        new Date(upcomingMatches[0].kickoff_time);
+      let nextKickoff: Date;
+      try {
+        nextKickoff = options.timezone ?
+          toZonedTime(new Date(upcomingMatches[0].kickoff_time), options.timezone) :
+          new Date(upcomingMatches[0].kickoff_time);
+      } catch (tzError) {
+        console.error('Error converting kickoff time to timezone:', tzError);
+        nextKickoff = new Date(upcomingMatches[0].kickoff_time);
+      }
         
       const preMatchStart = subHours(nextKickoff, options.preMatchWindow! / 60);
 
@@ -105,7 +119,7 @@ export async function detectMatchWindow(
 
     if (recentError) {
       console.error('Error fetching recent matches:', recentError);
-      throw recentError;
+      throw new Error(`Failed to fetch recent matches: ${recentError.message}`);
     }
 
     if (recentMatches && recentMatches.length > 0) {
@@ -149,7 +163,6 @@ export async function detectMatchWindow(
   }
 }
 
-// Utility function to validate a match window
 export function isValidMatchWindow(window: MatchWindow): boolean {
   if (!window) return false;
   

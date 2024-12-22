@@ -1,64 +1,27 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AdminGuard } from './components/auth/AdminGuard';
-import AppSidebar from './components/layout/AppSidebar';
-import BackendDashboard from './pages/backend/Dashboard';
-import BackendCalculations from './pages/backend/Calculations';
-import BackendLogs from './pages/backend/Logs';
-import BackendScheduler from './pages/backend/Scheduler';
-import GameWeekLive from './pages/GameWeekLive';
-import Home from './pages/Home';
-import About from './pages/About';
-import Contact from './pages/Contact';
-import Login from './pages/Login';
+import React from 'react';
+import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { createClient } from '@supabase/supabase-js';
 import { SessionContextProvider } from '@supabase/auth-helpers-react';
-import { supabase } from './integrations/supabase/client';
+import { Toaster } from '@/components/ui/toaster';
+import { AppRoutes } from './AppRoutes';
 
-// Create a client
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-      refetchOnWindowFocus: false,
-    },
-  },
-});
+const queryClient = new QueryClient();
+const supabaseUrl = "https://qlkhlcoyrifbvzbqkshu.supabase.co";
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFsa2hsY295cmlmYnZ6YnFrc2h1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQyMDc0NTksImV4cCI6MjA0OTc4MzQ1OX0.X2SNa57FYIjtpuZYBM1zlKn9IkIyrcP1hc9kv5H45GI";
+const supabase = createClient(supabaseUrl, supabaseKey);
 
-export default function App() {
+function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <SessionContextProvider supabaseClient={supabase}>
-        <Router>
-          <Routes>
-            {/* Public routes */}
-            <Route path="/" element={<Home />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/login" element={<Login />} />
-
-            {/* Admin routes */}
-            <Route
-              path="/backend/*"
-              element={
-                <AdminGuard>
-                  <AppSidebar>
-                    <Routes>
-                      <Route path="/" element={<BackendDashboard />} />
-                      <Route path="/calculations" element={<BackendCalculations />} />
-                      <Route path="/logs" element={<BackendLogs />} />
-                      <Route path="/scheduler" element={<BackendScheduler />} />
-                      <Route path="/gameweek-live" element={<GameWeekLive />} />
-                    </Routes>
-                  </AppSidebar>
-                </AdminGuard>
-              }
-            />
-
-            {/* Catch all route */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </Router>
+        <BrowserRouter>
+          <AppRoutes />
+          <Toaster />
+        </BrowserRouter>
       </SessionContextProvider>
     </QueryClientProvider>
   );
 }
+
+export default App;
