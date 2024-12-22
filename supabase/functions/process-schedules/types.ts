@@ -1,16 +1,10 @@
 export interface Schedule {
   id: string;
   function_name: string;
-  schedule_type: 'time_based' | 'event_based';
-  time_config?: {
-    type: 'daily' | 'interval';
-    hour?: number;
-    intervalMinutes?: number;
-  };
-  event_config?: {
-    type: string;
-    conditions?: any[];
-  };
+  frequency_type: 'daily' | 'match_dependent';
+  fixed_time?: string;
+  match_day_interval_minutes?: number;
+  non_match_interval_minutes?: number;
   execution_config?: {
     retry_count: number;
     timeout_seconds: number;

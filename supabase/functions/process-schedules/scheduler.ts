@@ -6,7 +6,6 @@ export const processSchedules = async (supabaseClient: ReturnType<typeof createC
   console.log('Starting schedule processing...');
   
   try {
-    // 1. Fetch active schedules
     const { data: activeSchedules, error: schedulesError } = await supabaseClient
       .from('function_schedules')
       .select(`
@@ -17,7 +16,7 @@ export const processSchedules = async (supabaseClient: ReturnType<typeof createC
         )
       `)
       .eq('status', 'active')
-      .lte('next_execution_at', new Date().toISOString());
+      .or('next_execution_at.is.null,next_execution_at.lte.now()');
 
     if (schedulesError) {
       console.error('Error fetching schedules:', schedulesError);
@@ -27,7 +26,6 @@ export const processSchedules = async (supabaseClient: ReturnType<typeof createC
     console.log(`Found ${activeSchedules?.length || 0} active schedules to process`);
     const processedSchedules: ProcessedSchedule[] = [];
 
-    // 2. Process each schedule
     for (const schedule of (activeSchedules || [])) {
       try {
         const result = await processSchedule(supabaseClient, schedule);
