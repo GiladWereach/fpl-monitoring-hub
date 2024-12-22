@@ -1,4 +1,4 @@
-import React from 'react';
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,6 +12,8 @@ interface UseScheduleFormProps {
 }
 
 export function useScheduleForm({ functionName, onSuccess }: UseScheduleFormProps) {
+  const [isRetrying, setIsRetrying] = useState(false);
+
   const form = useForm<AdvancedScheduleFormValues>({
     defaultValues: {
       enabled: false,
@@ -46,7 +48,7 @@ export function useScheduleForm({ functionName, onSuccess }: UseScheduleFormProp
       const startTime = Date.now();
       
       try {
-        // Get the schedule
+        // Get the schedule with proper error handling
         const { data: scheduleData, error: scheduleError } = await supabase
           .from("schedules")
           .select("*")
@@ -64,19 +66,42 @@ export function useScheduleForm({ functionName, onSuccess }: UseScheduleFormProp
         return scheduleData;
       } catch (error) {
         console.error("Error in schedule fetch:", error);
+        
+        // Log the error with detailed context
         await logAPIError({
           type: "SERVER_ERROR",
           message: error.message,
           endpoint: "fetch_schedule",
           statusCode: error.status || 500,
-          retryCount: 0,
+          retryCount: isRetrying ? 1 : 0,
           requestParams: { functionName }
         });
+
+        // Update metrics to reflect the failure
         await updateAPIHealthMetrics("fetch_schedule", false);
+
+        // If not already retrying, attempt one retry
+        if (!isRetrying) {
+          setIsRetrying(true);
+          // Retry after a short delay
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          return useScheduleForm({ functionName, onSuccess }).form.getValues();
+        }
+
+        // Show user-friendly error message
+        toast({
+          title: "Error fetching schedule",
+          description: "Failed to load schedule data. Please try again later.",
+          variant: "destructive",
+        });
+
         throw error;
+      } finally {
+        setIsRetrying(false);
       }
     },
-    retry: 1
+    retry: 1,
+    retryDelay: 1000
   });
 
   React.useEffect(() => {
@@ -140,6 +165,7 @@ export function useScheduleForm({ functionName, onSuccess }: UseScheduleFormProp
       onSuccess?.();
     } catch (error) {
       console.error("Error saving schedule:", error);
+      
       await logAPIError({
         type: "SERVER_ERROR",
         message: error.message,
@@ -148,6 +174,7 @@ export function useScheduleForm({ functionName, onSuccess }: UseScheduleFormProp
         retryCount: 0,
         requestParams: { functionName, values }
       });
+      
       await updateAPIHealthMetrics("save_schedule", false);
       
       toast({
