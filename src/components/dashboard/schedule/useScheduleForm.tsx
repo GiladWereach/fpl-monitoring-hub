@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -104,7 +104,7 @@ export function useScheduleForm({ functionName, onSuccess }: UseScheduleFormProp
     retryDelay: 1000
   });
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (schedule) {
       console.log(`Setting form values for ${functionName}:`, schedule);
       form.reset({
