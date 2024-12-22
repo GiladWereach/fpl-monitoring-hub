@@ -4,6 +4,7 @@ import { logFunctionExecution, updateExecutionLog } from "./executionLogger";
 import { logAPIError, updateAPIHealthMetrics } from "@/utils/api/errorHandling";
 import { APIError } from "@/utils/api/errorHandling";
 import { runScheduleTests, generateTestReport } from './scheduleTestRunner';
+import { TestSuite } from '../types/scheduling';
 import { 
   handleSchedulerError, 
   calculateBackoff, 
@@ -33,9 +34,9 @@ export const executeFetchFunction = async (functionName: string, options: {
 
   if (options.isTest) {
     console.log(`Running test execution for ${functionName}`);
-    const testSuites = [{
+    const testSuites: TestSuite[] = [{
       functionName,
-      scheduleTypes: options.scheduleType ? [options.scheduleType] : ['time_based', 'event_based'] as const
+      scheduleTypes: options.scheduleType ? [options.scheduleType] : ["time_based", "event_based"]
     }];
     
     const testResults = await runScheduleTests(testSuites);

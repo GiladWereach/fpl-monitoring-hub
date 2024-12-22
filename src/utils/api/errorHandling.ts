@@ -27,7 +27,7 @@ export const logAPIError = async (error: APIError): Promise<void> => {
     const { error: insertError } = await supabase
       .from('api_error_logs')
       .insert({
-        error_type: error.type,
+        error_type: error.type as "RATE_LIMIT" | "AUTH_ERROR" | "SERVER_ERROR" | "TIMEOUT" | "NETWORK" | "VALIDATION",
         endpoint: error.endpoint,
         error_details: error.message,
         response_code: error.statusCode,

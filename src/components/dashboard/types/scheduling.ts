@@ -33,6 +33,11 @@ export type EventCondition = {
   value: string;
 };
 
+export type TestSuite = {
+  functionName: string;
+  scheduleTypes: Array<"time_based" | "event_based">;
+};
+
 export interface AdvancedScheduleFormValues {
   enabled: boolean;
   scheduleType: 'time_based' | 'event_based';
