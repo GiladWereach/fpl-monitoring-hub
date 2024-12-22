@@ -2,6 +2,7 @@ import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 export type AlertSeverity = 'info' | 'warning' | 'error' | 'critical';
+export type APIErrorType = 'RATE_LIMIT' | 'AUTH_ERROR' | 'SERVER_ERROR' | 'TIMEOUT' | 'NETWORK' | 'VALIDATION';
 
 export interface Alert {
   id: string;
@@ -47,7 +48,7 @@ class AlertingService {
         .from('api_error_logs')
         .insert(
           alerts.map(alert => ({
-            error_type: alert.type,
+            error_type: this.mapAlertTypeToAPIErrorType(alert.type),
             endpoint: alert.metadata?.endpoint || 'system',
             error_details: alert.message,
             created_at: alert.timestamp.toISOString()
@@ -62,6 +63,23 @@ class AlertingService {
       this.alertBuffer.push(
         ...alerts.filter(a => a.severity === 'critical')
       );
+    }
+  }
+
+  private mapAlertTypeToAPIErrorType(type: string): APIErrorType {
+    switch (type) {
+      case 'RATE_LIMIT':
+        return 'RATE_LIMIT';
+      case 'AUTH_ERROR':
+        return 'AUTH_ERROR';
+      case 'NETWORK':
+        return 'NETWORK';
+      case 'TIMEOUT':
+        return 'TIMEOUT';
+      case 'VALIDATION':
+        return 'VALIDATION';
+      default:
+        return 'SERVER_ERROR';
     }
   }
 

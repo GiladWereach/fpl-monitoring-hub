@@ -21,6 +21,12 @@ export class SchedulerError extends Error {
 }
 
 export const errorClassification = {
+  RATE_LIMIT_ERROR: {
+    code: 'RATE_LIMIT_ERROR',
+    message: 'Rate limit exceeded',
+    severity: 'high' as ErrorSeverity,
+    retryable: true
+  },
   NETWORK_ERROR: {
     code: 'NETWORK_ERROR',
     message: 'Network connection error',

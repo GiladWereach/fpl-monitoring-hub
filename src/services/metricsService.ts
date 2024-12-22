@@ -8,6 +8,7 @@ export interface PerformanceMetrics {
   successRate: number;
   errorRate: number;
   throughput: number;
+  requestCount: number;
 }
 
 export interface SystemMetrics {
@@ -100,7 +101,6 @@ class MetricsService {
 
     this.metricsBuffer.set(endpoint, updated);
 
-    // If buffer gets too large, flush immediately
     if (this.metricsBuffer.size >= this.MAX_BUFFER_SIZE) {
       console.log('Buffer size limit reached, triggering immediate flush');
       this.flushMetrics();
@@ -116,11 +116,11 @@ class MetricsService {
       if (error) throw error;
 
       const systemMetrics: SystemMetrics = {
-        activeConnections: metrics.reduce((sum, m) => sum + (m.active_connections || 0), 0),
-        queueSize: metrics.reduce((sum, m) => sum + (m.queue_size || 0), 0),
+        activeConnections: 0, // These metrics are not available in the current implementation
+        queueSize: 0,        // These metrics are not available in the current implementation
         avgResponseTime: metrics.reduce((sum, m) => sum + m.avg_response_time, 0) / metrics.length,
-        errorCount: metrics.reduce((sum, m) => sum + m.error_count, 0),
-        requestCount: metrics.reduce((sum, m) => sum + m.success_count + m.error_count, 0)
+        errorCount: metrics.reduce((sum, m) => sum + m.total_errors, 0),
+        requestCount: metrics.reduce((sum, m) => sum + m.total_successes + m.total_errors, 0)
       };
 
       console.log('Retrieved system metrics:', systemMetrics);
