@@ -10,6 +10,17 @@ import { NewFunctionDialog } from "./components/schedule/NewFunctionDialog";
 import { APIHealthStatus } from "@/components/monitoring/APIHealthStatus";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { EdgeFunctionManager } from "@/components/dashboard/EdgeFunctionManager";
+import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
+import { Home, Settings, Activity, Calendar, Database } from "lucide-react";
+import { Link } from "react-router-dom";
+
+const menuItems = [
+  { title: "Dashboard", icon: Home, path: "/backend/dashboard" },
+  { title: "Scheduler", icon: Calendar, path: "/backend/scheduler" },
+  { title: "Logs", icon: Activity, path: "/backend/logs" },
+  { title: "Calculations", icon: Database, path: "/backend/calculations" },
+  { title: "Settings", icon: Settings, path: "/backend/settings" }
+];
 
 export default function BackendScheduler() {
   const [newFunctionOpen, setNewFunctionOpen] = useState(false);
@@ -71,45 +82,71 @@ export default function BackendScheduler() {
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-8 animate-fade-in">
-      <ScheduleHeader onNewFunction={() => setNewFunctionOpen(true)} />
-      
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <APIHealthStatus />
+    <div className="flex h-screen">
+      <Sidebar>
+        <SidebarContent>
+          <SidebarGroup>
+            <SidebarGroupLabel>Backend</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {menuItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <Link to={item.path} className="flex items-center gap-2">
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </SidebarContent>
+      </Sidebar>
+
+      <div className="flex-1 overflow-auto">
+        <div className="container mx-auto p-6 space-y-8 animate-fade-in">
+          <ScheduleHeader onNewFunction={() => setNewFunctionOpen(true)} />
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <APIHealthStatus />
+          </div>
+
+          <Card className="p-6">
+            <h2 className="text-lg sm:text-xl font-semibold mb-6">Edge Functions</h2>
+            <ScrollArea className="h-[400px] w-full">
+              <div className="min-w-[600px]">
+                <EdgeFunctionManager />
+              </div>
+            </ScrollArea>
+          </Card>
+
+          <Card className="p-6">
+            <h2 className="text-lg sm:text-xl font-semibold mb-6">Function Schedules</h2>
+            <ScrollArea className="h-[400px] w-full">
+              <div className="min-w-[600px]">
+                <ScheduleList />
+              </div>
+            </ScrollArea>
+          </Card>
+
+          <Card className="p-6">
+            <h2 className="text-lg sm:text-xl font-semibold mb-6">Recent Executions</h2>
+            <ScrollArea className="h-[400px] w-full">
+              <div className="min-w-[600px]">
+                <ExecutionList />
+              </div>
+            </ScrollArea>
+          </Card>
+
+          <NewFunctionDialog
+            open={newFunctionOpen}
+            onOpenChange={setNewFunctionOpen}
+            onSubmit={handleNewFunction}
+          />
+        </div>
       </div>
-
-      <Card className="p-6">
-        <h2 className="text-lg sm:text-xl font-semibold mb-6">Edge Functions</h2>
-        <ScrollArea className="h-[400px] w-full">
-          <div className="min-w-[600px]">
-            <EdgeFunctionManager />
-          </div>
-        </ScrollArea>
-      </Card>
-
-      <Card className="p-6">
-        <h2 className="text-lg sm:text-xl font-semibold mb-6">Function Schedules</h2>
-        <ScrollArea className="h-[400px] w-full">
-          <div className="min-w-[600px]">
-            <ScheduleList />
-          </div>
-        </ScrollArea>
-      </Card>
-
-      <Card className="p-6">
-        <h2 className="text-lg sm:text-xl font-semibold mb-6">Recent Executions</h2>
-        <ScrollArea className="h-[400px] w-full">
-          <div className="min-w-[600px]">
-            <ExecutionList />
-          </div>
-        </ScrollArea>
-      </Card>
-
-      <NewFunctionDialog
-        open={newFunctionOpen}
-        onOpenChange={setNewFunctionOpen}
-        onSubmit={handleNewFunction}
-      />
     </div>
   );
 }

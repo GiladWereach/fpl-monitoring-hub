@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { format } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface FunctionCardProps {
   name: string;
@@ -17,7 +18,7 @@ interface FunctionCardProps {
 export function FunctionCard({ name, functionName, loading, onExecute, schedule }: FunctionCardProps) {
   const isLoading = loading === functionName || loading === "all";
 
-  const { data: metrics } = useQuery({
+  const { data: metrics, isLoading: metricsLoading } = useQuery({
     queryKey: ["function-metrics", functionName],
     queryFn: async () => {
       console.log(`Fetching aggregated metrics for ${functionName}`);
@@ -46,6 +47,64 @@ export function FunctionCard({ name, functionName, loading, onExecute, schedule 
   const getHealthStatus = (metrics: any) => {
     if (!metrics) return 'info';
     return metrics.health_status;
+  };
+
+  const renderScheduleInfo = () => {
+    if (!schedule) {
+      return <div className="italic">No schedule configured</div>;
+    }
+
+    return (
+      <>
+        <div className="flex justify-between">
+          <span>Schedule:</span>
+          <span>
+            {schedule.frequency_type === 'fixed_interval' && 
+              `Every ${schedule.base_interval_minutes} minutes`}
+            {schedule.frequency_type === 'daily' && 
+              `Daily at ${schedule.fixed_time}`}
+            {schedule.frequency_type === 'match_dependent' &&
+              `Match day: ${schedule.match_day_interval_minutes}m, Other: ${schedule.non_match_interval_minutes}m`}
+          </span>
+        </div>
+        <div className="flex justify-between">
+          <span>Last Run:</span>
+          <span>
+            {schedule.last_execution_at ? 
+              format(new Date(schedule.last_execution_at), "MMM d, HH:mm:ss") : 
+              'Never'}
+          </span>
+        </div>
+        <div className="flex justify-between">
+          <span>Next Run:</span>
+          <span>
+            {schedule.next_execution_at ? 
+              format(new Date(schedule.next_execution_at), "MMM d, HH:mm:ss") : 
+              'Not scheduled'}
+          </span>
+        </div>
+        {metrics && (
+          <>
+            <div className="flex justify-between">
+              <span>Success Rate:</span>
+              <span>
+                {metrics.total_successes + metrics.total_errors > 0 
+                  ? `${Math.round((metrics.total_successes / (metrics.total_successes + metrics.total_errors)) * 100)}%`
+                  : 'N/A'}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span>Last Error:</span>
+              <span>
+                {metrics.latest_error 
+                  ? format(new Date(metrics.latest_error), "MMM d, HH:mm:ss")
+                  : 'None'}
+              </span>
+            </div>
+          </>
+        )}
+      </>
+    );
   };
 
   return (
@@ -87,58 +146,14 @@ export function FunctionCard({ name, functionName, loading, onExecute, schedule 
         </div>
 
         <div className="text-sm text-muted-foreground space-y-1">
-          {schedule ? (
-            <>
-              <div className="flex justify-between">
-                <span>Schedule:</span>
-                <span>
-                  {schedule.frequency_type === 'fixed_interval' && 
-                    `Every ${schedule.base_interval_minutes} minutes`}
-                  {schedule.frequency_type === 'daily' && 
-                    `Daily at ${schedule.fixed_time}`}
-                  {schedule.frequency_type === 'match_dependent' &&
-                    `Match day: ${schedule.match_day_interval_minutes}m, Other: ${schedule.non_match_interval_minutes}m`}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span>Last Run:</span>
-                <span>
-                  {schedule.last_execution_at ? 
-                    format(new Date(schedule.last_execution_at), "MMM d, HH:mm:ss") : 
-                    'Never'}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span>Next Run:</span>
-                <span>
-                  {schedule.next_execution_at ? 
-                    format(new Date(schedule.next_execution_at), "MMM d, HH:mm:ss") : 
-                    'Not scheduled'}
-                </span>
-              </div>
-              {metrics && (
-                <>
-                  <div className="flex justify-between">
-                    <span>Success Rate:</span>
-                    <span>
-                      {metrics.total_successes + metrics.total_errors > 0 
-                        ? `${Math.round((metrics.total_successes / (metrics.total_successes + metrics.total_errors)) * 100)}%`
-                        : 'N/A'}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Last Error:</span>
-                    <span>
-                      {metrics.latest_error 
-                        ? format(new Date(metrics.latest_error), "MMM d, HH:mm:ss")
-                        : 'None'}
-                    </span>
-                  </div>
-                </>
-              )}
-            </>
+          {metricsLoading ? (
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-full" />
+            </div>
           ) : (
-            <div className="italic">No schedule configured</div>
+            renderScheduleInfo()
           )}
         </div>
       </div>
