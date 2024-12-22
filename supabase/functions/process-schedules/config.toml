@@ -1,3 +1,4 @@
 project_id = "qlkhlcoyrifbvzbqkshu"
-[functions.process-schedules]
+name = "process-schedules"
+entrypoint = "/index.ts"
 verify_jwt = false
