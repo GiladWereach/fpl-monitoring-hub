@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { AdvancedScheduleFormValues, TimeConfig, EventConfig, ExecutionConfig, EventCondition } from "../types/scheduling";
+import { logAPIError, updateAPIHealthMetrics } from "@/utils/api/errorHandling";
 
 interface UseScheduleFormProps {
   functionName: string;
