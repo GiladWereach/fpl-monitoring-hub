@@ -18,23 +18,31 @@ interface FunctionCardProps {
 export function FunctionCard({ name, functionName, loading, onExecute, schedule }: FunctionCardProps) {
   const isLoading = loading === functionName || loading === "all";
 
-  const { data: metrics, isLoading: metricsLoading } = useQuery({
-    queryKey: ["function-metrics", functionName],
+  const { data: functionData, isLoading: dataLoading } = useQuery({
+    queryKey: ["function-data", functionName],
     queryFn: async () => {
-      console.log(`Fetching aggregated metrics for ${functionName}`);
-      const { data, error } = await supabase
+      console.log(`Fetching data for ${functionName}`);
+      
+      // Fetch metrics
+      const { data: metricsData, error: metricsError } = await supabase
         .rpc('get_aggregated_metrics', { hours_lookback: 24 });
 
-      if (error) {
-        console.error(`Error fetching metrics for ${functionName}:`, error);
+      if (metricsError) {
+        console.error(`Error fetching metrics for ${functionName}:`, metricsError);
         return null;
       }
 
-      const functionMetrics = data?.find(m => m.endpoint === functionName);
-      console.log(`Metrics data for ${functionName}:`, functionMetrics);
-      return functionMetrics;
+      const metrics = metricsData?.find(m => m.endpoint === functionName);
+      console.log(`Metrics data for ${functionName}:`, metrics);
+
+      return {
+        metrics,
+        schedule
+      };
     },
-    refetchInterval: 30000
+    refetchInterval: 30000,
+    staleTime: 25000, // Prevent unnecessary refreshes
+    keepPreviousData: true // Prevent jumping
   });
 
   const formatDuration = (ms: number) => {
@@ -83,21 +91,21 @@ export function FunctionCard({ name, functionName, loading, onExecute, schedule 
               'Not scheduled'}
           </span>
         </div>
-        {metrics && (
+        {functionData?.metrics && (
           <>
             <div className="flex justify-between">
               <span>Success Rate:</span>
               <span>
-                {metrics.total_successes + metrics.total_errors > 0 
-                  ? `${Math.round((metrics.total_successes / (metrics.total_successes + metrics.total_errors)) * 100)}%`
+                {functionData.metrics.total_successes + functionData.metrics.total_errors > 0 
+                  ? `${Math.round((functionData.metrics.total_successes / (functionData.metrics.total_successes + functionData.metrics.total_errors)) * 100)}%`
                   : 'N/A'}
               </span>
             </div>
             <div className="flex justify-between">
               <span>Last Error:</span>
               <span>
-                {metrics.latest_error 
-                  ? format(new Date(metrics.latest_error), "MMM d, HH:mm:ss")
+                {functionData.metrics.latest_error 
+                  ? format(new Date(functionData.metrics.latest_error), "MMM d, HH:mm:ss")
                   : 'None'}
               </span>
             </div>
@@ -115,13 +123,13 @@ export function FunctionCard({ name, functionName, loading, onExecute, schedule 
             <h3 className="font-semibold truncate">{name}</h3>
             <div className="flex items-center gap-2 mt-1">
               <span className={`h-2 w-2 rounded-full ${
-                getHealthStatus(metrics) === 'success' ? 'bg-success' :
-                getHealthStatus(metrics) === 'warning' ? 'bg-warning' :
-                getHealthStatus(metrics) === 'error' ? 'bg-destructive' :
+                getHealthStatus(functionData?.metrics) === 'success' ? 'bg-success' :
+                getHealthStatus(functionData?.metrics) === 'warning' ? 'bg-warning' :
+                getHealthStatus(functionData?.metrics) === 'error' ? 'bg-destructive' :
                 'bg-muted'
               }`} />
               <span className="text-sm text-muted-foreground">
-                {metrics?.avg_response_time ? formatDuration(metrics.avg_response_time) : 'No data'}
+                {functionData?.metrics?.avg_response_time ? formatDuration(functionData.metrics.avg_response_time) : 'No data'}
               </span>
             </div>
           </div>
@@ -146,7 +154,7 @@ export function FunctionCard({ name, functionName, loading, onExecute, schedule 
         </div>
 
         <div className="text-sm text-muted-foreground space-y-1">
-          {metricsLoading ? (
+          {dataLoading ? (
             <div className="space-y-2">
               <Skeleton className="h-4 w-full" />
               <Skeleton className="h-4 w-full" />
