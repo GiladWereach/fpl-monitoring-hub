@@ -10,6 +10,8 @@ import {
   TooltipProvider, 
   TooltipTrigger 
 } from '@/components/ui/tooltip';
+import { AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface LiveStatusProps {
   showLabel?: boolean;
@@ -22,17 +24,42 @@ export const LiveStatus = ({
   showWindow = false,
   timezone = 'UTC'
 }: LiveStatusProps) => {
-  const { data: matchWindow, isLoading } = useQuery({
+  // Query for match window
+  const { data: matchWindow, isLoading: windowLoading } = useQuery({
     queryKey: ['match-window', timezone],
     queryFn: () => detectMatchWindow({ timezone }),
-    refetchInterval: 30000 // Refresh every 30 seconds
+    refetchInterval: 30000
   });
 
-  if (isLoading) {
+  // Query for current gameweek status
+  const { data: currentGameweek, isLoading: gameweekLoading } = useQuery({
+    queryKey: ['current-gameweek'],
+    queryFn: async () => {
+      console.log('Fetching current gameweek status...');
+      const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .eq('is_current', true)
+        .single();
+      
+      if (error) throw error;
+      console.log('Current gameweek status:', data);
+      return data;
+    },
+    refetchInterval: 60000
+  });
+
+  if (windowLoading || gameweekLoading) {
     return <Badge variant="secondary" className="h-2 w-2 rounded-full p-0 animate-pulse" />;
   }
 
   const getStatusVariant = () => {
+    // Check for gameweek transition first
+    if (currentGameweek?.transition_status === 'in_progress') {
+      return "warning";
+    }
+
+    // Then check match window status
     switch (matchWindow?.type) {
       case 'live':
         return "success";
@@ -46,6 +73,12 @@ export const LiveStatus = ({
   };
 
   const getStatusLabel = () => {
+    // Gameweek transition takes precedence
+    if (currentGameweek?.transition_status === 'in_progress') {
+      return "Gameweek Transition";
+    }
+
+    // Regular match window status
     switch (matchWindow?.type) {
       case 'live':
         return `Live (${matchWindow.activeMatches} matches)`;
@@ -65,6 +98,18 @@ export const LiveStatus = ({
     }
   };
 
+  // Show transition error if exists
+  if (currentGameweek?.transition_error) {
+    return (
+      <Alert variant="destructive" className="mt-4">
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          Gameweek transition error: {currentGameweek.transition_error}
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
   return (
     <div className="flex items-center gap-2">
       <TooltipProvider>
@@ -77,6 +122,11 @@ export const LiveStatus = ({
           </TooltipTrigger>
           <TooltipContent>
             <p>{getStatusLabel()}</p>
+            {currentGameweek?.transition_status === 'in_progress' && (
+              <p className="text-xs text-muted-foreground">
+                Started at: {format(new Date(currentGameweek.transition_started_at), 'HH:mm:ss')}
+              </p>
+            )}
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>

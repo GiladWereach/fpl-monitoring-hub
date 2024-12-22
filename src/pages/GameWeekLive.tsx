@@ -10,6 +10,7 @@ import BonusPointsTracker from '@/components/gameweek-live/BonusPointsTracker';
 import MatchCards from '@/components/gameweek-live/MatchCards';
 import { LiveStatus } from '@/components/dashboard/LiveStatus';
 import { StatusCard } from '@/components/dashboard/StatusCard';
+import { GameweekTransition } from '@/components/gameweek-live/GameweekTransition';
 
 export default function GameWeekLive() {
   const [selectedMatchId, setSelectedMatchId] = useState<number | null>(null);
@@ -65,6 +66,9 @@ export default function GameWeekLive() {
           </AlertDescription>
         </Alert>
       </div>
+
+      {/* Show transition status if in progress */}
+      <GameweekTransition />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <StatusCard
