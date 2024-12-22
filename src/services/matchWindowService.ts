@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { addHours, subHours, isWithinInterval } from "date-fns";
-import { formatInTimeZone } from 'date-fns-tz';
+import { formatInTimeZone, toZonedTime } from 'date-fns-tz';
 
 export interface MatchWindow {
   type: 'pre' | 'live' | 'post' | 'none';
@@ -29,7 +29,7 @@ export async function detectMatchWindow(
   console.log('Detecting match window with options:', options);
   const now = new Date();
   const localNow = options.timezone ? 
-    utcToZonedTime(now, options.timezone) : 
+    toZonedTime(now, options.timezone) : 
     now;
 
   try {
@@ -77,7 +77,7 @@ export async function detectMatchWindow(
 
     if (upcomingMatches && upcomingMatches.length > 0) {
       const nextKickoff = options.timezone ?
-        utcToZonedTime(new Date(upcomingMatches[0].kickoff_time), options.timezone) :
+        toZonedTime(new Date(upcomingMatches[0].kickoff_time), options.timezone) :
         new Date(upcomingMatches[0].kickoff_time);
         
       const preMatchStart = subHours(nextKickoff, options.preMatchWindow! / 60);
