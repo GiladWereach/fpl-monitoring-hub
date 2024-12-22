@@ -10,6 +10,10 @@ import {
   SchedulerError,
   errorClassification 
 } from "@/utils/errorHandling";
+import { metricsService } from "@/services/metricsService";
+import { cacheService } from "@/services/cacheService";
+import { rateLimiterService } from "@/services/rateLimiterService";
+import { alertingService } from "@/services/alertingService";
 
 interface EdgeFunctionResponse {
   data: any;
@@ -21,7 +25,22 @@ export const executeFetchFunction = async (functionName: string) => {
   let scheduleId: string | undefined;
   const startTime = Date.now();
   let attempt = 1;
-  const maxAttempts = 3; // This could be configurable
+  const maxAttempts = 3;
+
+  // Check rate limit
+  if (!rateLimiterService.tryAcquire(functionName)) {
+    const error = new SchedulerError({
+      ...errorClassification.RATE_LIMIT_ERROR,
+      message: `Rate limit exceeded for ${functionName}`
+    });
+    alertingService.alert(
+      'RATE_LIMIT',
+      'warning',
+      `Rate limit exceeded for ${functionName}`,
+      { endpoint: functionName }
+    );
+    throw error;
+  }
 
   try {
     console.log(`Executing function: ${functionName}`);
@@ -34,9 +53,21 @@ export const executeFetchFunction = async (functionName: string) => {
       });
     }
 
+    // Check cache first
+    const cachedResult = cacheService.get<any>(functionName);
+    if (cachedResult) {
+      console.log(`Cache hit for ${functionName}`);
+      metricsService.recordMetric(functionName, {
+        cacheHitRate: 1,
+        executionTimeMs: 0,
+        successRate: 1,
+        errorRate: 0
+      });
+      return { success: true, data: cachedResult };
+    }
+
     while (attempt <= maxAttempts) {
       try {
-        // Get current metrics first
         const { data: currentMetrics } = await supabase
           .from('api_health_metrics')
           .select('*')
@@ -55,28 +86,17 @@ export const executeFetchFunction = async (functionName: string) => {
         const endTime = Date.now();
         const duration = endTime - startTime;
 
-        // Calculate new metrics
-        const newMetrics = {
-          endpoint: functionName,
-          success_count: (currentMetrics?.success_count || 0) + 1,
-          error_count: currentMetrics?.error_count || 0,
-          avg_response_time: currentMetrics 
-            ? ((currentMetrics.avg_response_time * currentMetrics.success_count) + duration) / (currentMetrics.success_count + 1)
-            : duration,
-          last_success_time: new Date().toISOString(),
-          last_error_time: currentMetrics?.last_error_time,
-          error_pattern: currentMetrics?.error_pattern || {}
-        };
+        // Cache successful response
+        cacheService.set(functionName, response.data);
 
-        // Update metrics
-        const { error: metricsError } = await supabase
-          .from('api_health_metrics')
-          .upsert(newMetrics);
+        // Record metrics
+        metricsService.recordMetric(functionName, {
+          executionTimeMs: duration,
+          successRate: 1,
+          errorRate: 0,
+          cacheHitRate: 0
+        });
 
-        if (metricsError) {
-          console.error(`Error updating metrics for ${functionName}:`, metricsError);
-        }
-        
         if (scheduleId) {
           await updateExecutionLog(scheduleId, true);
         }
@@ -90,9 +110,15 @@ export const executeFetchFunction = async (functionName: string) => {
 
         return { success: true, data: response.data };
       } catch (error) {
+        metricsService.recordMetric(functionName, {
+          executionTimeMs: Date.now() - startTime,
+          successRate: 0,
+          errorRate: 1,
+          cacheHitRate: 0
+        });
+
         await handleSchedulerError(error, { functionName, attempt, maxAttempts });
         
-        // If we get here, the error was retryable and we haven't exceeded maxAttempts
         const backoffDelay = calculateBackoff(attempt, 'exponential');
         console.log(`Retrying ${functionName} after ${backoffDelay}ms (attempt ${attempt}/${maxAttempts})`);
         await new Promise(resolve => setTimeout(resolve, backoffDelay));
@@ -101,29 +127,34 @@ export const executeFetchFunction = async (functionName: string) => {
       }
     }
 
-    // If we get here, we've exhausted all retries
-    throw new SchedulerError({
+    const maxRetriesError = new SchedulerError({
       code: 'MAX_RETRIES_EXCEEDED',
       message: `Failed to execute ${functionName} after ${maxAttempts} attempts`,
       severity: 'high',
       retryable: false
     });
+
+    alertingService.alert(
+      'MAX_RETRIES_EXCEEDED',
+      'error',
+      `Failed to execute ${functionName} after ${maxAttempts} attempts`,
+      { endpoint: functionName }
+    );
+
+    throw maxRetriesError;
   } catch (error) {
     console.error(`Error executing ${functionName}:`, error);
     
-    // Get current metrics for error handling
     const { data: currentMetrics } = await supabase
       .from('api_health_metrics')
       .select('*')
       .eq('endpoint', functionName)
       .maybeSingle();
 
-    // Ensure we have a valid error_pattern object
     const currentErrorPattern = typeof currentMetrics?.error_pattern === 'object' && currentMetrics?.error_pattern !== null 
       ? currentMetrics.error_pattern 
       : {};
 
-    // Update metrics for error case
     const newMetrics = {
       endpoint: functionName,
       success_count: currentMetrics?.success_count || 0,
@@ -157,6 +188,13 @@ export const executeFetchFunction = async (functionName: string) => {
     }
 
     await cleanupResources(functionName);
+
+    alertingService.alert(
+      'EXECUTION_ERROR',
+      'error',
+      `Failed to execute ${functionName}: ${error instanceof Error ? error.message : String(error)}`,
+      { endpoint: functionName }
+    );
 
     toast({
       title: "Error",
