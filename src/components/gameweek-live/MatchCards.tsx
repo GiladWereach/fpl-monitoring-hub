@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
+import { getMatchStatus } from '@/services/matchStatusService';
 
 interface MatchCardsProps {
   gameweek: number;
@@ -12,6 +13,14 @@ interface MatchCardsProps {
 }
 
 const MatchCards = ({ gameweek, onMatchSelect, selectedMatchId }: MatchCardsProps) => {
+  // Fetch match status
+  const { data: matchStatus } = useQuery({
+    queryKey: ['match-status'],
+    queryFn: getMatchStatus,
+    refetchInterval: 30000
+  });
+
+  // Fetch matches for the gameweek
   const { data: matches, isLoading } = useQuery({
     queryKey: ['gameweek-matches', gameweek],
     queryFn: async () => {
@@ -29,7 +38,7 @@ const MatchCards = ({ gameweek, onMatchSelect, selectedMatchId }: MatchCardsProp
       console.log('Fetched matches:', data);
       return data;
     },
-    refetchInterval: 30000 // Refetch every 30 seconds
+    refetchInterval: 30000
   });
 
   if (isLoading) {
@@ -37,13 +46,19 @@ const MatchCards = ({ gameweek, onMatchSelect, selectedMatchId }: MatchCardsProp
   }
 
   const getMatchStatus = (match: any) => {
-    console.log('Match status check:', {
-      id: match.id,
-      started: match.started,
-      finished: match.finished,
-      finished_provisional: match.finished_provisional
-    });
+    const kickoff = new Date(match.kickoff_time);
+    const now = new Date();
+    
+    // Pre-match window check
+    if (!match.started && matchStatus?.isPreMatch) {
+      const preMatchStart = new Date(kickoff);
+      preMatchStart.setHours(preMatchStart.getHours() - 2);
+      if (now >= preMatchStart) {
+        return { status: 'PRE-MATCH', color: 'bg-yellow-500' };
+      }
+    }
 
+    // Standard status checks
     if (!match.started) {
       return { status: 'UPCOMING', color: 'bg-gray-500' };
     }
@@ -63,11 +78,14 @@ const MatchCards = ({ gameweek, onMatchSelect, selectedMatchId }: MatchCardsProp
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {matches?.map((match) => {
         const { status, color } = getMatchStatus(match);
+        const isSelected = selectedMatchId === match.id;
         
         return (
           <Card 
             key={match.id} 
-            className={`p-4 relative cursor-pointer transition-all duration-200 hover:scale-[1.02] ${selectedMatchId === match.id ? 'ring-2 ring-primary' : ''}`}
+            className={`p-4 relative cursor-pointer transition-all duration-200 hover:scale-[1.02] ${
+              isSelected ? 'ring-2 ring-primary' : ''
+            }`}
             onClick={() => onMatchSelect?.(match.id)}
           >
             <div className={`absolute top-2 right-2 w-3 h-3 rounded-full ${color}`} />

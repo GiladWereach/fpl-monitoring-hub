@@ -1985,6 +1985,36 @@ export type Database = {
         }
         Relationships: []
       }
+      transaction_logs: {
+        Row: {
+          completed_at: string | null
+          context: string | null
+          created_at: string | null
+          error_details: string | null
+          id: number
+          operation: string
+          status: string
+        }
+        Insert: {
+          completed_at?: string | null
+          context?: string | null
+          created_at?: string | null
+          error_details?: string | null
+          id?: number
+          operation: string
+          status: string
+        }
+        Update: {
+          completed_at?: string | null
+          context?: string | null
+          created_at?: string | null
+          error_details?: string | null
+          id?: number
+          operation?: string
+          status?: string
+        }
+        Relationships: []
+      }
       transfer_history: {
         Row: {
           created_at: string | null
@@ -2057,6 +2087,13 @@ export type Database = {
       }
       cleanup_old_metrics: {
         Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      execute_in_transaction: {
+        Args: {
+          operation: string
+          context?: string
+        }
         Returns: undefined
       }
       get_active_cron_jobs: {
