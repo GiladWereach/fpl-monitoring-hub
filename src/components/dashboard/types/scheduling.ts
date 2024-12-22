@@ -13,9 +13,9 @@ export type EventConfig = {
 };
 
 export type ExecutionWindow = {
-  start_time?: string;
-  end_time?: string;
-  days_of_week?: number[];
+  start_time?: string | null;
+  end_time?: string | null;
+  days_of_week?: number[] | null;
 };
 
 export type ExecutionConfig = {
@@ -33,27 +33,29 @@ export type EventCondition = {
   value: string;
 };
 
-export type TestSuite = {
-  functionName: string;
-  scheduleTypes: Array<"time_based" | "event_based">;
-};
-
-export interface TestResult {
-  success: boolean;
-  executionTime?: number;
-  retryCount?: number;
-  error?: string;
-  functionName?: string;
-  scheduleType?: string;
-}
-
 export interface AdvancedScheduleFormValues {
   enabled: boolean;
   scheduleType: 'time_based' | 'event_based';
   timezone: string;
   timeConfig: TimeConfig;
   eventConfig?: EventConfig;
-  execution_window?: ExecutionWindow;
-  event_conditions: EventCondition[];
   execution_config: ExecutionConfig;
+  event_conditions: EventCondition[];
+}
+
+export interface ScheduleData {
+  id: string;
+  function_name: string;
+  schedule_type: 'time_based' | 'event_based';
+  enabled: boolean;
+  time_config: TimeConfig | null;
+  event_config: EventConfig | null;
+  execution_config: ExecutionConfig;
+  created_at: string;
+  updated_at: string;
+  last_execution_at: string | null;
+  next_execution_at: string | null;
+  timezone: string;
+  event_conditions: EventCondition[];
+  execution_window: ExecutionWindow | null;
 }

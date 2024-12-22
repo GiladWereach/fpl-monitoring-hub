@@ -3,27 +3,12 @@ import { useForm } from "react-hook-form";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { AdvancedScheduleFormValues } from "../types/scheduling";
+import { AdvancedScheduleFormValues, ScheduleData } from "../types/scheduling";
 import { logAPIError, updateAPIHealthMetrics } from "@/utils/api/errorHandling";
 
 interface UseScheduleFormProps {
   functionName: string;
   onSuccess?: () => void;
-}
-
-interface ScheduleData {
-  created_at: string;
-  enabled: boolean;
-  event_conditions: any;
-  event_config: any;
-  execution_config: any;
-  function_name: string;
-  id: string;
-  next_execution_at: string;
-  schedule_type: 'time_based' | 'event_based';
-  time_config: any;
-  timezone: string;
-  updated_at: string;
 }
 
 export function useScheduleForm({ functionName, onSuccess }: UseScheduleFormProps) {
@@ -118,7 +103,7 @@ export function useScheduleForm({ functionName, onSuccess }: UseScheduleFormProp
       console.log(`Setting form values for ${functionName}:`, schedule);
       form.reset({
         enabled: schedule.enabled ?? false,
-        scheduleType: schedule.schedule_type ?? "time_based",
+        scheduleType: schedule.schedule_type,
         timezone: schedule.timezone ?? "UTC",
         timeConfig: schedule.time_config ?? {
           type: "daily",
