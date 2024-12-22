@@ -363,6 +363,10 @@ export type Database = {
           name: string | null
           top_element: number | null
           transfers_made: number | null
+          transition_completed_at: string | null
+          transition_error: string | null
+          transition_started_at: string | null
+          transition_status: string | null
         }
         Insert: {
           average_entry_score?: number | null
@@ -383,6 +387,10 @@ export type Database = {
           name?: string | null
           top_element?: number | null
           transfers_made?: number | null
+          transition_completed_at?: string | null
+          transition_error?: string | null
+          transition_started_at?: string | null
+          transition_status?: string | null
         }
         Update: {
           average_entry_score?: number | null
@@ -403,6 +411,10 @@ export type Database = {
           name?: string | null
           top_element?: number | null
           transfers_made?: number | null
+          transition_completed_at?: string | null
+          transition_error?: string | null
+          transition_started_at?: string | null
+          transition_status?: string | null
         }
         Relationships: []
       }

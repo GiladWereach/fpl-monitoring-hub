@@ -2,178 +2,134 @@ import { supabase } from "@/integrations/supabase/client";
 import { addHours, subHours, isWithinInterval } from "date-fns";
 import { formatInTimeZone, toZonedTime } from 'date-fns-tz';
 
-export interface MatchWindow {
-  type: 'pre' | 'live' | 'post' | 'none';
-  start: Date | null;
-  end: Date | null;
-  nextKickoff: Date | null;
-  activeMatches: number;
-  timezone?: string;
-}
-
-export interface MatchWindowOptions {
-  timezone?: string;
-  preMatchWindow?: number; // minutes before kickoff
-  postMatchWindow?: number; // minutes after match end
-}
-
-const DEFAULT_OPTIONS: MatchWindowOptions = {
-  timezone: 'UTC',
-  preMatchWindow: 120, // 2 hours
-  postMatchWindow: 60 // 1 hour
+export type MatchWindow = {
+  start: Date;
+  end: Date;
+  type: 'pre' | 'live' | 'post';
+  activeMatches?: number;
+  nextKickoff?: Date | null;
 };
 
-export async function detectMatchWindow(
-  options: MatchWindowOptions = DEFAULT_OPTIONS
-): Promise<MatchWindow> {
-  console.log('Detecting match window with options:', options);
+export async function detectMatchWindow({ timezone = 'UTC' }: { timezone?: string } = {}): Promise<{
+  type: 'pre' | 'live' | 'post' | 'idle';
+  start?: Date;
+  end?: Date;
+  activeMatches?: number;
+  nextKickoff?: Date;
+}> {
+  console.log('Detecting match window...');
   
   try {
-    const now = new Date();
-    let localNow: Date;
-    
-    try {
-      localNow = options.timezone ? 
-        toZonedTime(now, options.timezone) : 
-        now;
-    } catch (tzError) {
-      console.error('Invalid timezone specified:', tzError);
-      localNow = now; // Fallback to UTC
+    // Get current gameweek and check transition status
+    const { data: currentEvent } = await supabase
+      .from('events')
+      .select('*')
+      .eq('is_current', true)
+      .single();
+
+    if (!currentEvent) {
+      console.log('No current gameweek found');
+      return { type: 'idle' };
     }
 
-    // Check for active matches
-    const { data: activeMatches, error: activeError } = await supabase
+    // Check if we're in a gameweek transition
+    if (currentEvent.transition_status === 'in_progress') {
+      console.log('Gameweek transition in progress');
+      return { type: 'idle' };
+    }
+
+    const now = new Date();
+    const zonedNow = toZonedTime(now, timezone);
+
+    // Get active matches
+    const { data: activeMatches } = await supabase
       .from('fixtures')
       .select('*')
+      .eq('event', currentEvent.id)
       .eq('started', true)
-      .eq('finished', false);
+      .eq('finished', false)
+      .eq('postponed', false)
+      .order('kickoff_time', { ascending: true });
 
-    if (activeError) {
-      console.error('Error fetching active matches:', activeError);
-      throw new Error(`Failed to fetch active matches: ${activeError.message}`);
-    }
+    // Get upcoming matches
+    const { data: upcomingMatches } = await supabase
+      .from('fixtures')
+      .select('kickoff_time')
+      .eq('event', currentEvent.id)
+      .eq('postponed', false)
+      .gt('kickoff_time', now.toISOString())
+      .order('kickoff_time', { ascending: true })
+      .limit(1);
 
-    // If we have active matches, we're in a live window
+    const nextKickoff = upcomingMatches?.[0]?.kickoff_time ? new Date(upcomingMatches[0].kickoff_time) : null;
+
+    // If we have active matches
     if (activeMatches && activeMatches.length > 0) {
-      console.log(`Found ${activeMatches.length} active matches`);
       const firstMatch = new Date(activeMatches[0].kickoff_time);
       const lastMatch = new Date(activeMatches[activeMatches.length - 1].kickoff_time);
-      const windowEnd = addHours(lastMatch, 2);
+      const windowEnd = new Date(lastMatch);
+      windowEnd.setHours(windowEnd.getHours() + 2.5); // 2.5 hours after last kickoff for extra time
 
       return {
         type: 'live',
         start: firstMatch,
         end: windowEnd,
-        nextKickoff: null,
         activeMatches: activeMatches.length,
-        timezone: options.timezone
+        nextKickoff
       };
     }
 
-    // Check for upcoming matches (pre-match window)
-    const { data: upcomingMatches, error: upcomingError } = await supabase
-      .from('fixtures')
-      .select('kickoff_time')
-      .gt('kickoff_time', localNow.toISOString())
-      .order('kickoff_time', { ascending: true })
-      .limit(1);
+    // Check for pre-match window (2 hours before kickoff)
+    if (nextKickoff) {
+      const preMatchStart = new Date(nextKickoff);
+      preMatchStart.setHours(preMatchStart.getHours() - 2);
 
-    if (upcomingError) {
-      console.error('Error fetching upcoming matches:', upcomingError);
-      throw new Error(`Failed to fetch upcoming matches: ${upcomingError.message}`);
-    }
-
-    if (upcomingMatches && upcomingMatches.length > 0) {
-      let nextKickoff: Date;
-      try {
-        nextKickoff = options.timezone ?
-          toZonedTime(new Date(upcomingMatches[0].kickoff_time), options.timezone) :
-          new Date(upcomingMatches[0].kickoff_time);
-      } catch (tzError) {
-        console.error('Error converting kickoff time to timezone:', tzError);
-        nextKickoff = new Date(upcomingMatches[0].kickoff_time);
-      }
-        
-      const preMatchStart = subHours(nextKickoff, options.preMatchWindow! / 60);
-
-      if (isWithinInterval(localNow, { start: preMatchStart, end: nextKickoff })) {
-        console.log('In pre-match window');
+      if (now >= preMatchStart && now < nextKickoff) {
         return {
           type: 'pre',
           start: preMatchStart,
           end: nextKickoff,
-          nextKickoff,
           activeMatches: 0,
-          timezone: options.timezone
+          nextKickoff
         };
       }
     }
 
-    // Check for recently finished matches (post-match window)
-    const { data: recentMatches, error: recentError } = await supabase
+    // Check for post-match window (within 3 hours of last finished match)
+    const { data: recentMatches } = await supabase
       .from('fixtures')
       .select('kickoff_time')
+      .eq('event', currentEvent.id)
       .eq('finished', true)
+      .eq('postponed', false)
       .order('kickoff_time', { ascending: false })
       .limit(1);
 
-    if (recentError) {
-      console.error('Error fetching recent matches:', recentError);
-      throw new Error(`Failed to fetch recent matches: ${recentError.message}`);
-    }
-
-    if (recentMatches && recentMatches.length > 0) {
-      const lastMatchEnd = addHours(
-        new Date(recentMatches[0].kickoff_time), 
-        2
-      );
-      const postMatchEnd = addHours(
-        lastMatchEnd, 
-        options.postMatchWindow! / 60
-      );
-
-      if (isWithinInterval(localNow, { start: lastMatchEnd, end: postMatchEnd })) {
-        console.log('In post-match window');
+    if (recentMatches?.[0]) {
+      const matchEnd = new Date(recentMatches[0].kickoff_time);
+      matchEnd.setMinutes(matchEnd.getMinutes() + 115); // 90 mins + potential extra time
+      
+      const postMatchEnd = new Date(matchEnd);
+      postMatchEnd.setHours(postMatchEnd.getHours() + 3);
+      
+      if (now <= postMatchEnd) {
         return {
           type: 'post',
-          start: lastMatchEnd,
+          start: matchEnd,
           end: postMatchEnd,
-          nextKickoff: upcomingMatches?.[0]?.kickoff_time ? 
-            new Date(upcomingMatches[0].kickoff_time) : null,
           activeMatches: 0,
-          timezone: options.timezone
+          nextKickoff
         };
       }
     }
 
     // No active window
-    console.log('No active match window');
-    return {
-      type: 'none',
-      start: null,
-      end: null,
-      nextKickoff: upcomingMatches?.[0]?.kickoff_time ? 
-        new Date(upcomingMatches[0].kickoff_time) : null,
-      activeMatches: 0,
-      timezone: options.timezone
+    return { 
+      type: 'idle',
+      nextKickoff
     };
   } catch (error) {
-    console.error('Error in detectMatchWindow:', error);
-    throw error;
+    console.error('Error detecting match window:', error);
+    return { type: 'idle' };
   }
-}
-
-export function isValidMatchWindow(window: MatchWindow): boolean {
-  if (!window) return false;
-  
-  // Type validation
-  if (!['pre', 'live', 'post', 'none'].includes(window.type)) return false;
-  
-  // Time validation for windows that should have start/end times
-  if (window.type !== 'none') {
-    if (!window.start || !window.end) return false;
-    if (window.start >= window.end) return false;
-  }
-  
-  return true;
 }
