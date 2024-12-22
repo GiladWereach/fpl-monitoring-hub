@@ -1,5 +1,5 @@
-import { ScoringRules } from '../types';
-import { logDebug } from '../logging';
+import { ScoringRules } from '../types.ts';
+import { logDebug } from '../logging.ts';
 
 export function calculateMinutesPoints(minutes: number | null, rules: ScoringRules): number {
   if (minutes === null || minutes === 0) {

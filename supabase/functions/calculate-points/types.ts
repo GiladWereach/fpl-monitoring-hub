@@ -15,15 +15,6 @@ export interface LivePerformance {
   red_cards: number;
   saves: number;
   bonus: number;
-  explain: Array<{
-    fixture: number;
-    stats: Array<{
-      identifier: string;
-      points: number;
-      value: number;
-      points_modification: number;
-    }>;
-  }>;
 }
 
 export interface Player {
@@ -50,23 +41,4 @@ export interface ScoringRules {
   red_cards: number;
   own_goals: number;
   saves: number;
-}
-
-export interface PointsCalculation {
-  event_id: number;
-  player_id: number;
-  fixture_id: number | null;
-  minutes_points: number;
-  goals_scored_points: number;
-  clean_sheet_points: number;
-  goals_conceded_points: number;
-  saves_points: number;
-  assist_points: number;
-  penalty_save_points: number;
-  penalty_miss_points: number;
-  own_goal_points: number;
-  card_points: number;
-  bonus_points: number;
-  raw_total_points: number;
-  final_total_points: number;
 }

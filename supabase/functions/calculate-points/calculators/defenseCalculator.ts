@@ -1,5 +1,5 @@
-import { ScoringRules } from '../types';
-import { logDebug } from '../logging';
+import { ScoringRules } from '../types.ts';
+import { logDebug } from '../logging.ts';
 
 export function calculateCleanSheetPoints(cleanSheets: number, position: number, rules: ScoringRules): number {
   if (cleanSheets === 0) return 0;

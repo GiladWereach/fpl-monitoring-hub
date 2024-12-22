@@ -1,5 +1,5 @@
-import { ScoringRules } from '../types';
-import { logDebug } from '../logging';
+import { ScoringRules } from '../types.ts';
+import { logDebug } from '../logging.ts';
 
 export function calculateBonusPoints(bonus: number): number {
   const points = Number(bonus) || 0;
