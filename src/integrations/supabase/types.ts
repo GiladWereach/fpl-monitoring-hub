@@ -1722,6 +1722,38 @@ export type Database = {
         }
         Relationships: []
       }
+      schedule_locks: {
+        Row: {
+          expires_at: string
+          id: string
+          locked_at: string
+          locked_by: string
+          schedule_id: string
+        }
+        Insert: {
+          expires_at: string
+          id?: string
+          locked_at?: string
+          locked_by: string
+          schedule_id: string
+        }
+        Update: {
+          expires_at?: string
+          id?: string
+          locked_at?: string
+          locked_by?: string
+          schedule_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "schedule_locks_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: true
+            referencedRelation: "schedules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       schedules: {
         Row: {
           created_at: string | null
@@ -2002,6 +2034,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      acquire_schedule_lock: {
+        Args: {
+          p_schedule_id: string
+          p_locked_by: string
+          p_lock_duration_seconds?: number
+        }
+        Returns: boolean
+      }
       check_scheduler_health: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -2075,6 +2115,13 @@ export type Database = {
           error_rate: number
           data_quality_score: number
         }[]
+      }
+      release_schedule_lock: {
+        Args: {
+          p_schedule_id: string
+          p_locked_by: string
+        }
+        Returns: boolean
       }
       update_next_execution_time: {
         Args: {
