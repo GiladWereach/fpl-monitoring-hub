@@ -58,7 +58,7 @@ export async function determineScheduleWindow(
     if (recentMatches && recentMatches.length > 0) {
       const lastMatch = recentMatches[0];
       const matchEndTime = new Date(lastMatch.kickoff_time);
-      matchEndTime.setMinutes(matchEndTime.getMinutes() + 90); // Approximate match end time
+      matchEndTime.setMinutes(matchEndTime.getMinutes() + 90);
       
       const threeHoursAfterMatch = new Date(matchEndTime);
       threeHoursAfterMatch.setHours(threeHoursAfterMatch.getHours() + 3);
