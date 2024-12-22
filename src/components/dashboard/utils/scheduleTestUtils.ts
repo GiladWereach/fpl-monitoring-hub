@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { logAPIError, updateAPIHealthMetrics } from "@/utils/api/errorHandling";
+import type { APIErrorType } from "@/utils/api/errorHandling";
 
 interface TestResult {
   success: boolean;
@@ -9,7 +10,16 @@ interface TestResult {
   retryCount?: number;
 }
 
-export async function testScheduleExecution(functionName: string, scheduleType: string): Promise<TestResult> {
+interface ExecutionConfig {
+  retry_count: number;
+  timeout_seconds: number;
+  retry_delay_seconds: number;
+  concurrent_execution: boolean;
+  retry_backoff: 'linear' | 'exponential' | 'fixed';
+  max_retry_delay: number;
+}
+
+export async function testScheduleExecution(functionName: string, scheduleType: "time_based" | "event_based"): Promise<TestResult> {
   console.log(`Testing schedule execution for ${functionName} (${scheduleType})`);
   const startTime = Date.now();
   
@@ -28,7 +38,7 @@ export async function testScheduleExecution(functionName: string, scheduleType: 
           concurrent_execution: false,
           retry_backoff: 'linear',
           max_retry_delay: 3600
-        }
+        } as ExecutionConfig
       })
       .select()
       .single();
@@ -61,7 +71,7 @@ export async function testScheduleExecution(functionName: string, scheduleType: 
     
     // Log error metrics
     await logAPIError({
-      type: 'TEST_ERROR',
+      type: 'TEST_ERROR' as APIErrorType,
       message: error.message,
       endpoint: functionName,
       statusCode: error.status || 500,
@@ -86,7 +96,7 @@ export async function verifyRetryMechanism(functionName: string): Promise<TestRe
       .from('schedules')
       .insert({
         function_name: functionName,
-        schedule_type: 'time_based',
+        schedule_type: 'time_based' as const,
         enabled: true,
         execution_config: {
           retry_count: 3,
@@ -95,7 +105,7 @@ export async function verifyRetryMechanism(functionName: string): Promise<TestRe
           concurrent_execution: false,
           retry_backoff: 'exponential',
           max_retry_delay: 10
-        }
+        } as ExecutionConfig
       })
       .select()
       .single();
@@ -125,8 +135,9 @@ export async function verifyRetryMechanism(functionName: string): Promise<TestRe
       retryCount = logs?.length || 0;
 
       // Verify retry count matches configuration
-      if (retryCount !== schedule.execution_config.retry_count + 1) {
-        throw new Error(`Expected ${schedule.execution_config.retry_count + 1} attempts, got ${retryCount}`);
+      const execConfig = schedule.execution_config as ExecutionConfig;
+      if (retryCount !== execConfig.retry_count + 1) {
+        throw new Error(`Expected ${execConfig.retry_count + 1} attempts, got ${retryCount}`);
       }
     }
 
@@ -142,7 +153,7 @@ export async function verifyRetryMechanism(functionName: string): Promise<TestRe
     console.error(`Error verifying retry mechanism for ${functionName}:`, error);
     
     await logAPIError({
-      type: 'RETRY_TEST_ERROR',
+      type: 'RETRY_TEST_ERROR' as APIErrorType,
       message: error.message,
       endpoint: functionName,
       statusCode: error.status || 500,
