@@ -1,3 +1,5 @@
+export type RetryBackoffStrategy = 'linear' | 'exponential' | 'fixed';
+
 export type NotificationConfig = {
   email?: string | null;
   webhook_url?: string | null;
@@ -44,7 +46,7 @@ export type ExecutionConfig = {
   timeout_seconds: number;
   retry_delay_seconds: number;
   concurrent_execution: boolean;
-  retry_backoff: 'linear' | 'exponential' | 'fixed';
+  retry_backoff: RetryBackoffStrategy;
   max_retry_delay: number;
 };
 
