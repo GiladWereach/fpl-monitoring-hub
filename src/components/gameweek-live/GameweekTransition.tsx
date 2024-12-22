@@ -43,8 +43,8 @@ export const GameweekTransition = () => {
       console.log('Transition status:', { current, next });
       return { current, next } as TransitionStatus;
     },
-    refetchInterval: (data: TransitionStatus | undefined) => 
-      data?.current?.transition_status === 'in_progress' ? 5000 : false
+    refetchInterval: (query) => 
+      query.state.data?.current?.transition_status === 'in_progress' ? 5000 : false
   });
 
   if (isLoading) {
