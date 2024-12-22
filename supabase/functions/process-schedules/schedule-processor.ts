@@ -24,6 +24,9 @@ export async function processSchedule(
             schedule_type: schedule.schedule_type,
             execution_config: schedule.execution_config
           }
+        },
+        headers: {
+          'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`
         }
       }
     );
