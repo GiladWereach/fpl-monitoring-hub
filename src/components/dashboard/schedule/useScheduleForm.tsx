@@ -3,12 +3,27 @@ import { useForm } from "react-hook-form";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { AdvancedScheduleFormValues, TimeConfig, EventConfig, ExecutionConfig, EventCondition } from "../types/scheduling";
+import { AdvancedScheduleFormValues } from "../types/scheduling";
 import { logAPIError, updateAPIHealthMetrics } from "@/utils/api/errorHandling";
 
 interface UseScheduleFormProps {
   functionName: string;
   onSuccess?: () => void;
+}
+
+interface ScheduleData {
+  created_at: string;
+  enabled: boolean;
+  event_conditions: any;
+  event_config: any;
+  execution_config: any;
+  function_name: string;
+  id: string;
+  next_execution_at: string;
+  schedule_type: 'time_based' | 'event_based';
+  time_config: any;
+  timezone: string;
+  updated_at: string;
 }
 
 export function useScheduleForm({ functionName, onSuccess }: UseScheduleFormProps) {
@@ -62,7 +77,7 @@ export function useScheduleForm({ functionName, onSuccess }: UseScheduleFormProp
         const endTime = Date.now();
         await updateAPIHealthMetrics("fetch_schedule", true, endTime - startTime);
 
-        return scheduleData;
+        return scheduleData as ScheduleData;
       } catch (error) {
         console.error("Error in schedule fetch:", error);
         
@@ -105,17 +120,17 @@ export function useScheduleForm({ functionName, onSuccess }: UseScheduleFormProp
         enabled: schedule.enabled ?? false,
         scheduleType: schedule.schedule_type ?? "time_based",
         timezone: schedule.timezone ?? "UTC",
-        timeConfig: schedule.time_config as TimeConfig ?? {
+        timeConfig: schedule.time_config ?? {
           type: "daily",
           hour: 3,
           matchDayIntervalMinutes: 2,
           nonMatchIntervalMinutes: 30
         },
-        eventConfig: schedule.event_config as EventConfig ?? {
+        eventConfig: schedule.event_config ?? {
           triggerType: "deadline",
           offsetMinutes: 0
         },
-        execution_config: schedule.execution_config as ExecutionConfig ?? {
+        execution_config: schedule.execution_config ?? {
           retry_count: 3,
           timeout_seconds: 30,
           retry_delay_seconds: 60,
@@ -123,7 +138,7 @@ export function useScheduleForm({ functionName, onSuccess }: UseScheduleFormProp
           retry_backoff: "linear",
           max_retry_delay: 3600
         },
-        event_conditions: (schedule.event_conditions as EventCondition[]) ?? []
+        event_conditions: schedule.event_conditions ?? []
       });
     }
   }, [schedule, form, functionName]);
