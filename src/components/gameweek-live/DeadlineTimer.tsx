@@ -29,7 +29,7 @@ export function DeadlineTimer() {
     },
     refetchInterval: (query) => {
       if (!query.state.data) return false;
-      const deadline = new Date(query.state.data.deadline_time);
+      const deadline = new Date(query.state.data.deadline_time + 'Z'); // Ensure UTC
       const now = new Date();
       // Refresh every minute if within 1 hour of deadline
       if (deadline > now && deadline.getTime() - now.getTime() < 60 * 60 * 1000) {
@@ -47,11 +47,12 @@ export function DeadlineTimer() {
     return null;
   }
 
-  // Parse the deadline_time directly as UTC
-  const deadlineTime = new Date(nextDeadline.deadline_time);
+  // Parse the deadline_time as UTC by appending 'Z'
+  const deadlineTime = new Date(nextDeadline.deadline_time + 'Z');
   const now = new Date();
   const hasDeadlinePassed = deadlineTime < now;
 
+  // Debug logging
   console.log('Deadline parsing debug:', {
     rawDeadline: nextDeadline.deadline_time,
     parsedDeadline: deadlineTime.toISOString(),
@@ -61,10 +62,6 @@ export function DeadlineTimer() {
     currentTime: now.toISOString()
   });
 
-  // Format times in UTC
-  const formattedDeadlineTime = format(deadlineTime, 'HH:mm');
-  const formattedDeadlineDate = format(deadlineTime, 'dd MMM yyyy');
-
   return (
     <Card className="mb-4">
       <CardContent className="pt-6">
@@ -72,7 +69,7 @@ export function DeadlineTimer() {
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              Deadline passed at {formattedDeadlineTime} UTC on {formattedDeadlineDate}
+              Deadline passed at {format(deadlineTime, 'HH:mm')} UTC on {format(deadlineTime, 'dd MMM yyyy')}
             </AlertDescription>
           </Alert>
         ) : (
@@ -80,7 +77,7 @@ export function DeadlineTimer() {
             <Clock className="h-4 w-4 text-muted-foreground" />
             <div className="flex flex-col">
               <p className="text-sm text-muted-foreground">
-                Deadline: {formattedDeadlineTime} UTC on {formattedDeadlineDate}
+                Deadline: {format(deadlineTime, 'HH:mm')} UTC on {format(deadlineTime, 'dd MMM yyyy')}
               </p>
               <p className="font-medium">
                 Time remaining: {formatDistanceToNowStrict(deadlineTime)}
