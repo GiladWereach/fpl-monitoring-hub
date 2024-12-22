@@ -19,6 +19,8 @@ export const logRetryMetrics = async (metrics: RetryMetrics): Promise<void> => {
         success_count: metrics.successfulAttempt ? 1 : 0,
         error_count: metrics.successfulAttempt ? 0 : 1,
         avg_response_time: metrics.totalDuration,
+        last_success_time: metrics.successfulAttempt ? new Date().toISOString() : null,
+        last_error_time: metrics.successfulAttempt ? null : new Date().toISOString(),
         error_pattern: metrics.error ? {
           last_error: metrics.error,
           retry_count: metrics.totalAttempts

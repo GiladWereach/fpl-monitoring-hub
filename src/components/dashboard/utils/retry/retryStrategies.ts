@@ -1,14 +1,16 @@
 import { RetryBackoffStrategy } from '../../types/scheduling';
 
-export const calculateBackoffDelay = (
+export const calculateBackoff = (
   attempt: number,
-  strategy: RetryBackoffStrategy,
+  strategy: RetryBackoffStrategy = 'linear',
   baseDelay: number = 1000,
   maxDelay: number = 300000 // 5 minutes
 ): number => {
-  console.log(`Calculating backoff delay for attempt ${attempt} using ${strategy} strategy`);
+  console.log(`Calculating backoff for attempt ${attempt} using ${strategy} strategy`);
   
   let delay: number;
+  const startTime = performance.now();
+
   switch (strategy) {
     case 'exponential':
       delay = Math.min(Math.pow(2, attempt) * baseDelay, maxDelay);
@@ -23,7 +25,13 @@ export const calculateBackoffDelay = (
 
   // Add jitter to prevent thundering herd
   const jitter = Math.random() * 0.1 * delay;
-  return Math.floor(delay + jitter);
+  const finalDelay = Math.floor(delay + jitter);
+
+  const calculationTime = performance.now() - startTime;
+  console.log(`Backoff calculation took ${calculationTime.toFixed(2)}ms`);
+  console.log(`Calculated delay: ${finalDelay}ms (before jitter: ${delay}ms)`);
+
+  return finalDelay;
 };
 
 export const validateRetryConfig = (
