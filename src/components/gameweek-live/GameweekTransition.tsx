@@ -7,6 +7,18 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle, CheckCircle2 } from 'lucide-react';
 import { format } from 'date-fns';
 
+interface TransitionStatus {
+  current: {
+    id: number;
+    transition_status: string | null;
+    transition_started_at: string | null;
+    transition_error: string | null;
+  };
+  next: {
+    id: number;
+  };
+}
+
 export const GameweekTransition = () => {
   const { data: transitionStatus, isLoading } = useQuery({
     queryKey: ['gameweek-transition'],
@@ -29,9 +41,9 @@ export const GameweekTransition = () => {
       if (nextError) throw nextError;
 
       console.log('Transition status:', { current, next });
-      return { current, next };
+      return { current, next } as TransitionStatus;
     },
-    refetchInterval: (data) => 
+    refetchInterval: (data: TransitionStatus | undefined) => 
       data?.current?.transition_status === 'in_progress' ? 5000 : false
   });
 

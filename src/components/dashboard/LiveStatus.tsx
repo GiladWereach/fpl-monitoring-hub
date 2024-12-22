@@ -25,14 +25,12 @@ export const LiveStatus = ({
   showWindow = false,
   timezone = 'UTC'
 }: LiveStatusProps) => {
-  // Query for match window
   const { data: matchWindow, isLoading: windowLoading } = useQuery({
     queryKey: ['match-window', timezone],
     queryFn: () => detectMatchWindow({ timezone }),
     refetchInterval: 30000
   });
 
-  // Query for current gameweek status
   const { data: currentGameweek, isLoading: gameweekLoading } = useQuery({
     queryKey: ['current-gameweek'],
     queryFn: async () => {
