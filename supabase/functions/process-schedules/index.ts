@@ -1,12 +1,8 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { corsHeaders } from './auth.ts';
 import { processSchedule } from './services/schedule-processor.ts';
 import { cleanupOldData } from './services/transaction-service.ts';
 import { logDebug, logError } from '../shared/logging-service.ts';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
