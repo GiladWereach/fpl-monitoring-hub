@@ -1,21 +1,27 @@
 export interface Schedule {
   id: string;
   function_name: string;
-  frequency_type: 'fixed_interval' | 'daily' | 'match_dependent';
-  base_interval_minutes?: number;
-  fixed_time?: string;
-  match_day_interval_minutes?: number;
-  non_match_interval_minutes?: number;
+  schedule_type: 'time_based' | 'event_based';
+  time_config?: {
+    type: 'daily' | 'interval';
+    hour?: number;
+    intervalMinutes?: number;
+  };
+  event_config?: {
+    type: string;
+    conditions?: any[];
+  };
+  execution_config?: {
+    retry_count: number;
+    timeout_seconds: number;
+    retry_delay_seconds: number;
+    concurrent_execution: boolean;
+    retry_backoff: 'linear' | 'exponential';
+    max_retry_delay: number;
+  };
   consecutive_failures: number;
-  status: string;
-  group_id?: string;
-}
-
-export interface ExecutionContext {
-  frequency_type: string;
-  interval_minutes: number;
-  has_active_matches: boolean;
-  consecutive_failures: number;
+  last_execution_at?: string;
+  next_execution_at?: string;
 }
 
 export interface ProcessedSchedule {
@@ -23,10 +29,16 @@ export interface ProcessedSchedule {
   function: string;
   success: boolean;
   duration: number;
-  nextExecution: Date;
+  nextExecution: Date | null;
   context: {
-    frequency_type: string;
-    interval_minutes: number;
-    has_active_matches: boolean;
+    schedule_type: string;
+    time_config?: any;
+    execution_config?: any;
   };
+}
+
+export interface ExecutionContext {
+  schedule_type: string;
+  time_config?: any;
+  execution_config?: any;
 }

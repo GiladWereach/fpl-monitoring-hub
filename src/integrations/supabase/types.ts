@@ -1603,6 +1603,57 @@ export type Database = {
         }
         Relationships: []
       }
+      schedule_backups: {
+        Row: {
+          created_at: string | null
+          enabled: boolean | null
+          event_conditions: Json | null
+          event_config: Json | null
+          execution_config: Json | null
+          execution_window: Json | null
+          function_name: string | null
+          id: string | null
+          last_execution_at: string | null
+          next_execution_at: string | null
+          schedule_type: Database["public"]["Enums"]["schedule_type"] | null
+          time_config: Json | null
+          timezone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          enabled?: boolean | null
+          event_conditions?: Json | null
+          event_config?: Json | null
+          execution_config?: Json | null
+          execution_window?: Json | null
+          function_name?: string | null
+          id?: string | null
+          last_execution_at?: string | null
+          next_execution_at?: string | null
+          schedule_type?: Database["public"]["Enums"]["schedule_type"] | null
+          time_config?: Json | null
+          timezone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          enabled?: boolean | null
+          event_conditions?: Json | null
+          event_config?: Json | null
+          execution_config?: Json | null
+          execution_window?: Json | null
+          function_name?: string | null
+          id?: string | null
+          last_execution_at?: string | null
+          next_execution_at?: string | null
+          schedule_type?: Database["public"]["Enums"]["schedule_type"] | null
+          time_config?: Json | null
+          timezone?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       schedule_execution_logs: {
         Row: {
           completed_at: string | null

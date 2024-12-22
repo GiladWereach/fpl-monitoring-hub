@@ -1,6 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { Schedule, ProcessedSchedule } from './types.ts';
-import { checkActiveMatches } from './match-service.ts';
 import { createExecutionLog, updateExecutionLog } from './execution-logger.ts';
 
 export async function processSchedule(
@@ -10,44 +9,37 @@ export async function processSchedule(
   console.log(`Processing schedule ${schedule.id} for function ${schedule.function_name}`);
   
   try {
-    // Determine interval based on match status
-    let intervalMinutes = schedule.base_interval_minutes;
-    const hasActiveMatches = schedule.frequency_type === 'match_dependent' 
-      ? await checkActiveMatches(supabaseClient)
-      : false;
-
-    if (schedule.frequency_type === 'match_dependent') {
-      intervalMinutes = hasActiveMatches 
-        ? schedule.match_day_interval_minutes 
-        : schedule.non_match_interval_minutes;
-    }
-
     // Create execution log
     const executionContext = {
-      frequency_type: schedule.frequency_type,
-      interval_minutes: intervalMinutes,
-      has_active_matches: hasActiveMatches,
-      consecutive_failures: schedule.consecutive_failures
+      schedule_type: schedule.schedule_type,
+      time_config: schedule.time_config,
+      execution_config: schedule.execution_config
     };
 
     const log = await createExecutionLog(supabaseClient, schedule.id, executionContext);
     
-    // Execute function
+    // Execute function with proper timeout and auth
     const startTime = Date.now();
     console.log(`Invoking function ${schedule.function_name}`);
     
-    const { error: invokeError } = await supabaseClient.functions.invoke(
+    const timeoutMs = (schedule.execution_config?.timeout_seconds || 30) * 1000;
+    
+    const functionPromise = supabaseClient.functions.invoke(
       schedule.function_name,
       {
         body: { 
           scheduled: true,
-          context: {
-            has_active_matches: hasActiveMatches,
-            interval_minutes: intervalMinutes
-          }
+          context: executionContext
         }
       }
     );
+
+    // Add timeout handling
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Function execution timed out')), timeoutMs);
+    });
+
+    const { error: invokeError } = await Promise.race([functionPromise, timeoutPromise]);
 
     const executionDuration = Date.now() - startTime;
     const success = !invokeError;
@@ -63,9 +55,19 @@ export async function processSchedule(
       );
     }
 
-    // Calculate next execution time
-    const nextExecutionTime = new Date();
-    nextExecutionTime.setMinutes(nextExecutionTime.getMinutes() + intervalMinutes);
+    // Calculate next execution time based on schedule type
+    let nextExecutionTime: Date | null = null;
+
+    if (schedule.schedule_type === 'time_based' && schedule.time_config?.type === 'daily') {
+      const hour = schedule.time_config.hour || 0;
+      const now = new Date();
+      nextExecutionTime = new Date();
+      nextExecutionTime.setHours(hour, 0, 0, 0);
+      
+      if (nextExecutionTime <= now) {
+        nextExecutionTime.setDate(nextExecutionTime.getDate() + 1);
+      }
+    }
 
     // Update schedule status
     await updateScheduleStatus(
@@ -84,17 +86,12 @@ export async function processSchedule(
       success,
       duration: executionDuration,
       nextExecution: nextExecutionTime,
-      context: {
-        frequency_type: schedule.frequency_type,
-        interval_minutes: intervalMinutes,
-        has_active_matches: hasActiveMatches
-      }
+      context: executionContext
     };
 
   } catch (error) {
     console.error(`Error processing schedule ${schedule.id}:`, error);
     
-    // Update schedule with error information
     await updateScheduleStatus(
       supabaseClient,
       schedule.id,
@@ -118,7 +115,7 @@ async function updateScheduleStatus(
   duration?: number
 ) {
   const { error: updateError } = await supabaseClient
-    .from('function_schedules')
+    .from('schedules')
     .update({
       last_execution_at: new Date().toISOString(),
       next_execution_at: nextExecutionTime?.toISOString(),
