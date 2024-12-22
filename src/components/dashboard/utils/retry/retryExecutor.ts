@@ -25,7 +25,7 @@ export const executeWithRetry = async <T>(
         new Promise((_, reject) => 
           setTimeout(() => reject(new Error('Operation timed out')), options.timeout)
         )
-      ]);
+      ]) as T; // Explicitly cast the result to type T
 
       console.log(`Operation succeeded on attempt ${attempt}`);
       return result;
@@ -33,9 +33,10 @@ export const executeWithRetry = async <T>(
       console.error(`Attempt ${attempt} failed:`, error);
 
       if (attempt === options.maxAttempts) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
         toast({
           title: "Operation Failed",
-          description: `Failed after ${options.maxAttempts} attempts: ${error.message}`,
+          description: `Failed after ${options.maxAttempts} attempts: ${errorMessage}`,
           variant: "destructive",
         });
         throw error;
