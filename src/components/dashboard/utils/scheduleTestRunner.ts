@@ -3,7 +3,7 @@ import { toast } from "@/hooks/use-toast";
 
 interface TestSuite {
   functionName: string;
-  scheduleTypes: string[];
+  scheduleTypes: Array<"time_based" | "event_based">;
 }
 
 export async function runScheduleTests(testSuites: TestSuite[]) {

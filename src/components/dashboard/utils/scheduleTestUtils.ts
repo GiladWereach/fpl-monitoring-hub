@@ -2,6 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { logAPIError, updateAPIHealthMetrics } from "@/utils/api/errorHandling";
 import type { APIErrorType } from "@/utils/api/errorHandling";
+import type { Json } from "@/integrations/supabase/types";
 
 interface ExecutionConfig {
   retry_count: number;
@@ -36,7 +37,7 @@ export async function testScheduleExecution(
         function_name: functionName,
         schedule_type: scheduleType,
         enabled: true,
-        execution_config: executionConfig as unknown as Json
+        execution_config: executionConfig
       })
       .select()
       .single();
