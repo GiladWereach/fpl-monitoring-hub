@@ -11,6 +11,7 @@ import MatchCards from '@/components/gameweek-live/MatchCards';
 import { LiveStatus } from '@/components/dashboard/LiveStatus';
 import { StatusCard } from '@/components/dashboard/StatusCard';
 import { GameweekTransition } from '@/components/gameweek-live/GameweekTransition';
+import { DeadlineTimer } from '@/components/gameweek-live/DeadlineTimer';
 
 export default function GameWeekLive() {
   const [selectedMatchId, setSelectedMatchId] = useState<number | null>(null);
@@ -66,6 +67,9 @@ export default function GameWeekLive() {
           </AlertDescription>
         </Alert>
       </div>
+
+      {/* Add DeadlineTimer component */}
+      <DeadlineTimer />
 
       {/* Show transition status if in progress */}
       <GameweekTransition />
