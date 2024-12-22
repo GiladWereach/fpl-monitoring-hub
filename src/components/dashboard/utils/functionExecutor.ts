@@ -43,7 +43,7 @@ export const executeFetchFunction = async (functionName: string) => {
           .eq('endpoint', functionName)
           .maybeSingle();
 
-        const response = await Promise.race([
+        const response = await Promise.race<EdgeFunctionResponse>([
           supabase.functions.invoke<EdgeFunctionResponse>(functionName),
           new Promise((_, reject) => 
             setTimeout(() => reject(new SchedulerError(errorClassification.TIMEOUT_ERROR)), 30000)
