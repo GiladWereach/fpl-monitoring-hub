@@ -1,61 +1,124 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { LivePerformanceUpdate } from '../types.ts';
 import { logDebug, logError } from '../logging.ts';
 
-export async function upsertLivePerformance(
-  supabaseClient: ReturnType<typeof createClient>,
-  updates: LivePerformanceUpdate[]
-) {
-  if (!updates.length) {
-    logDebug('fetch-live-gameweek', 'No updates to process');
-    return;
+export async function getLastUpdate(supabaseClient: ReturnType<typeof createClient>, eventId: number) {
+  logDebug('fetch-live-gameweek', `Fetching last update for event ${eventId}`);
+  
+  const { data: lastUpdate, error } = await supabaseClient
+    .from('gameweek_live_performance')
+    .select('last_updated')
+    .eq('event_id', eventId)
+    .order('last_updated', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error && error.code !== 'PGRST116') { // Ignore "no rows returned" error
+    logError('fetch-live-gameweek', 'Error fetching last update:', error);
+    throw error;
   }
 
-  const playerIds = [...new Set(updates.map(u => u.player_id))];
-  const validPlayerIds = await validatePlayers(supabaseClient, playerIds);
-  const validUpdates = updates.filter(update => validPlayerIds.has(update.player_id));
+  logDebug('fetch-live-gameweek', 'Last update:', lastUpdate);
+  return lastUpdate;
+}
 
-  logDebug('fetch-live-gameweek', `Processing ${validUpdates.length} valid updates out of ${updates.length} total`);
+export async function cleanupOldPerformanceData(supabaseClient: ReturnType<typeof createClient>, eventId: number) {
+  // Keep only the last 3 gameweeks of performance data
+  const oldEventId = eventId - 3;
+  
+  const { error } = await supabaseClient
+    .from('gameweek_live_performance')
+    .delete()
+    .lt('event_id', oldEventId);
 
-  if (!validUpdates.length) {
-    logDebug('fetch-live-gameweek', 'No valid updates to process after filtering');
+  if (error) {
+    logError('fetch-live-gameweek', 'Error cleaning up old performance data:', error);
+    throw error;
+  }
+  
+  logDebug('fetch-live-gameweek', `Cleaned up performance data older than gameweek ${oldEventId}`);
+}
+
+export async function upsertPerformanceData(
+  supabaseClient: ReturnType<typeof createClient>,
+  eventId: number,
+  performanceData: any[]
+) {
+  if (!performanceData.length) {
+    logDebug('fetch-live-gameweek', 'No performance data to upsert');
     return;
   }
 
   const batchSize = 50;
-  for (let i = 0; i < validUpdates.length; i += batchSize) {
-    const batch = validUpdates.slice(i, i + batchSize);
-    logDebug('fetch-live-gameweek', `Processing batch ${Math.floor(i/batchSize) + 1} of ${Math.ceil(validUpdates.length/batchSize)}`);
+  for (let i = 0; i < performanceData.length; i += batchSize) {
+    const batch = performanceData.slice(i, i + batchSize);
+    logDebug('fetch-live-gameweek', `Upserting performance batch ${Math.floor(i/batchSize) + 1} of ${Math.ceil(performanceData.length/batchSize)}`);
     
-    const { error: upsertError } = await supabaseClient
+    const { error } = await supabaseClient
       .from('gameweek_live_performance')
-      .upsert(batch, {
-        onConflict: 'event_id,player_id',
-        ignoreDuplicates: false
-      });
+      .upsert(
+        batch.map(data => ({
+          ...data,
+          event_id: eventId,
+          last_updated: new Date().toISOString()
+        })),
+        {
+          onConflict: 'event_id,player_id',
+          ignoreDuplicates: false
+        }
+      );
 
-    if (upsertError) {
-      logError('fetch-live-gameweek', `Error upserting batch ${Math.floor(i/batchSize) + 1}:`, upsertError);
-      throw upsertError;
+    if (error) {
+      logError('fetch-live-gameweek', `Error upserting performance batch:`, error);
+      throw error;
     }
   }
+
+  logDebug('fetch-live-gameweek', `Successfully upserted ${performanceData.length} performance records`);
 }
 
-async function validatePlayers(supabaseClient: ReturnType<typeof createClient>, playerIds: number[]) {
-  logDebug('fetch-live-gameweek', `Validating ${playerIds.length} players...`);
-  
-  const { data: existingPlayers, error } = await supabaseClient
-    .from('players')
-    .select('id')
-    .in('id', playerIds);
+export async function getPerformanceStats(supabaseClient: ReturnType<typeof createClient>, eventId: number) {
+  const { data, error } = await supabaseClient
+    .from('gameweek_live_performance')
+    .select('count(*), min(last_updated), max(last_updated)')
+    .eq('event_id', eventId)
+    .single();
 
   if (error) {
-    logError('fetch-live-gameweek', 'Error validating players:', error);
+    logError('fetch-live-gameweek', 'Error fetching performance stats:', error);
     throw error;
   }
 
-  const validPlayerIds = new Set(existingPlayers.map(p => p.id));
-  logDebug('fetch-live-gameweek', `Found ${validPlayerIds.size} valid players out of ${playerIds.length}`);
-  
-  return validPlayerIds;
+  return {
+    recordCount: data?.count || 0,
+    firstUpdate: data?.min || null,
+    lastUpdate: data?.max || null
+  };
+}
+
+export async function archivePerformanceData(supabaseClient: ReturnType<typeof createClient>, eventId: number) {
+  const { error: archiveError } = await supabaseClient
+    .from('gameweek_performance_archive')
+    .insert(
+      supabaseClient
+        .from('gameweek_live_performance')
+        .select('*')
+        .eq('event_id', eventId)
+    );
+
+  if (archiveError) {
+    logError('fetch-live-gameweek', 'Error archiving performance data:', archiveError);
+    throw archiveError;
+  }
+
+  const { error: deleteError } = await supabaseClient
+    .from('gameweek_live_performance')
+    .delete()
+    .eq('event_id', eventId);
+
+  if (deleteError) {
+    logError('fetch-live-gameweek', 'Error deleting archived performance data:', deleteError);
+    throw deleteError;
+  }
+
+  logDebug('fetch-live-gameweek', `Successfully archived performance data for gameweek ${eventId}`);
 }
