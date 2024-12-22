@@ -11,6 +11,11 @@ import {
   errorClassification 
 } from "@/utils/errorHandling";
 
+interface EdgeFunctionResponse {
+  data: any;
+  error: Error | null;
+}
+
 export const executeFetchFunction = async (functionName: string) => {
   const started_at = new Date().toISOString();
   let scheduleId: string | undefined;
@@ -38,14 +43,14 @@ export const executeFetchFunction = async (functionName: string) => {
           .eq('endpoint', functionName)
           .maybeSingle();
 
-        const { data, error } = await Promise.race([
-          supabase.functions.invoke(functionName),
+        const response = await Promise.race([
+          supabase.functions.invoke<EdgeFunctionResponse>(functionName),
           new Promise((_, reject) => 
             setTimeout(() => reject(new SchedulerError(errorClassification.TIMEOUT_ERROR)), 30000)
           )
         ]);
         
-        if (error) throw error;
+        if (response.error) throw response.error;
         
         const endTime = Date.now();
         const duration = endTime - startTime;
@@ -83,7 +88,7 @@ export const executeFetchFunction = async (functionName: string) => {
           description: `${functionName} executed successfully`,
         });
 
-        return { success: true, data };
+        return { success: true, data: response.data };
       } catch (error) {
         await handleSchedulerError(error, { functionName, attempt, maxAttempts });
         
