@@ -22,7 +22,7 @@ vi.mock('@/integrations/supabase/client', () => ({
       upsert: vi.fn(),
       delete: vi.fn(),
       headers: {},
-      url: 'mock-url'
+      url: new URL('https://mock-url.com')
     }))
   }
 }));
@@ -137,7 +137,7 @@ describe('Schedule Validation Service', () => {
         upsert: vi.fn(),
         delete: vi.fn(),
         headers: {},
-        url: 'mock-url'
+        url: new URL('https://mock-url.com')
       }));
 
       const result = await validateSchedule(mockSchedule);
