@@ -8,6 +8,7 @@ import { EventConditionsFields } from "./EventConditionsFields";
 import { UseFormReturn } from "react-hook-form";
 import { AdvancedScheduleFormValues } from "./types/scheduling";
 import { toast } from "@/hooks/use-toast";
+import { validateTimeZone } from "@/utils/validation";
 
 interface ScheduleFormFieldsProps {
   form: UseFormReturn<AdvancedScheduleFormValues>;
@@ -89,7 +90,11 @@ export function ScheduleFormFields({ form }: ScheduleFormFieldsProps) {
           control={form.control}
           name="timezone"
           rules={{
-            required: "Timezone is required"
+            required: "Timezone is required",
+            validate: {
+              validTimezone: (value) => 
+                validateTimeZone(value) || "Invalid timezone format"
+            }
           }}
           render={({ field }) => (
             <FormItem>
