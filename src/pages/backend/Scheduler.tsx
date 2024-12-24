@@ -4,6 +4,7 @@ import { ExecutionList } from "./components/ExecutionList";
 import { ScheduleList } from "./components/schedule/ScheduleList";
 import { APIHealthStatus } from "@/components/monitoring/APIHealthStatus";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { BackendSidebarMenu } from "@/components/backend/navigation/BackendSidebarMenu";
 import { FunctionDialogHandler } from "@/components/backend/scheduler/FunctionDialogHandler";
 import { SchedulerErrorBoundary } from "@/components/backend/scheduler/SchedulerErrorBoundary";
 import { useQuery } from "@tanstack/react-query";
@@ -12,9 +13,11 @@ import { useToast } from "@/hooks/use-toast";
 import { SchedulerHeader } from "./components/scheduler/SchedulerHeader";
 import { StatusCardsGrid } from "./components/scheduler/StatusCardsGrid";
 import { EdgeFunctionSection } from "./components/scheduler/EdgeFunctionSection";
+import { cn } from "@/lib/utils";
 
 export default function Scheduler() {
   const [newFunctionOpen, setNewFunctionOpen] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
   const { toast } = useToast();
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
@@ -68,10 +71,14 @@ export default function Scheduler() {
   }, [refetch]);
 
   return (
-    <div className="min-h-screen bg-background">
-      <main className="flex-1 p-6">
+    <div className="flex min-h-screen bg-background">
+      <BackendSidebarMenu onExpandedChange={setIsExpanded} />
+      <main className={cn(
+        "flex-1 transition-all duration-300 ease-in-out p-6",
+        isExpanded ? "ml-[240px]" : "ml-[60px]"
+      )}>
         <SchedulerErrorBoundary>
-          <div className="space-y-8 max-w-7xl mx-auto">
+          <div className="space-y-8 max-w-7xl">
             <SchedulerHeader lastUpdated={lastUpdated} onRefresh={() => refetch()} />
             <StatusCardsGrid metrics={metrics} isLoading={isLoading} error={error} />
 
