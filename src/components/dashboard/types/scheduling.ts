@@ -92,33 +92,52 @@ export interface ScheduleData extends AdvancedScheduleFormValues {
 
 // Type guard to validate TimeConfig
 export function isTimeConfig(obj: any): obj is TimeConfig {
-  return obj && 
-    typeof obj === 'object' && 
-    (obj.type === 'daily' || obj.type === 'match_dependent');
+  if (!obj || typeof obj !== 'object') return false;
+  
+  if (obj.type !== 'daily' && obj.type !== 'match_dependent') return false;
+  
+  if (obj.type === 'daily') {
+    return typeof obj.hour === 'number' && obj.hour >= 0 && obj.hour <= 23;
+  }
+  
+  if (obj.type === 'match_dependent') {
+    return (
+      (typeof obj.matchDayIntervalMinutes === 'number' || obj.matchDayIntervalMinutes === undefined) &&
+      (typeof obj.nonMatchIntervalMinutes === 'number' || obj.nonMatchIntervalMinutes === undefined)
+    );
+  }
+  
+  return false;
 }
 
 // Type guard to validate EventConfig
 export function isEventConfig(obj: any): obj is EventConfig {
-  return obj && 
-    typeof obj === 'object' && 
-    typeof obj.triggerType === 'string' &&
-    typeof obj.offsetMinutes === 'number';
+  if (!obj || typeof obj !== 'object') return false;
+  
+  return (
+    ['deadline', 'kickoff', 'match_status'].includes(obj.triggerType) &&
+    typeof obj.offsetMinutes === 'number'
+  );
 }
 
 // Type guard to validate ExecutionConfig
 export function isExecutionConfig(obj: any): obj is ExecutionConfig {
-  return obj && 
-    typeof obj === 'object' &&
+  if (!obj || typeof obj !== 'object') return false;
+  
+  return (
     typeof obj.retry_count === 'number' &&
     typeof obj.timeout_seconds === 'number' &&
     typeof obj.retry_delay_seconds === 'number' &&
     typeof obj.concurrent_execution === 'boolean' &&
     typeof obj.max_retry_delay === 'number' &&
-    ['linear', 'exponential', 'fixed'].includes(obj.retry_backoff);
+    ['linear', 'exponential', 'fixed'].includes(obj.retry_backoff)
+  );
 }
 
 // Helper function to safely convert Supabase JSON to our types
 export function convertScheduleData(data: any): ScheduleData {
+  console.log('Converting schedule data:', data);
+  
   return {
     id: data.id,
     function_name: data.function_name,
