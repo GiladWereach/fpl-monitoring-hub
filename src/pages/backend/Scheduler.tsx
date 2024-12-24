@@ -79,11 +79,15 @@ export default function Scheduler() {
         <BackendSidebarMenu onExpandedChange={setIsExpanded} />
         <main 
           className={cn(
-            "flex-1 transition-all duration-300 ease-in-out p-6"
+            "flex-1 transition-all duration-300 ease-in-out p-6",
           )}
         >
           <SchedulerErrorBoundary>
-            <div className="container mx-auto space-y-8 max-w-7xl">
+            <div className={cn(
+              "space-y-8",
+              "max-w-7xl",
+              isExpanded ? "ml-[240px]" : "ml-[60px]"
+            )}>
               <SchedulerHeader lastUpdated={lastUpdated} onRefresh={() => refetch()} />
               <StatusCardsGrid metrics={metrics} isLoading={isLoading} error={error} />
 
