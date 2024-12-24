@@ -16,9 +16,10 @@ interface NewFunctionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (values: NewFunctionFormValues) => Promise<void>;
+  isLoading?: boolean;
 }
 
-export function NewFunctionDialog({ open, onOpenChange, onSubmit }: NewFunctionDialogProps) {
+export function NewFunctionDialog({ open, onOpenChange, onSubmit, isLoading }: NewFunctionDialogProps) {
   const form = useForm<NewFunctionFormValues>();
 
   const { data: groups } = useQuery({
@@ -72,8 +73,8 @@ export function NewFunctionDialog({ open, onOpenChange, onSubmit }: NewFunctionD
                 </SelectContent>
               </Select>
             </div>
-            <Button type="submit" className="w-full">
-              Create Function Schedule
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? 'Creating...' : 'Create Function Schedule'}
             </Button>
           </form>
         </Form>
