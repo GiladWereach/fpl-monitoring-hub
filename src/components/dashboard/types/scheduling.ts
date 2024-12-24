@@ -52,7 +52,6 @@ export interface ScheduleValidationResult {
   errors: ValidationError[];
 }
 
-// Add missing types
 export interface ScheduleData {
   id?: string;
   function_name: string;

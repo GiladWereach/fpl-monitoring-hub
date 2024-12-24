@@ -1,5 +1,5 @@
-import { supabase } from "@/integrations/supabase/client";
 import { AdvancedScheduleFormValues, TimeConfig } from "@/components/dashboard/types/scheduling";
+import { supabase } from "@/integrations/supabase/client";
 
 export const validateTimeZone = (timezone: string): boolean => {
   try {
@@ -31,7 +31,9 @@ export const validateScheduleConflicts = async (
   // For time-based schedules
   if (values.schedule_type === 'time_based') {
     const conflictingSchedule = existingSchedules?.find(schedule => {
+      // Safely type assert the time_config
       const timeConfig = schedule.time_config as TimeConfig | null;
+      
       return schedule.schedule_type === 'time_based' &&
              timeConfig?.type === values.time_config.type &&
              timeConfig?.hour === values.time_config.hour;
