@@ -31,25 +31,25 @@ export default function BackendScheduler() {
     {
       title: "Database Status",
       value: "Connected",
-      status: "success",
+      status: "success" as const,
       icon: <Database className="h-4 w-4" />,
     },
     {
       title: "Edge Functions",
       value: `${metrics?.length || 0} Active`,
-      status: "info",
+      status: "info" as const,
       icon: <Server className="h-4 w-4" />,
     },
     {
       title: "System Health",
       value: "Healthy",
-      status: "success",
+      status: "success" as const,
       icon: <Activity className="h-4 w-4" />,
     },
     {
       title: "System Errors",
       value: "0",
-      status: "warning",
+      status: "warning" as const,
       icon: <AlertTriangle className="h-4 w-4" />,
     },
   ];
