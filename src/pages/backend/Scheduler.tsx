@@ -33,42 +33,48 @@ export default function BackendScheduler() {
               <ScheduleHeader onNewFunction={() => setNewFunctionOpen(true)} />
               
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                <TooltipProvider>
+                <TooltipProvider delayDuration={300}>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <div>
+                      <div className="transition-all duration-200 hover:scale-[1.02]">
                         <APIHealthStatus />
                       </div>
                     </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Monitor API health and performance metrics</p>
+                    <TooltipContent side="bottom" className="max-w-[300px]">
+                      <p>Monitor API health and performance metrics in real-time</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
               </div>
 
-              <Card className="p-6">
-                <h2 className="text-lg sm:text-xl font-semibold mb-6">Edge Functions</h2>
-                <ScrollArea className="h-[400px] w-full">
-                  <div className="min-w-[600px]">
+              <Card className="p-6 bg-card shadow-md">
+                <h2 className="text-lg sm:text-xl font-semibold mb-6 flex items-center gap-2">
+                  Edge Functions
+                </h2>
+                <ScrollArea className="h-[400px] w-full rounded-md">
+                  <div className="min-w-[600px] p-1">
                     <EdgeFunctionManager />
                   </div>
                 </ScrollArea>
               </Card>
 
-              <Card className="p-6">
-                <h2 className="text-lg sm:text-xl font-semibold mb-6">Function Schedules</h2>
-                <ScrollArea className="h-[400px] w-full">
-                  <div className="min-w-[600px]">
+              <Card className="p-6 bg-card shadow-md">
+                <h2 className="text-lg sm:text-xl font-semibold mb-6 flex items-center gap-2">
+                  Function Schedules
+                </h2>
+                <ScrollArea className="h-[400px] w-full rounded-md">
+                  <div className="min-w-[600px] p-1">
                     <ScheduleList />
                   </div>
                 </ScrollArea>
               </Card>
 
-              <Card className="p-6">
-                <h2 className="text-lg sm:text-xl font-semibold mb-6">Recent Executions</h2>
-                <ScrollArea className="h-[400px] w-full">
-                  <div className="min-w-[600px]">
+              <Card className="p-6 bg-card shadow-md">
+                <h2 className="text-lg sm:text-xl font-semibold mb-6 flex items-center gap-2">
+                  Recent Executions
+                </h2>
+                <ScrollArea className="h-[400px] w-full rounded-md">
+                  <div className="min-w-[600px] p-1">
                     <ExecutionList />
                   </div>
                 </ScrollArea>
