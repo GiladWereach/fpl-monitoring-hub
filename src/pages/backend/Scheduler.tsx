@@ -11,17 +11,20 @@ import { BackendSidebarMenu } from "@/components/backend/navigation/BackendSideb
 import { FunctionDialogHandler } from "@/components/backend/scheduler/FunctionDialogHandler";
 import { SchedulerErrorBoundary } from "@/components/backend/scheduler/SchedulerErrorBoundary";
 import { StatusCard } from "@/components/dashboard/StatusCard";
-import { Database, Activity, AlertTriangle, Server } from "lucide-react";
+import { Database, Activity, AlertTriangle, Server, RefreshCw } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Button } from "@/components/ui/button";
 
 export default function BackendScheduler() {
   const [newFunctionOpen, setNewFunctionOpen] = useState(false);
   const { toast } = useToast();
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
-  const { data: metrics, isLoading, error } = useQuery({
+  const { data: metrics, isLoading, error, refetch } = useQuery({
     queryKey: ['system-metrics'],
     queryFn: async () => {
       console.log('Fetching system metrics');
@@ -33,6 +36,7 @@ export default function BackendScheduler() {
       }
       
       console.log('Fetched metrics:', healthData);
+      setLastUpdated(new Date());
       return healthData;
     },
     refetchInterval: 30000,
@@ -47,30 +51,57 @@ export default function BackendScheduler() {
     }
   });
 
+  // Set up real-time subscription
+  useEffect(() => {
+    const channel = supabase
+      .channel('system-metrics')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'api_health_metrics'
+        },
+        (payload) => {
+          console.log('Received real-time update:', payload);
+          refetch();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [refetch]);
+
   const statusCards = [
     {
       title: "Database Status",
       value: "Connected",
       status: "success" as const,
       icon: <Database className="h-4 w-4" />,
+      tooltip: "Current database connection status"
     },
     {
       title: "Edge Functions",
       value: `${metrics?.length || 0} Active`,
       status: "info" as const,
       icon: <Server className="h-4 w-4" />,
+      tooltip: "Number of active edge functions"
     },
     {
       title: "System Health",
       value: "Healthy",
       status: "success" as const,
       icon: <Activity className="h-4 w-4" />,
+      tooltip: "Overall system health status"
     },
     {
       title: "System Errors",
       value: "0",
       status: "warning" as const,
       icon: <AlertTriangle className="h-4 w-4" />,
+      tooltip: "Number of system errors in the last 24 hours"
     },
   ];
 
@@ -108,7 +139,18 @@ export default function BackendScheduler() {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {statusCards.map((card, index) => (
-          <StatusCard key={index} {...card} />
+          <TooltipProvider key={index}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="transition-transform hover:scale-[1.02]">
+                  <StatusCard {...card} />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{card.tooltip}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         ))}
       </div>
     );
@@ -124,7 +166,23 @@ export default function BackendScheduler() {
         <div className="flex-1 overflow-auto">
           <SchedulerErrorBoundary>
             <div className="container mx-auto p-6 space-y-8 animate-fade-in">
-              <ScheduleHeader onNewFunction={() => setNewFunctionOpen(true)} />
+              <div className="flex justify-between items-center">
+                <ScheduleHeader onNewFunction={() => setNewFunctionOpen(true)} />
+                <div className="flex items-center gap-2">
+                  <p className="text-sm text-muted-foreground">
+                    Last updated: {lastUpdated.toLocaleTimeString()}
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => refetch()}
+                    className="gap-2"
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                    Refresh
+                  </Button>
+                </div>
+              </div>
               
               {renderStatusCards()}
 
