@@ -17,6 +17,7 @@ import { EdgeFunctionSection } from "./components/scheduler/EdgeFunctionSection"
 
 export default function Scheduler() {
   const [newFunctionOpen, setNewFunctionOpen] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
   const { toast } = useToast();
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
@@ -72,8 +73,8 @@ export default function Scheduler() {
   return (
     <div className="flex min-h-screen bg-background">
       <SidebarProvider defaultOpen>
-        <BackendSidebarMenu />
-        <div className="flex-1 ml-[60px] transition-all duration-300">
+        <BackendSidebarMenu onExpandedChange={setIsExpanded} />
+        <div className={`flex-1 transition-all duration-300 ${isExpanded ? 'ml-[240px]' : 'ml-[60px]'}`}>
           <SchedulerErrorBoundary>
             <div className="container mx-auto p-6 space-y-8 max-w-7xl">
               <SchedulerHeader lastUpdated={lastUpdated} onRefresh={() => refetch()} />

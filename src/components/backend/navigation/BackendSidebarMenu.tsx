@@ -5,14 +5,17 @@ import {
   SidebarContent,
   SidebarGroup,
   SidebarGroupLabel,
-  SidebarTrigger
 } from '@/components/ui/sidebar';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { MenuItems } from './MenuItems';
 import { MonitoringSection } from './MonitoringSection';
 
-export function BackendSidebarMenu() {
+interface BackendSidebarMenuProps {
+  onExpandedChange?: (expanded: boolean) => void;
+}
+
+export function BackendSidebarMenu({ onExpandedChange }: BackendSidebarMenuProps) {
   const [isMonitoringOpen, setIsMonitoringOpen] = React.useState(true);
   const [isLoading, setIsLoading] = React.useState(false);
   const [isExpanded, setIsExpanded] = React.useState(true);
@@ -24,7 +27,9 @@ export function BackendSidebarMenu() {
   };
 
   const toggleSidebar = () => {
-    setIsExpanded(!isExpanded);
+    const newExpandedState = !isExpanded;
+    setIsExpanded(newExpandedState);
+    onExpandedChange?.(newExpandedState);
   };
 
   console.log('BackendSidebarMenu render state:', { isExpanded });
@@ -32,7 +37,7 @@ export function BackendSidebarMenu() {
   return (
     <Sidebar 
       className={cn(
-        "transition-all duration-300 border-r fixed h-full bg-background",
+        "transition-all duration-300 border-r fixed h-full bg-background z-40",
         isExpanded ? "w-[240px]" : "w-[60px]"
       )} 
       variant="sidebar"
@@ -40,7 +45,7 @@ export function BackendSidebarMenu() {
       <Button
         variant="ghost"
         size="icon"
-        className="absolute right-2 top-2 z-50"
+        className="absolute right-2 top-2"
         onClick={toggleSidebar}
       >
         {isExpanded ? (
