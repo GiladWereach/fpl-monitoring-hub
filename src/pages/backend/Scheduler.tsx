@@ -70,8 +70,8 @@ export default function Scheduler() {
   }, [refetch]);
 
   return (
-    <SidebarProvider>
-      <div className="flex h-screen overflow-hidden">
+    <div className="flex h-screen overflow-hidden bg-background">
+      <SidebarProvider defaultOpen>
         <BackendSidebarMenu />
         <div className="flex-1 overflow-auto">
           <SchedulerErrorBoundary>
@@ -108,7 +108,7 @@ export default function Scheduler() {
             </div>
           </SchedulerErrorBoundary>
         </div>
-      </div>
-    </SidebarProvider>
+      </SidebarProvider>
+    </div>
   );
 }
