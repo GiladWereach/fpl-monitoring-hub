@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
-import { functions } from "./utils/functionConfigs";
+import { functions, getCategoryDescription } from "./utils/functionConfigs";
 import { executeFetchFunction } from "./utils/functionExecutor";
 import { FunctionList } from "./components/FunctionList";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { ScheduleCategory } from "./types/scheduleTypes";
 
 export function EdgeFunctionManager() {
   const [loading, setLoading] = useState<string | null>(null);
@@ -56,6 +57,9 @@ export function EdgeFunctionManager() {
     setLoading(null);
   };
 
+  // Group functions by category
+  const categories: ScheduleCategory[] = ['core_data', 'match_dependent', 'system', 'analytics'];
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -71,12 +75,26 @@ export function EdgeFunctionManager() {
       </div>
 
       <ScrollArea className="h-[calc(100vh-200px)]">
-        <div className="min-w-[600px] pr-4">
-          <FunctionList 
-            loading={loading} 
-            onExecute={handleExecute} 
-            schedules={schedules || []}
-          />
+        <div className="min-w-[600px] pr-4 space-y-8">
+          {categories.map(category => {
+            const categoryFunctions = functions.filter(f => f.scheduleConfig.category === category);
+            if (categoryFunctions.length === 0) return null;
+
+            return (
+              <div key={category} className="space-y-4">
+                <div className="border-b pb-2">
+                  <h3 className="text-lg font-semibold capitalize">{category.replace('_', ' ')}</h3>
+                  <p className="text-sm text-muted-foreground">{getCategoryDescription(category)}</p>
+                </div>
+                <FunctionList 
+                  loading={loading} 
+                  onExecute={handleExecute} 
+                  schedules={schedules || []}
+                  functions={categoryFunctions}
+                />
+              </div>
+            );
+          })}
         </div>
       </ScrollArea>
     </div>
