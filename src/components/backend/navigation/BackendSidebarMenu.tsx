@@ -59,7 +59,6 @@ export function BackendSidebarMenu() {
             )}>
               Backend
             </SidebarGroupLabel>
-            <SidebarTrigger />
           </div>
           <MenuItems 
             isExpanded={isExpanded}
