@@ -1,7 +1,7 @@
 import React from 'react';
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { NewFunctionDialog } from "../components/schedule/NewFunctionDialog";
+import { NewFunctionDialog } from "@/pages/backend/components/schedule/NewFunctionDialog";
 
 interface FunctionDialogHandlerProps {
   newFunctionOpen: boolean;
