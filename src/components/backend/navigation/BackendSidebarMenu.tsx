@@ -35,7 +35,7 @@ export function BackendSidebarMenu({ onExpandedChange }: BackendSidebarMenuProps
   return (
     <Sidebar 
       className={cn(
-        "transition-all duration-300 border-r fixed h-full bg-background z-40",
+        "fixed left-0 top-0 h-screen z-40 transition-all duration-300 ease-in-out border-r bg-background",
         isExpanded ? "w-[240px]" : "w-[60px]"
       )} 
       variant="sidebar"

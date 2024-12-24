@@ -75,10 +75,12 @@ export default function Scheduler() {
     <div className="flex min-h-screen bg-background">
       <SidebarProvider defaultOpen>
         <BackendSidebarMenu onExpandedChange={setIsExpanded} />
-        <main className={cn(
-          "flex-1 transition-all duration-300",
-          isExpanded ? "ml-[240px]" : "ml-[60px]"
-        )}>
+        <main 
+          className={cn(
+            "flex-1 transition-all duration-300 ease-in-out",
+            isExpanded ? "ml-[240px]" : "ml-[60px]"
+          )}
+        >
           <SchedulerErrorBoundary>
             <div className="container mx-auto p-6 space-y-8 max-w-7xl">
               <SchedulerHeader lastUpdated={lastUpdated} onRefresh={() => refetch()} />
