@@ -59,14 +59,7 @@ export type Schedule = {
     triggerType: string;
     offsetMinutes: number;
   };
-  execution_config: {
-    retry_count: number;
-    timeout_seconds: number;
-    retry_delay_seconds: number;
-    concurrent_execution: boolean;
-    retry_backoff: 'linear' | 'exponential' | 'fixed';
-    max_retry_delay: number;
-  };
+  execution_config: ExecutionConfig;
   execution_window?: ExecutionWindow;
   notification_config: NotificationConfig;
   timezone: string;
