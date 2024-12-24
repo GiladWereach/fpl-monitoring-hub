@@ -36,7 +36,7 @@ export function MenuItems({ isExpanded, isLoading, handleNavigation }: MenuItems
                 asChild
                 className={cn(
                   "relative",
-                  location.pathname === item.path && "bg-accent"
+                  location.pathname === item.path && isExpanded ? "bg-accent w-full" : location.pathname === item.path ? "bg-accent w-8" : ""
                 )}
               >
                 <Link 
