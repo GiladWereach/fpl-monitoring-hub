@@ -7,6 +7,8 @@ interface SchedulerHeaderProps {
 }
 
 export function SchedulerHeader({ lastUpdated, onRefresh }: SchedulerHeaderProps) {
+  console.log("Rendering SchedulerHeader");
+  
   return (
     <div className="flex flex-col space-y-4 sm:flex-row sm:justify-between sm:items-center mb-8">
       <div>

@@ -1,52 +1,53 @@
-import { StatusCard } from "@/components/dashboard/StatusCard";
-import { Database, Activity, AlertTriangle, Server } from "lucide-react";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface StatusCardsGridProps {
-  metrics: any[] | undefined;
+  metrics: any;
   isLoading: boolean;
   error: Error | null;
 }
 
 export function StatusCardsGrid({ metrics, isLoading, error }: StatusCardsGridProps) {
-  const statusCards = [
-    {
-      title: "Database Status",
-      value: "Connected",
-      status: "success" as const,
-      icon: <Database className="h-4 w-4" />,
-      tooltip: "Current database connection status"
-    },
-    {
-      title: "Edge Functions",
-      value: `${metrics?.length || 0} Active`,
-      status: "info" as const,
-      icon: <Server className="h-4 w-4" />,
-      tooltip: "Number of active edge functions"
-    },
-    {
-      title: "System Health",
-      value: "Healthy",
-      status: "success" as const,
-      icon: <Activity className="h-4 w-4" />,
-      tooltip: "Overall system health status"
-    },
-    {
-      title: "System Errors",
-      value: "0",
-      status: "warning" as const,
-      icon: <AlertTriangle className="h-4 w-4" />,
-      tooltip: "Number of system errors in the last 24 hours"
-    },
-  ];
+  console.log("Rendering StatusCardsGrid with metrics:", metrics);
 
-  return (
-    <TooltipProvider>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {statusCards.map((card, index) => (
-          <StatusCard key={index} {...card} />
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {[1, 2, 3, 4].map((i) => (
+          <Card key={i} className="p-4">
+            <Skeleton className="h-4 w-1/2 mb-2" />
+            <Skeleton className="h-8 w-full" />
+          </Card>
         ))}
       </div>
-    </TooltipProvider>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className="p-4 text-destructive">
+        Error loading metrics: {error.message}
+      </Card>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {metrics?.map((metric: any) => (
+        <Card key={metric.endpoint} className="p-4">
+          <h3 className="font-semibold text-sm mb-2">{metric.endpoint}</h3>
+          <div className="space-y-1 text-sm">
+            <div className="flex justify-between">
+              <span>Success Rate:</span>
+              <span>{metric.success_rate}%</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Response Time:</span>
+              <span>{metric.avg_response_time}ms</span>
+            </div>
+          </div>
+        </Card>
+      ))}
+    </div>
   );
 }

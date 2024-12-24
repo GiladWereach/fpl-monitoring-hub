@@ -18,6 +18,8 @@ import { cn } from "@/lib/utils";
 import { SidebarProvider } from "@/components/ui/sidebar";
 
 export default function Scheduler() {
+  console.log("Rendering Scheduler page");
+  
   const [newFunctionOpen, setNewFunctionOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(true);
   const { toast } = useToast();
