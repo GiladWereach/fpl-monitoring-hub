@@ -14,6 +14,8 @@ import { SchedulerHeader } from "./components/scheduler/SchedulerHeader";
 import { StatusCardsGrid } from "./components/scheduler/StatusCardsGrid";
 import { EdgeFunctionSection } from "./components/scheduler/EdgeFunctionSection";
 import { ScheduleMonitor } from "@/components/dashboard/monitoring/ScheduleMonitor";
+import { MetricsPanel } from "./components/scheduler/MetricsPanel";
+import { ExecutionSummary } from "./components/scheduler/ExecutionSummary";
 import { cn } from "@/lib/utils";
 import { SidebarProvider } from "@/components/ui/sidebar";
 
@@ -86,6 +88,11 @@ export default function Scheduler() {
             <div className="space-y-8 max-w-7xl">
               <SchedulerHeader lastUpdated={lastUpdated} onRefresh={() => refetch()} />
               <StatusCardsGrid metrics={metrics} isLoading={isLoading} error={error} />
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <MetricsPanel />
+                <ExecutionSummary />
+              </div>
 
               <ScheduleMonitor />
 
