@@ -36,12 +36,14 @@ export default function BackendScheduler() {
       return healthData;
     },
     refetchInterval: 30000,
-    onError: () => {
-      toast({
-        title: "Error fetching metrics",
-        description: "Failed to load system metrics. Please try again later.",
-        variant: "destructive",
-      });
+    meta: {
+      onError: () => {
+        toast({
+          title: "Error fetching metrics",
+          description: "Failed to load system metrics. Please try again later.",
+          variant: "destructive",
+        });
+      }
     }
   });
 
