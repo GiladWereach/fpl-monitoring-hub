@@ -1,48 +1,83 @@
 import { Schedule } from "@/types/scheduling";
 import { Card } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ErrorAnalyticsDashboard } from "../../monitoring/ErrorAnalyticsDashboard";
+import { useQuery } from "@tanstack/react-query";
+import { errorPatternService } from "@/services/errorPatternService";
+import { toast } from "@/hooks/use-toast";
 
 interface MonitoringTabProps {
   schedule: Schedule;
 }
 
 export function MonitoringTab({ schedule }: MonitoringTabProps) {
-  return (
-    <div className="space-y-4">
-      <Card className="p-4">
-        <h4 className="text-sm font-medium mb-2">Performance Metrics</h4>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <p className="text-sm text-muted-foreground">Success Rate</p>
-            <p className="text-lg font-semibold">{schedule.success_rate}%</p>
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Avg. Duration</p>
-            <p className="text-lg font-semibold">
-              {schedule.avg_duration_ms ? `${(schedule.avg_duration_ms / 1000).toFixed(2)}s` : 'N/A'}
-            </p>
-          </div>
-        </div>
-      </Card>
+  console.log('Rendering MonitoringTab for schedule:', schedule.function_name);
 
-      <Card className="p-4">
-        <h4 className="text-sm font-medium mb-2">Last Execution</h4>
-        <div className="space-y-2">
-          <div>
-            <p className="text-sm text-muted-foreground">Timestamp</p>
-            <p className="font-medium">
-              {schedule.last_execution_at ? new Date(schedule.last_execution_at).toLocaleString() : 'Never'}
-            </p>
+  const { data: errorPatterns, isLoading } = useQuery({
+    queryKey: ['error-patterns', schedule.id],
+    queryFn: () => errorPatternService.analyzePatterns(),
+    refetchInterval: 60000,
+    meta: {
+      onError: () => {
+        toast({
+          title: "Error Analysis Failed",
+          description: "Could not analyze error patterns",
+          variant: "destructive",
+        });
+      }
+    }
+  });
+
+  return (
+    <Card className="p-6">
+      <Tabs defaultValue="analytics">
+        <TabsList>
+          <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          <TabsTrigger value="patterns">Error Patterns</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="analytics">
+          <ErrorAnalyticsDashboard />
+        </TabsContent>
+        
+        <TabsContent value="patterns">
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Detected Error Patterns</h3>
+            {isLoading ? (
+              <p>Analyzing patterns...</p>
+            ) : errorPatterns?.length === 0 ? (
+              <p>No error patterns detected</p>
+            ) : (
+              <div className="grid gap-4">
+                {errorPatterns?.map(pattern => (
+                  <Card key={pattern.pattern_id} className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="font-medium">{pattern.error_type}</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Frequency: {pattern.frequency.toFixed(2)} errors/hour
+                        </p>
+                      </div>
+                      <div className={`px-2 py-1 rounded text-sm ${
+                        pattern.severity === 'high' ? 'bg-red-100 text-red-800' :
+                        pattern.severity === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-green-100 text-green-800'
+                      }`}>
+                        {pattern.severity}
+                      </div>
+                    </div>
+                    <div className="mt-2 text-sm text-muted-foreground">
+                      First seen: {pattern.first_seen.toLocaleString()}
+                      <br />
+                      Last seen: {pattern.last_seen.toLocaleString()}
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
           </div>
-          {schedule.last_failure_at && (
-            <div>
-              <p className="text-sm text-muted-foreground">Last Failure</p>
-              <p className="font-medium text-red-500">
-                {new Date(schedule.last_failure_at).toLocaleString()}
-              </p>
-            </div>
-          )}
-        </div>
-      </Card>
-    </div>
+        </TabsContent>
+      </Tabs>
+    </Card>
   );
 }
