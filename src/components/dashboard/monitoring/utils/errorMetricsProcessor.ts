@@ -31,3 +31,44 @@ export function processErrorMetrics(rawMetrics: RawErrorLog[]): ErrorMetrics[] {
     avg_recovery_time: metrics.total_recovery_time / metrics.recovered_count || 0
   }));
 }
+
+export function analyzeErrorPatterns(metrics: ErrorMetrics[]): {
+  severity: 'low' | 'medium' | 'high';
+  trend: 'improving' | 'stable' | 'degrading';
+  recommendations: string[];
+} {
+  console.log('Analyzing error patterns:', metrics);
+  
+  const recentMetrics = metrics.slice(-24); // Last 24 hours
+  const totalErrors = recentMetrics.reduce((sum, m) => sum + m.error_count, 0);
+  const avgRecoveryRate = recentMetrics.reduce((sum, m) => sum + m.recovery_rate, 0) / recentMetrics.length;
+  
+  // Determine severity
+  const severity = 
+    totalErrors > 100 || avgRecoveryRate < 50 ? 'high' :
+    totalErrors > 50 || avgRecoveryRate < 75 ? 'medium' : 'low';
+  
+  // Analyze trend
+  const firstHalf = recentMetrics.slice(0, 12);
+  const secondHalf = recentMetrics.slice(12);
+  const firstHalfErrors = firstHalf.reduce((sum, m) => sum + m.error_count, 0);
+  const secondHalfErrors = secondHalf.reduce((sum, m) => sum + m.error_count, 0);
+  
+  const trend = 
+    secondHalfErrors < firstHalfErrors * 0.8 ? 'improving' :
+    secondHalfErrors > firstHalfErrors * 1.2 ? 'degrading' : 'stable';
+  
+  // Generate recommendations
+  const recommendations = [];
+  if (avgRecoveryRate < 75) {
+    recommendations.push('Consider increasing retry attempts or adjusting retry intervals');
+  }
+  if (totalErrors > 50) {
+    recommendations.push('Investigate common error patterns and implement preventive measures');
+  }
+  if (trend === 'degrading') {
+    recommendations.push('System health is declining - immediate investigation recommended');
+  }
+  
+  return { severity, trend, recommendations };
+}

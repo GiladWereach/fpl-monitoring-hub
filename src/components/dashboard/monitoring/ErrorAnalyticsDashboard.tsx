@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { MetricCard } from "./components/MetricCard";
 import { ErrorMetricsChart } from "./components/ErrorMetricsChart";
+import { ErrorAnalyticsSummary } from "./components/ErrorAnalyticsSummary";
 import { processErrorMetrics } from "./utils/errorMetricsProcessor";
 import { ErrorMetrics, RawErrorLog } from "./types/error-analytics";
 
@@ -26,7 +27,6 @@ export function ErrorAnalyticsDashboard() {
         throw metricsError;
       }
 
-      // Process metrics to get hourly error counts and recovery rates
       const processedMetrics = processErrorMetrics(metrics as RawErrorLog[]);
       console.log('Processed error metrics:', processedMetrics);
       return processedMetrics;
@@ -55,24 +55,29 @@ export function ErrorAnalyticsDashboard() {
     );
   }
 
+  const metrics = errorMetrics || [];
+
   return (
-    <Card className="p-6">
-      <h2 className="text-xl font-semibold mb-4">Error Analytics</h2>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+    <Card className="p-6 space-y-6">
+      <h2 className="text-xl font-semibold">Error Analytics</h2>
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <MetricCard
           title="Total Errors"
-          value={errorMetrics?.reduce((sum, m) => sum + m.error_count, 0) || 0}
+          value={metrics.reduce((sum, m) => sum + m.error_count, 0)}
         />
         <MetricCard
           title="Avg Recovery Rate"
-          value={`${Math.round(errorMetrics?.reduce((sum, m) => sum + m.recovery_rate, 0) / (errorMetrics?.length || 1))}%`}
+          value={`${Math.round(metrics.reduce((sum, m) => sum + m.recovery_rate, 0) / (metrics.length || 1))}%`}
         />
         <MetricCard
           title="Avg Recovery Time"
-          value={`${Math.round(errorMetrics?.reduce((sum, m) => sum + m.avg_recovery_time, 0) / (errorMetrics?.length || 1))}s`}
+          value={`${Math.round(metrics.reduce((sum, m) => sum + m.avg_recovery_time, 0) / (metrics.length || 1))}s`}
         />
       </div>
-      <ErrorMetricsChart data={errorMetrics || []} />
+      
+      <ErrorAnalyticsSummary metrics={metrics} />
+      <ErrorMetricsChart data={metrics} />
     </Card>
   );
 }
