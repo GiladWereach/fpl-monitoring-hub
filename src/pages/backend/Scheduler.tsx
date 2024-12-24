@@ -22,6 +22,8 @@ export default function Scheduler() {
   const { toast } = useToast();
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
+  console.log('Scheduler component rendered, sidebar expanded:', isExpanded);
+
   const { data: metrics, isLoading, error, refetch } = useQuery({
     queryKey: ['system-metrics'],
     queryFn: async () => {
@@ -77,12 +79,12 @@ export default function Scheduler() {
         <BackendSidebarMenu onExpandedChange={setIsExpanded} />
         <main 
           className={cn(
-            "flex-1 transition-all duration-300 ease-in-out",
+            "flex-1 transition-all duration-300 ease-in-out p-6",
             isExpanded ? "ml-[240px]" : "ml-[60px]"
           )}
         >
           <SchedulerErrorBoundary>
-            <div className="container mx-auto p-6 space-y-8 max-w-7xl">
+            <div className="container mx-auto space-y-8 max-w-7xl">
               <SchedulerHeader lastUpdated={lastUpdated} onRefresh={() => refetch()} />
               <StatusCardsGrid metrics={metrics} isLoading={isLoading} error={error} />
 
