@@ -7,31 +7,44 @@ import {
   FormDescription,
   FormMessage,
 } from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UseFormReturn } from "react-hook-form";
 import { AdvancedScheduleFormValues } from "./types/scheduling";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { HelpCircle } from "lucide-react";
 
 interface TimeConfigFieldsProps {
   form: UseFormReturn<AdvancedScheduleFormValues>;
 }
 
 export function TimeConfigFields({ form }: TimeConfigFieldsProps) {
+  console.log("Rendering TimeConfigFields with values:", form.watch("time_config"));
+
   return (
     <>
       <FormField
         control={form.control}
         name="time_config.type"
+        rules={{
+          required: "Schedule type is required"
+        }}
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Time Schedule Type</FormLabel>
-            <Select onValueChange={field.onChange} defaultValue={field.value}>
+            <div className="flex items-center gap-2">
+              <FormLabel>Time Schedule Type</FormLabel>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Choose how you want to schedule the execution</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+            <Select onValueChange={field.onChange} value={field.value}>
               <FormControl>
                 <SelectTrigger>
                   <SelectValue placeholder="Select time schedule type" />
@@ -51,9 +64,26 @@ export function TimeConfigFields({ form }: TimeConfigFieldsProps) {
         <FormField
           control={form.control}
           name="time_config.hour"
+          rules={{
+            required: "Hour is required for daily schedules",
+            min: { value: 0, message: "Hour must be between 0 and 23" },
+            max: { value: 23, message: "Hour must be between 0 and 23" }
+          }}
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Hour (UTC)</FormLabel>
+              <div className="flex items-center gap-2">
+                <FormLabel>Hour (UTC)</FormLabel>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Hour in 24-hour format (UTC)</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
               <FormControl>
                 <Input
                   type="number"
@@ -75,9 +105,25 @@ export function TimeConfigFields({ form }: TimeConfigFieldsProps) {
           <FormField
             control={form.control}
             name="time_config.matchDayIntervalMinutes"
+            rules={{
+              required: "Match day interval is required",
+              min: { value: 1, message: "Interval must be at least 1 minute" }
+            }}
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Match Day Interval (minutes)</FormLabel>
+                <div className="flex items-center gap-2">
+                  <FormLabel>Match Day Interval (minutes)</FormLabel>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Interval during active matches</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
                 <FormControl>
                   <Input
                     type="number"
@@ -92,12 +138,29 @@ export function TimeConfigFields({ form }: TimeConfigFieldsProps) {
               </FormItem>
             )}
           />
+
           <FormField
             control={form.control}
             name="time_config.nonMatchIntervalMinutes"
+            rules={{
+              required: "Non-match interval is required",
+              min: { value: 1, message: "Interval must be at least 1 minute" }
+            }}
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Non-Match Interval (minutes)</FormLabel>
+                <div className="flex items-center gap-2">
+                  <FormLabel>Non-Match Interval (minutes)</FormLabel>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Interval during live gameweek</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
                 <FormControl>
                   <Input
                     type="number"

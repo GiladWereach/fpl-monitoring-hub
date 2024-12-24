@@ -1,4 +1,4 @@
-import { FormField, FormItem, FormLabel, FormControl, FormDescription } from "@/components/ui/form";
+import { FormField, FormItem, FormLabel, FormControl, FormDescription, FormMessage } from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -7,12 +7,31 @@ import { ExecutionConfigFields } from "./ExecutionConfigFields";
 import { EventConditionsFields } from "./EventConditionsFields";
 import { UseFormReturn } from "react-hook-form";
 import { AdvancedScheduleFormValues } from "./types/scheduling";
+import { toast } from "@/hooks/use-toast";
 
 interface ScheduleFormFieldsProps {
   form: UseFormReturn<AdvancedScheduleFormValues>;
 }
 
 export function ScheduleFormFields({ form }: ScheduleFormFieldsProps) {
+  console.log("Rendering ScheduleFormFields with values:", form.getValues());
+
+  const handleScheduleTypeChange = (value: string) => {
+    form.setValue("schedule_type", value as "time_based" | "event_based");
+    
+    // Reset relevant fields based on schedule type
+    if (value === "time_based") {
+      form.setValue("event_conditions", []);
+    } else {
+      form.setValue("time_config", { type: "daily", hour: 3 });
+    }
+
+    toast({
+      title: "Schedule Type Changed",
+      description: `Switched to ${value} scheduling`,
+    });
+  };
+
   return (
     <div className="space-y-6">
       <FormField
@@ -41,11 +60,14 @@ export function ScheduleFormFields({ form }: ScheduleFormFieldsProps) {
         <FormField
           control={form.control}
           name="schedule_type"
+          rules={{
+            required: "Schedule type is required"
+          }}
           render={({ field }) => (
             <FormItem>
               <FormLabel>Schedule Type</FormLabel>
               <Select
-                onValueChange={field.onChange}
+                onValueChange={handleScheduleTypeChange}
                 value={field.value}
               >
                 <FormControl>
@@ -58,6 +80,7 @@ export function ScheduleFormFields({ form }: ScheduleFormFieldsProps) {
                   <SelectItem value="event_based">Event Based</SelectItem>
                 </SelectContent>
               </Select>
+              <FormMessage />
             </FormItem>
           )}
         />
@@ -65,6 +88,9 @@ export function ScheduleFormFields({ form }: ScheduleFormFieldsProps) {
         <FormField
           control={form.control}
           name="timezone"
+          rules={{
+            required: "Timezone is required"
+          }}
           render={({ field }) => (
             <FormItem>
               <FormLabel>Timezone</FormLabel>
@@ -74,6 +100,7 @@ export function ScheduleFormFields({ form }: ScheduleFormFieldsProps) {
               <FormDescription className="text-xs">
                 Enter timezone (e.g., 'America/New_York', 'Europe/London')
               </FormDescription>
+              <FormMessage />
             </FormItem>
           )}
         />
