@@ -9,6 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ScheduleCategory } from "./types/scheduleTypes";
 import { ScheduleOverrideManager } from "./schedule/ScheduleOverrideManager";
+import { ScheduleTestSuite } from "./testing/ScheduleTestSuite";
 
 export function EdgeFunctionManager() {
   const [loading, setLoading] = useState<string | null>(null);
@@ -74,6 +75,7 @@ export function EdgeFunctionManager() {
         </Button>
       </div>
 
+      <ScheduleTestSuite />
       <ScheduleOverrideManager />
 
       <ScrollArea className="h-[calc(100vh-200px)]">
