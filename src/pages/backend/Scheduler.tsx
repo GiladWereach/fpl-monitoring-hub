@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { ExecutionList } from "./components/ExecutionList";
 import { ScheduleHeader } from "./components/schedule/ScheduleHeader";
