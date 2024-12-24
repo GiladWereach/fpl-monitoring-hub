@@ -32,8 +32,6 @@ export function BackendSidebarMenu({ onExpandedChange }: BackendSidebarMenuProps
     onExpandedChange?.(newExpandedState);
   };
 
-  console.log('BackendSidebarMenu render state:', { isExpanded });
-
   return (
     <Sidebar 
       className={cn(
