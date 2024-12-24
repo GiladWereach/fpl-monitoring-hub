@@ -47,7 +47,6 @@ export default function Scheduler() {
     }
   });
 
-  // Set up real-time subscription
   useEffect(() => {
     const channel = supabase
       .channel('system-metrics')
@@ -76,7 +75,7 @@ export default function Scheduler() {
         <BackendSidebarMenu />
         <div className="flex-1 overflow-auto">
           <SchedulerErrorBoundary>
-            <div className="container mx-auto p-6 space-y-8">
+            <div className="container mx-auto p-6 space-y-8 max-w-7xl">
               <SchedulerHeader lastUpdated={lastUpdated} onRefresh={() => refetch()} />
               <StatusCardsGrid metrics={metrics} isLoading={isLoading} error={error} />
 

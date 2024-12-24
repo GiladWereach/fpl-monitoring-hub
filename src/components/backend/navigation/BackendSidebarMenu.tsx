@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   Home, 
@@ -8,16 +8,20 @@ import {
   Database,
   ChevronRight,
   Timer,
-  Loader
+  Loader,
+  PanelLeftClose
 } from 'lucide-react';
 import { 
-  SidebarContent, 
-  SidebarGroup, 
-  SidebarGroupContent, 
-  SidebarGroupLabel, 
-  SidebarMenu, 
-  SidebarMenuButton, 
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
   SidebarMenuItem,
+  SidebarProvider,
+  SidebarTrigger
 } from '@/components/ui/sidebar';
 import {
   Collapsible,
@@ -25,6 +29,8 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 const menuItems = [
   { title: "Dashboard", icon: Home, path: "/backend/dashboard" },
@@ -39,97 +45,115 @@ const monitoringItems = [
 ];
 
 export function BackendSidebarMenu() {
-  const [isMonitoringOpen, setIsMonitoringOpen] = useState(true);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isMonitoringOpen, setIsMonitoringOpen] = React.useState(true);
+  const [isLoading, setIsLoading] = React.useState(false);
   const location = useLocation();
 
   const handleNavigation = async () => {
     setIsLoading(true);
-    // Simulate loading for demo purposes
     await new Promise(resolve => setTimeout(resolve, 500));
     setIsLoading(false);
   };
 
   return (
-    <SidebarContent>
-      <SidebarGroup>
-        <SidebarGroupLabel>Backend</SidebarGroupLabel>
-        <SidebarGroupContent>
-          <SidebarMenu>
-            {menuItems.map((item) => (
-              <SidebarMenuItem key={item.title}>
-                <SidebarMenuButton 
-                  asChild
-                  className={cn(
-                    "relative",
-                    location.pathname === item.path && "bg-accent"
-                  )}
-                >
-                  <Link 
-                    to={item.path} 
-                    className="flex items-center gap-2"
-                    onClick={handleNavigation}
-                  >
-                    {isLoading ? (
-                      <Loader className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <item.icon className="h-4 w-4" />
-                    )}
-                    <span>{item.title}</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            ))}
-          </SidebarMenu>
-        </SidebarGroupContent>
-      </SidebarGroup>
-
-      <SidebarGroup>
-        <Collapsible
-          open={isMonitoringOpen}
-          onOpenChange={setIsMonitoringOpen}
-          className="w-full"
-        >
-          <CollapsibleTrigger className="flex w-full items-center justify-between p-2 hover:bg-accent rounded-md">
-            <span className="text-sm font-medium">Monitoring</span>
-            <ChevronRight
-              className={`h-4 w-4 transition-transform duration-200 ${
-                isMonitoringOpen ? "rotate-90" : ""
-              }`}
-            />
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {monitoringItems.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton 
-                      asChild
-                      className={cn(
-                        "relative",
-                        location.pathname === item.path && "bg-accent"
-                      )}
-                    >
-                      <Link 
-                        to={item.path} 
-                        className="flex items-center gap-2"
-                        onClick={handleNavigation}
-                      >
-                        {isLoading ? (
-                          <Loader className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <item.icon className="h-4 w-4" />
+    <Sidebar className="w-[240px] border-r" variant="default" collapsible="icon">
+      <SidebarContent>
+        <SidebarGroup>
+          <div className="flex items-center justify-between px-4 py-2">
+            <SidebarGroupLabel>Backend</SidebarGroupLabel>
+            <SidebarTrigger />
+          </div>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {menuItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <SidebarMenuButton 
+                        asChild
+                        className={cn(
+                          "relative",
+                          location.pathname === item.path && "bg-accent"
                         )}
-                        <span>{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </CollapsibleContent>
-        </Collapsible>
-      </SidebarGroup>
-    </SidebarContent>
+                      >
+                        <Link 
+                          to={item.path} 
+                          className="flex items-center gap-2"
+                          onClick={handleNavigation}
+                        >
+                          {isLoading ? (
+                            <Loader className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <item.icon className="h-4 w-4" />
+                          )}
+                          <span>{item.title}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" align="center">
+                      {item.title}
+                    </TooltipContent>
+                  </Tooltip>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <Collapsible
+            open={isMonitoringOpen}
+            onOpenChange={setIsMonitoringOpen}
+            className="w-full"
+          >
+            <CollapsibleTrigger className="flex w-full items-center justify-between p-2 hover:bg-accent rounded-md">
+              <span className="text-sm font-medium">Monitoring</span>
+              <ChevronRight
+                className={`h-4 w-4 transition-transform duration-200 ${
+                  isMonitoringOpen ? "rotate-90" : ""
+                }`}
+              />
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {monitoringItems.map((item) => (
+                    <SidebarMenuItem key={item.title}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <SidebarMenuButton 
+                            asChild
+                            className={cn(
+                              "relative",
+                              location.pathname === item.path && "bg-accent"
+                            )}
+                          >
+                            <Link 
+                              to={item.path} 
+                              className="flex items-center gap-2"
+                              onClick={handleNavigation}
+                            >
+                              {isLoading ? (
+                                <Loader className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <item.icon className="h-4 w-4" />
+                              )}
+                              <span>{item.title}</span>
+                            </Link>
+                          </SidebarMenuButton>
+                        </TooltipTrigger>
+                        <TooltipContent side="right" align="center">
+                          {item.title}
+                        </TooltipContent>
+                      </Tooltip>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </CollapsibleContent>
+          </Collapsible>
+        </SidebarGroup>
+      </SidebarContent>
+    </Sidebar>
   );
 }
