@@ -56,7 +56,7 @@ export function BackendSidebarMenu() {
   };
 
   return (
-    <Sidebar className="w-[240px] border-r" variant="default" collapsible="icon">
+    <Sidebar className="w-[240px] border-r" variant="sidebar" collapsible="icon">
       <SidebarContent>
         <SidebarGroup>
           <div className="flex items-center justify-between px-4 py-2">
