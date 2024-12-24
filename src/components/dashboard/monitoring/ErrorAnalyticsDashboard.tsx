@@ -1,21 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-
-interface ErrorMetrics {
-  timestamp: string;
-  error_count: number;
-  recovery_rate: number;
-  avg_recovery_time: number;
-}
-
-interface RawErrorLog {
-  created_at: string;
-  retry_count: number | null;
-}
+import { MetricCard } from "./components/MetricCard";
+import { ErrorMetricsChart } from "./components/ErrorMetricsChart";
+import { processErrorMetrics } from "./utils/errorMetricsProcessor";
+import { ErrorMetrics, RawErrorLog } from "./types/error-analytics";
 
 export function ErrorAnalyticsDashboard() {
   console.log('Rendering ErrorAnalyticsDashboard');
@@ -81,64 +72,7 @@ export function ErrorAnalyticsDashboard() {
           value={`${Math.round(errorMetrics?.reduce((sum, m) => sum + m.avg_recovery_time, 0) / (errorMetrics?.length || 1))}s`}
         />
       </div>
-      <div className="h-[300px]">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={errorMetrics}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="timestamp" />
-            <YAxis yAxisId="left" />
-            <YAxis yAxisId="right" orientation="right" />
-            <Tooltip />
-            <Line yAxisId="left" type="monotone" dataKey="error_count" stroke="#ef4444" name="Errors" />
-            <Line yAxisId="right" type="monotone" dataKey="recovery_rate" stroke="#22c55e" name="Recovery Rate %" />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
+      <ErrorMetricsChart data={errorMetrics || []} />
     </Card>
   );
-}
-
-function MetricCard({ title, value }: { title: string; value: string | number }) {
-  return (
-    <Card className="p-4">
-      <h3 className="text-sm font-medium text-muted-foreground">{title}</h3>
-      <p className="text-2xl font-bold">{value}</p>
-    </Card>
-  );
-}
-
-interface HourlyMetrics {
-  error_count: number;
-  recovered_count: number;
-  total_recovery_time: number;
-}
-
-function processErrorMetrics(rawMetrics: RawErrorLog[]): ErrorMetrics[] {
-  // Group errors by hour
-  const hourlyMetrics = rawMetrics.reduce((acc, error) => {
-    const hour = new Date(error.created_at).toISOString().slice(0, 13);
-    if (!acc[hour]) {
-      acc[hour] = {
-        error_count: 0,
-        recovered_count: 0,
-        total_recovery_time: 0
-      };
-    }
-    acc[hour].error_count++;
-    
-    // Calculate recovery metrics if available
-    if (error.retry_count !== null) {
-      acc[hour].recovered_count++;
-      acc[hour].total_recovery_time += error.retry_count * 60; // Assuming 60s between retries
-    }
-    return acc;
-  }, {} as Record<string, HourlyMetrics>);
-
-  // Convert to array format for chart
-  return Object.entries(hourlyMetrics).map(([hour, metrics]) => ({
-    timestamp: hour,
-    error_count: metrics.error_count,
-    recovery_rate: metrics.recovered_count / metrics.error_count * 100,
-    avg_recovery_time: metrics.total_recovery_time / metrics.recovered_count || 0
-  }));
 }
