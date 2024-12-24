@@ -11,12 +11,12 @@ import { SystemMetricsOverview } from "./components/scheduler/SystemMetricsOverv
 import { ScheduleExecutionMonitor } from "./components/scheduler/ScheduleExecutionMonitor";
 import { EdgeFunctionSection } from "./components/scheduler/EdgeFunctionSection";
 import { ScheduleTestSuite } from "@/components/dashboard/testing/ScheduleTestSuite";
+import { AlertingSystem } from "@/components/dashboard/monitoring/AlertingSystem";
 import { cn } from "@/lib/utils";
 import { SidebarProvider } from "@/components/ui/sidebar";
 
 export default function Scheduler() {
   console.log("Rendering Scheduler page");
-  
   const [newFunctionOpen, setNewFunctionOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(true);
   const { toast } = useToast();
@@ -61,20 +61,19 @@ export default function Scheduler() {
             <div className="space-y-8 max-w-7xl">
               <SchedulerHeader lastUpdated={lastUpdated} onRefresh={() => refetch()} />
               
-              {/* Add ScheduleTestSuite here */}
+              {/* Add AlertingSystem here */}
+              <AlertingSystem />
+              
               <ScheduleTestSuite />
               
-              {/* System-wide metrics and health overview */}
               <SystemMetricsOverview 
                 metrics={metrics} 
                 isLoading={isLoading} 
                 error={error} 
               />
               
-              {/* Schedule execution monitoring and management */}
               <ScheduleExecutionMonitor />
               
-              {/* Edge Functions management */}
               <EdgeFunctionSection onNewFunction={() => setNewFunctionOpen(true)} />
 
               <FunctionDialogHandler 
