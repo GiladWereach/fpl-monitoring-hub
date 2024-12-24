@@ -33,9 +33,9 @@ export function StatusCard({
         <Card className="glass-card transition-all duration-200 hover:scale-[1.02] w-full">
           <CardContent className="p-6">
             <div className="flex items-start justify-between space-x-4">
-              <div className="flex-1 space-y-3 min-w-0">
-                <p className="text-sm font-medium text-muted-foreground line-clamp-1">{title}</p>
-                <h3 className="text-2xl font-bold line-clamp-1">{value}</h3>
+              <div className="space-y-3">
+                <p className="text-sm font-medium text-muted-foreground">{title}</p>
+                <h3 className="text-2xl font-bold tracking-tight">{value}</h3>
                 {trend && (
                   <p className={cn(
                     "text-sm font-medium",
@@ -47,7 +47,7 @@ export function StatusCard({
                 {indicator && <div className="mt-2">{indicator}</div>}
               </div>
               <div
-                className={cn("status-badge flex-shrink-0 self-start", {
+                className={cn("status-badge", {
                   "status-badge-success": status === "success",
                   "status-badge-warning": status === "warning",
                   "status-badge-error": status === "error",
@@ -61,7 +61,7 @@ export function StatusCard({
         </Card>
       </HoverCardTrigger>
       {details && (
-        <HoverCardContent className="w-80 p-4">
+        <HoverCardContent className="w-80">
           <div className="space-y-2">
             {details.map((detail, index) => (
               <div key={index} className="flex justify-between items-center">

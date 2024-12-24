@@ -10,15 +10,49 @@ import { Sidebar, SidebarProvider } from "@/components/ui/sidebar";
 import { BackendSidebarMenu } from "@/components/backend/navigation/BackendSidebarMenu";
 import { FunctionDialogHandler } from "@/components/backend/scheduler/FunctionDialogHandler";
 import { SchedulerErrorBoundary } from "@/components/backend/scheduler/SchedulerErrorBoundary";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { StatusCard } from "@/components/dashboard/StatusCard";
+import { Database, Activity, AlertTriangle, Server } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function BackendScheduler() {
   const [newFunctionOpen, setNewFunctionOpen] = useState(false);
+
+  const { data: metrics } = useQuery({
+    queryKey: ['system-metrics'],
+    queryFn: async () => {
+      const { data: healthData } = await supabase.rpc('get_aggregated_metrics');
+      return healthData;
+    },
+    refetchInterval: 30000
+  });
+
+  const statusCards = [
+    {
+      title: "Database Status",
+      value: "Connected",
+      status: "success",
+      icon: <Database className="h-4 w-4" />,
+    },
+    {
+      title: "Edge Functions",
+      value: `${metrics?.length || 0} Active`,
+      status: "info",
+      icon: <Server className="h-4 w-4" />,
+    },
+    {
+      title: "System Health",
+      value: "Healthy",
+      status: "success",
+      icon: <Activity className="h-4 w-4" />,
+    },
+    {
+      title: "System Errors",
+      value: "0",
+      status: "warning",
+      icon: <AlertTriangle className="h-4 w-4" />,
+    },
+  ];
 
   return (
     <SidebarProvider>
@@ -32,19 +66,16 @@ export default function BackendScheduler() {
             <div className="container mx-auto p-6 space-y-8 animate-fade-in">
               <ScheduleHeader onNewFunction={() => setNewFunctionOpen(true)} />
               
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                <TooltipProvider delayDuration={300}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div className="transition-all duration-200 hover:scale-[1.02]">
-                        <APIHealthStatus />
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom" className="max-w-[300px]">
-                      <p>Monitor API health and performance metrics in real-time</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {statusCards.map((card, index) => (
+                  <StatusCard
+                    key={index}
+                    title={card.title}
+                    value={card.value}
+                    status={card.status}
+                    icon={card.icon}
+                  />
+                ))}
               </div>
 
               <Card className="p-6 bg-card shadow-md">
