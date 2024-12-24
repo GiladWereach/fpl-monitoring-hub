@@ -2205,7 +2205,11 @@ export type Database = {
       calculation_trigger_type: "time_based" | "event_based"
       event_trigger_type: "deadline" | "kickoff" | "match_status"
       frequency_unit: "minutes" | "hours" | "days"
-      schedule_frequency: "fixed_interval" | "match_dependent" | "daily"
+      schedule_frequency:
+        | "fixed_interval"
+        | "match_dependent"
+        | "daily"
+        | "override"
       schedule_status: "active" | "paused" | "error"
       schedule_type: "time_based" | "event_based"
       time_schedule_type: "interval" | "daily" | "weekly" | "monthly" | "cron"

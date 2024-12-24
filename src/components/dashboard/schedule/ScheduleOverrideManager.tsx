@@ -28,15 +28,20 @@ export function ScheduleOverrideManager() {
 
   const handleCreateOverride = async () => {
     try {
+      console.log('Creating new schedule override');
       const { error } = await supabase
         .from('function_schedules')
         .insert({
           frequency_type: 'override',
           status: 'active',
-          base_interval_minutes: 5
+          base_interval_minutes: 5,
+          function_name: 'override-schedule' // Default name for new overrides
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error creating override:', error);
+        throw error;
+      }
 
       toast({
         title: "Success",
