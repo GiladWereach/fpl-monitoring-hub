@@ -8,6 +8,7 @@ describe('Schedule Validation Tests', () => {
   beforeEach(() => {
     // Reset mock data before each test
     mockScheduleData = {
+      function_name: 'test-function', // Added the required function_name property
       enabled: true,
       schedule_type: 'time_based',
       timezone: 'UTC',
