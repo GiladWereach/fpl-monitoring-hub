@@ -1,3 +1,18 @@
+export type RetryBackoffStrategy = 'linear' | 'exponential' | 'fixed';
+
+export type ExecutionConfig = {
+  retry_count: number;
+  timeout_seconds: number;
+  retry_delay_seconds: number;
+  concurrent_execution: boolean;
+  retry_backoff: RetryBackoffStrategy;
+  max_retry_delay: number;
+  alert_on_failure?: boolean;
+  alert_on_recovery?: boolean;
+  failure_threshold?: number;
+  auto_disable_after_failures?: boolean;
+};
+
 export type NotificationConfig = {
   email?: string | null;
   webhook_url?: string | null;
