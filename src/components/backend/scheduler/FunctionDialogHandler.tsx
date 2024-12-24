@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { NewFunctionDialog } from "@/pages/backend/components/schedule/NewFunctionDialog";
@@ -12,10 +12,13 @@ export function FunctionDialogHandler({
   newFunctionOpen, 
   setNewFunctionOpen 
 }: FunctionDialogHandlerProps) {
+  const [isLoading, setIsLoading] = useState(false);
+
   const handleNewFunction = async (data: {
     name: string;
     groupId: string;
   }) => {
+    setIsLoading(true);
     try {
       console.log("Creating new function schedule:", data);
       
@@ -62,9 +65,11 @@ export function FunctionDialogHandler({
       console.error("Error creating function schedule:", error);
       toast({
         title: "Error",
-        description: "Failed to create function schedule",
+        description: error instanceof Error ? error.message : "Failed to create function schedule",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -73,6 +78,7 @@ export function FunctionDialogHandler({
       open={newFunctionOpen}
       onOpenChange={setNewFunctionOpen}
       onSubmit={handleNewFunction}
+      isLoading={isLoading}
     />
   );
 }

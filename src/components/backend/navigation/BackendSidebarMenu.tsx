@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { 
   Home, 
   Settings, 
@@ -7,7 +7,8 @@ import {
   Calendar, 
   Database,
   ChevronRight,
-  Timer
+  Timer,
+  Loader
 } from 'lucide-react';
 import { 
   SidebarContent, 
@@ -23,6 +24,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import { cn } from '@/lib/utils';
 
 const menuItems = [
   { title: "Dashboard", icon: Home, path: "/backend/dashboard" },
@@ -38,6 +40,15 @@ const monitoringItems = [
 
 export function BackendSidebarMenu() {
   const [isMonitoringOpen, setIsMonitoringOpen] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const location = useLocation();
+
+  const handleNavigation = async () => {
+    setIsLoading(true);
+    // Simulate loading for demo purposes
+    await new Promise(resolve => setTimeout(resolve, 500));
+    setIsLoading(false);
+  };
 
   return (
     <SidebarContent>
@@ -47,9 +58,23 @@ export function BackendSidebarMenu() {
           <SidebarMenu>
             {menuItems.map((item) => (
               <SidebarMenuItem key={item.title}>
-                <SidebarMenuButton asChild>
-                  <Link to={item.path} className="flex items-center gap-2">
-                    <item.icon className="h-4 w-4" />
+                <SidebarMenuButton 
+                  asChild
+                  className={cn(
+                    "relative",
+                    location.pathname === item.path && "bg-accent"
+                  )}
+                >
+                  <Link 
+                    to={item.path} 
+                    className="flex items-center gap-2"
+                    onClick={handleNavigation}
+                  >
+                    {isLoading ? (
+                      <Loader className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <item.icon className="h-4 w-4" />
+                    )}
                     <span>{item.title}</span>
                   </Link>
                 </SidebarMenuButton>
@@ -78,9 +103,23 @@ export function BackendSidebarMenu() {
               <SidebarMenu>
                 {monitoringItems.map((item) => (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild>
-                      <Link to={item.path} className="flex items-center gap-2">
-                        <item.icon className="h-4 w-4" />
+                    <SidebarMenuButton 
+                      asChild
+                      className={cn(
+                        "relative",
+                        location.pathname === item.path && "bg-accent"
+                      )}
+                    >
+                      <Link 
+                        to={item.path} 
+                        className="flex items-center gap-2"
+                        onClick={handleNavigation}
+                      >
+                        {isLoading ? (
+                          <Loader className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <item.icon className="h-4 w-4" />
+                        )}
                         <span>{item.title}</span>
                       </Link>
                     </SidebarMenuButton>
