@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
+import { format } from "date-fns";
 
 interface SchedulerHeaderProps {
   lastUpdated: Date;
@@ -10,27 +11,17 @@ export function SchedulerHeader({ lastUpdated, onRefresh }: SchedulerHeaderProps
   console.log("Rendering SchedulerHeader");
   
   return (
-    <div className="flex flex-col space-y-4 sm:flex-row sm:justify-between sm:items-center mb-8">
+    <div className="flex items-center justify-between mb-6">
       <div>
-        <h1 className="text-2xl font-bold">Schedule Manager</h1>
-        <p className="text-muted-foreground mt-1">
-          Manage and monitor function schedules
+        <h1 className="text-2xl font-semibold">Scheduler Dashboard</h1>
+        <p className="text-sm text-muted-foreground">
+          Last updated: {format(lastUpdated, "HH:mm:ss dd/MM/yyyy")}
         </p>
       </div>
-      <div className="flex items-center gap-4">
-        <p className="text-sm text-muted-foreground whitespace-nowrap">
-          Last updated: {lastUpdated.toLocaleTimeString()}
-        </p>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onRefresh}
-          className="gap-2 whitespace-nowrap"
-        >
-          <RefreshCw className="h-4 w-4" />
-          Refresh
-        </Button>
-      </div>
+      <Button onClick={onRefresh} variant="outline" size="sm">
+        <RefreshCw className="h-4 w-4 mr-2" />
+        Refresh
+      </Button>
     </div>
   );
 }
