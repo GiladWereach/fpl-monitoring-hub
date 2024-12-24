@@ -47,6 +47,7 @@ const monitoringItems = [
 export function BackendSidebarMenu() {
   const [isMonitoringOpen, setIsMonitoringOpen] = React.useState(true);
   const [isLoading, setIsLoading] = React.useState(false);
+  const [isExpanded, setIsExpanded] = React.useState(false);
   const location = useLocation();
 
   const handleNavigation = async () => {
@@ -56,11 +57,25 @@ export function BackendSidebarMenu() {
   };
 
   return (
-    <Sidebar className="w-[240px] border-r" variant="sidebar" collapsible="icon">
+    <Sidebar 
+      className={cn(
+        "transition-all duration-300 border-r",
+        isExpanded ? "w-[240px]" : "w-[60px]"
+      )} 
+      variant="sidebar" 
+      collapsible="icon"
+      onMouseEnter={() => setIsExpanded(true)}
+      onMouseLeave={() => setIsExpanded(false)}
+    >
       <SidebarContent>
         <SidebarGroup>
           <div className="flex items-center justify-between px-4 py-2">
-            <SidebarGroupLabel>Backend</SidebarGroupLabel>
+            <SidebarGroupLabel className={cn(
+              "transition-opacity duration-300",
+              !isExpanded && "opacity-0"
+            )}>
+              Backend
+            </SidebarGroupLabel>
             <SidebarTrigger />
           </div>
           <SidebarGroupContent>
@@ -86,7 +101,12 @@ export function BackendSidebarMenu() {
                           ) : (
                             <item.icon className="h-4 w-4" />
                           )}
-                          <span>{item.title}</span>
+                          <span className={cn(
+                            "transition-opacity duration-300",
+                            !isExpanded && "opacity-0"
+                          )}>
+                            {item.title}
+                          </span>
                         </Link>
                       </SidebarMenuButton>
                     </TooltipTrigger>
@@ -102,11 +122,14 @@ export function BackendSidebarMenu() {
 
         <SidebarGroup>
           <Collapsible
-            open={isMonitoringOpen}
+            open={isMonitoringOpen && isExpanded}
             onOpenChange={setIsMonitoringOpen}
             className="w-full"
           >
-            <CollapsibleTrigger className="flex w-full items-center justify-between p-2 hover:bg-accent rounded-md">
+            <CollapsibleTrigger className={cn(
+              "flex w-full items-center justify-between p-2 hover:bg-accent rounded-md",
+              !isExpanded && "opacity-0"
+            )}>
               <span className="text-sm font-medium">Monitoring</span>
               <ChevronRight
                 className={`h-4 w-4 transition-transform duration-200 ${
@@ -138,7 +161,12 @@ export function BackendSidebarMenu() {
                               ) : (
                                 <item.icon className="h-4 w-4" />
                               )}
-                              <span>{item.title}</span>
+                              <span className={cn(
+                                "transition-opacity duration-300",
+                                !isExpanded && "opacity-0"
+                              )}>
+                                {item.title}
+                              </span>
                             </Link>
                           </SidebarMenuButton>
                         </TooltipTrigger>
