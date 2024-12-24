@@ -15,8 +15,8 @@ import { MonitoringSection } from './MonitoringSection';
 export function BackendSidebarMenu() {
   const [isMonitoringOpen, setIsMonitoringOpen] = React.useState(true);
   const [isLoading, setIsLoading] = React.useState(false);
-  const [isExpanded, setIsExpanded] = React.useState(false);
-  const [isPinned, setIsPinned] = React.useState(false);
+  const [isExpanded, setIsExpanded] = React.useState(true);
+  const [isPinned, setIsPinned] = React.useState(true);
 
   const handleNavigation = async () => {
     setIsLoading(true);
@@ -41,10 +41,12 @@ export function BackendSidebarMenu() {
     setIsExpanded(!isPinned);
   };
 
+  console.log('BackendSidebarMenu render state:', { isExpanded, isPinned });
+
   return (
     <Sidebar 
       className={cn(
-        "transition-all duration-300 border-r relative",
+        "transition-all duration-300 border-r h-screen relative bg-background",
         isExpanded ? "w-[240px]" : "w-[60px]"
       )} 
       variant="sidebar" 

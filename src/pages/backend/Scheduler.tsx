@@ -70,7 +70,7 @@ export default function Scheduler() {
   }, [refetch]);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
+    <div className="flex h-screen bg-background">
       <SidebarProvider defaultOpen>
         <BackendSidebarMenu />
         <div className="flex-1 overflow-auto">
