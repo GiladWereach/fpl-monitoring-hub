@@ -43,7 +43,7 @@ export function BackendSidebarMenu({ onExpandedChange }: BackendSidebarMenuProps
       <Button
         variant="ghost"
         size="icon"
-        className="absolute right-2 top-2"
+        className="absolute right-2 top-2 z-50"
         onClick={toggleSidebar}
       >
         {isExpanded ? (

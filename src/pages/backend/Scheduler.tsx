@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { SchedulerHeader } from "./components/scheduler/SchedulerHeader";
 import { StatusCardsGrid } from "./components/scheduler/StatusCardsGrid";
 import { EdgeFunctionSection } from "./components/scheduler/EdgeFunctionSection";
+import { cn } from "@/lib/utils";
 
 export default function Scheduler() {
   const [newFunctionOpen, setNewFunctionOpen] = useState(false);
@@ -74,7 +75,10 @@ export default function Scheduler() {
     <div className="flex min-h-screen bg-background">
       <SidebarProvider defaultOpen>
         <BackendSidebarMenu onExpandedChange={setIsExpanded} />
-        <div className={`flex-1 transition-all duration-300 ${isExpanded ? 'ml-[240px]' : 'ml-[60px]'}`}>
+        <main className={cn(
+          "flex-1 transition-all duration-300",
+          isExpanded ? "ml-[240px]" : "ml-[60px]"
+        )}>
           <SchedulerErrorBoundary>
             <div className="container mx-auto p-6 space-y-8 max-w-7xl">
               <SchedulerHeader lastUpdated={lastUpdated} onRefresh={() => refetch()} />
@@ -108,7 +112,7 @@ export default function Scheduler() {
               />
             </div>
           </SchedulerErrorBoundary>
-        </div>
+        </main>
       </SidebarProvider>
     </div>
   );
