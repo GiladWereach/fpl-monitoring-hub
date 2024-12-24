@@ -108,7 +108,7 @@ export default function BackendScheduler() {
   const renderStatusCards = () => {
     if (isLoading) {
       return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[1, 2, 3, 4].map((i) => (
             <Card key={i} className="p-6">
               <div className="space-y-3">
@@ -123,7 +123,7 @@ export default function BackendScheduler() {
 
     if (error) {
       return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {statusCards.map((card, index) => (
             <StatusCard
               key={index}
@@ -137,16 +137,16 @@ export default function BackendScheduler() {
     }
 
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {statusCards.map((card, index) => (
           <TooltipProvider key={index}>
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="transition-transform hover:scale-[1.02]">
+                <div className="transition-transform hover:scale-[1.02] w-full">
                   <StatusCard {...card} />
                 </div>
               </TooltipTrigger>
-              <TooltipContent>
+              <TooltipContent side="bottom" align="center" className="z-50">
                 <p>{card.tooltip}</p>
               </TooltipContent>
             </Tooltip>
@@ -158,25 +158,25 @@ export default function BackendScheduler() {
 
   return (
     <SidebarProvider>
-      <div className="flex h-screen">
+      <div className="flex h-screen overflow-hidden">
         <Sidebar>
           <BackendSidebarMenu />
         </Sidebar>
 
         <div className="flex-1 overflow-auto">
           <SchedulerErrorBoundary>
-            <div className="container mx-auto p-6 space-y-8 animate-fade-in">
-              <div className="flex justify-between items-center">
+            <div className="container mx-auto p-6 space-y-8">
+              <div className="flex justify-between items-center mb-8">
                 <ScheduleHeader onNewFunction={() => setNewFunctionOpen(true)} />
-                <div className="flex items-center gap-2">
-                  <p className="text-sm text-muted-foreground">
+                <div className="flex items-center gap-4">
+                  <p className="text-sm text-muted-foreground whitespace-nowrap">
                     Last updated: {lastUpdated.toLocaleTimeString()}
                   </p>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => refetch()}
-                    className="gap-2"
+                    className="gap-2 whitespace-nowrap"
                   >
                     <RefreshCw className="h-4 w-4" />
                     Refresh
@@ -186,38 +186,40 @@ export default function BackendScheduler() {
               
               {renderStatusCards()}
 
-              <Card className="p-6 bg-card shadow-md">
-                <h2 className="text-lg sm:text-xl font-semibold mb-6 flex items-center gap-2">
-                  Edge Functions
-                </h2>
-                <ScrollArea className="h-[400px] w-full rounded-md">
-                  <div className="min-w-[600px] p-1">
-                    <EdgeFunctionManager />
-                  </div>
-                </ScrollArea>
-              </Card>
+              <div className="space-y-8 mt-8">
+                <Card className="p-6 bg-card">
+                  <h2 className="text-lg sm:text-xl font-semibold mb-6 flex items-center gap-2">
+                    Edge Functions
+                  </h2>
+                  <ScrollArea className="h-[400px] w-full rounded-md">
+                    <div className="min-w-[600px] p-1">
+                      <EdgeFunctionManager />
+                    </div>
+                  </ScrollArea>
+                </Card>
 
-              <Card className="p-6 bg-card shadow-md">
-                <h2 className="text-lg sm:text-xl font-semibold mb-6 flex items-center gap-2">
-                  Function Schedules
-                </h2>
-                <ScrollArea className="h-[400px] w-full rounded-md">
-                  <div className="min-w-[600px] p-1">
-                    <ScheduleList />
-                  </div>
-                </ScrollArea>
-              </Card>
+                <Card className="p-6 bg-card">
+                  <h2 className="text-lg sm:text-xl font-semibold mb-6 flex items-center gap-2">
+                    Function Schedules
+                  </h2>
+                  <ScrollArea className="h-[400px] w-full rounded-md">
+                    <div className="min-w-[600px] p-1">
+                      <ScheduleList />
+                    </div>
+                  </ScrollArea>
+                </Card>
 
-              <Card className="p-6 bg-card shadow-md">
-                <h2 className="text-lg sm:text-xl font-semibold mb-6 flex items-center gap-2">
-                  Recent Executions
-                </h2>
-                <ScrollArea className="h-[400px] w-full rounded-md">
-                  <div className="min-w-[600px] p-1">
-                    <ExecutionList />
-                  </div>
-                </ScrollArea>
-              </Card>
+                <Card className="p-6 bg-card">
+                  <h2 className="text-lg sm:text-xl font-semibold mb-6 flex items-center gap-2">
+                    Recent Executions
+                  </h2>
+                  <ScrollArea className="h-[400px] w-full rounded-md">
+                    <div className="min-w-[600px] p-1">
+                      <ExecutionList />
+                    </div>
+                  </ScrollArea>
+                </Card>
+              </div>
 
               <FunctionDialogHandler 
                 newFunctionOpen={newFunctionOpen}
