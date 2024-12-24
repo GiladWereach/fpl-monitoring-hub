@@ -1,13 +1,13 @@
-import { functions } from "../utils/functionConfigs";
-import { FunctionCard } from "./FunctionCard";
+import { FunctionDefinition } from "../types/scheduleTypes";
 
 interface FunctionListProps {
   loading: string | null;
   onExecute: (functionName: string) => Promise<void>;
   schedules: any[];
+  functions: FunctionDefinition[];
 }
 
-export function FunctionList({ loading, onExecute, schedules }: FunctionListProps) {
+export function FunctionList({ loading, onExecute, schedules, functions }: FunctionListProps) {
   return (
     <div className="grid grid-cols-1 gap-4">
       {functions.map((func) => {

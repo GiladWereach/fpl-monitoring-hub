@@ -1,4 +1,4 @@
-import { FunctionDefinition } from "../types/scheduleTypes";
+import { FunctionDefinition, ScheduleCategory } from "../types/scheduleTypes";
 
 export const functions: FunctionDefinition[] = [
   { 
@@ -84,7 +84,7 @@ export const functions: FunctionDefinition[] = [
   }
 ];
 
-export const getScheduleConfig = (functionName: string): ScheduleConfig | undefined => {
+export const getScheduleConfig = (functionName: string) => {
   const func = functions.find(f => f.function === functionName);
   return func?.scheduleConfig;
 };
