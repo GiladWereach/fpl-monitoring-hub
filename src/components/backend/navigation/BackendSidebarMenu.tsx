@@ -9,7 +9,8 @@ import {
   ChevronRight,
   Timer,
   Loader,
-  PanelLeftClose
+  PanelLeftClose,
+  PanelLeft
 } from 'lucide-react';
 import { 
   Sidebar,
@@ -48,6 +49,7 @@ export function BackendSidebarMenu() {
   const [isMonitoringOpen, setIsMonitoringOpen] = React.useState(true);
   const [isLoading, setIsLoading] = React.useState(false);
   const [isExpanded, setIsExpanded] = React.useState(false);
+  const [isPinned, setIsPinned] = React.useState(false);
   const location = useLocation();
 
   const handleNavigation = async () => {
@@ -56,17 +58,47 @@ export function BackendSidebarMenu() {
     setIsLoading(false);
   };
 
+  const handleMouseEnter = () => {
+    if (!isPinned) {
+      setIsExpanded(true);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (!isPinned) {
+      setIsExpanded(false);
+    }
+  };
+
+  const togglePin = () => {
+    setIsPinned(!isPinned);
+    setIsExpanded(!isPinned);
+  };
+
   return (
     <Sidebar 
       className={cn(
-        "transition-all duration-300 border-r",
+        "transition-all duration-300 border-r relative",
         isExpanded ? "w-[240px]" : "w-[60px]"
       )} 
       variant="sidebar" 
       collapsible="icon"
-      onMouseEnter={() => setIsExpanded(true)}
-      onMouseLeave={() => setIsExpanded(false)}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
+      <Button
+        variant="ghost"
+        size="icon"
+        className="absolute right-2 top-2 z-50"
+        onClick={togglePin}
+      >
+        {isPinned ? (
+          <PanelLeftClose className="h-4 w-4" />
+        ) : (
+          <PanelLeft className="h-4 w-4" />
+        )}
+      </Button>
+
       <SidebarContent>
         <SidebarGroup>
           <div className="flex items-center justify-between px-4 py-2">
