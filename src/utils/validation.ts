@@ -1,3 +1,4 @@
+import { supabase } from "@/integrations/supabase/client";
 import { AdvancedScheduleFormValues } from "@/components/dashboard/types/scheduling";
 
 export const validateTimeZone = (timezone: string): boolean => {

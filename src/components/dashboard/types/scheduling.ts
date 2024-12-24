@@ -51,3 +51,57 @@ export interface ScheduleValidationResult {
   isValid: boolean;
   errors: ValidationError[];
 }
+
+// Add missing types
+export interface ScheduleData {
+  id?: string;
+  function_name: string;
+  schedule_type: 'time_based' | 'event_based';
+  enabled: boolean;
+  time_config?: TimeConfig;
+  event_config?: EventConfig;
+  execution_config: ExecutionConfig;
+  timezone: string;
+  event_conditions?: EventCondition[];
+  execution_window?: {
+    start_time: string;
+    end_time: string;
+    days_of_week: number[];
+  };
+}
+
+export interface TestResult {
+  success: boolean;
+  executionTime?: number;
+  error?: string;
+  functionName?: string;
+  scheduleType?: string;
+  retryCount?: number;
+}
+
+export interface TestSuite {
+  functionName: string;
+  scheduleTypes: ('time_based' | 'event_based')[];
+}
+
+export const convertScheduleData = (data: any): ScheduleData => {
+  return {
+    id: data.id,
+    function_name: data.function_name,
+    schedule_type: data.schedule_type,
+    enabled: data.enabled ?? true,
+    time_config: data.time_config,
+    event_config: data.event_config,
+    execution_config: data.execution_config || {
+      retry_count: 3,
+      timeout_seconds: 30,
+      retry_delay_seconds: 60,
+      concurrent_execution: false,
+      retry_backoff: 'linear',
+      max_retry_delay: 3600
+    },
+    timezone: data.timezone || 'UTC',
+    event_conditions: data.event_conditions || [],
+    execution_window: data.execution_window
+  };
+};
