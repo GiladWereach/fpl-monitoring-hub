@@ -1,21 +1,15 @@
 import { useState, useEffect } from "react";
-import { Card } from "@/components/ui/card";
-import { ExecutionList } from "./components/ExecutionList";
-import { ScheduleList } from "./components/schedule/ScheduleList";
-import { APIHealthStatus } from "@/components/monitoring/APIHealthStatus";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { BackendSidebarMenu } from "@/components/backend/navigation/BackendSidebarMenu";
 import { FunctionDialogHandler } from "@/components/backend/scheduler/FunctionDialogHandler";
 import { SchedulerErrorBoundary } from "@/components/backend/scheduler/SchedulerErrorBoundary";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { SchedulerHeader } from "./components/scheduler/SchedulerHeader";
-import { StatusCardsGrid } from "./components/scheduler/StatusCardsGrid";
+import { SystemMetricsOverview } from "./components/scheduler/SystemMetricsOverview";
+import { ScheduleExecutionMonitor } from "./components/scheduler/ScheduleExecutionMonitor";
 import { EdgeFunctionSection } from "./components/scheduler/EdgeFunctionSection";
-import { ScheduleMonitor } from "@/components/dashboard/monitoring/ScheduleMonitor";
-import { MetricsPanel } from "./components/scheduler/MetricsPanel";
-import { ExecutionSummary } from "./components/scheduler/ExecutionSummary";
 import { cn } from "@/lib/utils";
 import { SidebarProvider } from "@/components/ui/sidebar";
 
@@ -54,28 +48,6 @@ export default function Scheduler() {
     }
   });
 
-  useEffect(() => {
-    const channel = supabase
-      .channel('system-metrics')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'api_health_metrics'
-        },
-        (payload) => {
-          console.log('Received real-time update:', payload);
-          refetch();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [refetch]);
-
   return (
     <div className="flex min-h-screen bg-background">
       <SidebarProvider>
@@ -87,36 +59,19 @@ export default function Scheduler() {
           <SchedulerErrorBoundary>
             <div className="space-y-8 max-w-7xl">
               <SchedulerHeader lastUpdated={lastUpdated} onRefresh={() => refetch()} />
-              <StatusCardsGrid metrics={metrics} isLoading={isLoading} error={error} />
-
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <MetricsPanel />
-                <ExecutionSummary />
-              </div>
-
-              <ScheduleMonitor />
-
-              <div className="space-y-8">
-                <EdgeFunctionSection onNewFunction={() => setNewFunctionOpen(true)} />
-
-                <Card className="p-6 bg-card">
-                  <h2 className="text-lg sm:text-xl font-semibold mb-6">Function Schedules</h2>
-                  <ScrollArea className="h-[400px] w-full rounded-md">
-                    <div className="min-w-[600px] p-1">
-                      <ScheduleList />
-                    </div>
-                  </ScrollArea>
-                </Card>
-
-                <Card className="p-6 bg-card">
-                  <h2 className="text-lg sm:text-xl font-semibold mb-6">Recent Executions</h2>
-                  <ScrollArea className="h-[400px] w-full rounded-md">
-                    <div className="min-w-[600px] p-1">
-                      <ExecutionList />
-                    </div>
-                  </ScrollArea>
-                </Card>
-              </div>
+              
+              {/* System-wide metrics and health overview */}
+              <SystemMetricsOverview 
+                metrics={metrics} 
+                isLoading={isLoading} 
+                error={error} 
+              />
+              
+              {/* Schedule execution monitoring and management */}
+              <ScheduleExecutionMonitor />
+              
+              {/* Edge Functions management */}
+              <EdgeFunctionSection onNewFunction={() => setNewFunctionOpen(true)} />
 
               <FunctionDialogHandler 
                 newFunctionOpen={newFunctionOpen}
