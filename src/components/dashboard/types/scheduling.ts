@@ -27,6 +27,15 @@ export type EventCondition = {
   value: string;
 };
 
+export type SchedulePriority = 'override' | 'default' | 'backup';
+
+export interface ScheduleResolution {
+  priority: SchedulePriority;
+  source: 'manual' | 'system' | 'override';
+  resolvedInterval: number;
+  nextExecutionTime: Date;
+}
+
 export interface AdvancedScheduleFormValues {
   enabled: boolean;
   schedule_type: 'time_based' | 'event_based';
@@ -104,3 +113,19 @@ export const convertScheduleData = (data: any): ScheduleData => {
     execution_window: data.execution_window
   };
 };
+
+export interface ScheduleOverride {
+  id: string;
+  scheduleId: string;
+  startTime: Date;
+  endTime: Date;
+  interval?: number;
+  enabled: boolean;
+  reason?: string;
+}
+
+export interface ResolvedSchedule {
+  baseSchedule: AdvancedScheduleFormValues;
+  override?: ScheduleOverride;
+  resolution: ScheduleResolution;
+}
