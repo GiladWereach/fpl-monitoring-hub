@@ -4,8 +4,6 @@ import { ExecutionList } from "./components/ExecutionList";
 import { ScheduleList } from "./components/schedule/ScheduleList";
 import { APIHealthStatus } from "@/components/monitoring/APIHealthStatus";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { SidebarProvider } from "@/components/ui/sidebar";
-import { BackendSidebarMenu } from "@/components/backend/navigation/BackendSidebarMenu";
 import { FunctionDialogHandler } from "@/components/backend/scheduler/FunctionDialogHandler";
 import { SchedulerErrorBoundary } from "@/components/backend/scheduler/SchedulerErrorBoundary";
 import { useQuery } from "@tanstack/react-query";
@@ -14,15 +12,11 @@ import { useToast } from "@/hooks/use-toast";
 import { SchedulerHeader } from "./components/scheduler/SchedulerHeader";
 import { StatusCardsGrid } from "./components/scheduler/StatusCardsGrid";
 import { EdgeFunctionSection } from "./components/scheduler/EdgeFunctionSection";
-import { cn } from "@/lib/utils";
 
 export default function Scheduler() {
   const [newFunctionOpen, setNewFunctionOpen] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(true);
   const { toast } = useToast();
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
-
-  console.log('Scheduler component rendered, sidebar expanded:', isExpanded);
 
   const { data: metrics, isLoading, error, refetch } = useQuery({
     queryKey: ['system-metrics'],
@@ -74,53 +68,42 @@ export default function Scheduler() {
   }, [refetch]);
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <SidebarProvider defaultOpen>
-        <BackendSidebarMenu onExpandedChange={setIsExpanded} />
-        <main 
-          className={cn(
-            "flex-1 transition-all duration-300 ease-in-out p-6",
-          )}
-        >
-          <SchedulerErrorBoundary>
-            <div className={cn(
-              "space-y-8",
-              "max-w-7xl",
-              isExpanded ? "ml-[240px]" : "ml-[60px]"
-            )}>
-              <SchedulerHeader lastUpdated={lastUpdated} onRefresh={() => refetch()} />
-              <StatusCardsGrid metrics={metrics} isLoading={isLoading} error={error} />
+    <div className="min-h-screen bg-background">
+      <main className="flex-1 p-6">
+        <SchedulerErrorBoundary>
+          <div className="space-y-8 max-w-7xl mx-auto">
+            <SchedulerHeader lastUpdated={lastUpdated} onRefresh={() => refetch()} />
+            <StatusCardsGrid metrics={metrics} isLoading={isLoading} error={error} />
 
-              <div className="space-y-8">
-                <EdgeFunctionSection onNewFunction={() => setNewFunctionOpen(true)} />
+            <div className="space-y-8">
+              <EdgeFunctionSection onNewFunction={() => setNewFunctionOpen(true)} />
 
-                <Card className="p-6 bg-card">
-                  <h2 className="text-lg sm:text-xl font-semibold mb-6">Function Schedules</h2>
-                  <ScrollArea className="h-[400px] w-full rounded-md">
-                    <div className="min-w-[600px] p-1">
-                      <ScheduleList />
-                    </div>
-                  </ScrollArea>
-                </Card>
+              <Card className="p-6 bg-card">
+                <h2 className="text-lg sm:text-xl font-semibold mb-6">Function Schedules</h2>
+                <ScrollArea className="h-[400px] w-full rounded-md">
+                  <div className="min-w-[600px] p-1">
+                    <ScheduleList />
+                  </div>
+                </ScrollArea>
+              </Card>
 
-                <Card className="p-6 bg-card">
-                  <h2 className="text-lg sm:text-xl font-semibold mb-6">Recent Executions</h2>
-                  <ScrollArea className="h-[400px] w-full rounded-md">
-                    <div className="min-w-[600px] p-1">
-                      <ExecutionList />
-                    </div>
-                  </ScrollArea>
-                </Card>
-              </div>
-
-              <FunctionDialogHandler 
-                newFunctionOpen={newFunctionOpen}
-                setNewFunctionOpen={setNewFunctionOpen}
-              />
+              <Card className="p-6 bg-card">
+                <h2 className="text-lg sm:text-xl font-semibold mb-6">Recent Executions</h2>
+                <ScrollArea className="h-[400px] w-full rounded-md">
+                  <div className="min-w-[600px] p-1">
+                    <ExecutionList />
+                  </div>
+                </ScrollArea>
+              </Card>
             </div>
-          </SchedulerErrorBoundary>
-        </main>
-      </SidebarProvider>
+
+            <FunctionDialogHandler 
+              newFunctionOpen={newFunctionOpen}
+              setNewFunctionOpen={setNewFunctionOpen}
+            />
+          </div>
+        </SchedulerErrorBoundary>
+      </main>
     </div>
   );
 }
