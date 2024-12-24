@@ -9,6 +9,13 @@ import { EdgeFunctionManager } from "@/components/dashboard/EdgeFunctionManager"
 import { Sidebar, SidebarProvider } from "@/components/ui/sidebar";
 import { BackendSidebarMenu } from "@/components/backend/navigation/BackendSidebarMenu";
 import { FunctionDialogHandler } from "@/components/backend/scheduler/FunctionDialogHandler";
+import { SchedulerErrorBoundary } from "@/components/backend/scheduler/SchedulerErrorBoundary";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export default function BackendScheduler() {
   const [newFunctionOpen, setNewFunctionOpen] = useState(false);
@@ -21,45 +28,58 @@ export default function BackendScheduler() {
         </Sidebar>
 
         <div className="flex-1 overflow-auto">
-          <div className="container mx-auto p-6 space-y-8 animate-fade-in">
-            <ScheduleHeader onNewFunction={() => setNewFunctionOpen(true)} />
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              <APIHealthStatus />
+          <SchedulerErrorBoundary>
+            <div className="container mx-auto p-6 space-y-8 animate-fade-in">
+              <ScheduleHeader onNewFunction={() => setNewFunctionOpen(true)} />
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div>
+                        <APIHealthStatus />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Monitor API health and performance metrics</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+
+              <Card className="p-6">
+                <h2 className="text-lg sm:text-xl font-semibold mb-6">Edge Functions</h2>
+                <ScrollArea className="h-[400px] w-full">
+                  <div className="min-w-[600px]">
+                    <EdgeFunctionManager />
+                  </div>
+                </ScrollArea>
+              </Card>
+
+              <Card className="p-6">
+                <h2 className="text-lg sm:text-xl font-semibold mb-6">Function Schedules</h2>
+                <ScrollArea className="h-[400px] w-full">
+                  <div className="min-w-[600px]">
+                    <ScheduleList />
+                  </div>
+                </ScrollArea>
+              </Card>
+
+              <Card className="p-6">
+                <h2 className="text-lg sm:text-xl font-semibold mb-6">Recent Executions</h2>
+                <ScrollArea className="h-[400px] w-full">
+                  <div className="min-w-[600px]">
+                    <ExecutionList />
+                  </div>
+                </ScrollArea>
+              </Card>
+
+              <FunctionDialogHandler 
+                newFunctionOpen={newFunctionOpen}
+                setNewFunctionOpen={setNewFunctionOpen}
+              />
             </div>
-
-            <Card className="p-6">
-              <h2 className="text-lg sm:text-xl font-semibold mb-6">Edge Functions</h2>
-              <ScrollArea className="h-[400px] w-full">
-                <div className="min-w-[600px]">
-                  <EdgeFunctionManager />
-                </div>
-              </ScrollArea>
-            </Card>
-
-            <Card className="p-6">
-              <h2 className="text-lg sm:text-xl font-semibold mb-6">Function Schedules</h2>
-              <ScrollArea className="h-[400px] w-full">
-                <div className="min-w-[600px]">
-                  <ScheduleList />
-                </div>
-              </ScrollArea>
-            </Card>
-
-            <Card className="p-6">
-              <h2 className="text-lg sm:text-xl font-semibold mb-6">Recent Executions</h2>
-              <ScrollArea className="h-[400px] w-full">
-                <div className="min-w-[600px]">
-                  <ExecutionList />
-                </div>
-              </ScrollArea>
-            </Card>
-
-            <FunctionDialogHandler 
-              newFunctionOpen={newFunctionOpen}
-              setNewFunctionOpen={setNewFunctionOpen}
-            />
-          </div>
+          </SchedulerErrorBoundary>
         </div>
       </div>
     </SidebarProvider>
