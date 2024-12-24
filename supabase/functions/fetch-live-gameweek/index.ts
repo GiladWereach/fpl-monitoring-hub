@@ -4,15 +4,12 @@ import { getCurrentEvent } from './db/events.ts';
 import { upsertLivePerformance } from './db/performance.ts';
 import { mapPlayerDataToUpdate } from './utils.ts';
 import { logDebug, logError } from './logging.ts';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders, handleOptions } from '../_shared/cors.ts';
 
 Deno.serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleOptions(req);
   }
 
   const functionName = 'fetch-live-gameweek';
@@ -36,7 +33,12 @@ Deno.serve(async (req) => {
           message: 'No current gameweek found',
           shouldProcess: false
         }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { 
+          headers: { 
+            ...corsHeaders, 
+            'Content-Type': 'application/json' 
+          } 
+        }
       );
     }
 
@@ -59,7 +61,12 @@ Deno.serve(async (req) => {
         updatedPlayers: updates.length,
         processingTime
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { 
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json' 
+        } 
+      }
     );
 
   } catch (error) {
@@ -72,7 +79,10 @@ Deno.serve(async (req) => {
         timestamp: new Date().toISOString()
       }),
       { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json' 
+        },
         status: 500 
       }
     );
