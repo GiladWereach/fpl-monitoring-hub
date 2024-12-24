@@ -79,8 +79,7 @@ export default function Scheduler() {
         <BackendSidebarMenu onExpandedChange={setIsExpanded} />
         <main 
           className={cn(
-            "flex-1 transition-all duration-300 ease-in-out p-6",
-            isExpanded ? "ml-[240px]" : "ml-[60px]"
+            "flex-1 transition-all duration-300 ease-in-out p-6"
           )}
         >
           <SchedulerErrorBoundary>
