@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { SchedulerHeader } from "./components/scheduler/SchedulerHeader";
 import { StatusCardsGrid } from "./components/scheduler/StatusCardsGrid";
 import { EdgeFunctionSection } from "./components/scheduler/EdgeFunctionSection";
+import { ScheduleMonitor } from "@/components/dashboard/monitoring/ScheduleMonitor";
 import { cn } from "@/lib/utils";
 import { SidebarProvider } from "@/components/ui/sidebar";
 
@@ -83,6 +84,8 @@ export default function Scheduler() {
             <div className="space-y-8 max-w-7xl">
               <SchedulerHeader lastUpdated={lastUpdated} onRefresh={() => refetch()} />
               <StatusCardsGrid metrics={metrics} isLoading={isLoading} error={error} />
+
+              <ScheduleMonitor />
 
               <div className="space-y-8">
                 <EdgeFunctionSection onNewFunction={() => setNewFunctionOpen(true)} />
