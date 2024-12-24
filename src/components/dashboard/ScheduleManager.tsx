@@ -16,7 +16,16 @@ export function ScheduleManager({ functionName, functionDisplayName }: ScheduleM
       console.log(`Fetching schedule for ${functionName}`);
       const { data, error } = await supabase
         .from('schedules')
-        .select('*')
+        .select(`
+          *,
+          schedule_execution_logs (
+            id,
+            status,
+            started_at,
+            completed_at,
+            error_details
+          )
+        `)
         .eq('function_name', functionName)
         .maybeSingle();
 
@@ -27,7 +36,8 @@ export function ScheduleManager({ functionName, functionDisplayName }: ScheduleM
       
       console.log(`Schedule data for ${functionName}:`, data);
       return data;
-    }
+    },
+    refetchInterval: 30000 // Refresh every 30 seconds
   });
 
   // Check if this is a core data function
