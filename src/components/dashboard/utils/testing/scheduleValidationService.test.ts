@@ -3,15 +3,26 @@ import { validateSchedule } from '@/services/scheduleValidationService';
 import { AdvancedScheduleFormValues } from '../../types/scheduling';
 import { supabase } from '@/integrations/supabase/client';
 
-// Mock Supabase client
+// Mock Supabase client with complete implementation
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     from: vi.fn(() => ({
       select: vi.fn(() => ({
         eq: vi.fn(() => ({
           maybeSingle: vi.fn(() => Promise.resolve({ data: null, error: null }))
-        }))
-      }))
+        })),
+        neq: vi.fn(),
+        gt: vi.fn(),
+        lt: vi.fn(),
+        gte: vi.fn(),
+        lte: vi.fn(),
+      })),
+      insert: vi.fn(),
+      update: vi.fn(),
+      upsert: vi.fn(),
+      delete: vi.fn(),
+      headers: {},
+      url: 'mock-url'
     }))
   }
 }));
@@ -114,8 +125,19 @@ describe('Schedule Validation Service', () => {
           eq: vi.fn().mockResolvedValue({
             data: [{ function_name: 'existing-function' }],
             error: null
-          })
-        })
+          }),
+          neq: vi.fn(),
+          gt: vi.fn(),
+          lt: vi.fn(),
+          gte: vi.fn(),
+          lte: vi.fn(),
+        }),
+        insert: vi.fn(),
+        update: vi.fn(),
+        upsert: vi.fn(),
+        delete: vi.fn(),
+        headers: {},
+        url: 'mock-url'
       }));
 
       const result = await validateSchedule(mockSchedule);
