@@ -37,6 +37,7 @@ export interface ScheduleResolution {
 }
 
 export interface AdvancedScheduleFormValues {
+  function_name: string;  // Added this property
   enabled: boolean;
   schedule_type: 'time_based' | 'event_based';
   timezone: string;
