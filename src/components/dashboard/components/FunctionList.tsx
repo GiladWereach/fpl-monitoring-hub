@@ -1,4 +1,5 @@
 import { FunctionDefinition } from "../types/scheduleTypes";
+import { FunctionCard } from "./FunctionCard";
 
 interface FunctionListProps {
   loading: string | null;
