@@ -12,6 +12,11 @@ interface ErrorMetrics {
   avg_recovery_time: number;
 }
 
+interface RawErrorLog {
+  created_at: string;
+  retry_count: number | null;
+}
+
 export function ErrorAnalyticsDashboard() {
   console.log('Rendering ErrorAnalyticsDashboard');
 
@@ -31,7 +36,7 @@ export function ErrorAnalyticsDashboard() {
       }
 
       // Process metrics to get hourly error counts and recovery rates
-      const processedMetrics = processErrorMetrics(metrics);
+      const processedMetrics = processErrorMetrics(metrics as RawErrorLog[]);
       console.log('Processed error metrics:', processedMetrics);
       return processedMetrics;
     },
@@ -102,7 +107,13 @@ function MetricCard({ title, value }: { title: string; value: string | number })
   );
 }
 
-function processErrorMetrics(rawMetrics: any[]): ErrorMetrics[] {
+interface HourlyMetrics {
+  error_count: number;
+  recovered_count: number;
+  total_recovery_time: number;
+}
+
+function processErrorMetrics(rawMetrics: RawErrorLog[]): ErrorMetrics[] {
   // Group errors by hour
   const hourlyMetrics = rawMetrics.reduce((acc, error) => {
     const hour = new Date(error.created_at).toISOString().slice(0, 13);
@@ -121,7 +132,7 @@ function processErrorMetrics(rawMetrics: any[]): ErrorMetrics[] {
       acc[hour].total_recovery_time += error.retry_count * 60; // Assuming 60s between retries
     }
     return acc;
-  }, {} as Record<string, any>);
+  }, {} as Record<string, HourlyMetrics>);
 
   // Convert to array format for chart
   return Object.entries(hourlyMetrics).map(([hour, metrics]) => ({
