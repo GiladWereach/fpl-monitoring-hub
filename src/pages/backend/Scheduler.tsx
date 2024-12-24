@@ -14,6 +14,7 @@ import { SchedulerHeader } from "./components/scheduler/SchedulerHeader";
 import { StatusCardsGrid } from "./components/scheduler/StatusCardsGrid";
 import { EdgeFunctionSection } from "./components/scheduler/EdgeFunctionSection";
 import { cn } from "@/lib/utils";
+import { SidebarProvider } from "@/components/ui/sidebar";
 
 export default function Scheduler() {
   const [newFunctionOpen, setNewFunctionOpen] = useState(false);
@@ -72,45 +73,47 @@ export default function Scheduler() {
 
   return (
     <div className="flex min-h-screen bg-background">
-      <BackendSidebarMenu onExpandedChange={setIsExpanded} />
-      <main className={cn(
-        "flex-1 transition-all duration-300 ease-in-out p-6",
-        isExpanded ? "ml-[240px]" : "ml-[60px]"
-      )}>
-        <SchedulerErrorBoundary>
-          <div className="space-y-8 max-w-7xl">
-            <SchedulerHeader lastUpdated={lastUpdated} onRefresh={() => refetch()} />
-            <StatusCardsGrid metrics={metrics} isLoading={isLoading} error={error} />
+      <SidebarProvider>
+        <BackendSidebarMenu onExpandedChange={setIsExpanded} />
+        <main className={cn(
+          "flex-1 transition-all duration-300 ease-in-out p-6",
+          isExpanded ? "ml-[240px]" : "ml-[60px]"
+        )}>
+          <SchedulerErrorBoundary>
+            <div className="space-y-8 max-w-7xl">
+              <SchedulerHeader lastUpdated={lastUpdated} onRefresh={() => refetch()} />
+              <StatusCardsGrid metrics={metrics} isLoading={isLoading} error={error} />
 
-            <div className="space-y-8">
-              <EdgeFunctionSection onNewFunction={() => setNewFunctionOpen(true)} />
+              <div className="space-y-8">
+                <EdgeFunctionSection onNewFunction={() => setNewFunctionOpen(true)} />
 
-              <Card className="p-6 bg-card">
-                <h2 className="text-lg sm:text-xl font-semibold mb-6">Function Schedules</h2>
-                <ScrollArea className="h-[400px] w-full rounded-md">
-                  <div className="min-w-[600px] p-1">
-                    <ScheduleList />
-                  </div>
-                </ScrollArea>
-              </Card>
+                <Card className="p-6 bg-card">
+                  <h2 className="text-lg sm:text-xl font-semibold mb-6">Function Schedules</h2>
+                  <ScrollArea className="h-[400px] w-full rounded-md">
+                    <div className="min-w-[600px] p-1">
+                      <ScheduleList />
+                    </div>
+                  </ScrollArea>
+                </Card>
 
-              <Card className="p-6 bg-card">
-                <h2 className="text-lg sm:text-xl font-semibold mb-6">Recent Executions</h2>
-                <ScrollArea className="h-[400px] w-full rounded-md">
-                  <div className="min-w-[600px] p-1">
-                    <ExecutionList />
-                  </div>
-                </ScrollArea>
-              </Card>
+                <Card className="p-6 bg-card">
+                  <h2 className="text-lg sm:text-xl font-semibold mb-6">Recent Executions</h2>
+                  <ScrollArea className="h-[400px] w-full rounded-md">
+                    <div className="min-w-[600px] p-1">
+                      <ExecutionList />
+                    </div>
+                  </ScrollArea>
+                </Card>
+              </div>
+
+              <FunctionDialogHandler 
+                newFunctionOpen={newFunctionOpen}
+                setNewFunctionOpen={setNewFunctionOpen}
+              />
             </div>
-
-            <FunctionDialogHandler 
-              newFunctionOpen={newFunctionOpen}
-              setNewFunctionOpen={setNewFunctionOpen}
-            />
-          </div>
-        </SchedulerErrorBoundary>
-      </main>
+          </SchedulerErrorBoundary>
+        </main>
+      </SidebarProvider>
     </div>
   );
 }
