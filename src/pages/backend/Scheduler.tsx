@@ -10,9 +10,32 @@ import { NewFunctionDialog } from "./components/schedule/NewFunctionDialog";
 import { APIHealthStatus } from "@/components/monitoring/APIHealthStatus";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { EdgeFunctionManager } from "@/components/dashboard/EdgeFunctionManager";
-import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider } from "@/components/ui/sidebar";
-import { Home, Settings, Activity, Calendar, Database } from "lucide-react";
+import { 
+  Sidebar, 
+  SidebarContent, 
+  SidebarGroup, 
+  SidebarGroupContent, 
+  SidebarGroupLabel, 
+  SidebarMenu, 
+  SidebarMenuButton, 
+  SidebarMenuItem,
+  SidebarProvider 
+} from "@/components/ui/sidebar";
+import { 
+  Home, 
+  Settings, 
+  Activity, 
+  Calendar, 
+  Database,
+  ChevronRight,
+  Timer
+} from "lucide-react";
 import { Link } from "react-router-dom";
+import { 
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 
 const menuItems = [
   { title: "Dashboard", icon: Home, path: "/backend/dashboard" },
@@ -22,8 +45,13 @@ const menuItems = [
   { title: "Settings", icon: Settings, path: "/backend/settings" }
 ];
 
+const monitoringItems = [
+  { title: "Live Gameweek", icon: Timer, path: "/gameweek-live" }
+];
+
 export default function BackendScheduler() {
   const [newFunctionOpen, setNewFunctionOpen] = useState(false);
+  const [isMonitoringOpen, setIsMonitoringOpen] = useState(true);
 
   const handleNewFunction = async (data: {
     name: string;
@@ -102,6 +130,39 @@ export default function BackendScheduler() {
                   ))}
                 </SidebarMenu>
               </SidebarGroupContent>
+            </SidebarGroup>
+
+            <SidebarGroup>
+              <Collapsible
+                open={isMonitoringOpen}
+                onOpenChange={setIsMonitoringOpen}
+                className="w-full"
+              >
+                <CollapsibleTrigger className="flex w-full items-center justify-between p-2 hover:bg-accent rounded-md">
+                  <span className="text-sm font-medium">Monitoring</span>
+                  <ChevronRight
+                    className={`h-4 w-4 transition-transform duration-200 ${
+                      isMonitoringOpen ? "rotate-90" : ""
+                    }`}
+                  />
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <SidebarGroupContent>
+                    <SidebarMenu>
+                      {monitoringItems.map((item) => (
+                        <SidebarMenuItem key={item.title}>
+                          <SidebarMenuButton asChild>
+                            <Link to={item.path} className="flex items-center gap-2">
+                              <item.icon className="h-4 w-4" />
+                              <span>{item.title}</span>
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      ))}
+                    </SidebarMenu>
+                  </SidebarGroupContent>
+                </CollapsibleContent>
+              </Collapsible>
             </SidebarGroup>
           </SidebarContent>
         </Sidebar>
