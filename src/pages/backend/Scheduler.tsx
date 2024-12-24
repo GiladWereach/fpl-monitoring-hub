@@ -10,6 +10,7 @@ import { SchedulerHeader } from "./components/scheduler/SchedulerHeader";
 import { SystemMetricsOverview } from "./components/scheduler/SystemMetricsOverview";
 import { ScheduleExecutionMonitor } from "./components/scheduler/ScheduleExecutionMonitor";
 import { EdgeFunctionSection } from "./components/scheduler/EdgeFunctionSection";
+import { ScheduleTestSuite } from "@/components/dashboard/testing/ScheduleTestSuite";
 import { cn } from "@/lib/utils";
 import { SidebarProvider } from "@/components/ui/sidebar";
 
@@ -59,6 +60,9 @@ export default function Scheduler() {
           <SchedulerErrorBoundary>
             <div className="space-y-8 max-w-7xl">
               <SchedulerHeader lastUpdated={lastUpdated} onRefresh={() => refetch()} />
+              
+              {/* Add ScheduleTestSuite here */}
+              <ScheduleTestSuite />
               
               {/* System-wide metrics and health overview */}
               <SystemMetricsOverview 
