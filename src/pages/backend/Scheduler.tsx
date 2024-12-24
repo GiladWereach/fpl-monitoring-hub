@@ -70,10 +70,10 @@ export default function Scheduler() {
   }, [refetch]);
 
   return (
-    <div className="flex h-screen">
+    <div className="flex min-h-screen bg-background">
       <SidebarProvider defaultOpen>
         <BackendSidebarMenu />
-        <div className="flex-1">
+        <div className="flex-1 ml-[60px] transition-all duration-300">
           <SchedulerErrorBoundary>
             <div className="container mx-auto p-6 space-y-8 max-w-7xl">
               <SchedulerHeader lastUpdated={lastUpdated} onRefresh={() => refetch()} />

@@ -16,7 +16,6 @@ export function BackendSidebarMenu() {
   const [isMonitoringOpen, setIsMonitoringOpen] = React.useState(true);
   const [isLoading, setIsLoading] = React.useState(false);
   const [isExpanded, setIsExpanded] = React.useState(true);
-  const [isPinned, setIsPinned] = React.useState(true);
 
   const handleNavigation = async () => {
     setIsLoading(true);
@@ -24,43 +23,27 @@ export function BackendSidebarMenu() {
     setIsLoading(false);
   };
 
-  const handleMouseEnter = () => {
-    if (!isPinned) {
-      setIsExpanded(true);
-    }
+  const toggleSidebar = () => {
+    setIsExpanded(!isExpanded);
   };
 
-  const handleMouseLeave = () => {
-    if (!isPinned) {
-      setIsExpanded(false);
-    }
-  };
-
-  const togglePin = () => {
-    setIsPinned(!isPinned);
-    setIsExpanded(!isPinned);
-  };
-
-  console.log('BackendSidebarMenu render state:', { isExpanded, isPinned });
+  console.log('BackendSidebarMenu render state:', { isExpanded });
 
   return (
     <Sidebar 
       className={cn(
-        "transition-all duration-300 border-r h-screen relative bg-background",
+        "transition-all duration-300 border-r fixed h-full bg-background",
         isExpanded ? "w-[240px]" : "w-[60px]"
       )} 
-      variant="sidebar" 
-      collapsible="icon"
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
+      variant="sidebar"
     >
       <Button
         variant="ghost"
         size="icon"
         className="absolute right-2 top-2 z-50"
-        onClick={togglePin}
+        onClick={toggleSidebar}
       >
-        {isPinned ? (
+        {isExpanded ? (
           <PanelLeftClose className="h-4 w-4" />
         ) : (
           <PanelLeft className="h-4 w-4" />
