@@ -9,6 +9,7 @@ import { UseFormReturn } from "react-hook-form";
 import { AdvancedScheduleFormValues } from "./types/scheduling";
 import { toast } from "@/hooks/use-toast";
 import { validateTimeZone } from "@/utils/validation";
+import { measurePerformance } from "@/utils/monitoring";
 
 interface ScheduleFormFieldsProps {
   form: UseFormReturn<AdvancedScheduleFormValues>;
@@ -17,19 +18,21 @@ interface ScheduleFormFieldsProps {
 export function ScheduleFormFields({ form }: ScheduleFormFieldsProps) {
   console.log("Rendering ScheduleFormFields with values:", form.getValues());
 
-  const handleScheduleTypeChange = (value: string) => {
-    form.setValue("schedule_type", value as "time_based" | "event_based");
-    
-    // Reset relevant fields based on schedule type
-    if (value === "time_based") {
-      form.setValue("event_conditions", []);
-    } else {
-      form.setValue("time_config", { type: "daily", hour: 3 });
-    }
+  const handleScheduleTypeChange = async (value: string) => {
+    await measurePerformance("ScheduleFormFields", "scheduleTypeChange", async () => {
+      form.setValue("schedule_type", value as "time_based" | "event_based");
+      
+      // Reset relevant fields based on schedule type
+      if (value === "time_based") {
+        form.setValue("event_conditions", []);
+      } else {
+        form.setValue("time_config", { type: "daily", hour: 3 });
+      }
 
-    toast({
-      title: "Schedule Type Changed",
-      description: `Switched to ${value} scheduling`,
+      toast({
+        title: "Schedule Type Changed",
+        description: `Switched to ${value} scheduling`,
+      });
     });
   };
 
