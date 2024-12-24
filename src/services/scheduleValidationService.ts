@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { Schedule } from "@/components/dashboard/types/scheduling";
+import { AdvancedScheduleFormValues } from "@/components/dashboard/types/scheduling";
 
 export interface ValidationResult {
   isValid: boolean;
@@ -8,7 +8,7 @@ export interface ValidationResult {
   warnings: string[];
 }
 
-export async function validateSchedule(schedule: Schedule): Promise<ValidationResult> {
+export async function validateSchedule(schedule: AdvancedScheduleFormValues): Promise<ValidationResult> {
   console.log('Validating schedule:', schedule);
   
   const errors: string[] = [];
@@ -49,13 +49,12 @@ export async function validateSchedule(schedule: Schedule): Promise<ValidationRe
   };
 }
 
-async function checkScheduleConflicts(schedule: Schedule): Promise<string[]> {
+async function checkScheduleConflicts(schedule: AdvancedScheduleFormValues): Promise<string[]> {
   console.log('Checking for schedule conflicts');
   
   const { data: existingSchedules, error } = await supabase
     .from('schedules')
     .select('*')
-    .neq('id', schedule.id || '')
     .eq('function_name', schedule.function_name);
 
   if (error) {
@@ -68,17 +67,17 @@ async function checkScheduleConflicts(schedule: Schedule): Promise<string[]> {
     .map(s => s.function_name);
 }
 
-function hasTimeOverlap(schedule1: Schedule, schedule2: Schedule): boolean {
+function hasTimeOverlap(schedule1: AdvancedScheduleFormValues, schedule2: any): boolean {
   // Implementation depends on your scheduling logic
   // This is a basic example
-  if (schedule1.time_config?.type !== schedule2.time_config?.type) {
+  if (schedule1.schedule_type !== schedule2.schedule_type) {
     return false;
   }
 
   // Check for daily schedule overlaps
-  if (schedule1.time_config?.type === 'daily') {
+  if (schedule1.schedule_type === 'time_based' && schedule1.time_config?.type === 'daily') {
     const hour1 = schedule1.time_config.hour;
-    const hour2 = schedule2.time_config.hour;
+    const hour2 = schedule2.time_config?.hour;
     return Math.abs(hour1 - hour2) < 1; // Consider 1 hour buffer
   }
 
@@ -86,19 +85,19 @@ function hasTimeOverlap(schedule1: Schedule, schedule2: Schedule): boolean {
 }
 
 function validateExecutionWindow(window: any): boolean {
-  if (!window.start || !window.end) {
+  if (!window.start_time || !window.end_time) {
     return false;
   }
 
-  const start = new Date(`1970-01-01T${window.start}`);
-  const end = new Date(`1970-01-01T${window.end}`);
+  const start = new Date(`1970-01-01T${window.start_time}`);
+  const end = new Date(`1970-01-01T${window.end_time}`);
 
   return start < end;
 }
 
 function validateEventConditions(conditions: any[]): boolean {
   return conditions.every(condition => 
-    condition.type && 
+    condition.field && 
     condition.operator && 
     condition.value !== undefined
   );

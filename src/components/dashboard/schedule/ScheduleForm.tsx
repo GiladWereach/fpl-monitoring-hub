@@ -1,34 +1,28 @@
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { toast } from "@/hooks/use-toast";
 import { validateSchedule } from "@/services/scheduleValidationService";
-import { Schedule } from "../types/scheduling";
+import { AdvancedScheduleFormValues } from "../types/scheduling";
 import { TimeConfigFields } from "../TimeConfigFields";
 import { ExecutionConfigFields } from "../ExecutionConfigFields";
 import { EventConditionsFields } from "../EventConditionsFields";
+import { UseFormReturn } from "react-hook-form";
 
 interface ScheduleFormProps {
-  initialData?: Schedule;
-  onSubmit: (data: Schedule) => void;
+  form: UseFormReturn<AdvancedScheduleFormValues>;
+  onSubmit: (data: AdvancedScheduleFormValues) => Promise<void>;
+  isDataCollectionFunction?: boolean;
+  isCoreDataFunction?: boolean;
 }
 
-export function ScheduleForm({ initialData, onSubmit }: ScheduleFormProps) {
-  const form = useForm<Schedule>({
-    defaultValues: initialData || {
-      enabled: true,
-      schedule_type: "time_based",
-      timezone: "UTC",
-      execution_config: {
-        retry_count: 3,
-        timeout_seconds: 30,
-        retry_delay_seconds: 60
-      }
-    }
-  });
-
-  const handleSubmit = async (data: Schedule) => {
+export function ScheduleForm({ 
+  form, 
+  onSubmit,
+  isDataCollectionFunction,
+  isCoreDataFunction 
+}: ScheduleFormProps) {
+  const handleSubmit = async (data: AdvancedScheduleFormValues) => {
     console.log('Validating schedule before submission:', data);
     
     try {
