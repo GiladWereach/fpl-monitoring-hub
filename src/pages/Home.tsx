@@ -43,11 +43,11 @@ export default function Home() {
         ctx.fillText(text, x, y);
         
         // Slowed down the drop speed by reducing the probability of resetting
-        if (y > canvas.height && Math.random() > 0.995) { // Changed from 0.99 to 0.995
+        if (y > canvas.height && Math.random() > 0.850) { // Changed from 0.99 to 0.995
           drops[i] = 0;
         }
         // Slowed down the falling speed by using a smaller increment
-        drops[i] += 0.5; // Changed from 1 to 0.5
+        drops[i] += 0.3; // Changed from 1 to 0.5
       }
 
       requestAnimationFrame(draw);
