@@ -48,6 +48,21 @@ Deno.serve(async (req) => {
     logDebug('calculate-points', `Processing ${performances?.length || 0} performances`);
 
     const pointsCalculations = performances?.map(perf => {
+      // Get all BPS data for this fixture for bonus calculation
+      const fixtureBPSData = performances
+        .filter(p => p.fixture_id === perf.fixture_id)
+        .map(p => ({
+          player_id: p.player_id,
+          bps: p.bps,
+          fixture_id: p.fixture_id
+        }));
+
+      const playerBPSData = [{
+        player_id: perf.player_id,
+        bps: perf.bps,
+        fixture_id: perf.fixture_id
+      }];
+
       const minutes = typeof perf.minutes === 'number' ? perf.minutes : 0;
       const minutesPoints = calculateMinutesPoints(minutes, rules);
       const goalsPoints = calculateGoalPoints(perf.goals_scored, perf.player.element_type, rules);
@@ -58,7 +73,7 @@ Deno.serve(async (req) => {
       const penaltyMissPoints = perf.penalties_missed * rules.penalties_missed;
       const ownGoalPoints = perf.own_goals * rules.own_goals;
       const cardPoints = calculateCardPoints(perf.yellow_cards, perf.red_cards, rules);
-      const bonusPoints = calculateBonusPoints(perf.bonus);
+      const bonusPoints = calculateBonusPoints(perf.bonus, playerBPSData, fixtureBPSData);
 
       const rawTotal = 
         minutesPoints +
