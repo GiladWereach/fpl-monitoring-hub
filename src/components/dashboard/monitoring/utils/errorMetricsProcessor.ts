@@ -10,16 +10,31 @@ export function processErrorMetrics(rawMetrics: RawErrorLog[]): ErrorMetrics[] {
       acc[hour] = {
         error_count: 0,
         recovered_count: 0,
-        total_recovery_time: 0
+        total_recovery_time: 0,
+        error_categories: {},
+        severity_counts: {}
       };
     }
+
+    // Update basic metrics
     acc[hour].error_count++;
-    
-    // Calculate recovery metrics if available
     if (error.retry_count !== null) {
       acc[hour].recovered_count++;
-      acc[hour].total_recovery_time += error.retry_count * 60; // Assuming 60s between retries
+      acc[hour].total_recovery_time += error.retry_count * 60;
     }
+
+    // Track error categories
+    if (error.category) {
+      acc[hour].error_categories[error.category] = 
+        (acc[hour].error_categories[error.category] || 0) + 1;
+    }
+
+    // Track error severities
+    if (error.severity) {
+      acc[hour].severity_counts[error.severity] = 
+        (acc[hour].severity_counts[error.severity] || 0) + 1;
+    }
+
     return acc;
   }, {} as Record<string, HourlyMetrics>);
 
@@ -28,8 +43,23 @@ export function processErrorMetrics(rawMetrics: RawErrorLog[]): ErrorMetrics[] {
     timestamp: hour,
     error_count: metrics.error_count,
     recovery_rate: metrics.recovered_count / metrics.error_count * 100,
-    avg_recovery_time: metrics.total_recovery_time / metrics.recovered_count || 0
+    avg_recovery_time: metrics.total_recovery_time / metrics.recovered_count || 0,
+    error_severity: determineOverallSeverity(metrics.severity_counts),
+    error_categories: metrics.error_categories
   }));
+}
+
+function determineOverallSeverity(
+  severityCounts: Record<string, number>
+): 'low' | 'medium' | 'high' | 'critical' {
+  const total = Object.values(severityCounts).reduce((sum, count) => sum + count, 0);
+  const criticalPercentage = (severityCounts['critical'] || 0) / total * 100;
+  const highPercentage = (severityCounts['high'] || 0) / total * 100;
+
+  if (criticalPercentage > 10) return 'critical';
+  if (highPercentage > 20) return 'high';
+  if (highPercentage > 5) return 'medium';
+  return 'low';
 }
 
 export function analyzeErrorPatterns(metrics: ErrorMetrics[]): {

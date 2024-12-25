@@ -6,14 +6,16 @@ import { toast } from "@/hooks/use-toast";
 import { MetricCard } from "./components/MetricCard";
 import { ErrorMetricsChart } from "./components/ErrorMetricsChart";
 import { ErrorAnalyticsSummary } from "./components/ErrorAnalyticsSummary";
+import { AlertThresholds } from "./components/AlertThresholds";
+import { PerformanceMetrics } from "./components/PerformanceMetrics";
 import { processErrorMetrics } from "./utils/errorMetricsProcessor";
-import { ErrorMetrics, RawErrorLog } from "./types/error-analytics";
+import { ErrorMetrics, RawErrorLog, AlertThreshold, PerformanceMetrics as PerformanceMetricsType } from "./types/error-analytics";
 import { AlertTriangle, Activity, Clock } from "lucide-react";
 
 export function ErrorAnalyticsDashboard() {
   console.log('Rendering ErrorAnalyticsDashboard');
 
-  const { data: errorMetrics, isLoading, error, refetch } = useQuery({
+  const { data: errorMetrics, isLoading, error } = useQuery({
     queryKey: ['error-metrics'],
     queryFn: async () => {
       console.log('Fetching error metrics');
@@ -43,6 +45,39 @@ export function ErrorAnalyticsDashboard() {
       }
     }
   });
+
+  // Sample thresholds - in a real app, these would come from configuration
+  const alertThresholds: AlertThreshold[] = [
+    {
+      metric: 'Error Rate',
+      warning: 5,
+      critical: 10,
+      currentValue: 3.2,
+      status: 'normal'
+    },
+    {
+      metric: 'Response Time',
+      warning: 1000,
+      critical: 2000,
+      currentValue: 850,
+      status: 'normal'
+    },
+    {
+      metric: 'Failed Recoveries',
+      warning: 3,
+      critical: 5,
+      currentValue: 4,
+      status: 'warning'
+    }
+  ];
+
+  // Sample performance metrics
+  const performanceMetrics: PerformanceMetricsType = {
+    responseTime: 245,
+    throughput: 150,
+    errorRate: 2.5,
+    resourceUtilization: 65
+  };
 
   if (isLoading) {
     return <Skeleton className="w-full h-[400px]" />;
@@ -86,6 +121,8 @@ export function ErrorAnalyticsDashboard() {
         />
       </div>
       
+      <AlertThresholds thresholds={alertThresholds} />
+      <PerformanceMetrics metrics={performanceMetrics} />
       <ErrorAnalyticsSummary metrics={metrics} />
       <ErrorMetricsChart data={metrics} />
     </Card>
