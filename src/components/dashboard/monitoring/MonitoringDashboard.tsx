@@ -6,6 +6,7 @@ import { ErrorMetricsChart } from "./components/ErrorMetricsChart";
 import { AlertTriangle, CheckCircle2, Clock, Activity } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { ErrorMetrics } from "./types/error-analytics";
+import { AlertManagement } from "./AlertManagement";
 
 export function MonitoringDashboard() {
   console.log('Rendering MonitoringDashboard');
@@ -63,7 +64,6 @@ export function MonitoringDashboard() {
     );
   }
 
-  // Ensure we have default values when metrics are undefined
   const defaultMetrics = {
     success_rate: 0,
     avg_response_time: 0,
@@ -81,52 +81,56 @@ export function MonitoringDashboard() {
   })) || [];
 
   return (
-    <Card className="p-6 space-y-6">
-      <h2 className="text-2xl font-bold">System Monitoring</h2>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard
-          title="Success Rate"
-          value={`${aggregatedMetrics.success_rate?.toFixed(1)}%`}
-          icon={CheckCircle2}
-          iconColor="text-green-500"
-          subtitle="Last 24 hours"
-        />
-        <MetricCard
-          title="Average Response Time"
-          value={`${aggregatedMetrics.avg_response_time?.toFixed(0)}ms`}
-          icon={Clock}
-          iconColor="text-blue-500"
-          subtitle="Last 24 hours"
-        />
-        <MetricCard
-          title="Error Count"
-          value={aggregatedMetrics.total_errors?.toString() || '0'}
-          icon={AlertTriangle}
-          iconColor="text-red-500"
-          subtitle="Last 24 hours"
-        />
-        <MetricCard
-          title="System Health"
-          value={aggregatedMetrics.health_status || 'Unknown'}
-          icon={Activity}
-          iconColor="text-purple-500"
-          subtitle="Current Status"
-          indicator={{
-            color: aggregatedMetrics.health_status === 'success' 
-              ? 'bg-green-500' 
-              : aggregatedMetrics.health_status === 'warning'
-              ? 'bg-yellow-500'
-              : 'bg-red-500',
-            show: true
-          }}
-        />
-      </div>
+    <div className="space-y-6">
+      <Card className="p-6 space-y-6">
+        <h2 className="text-2xl font-bold">System Monitoring</h2>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <MetricCard
+            title="Success Rate"
+            value={`${aggregatedMetrics.success_rate?.toFixed(1)}%`}
+            icon={CheckCircle2}
+            iconColor="text-green-500"
+            subtitle="Last 24 hours"
+          />
+          <MetricCard
+            title="Average Response Time"
+            value={`${aggregatedMetrics.avg_response_time?.toFixed(0)}ms`}
+            icon={Clock}
+            iconColor="text-blue-500"
+            subtitle="Last 24 hours"
+          />
+          <MetricCard
+            title="Error Count"
+            value={aggregatedMetrics.total_errors?.toString() || '0'}
+            icon={AlertTriangle}
+            iconColor="text-red-500"
+            subtitle="Last 24 hours"
+          />
+          <MetricCard
+            title="System Health"
+            value={aggregatedMetrics.health_status || 'Unknown'}
+            icon={Activity}
+            iconColor="text-purple-500"
+            subtitle="Current Status"
+            indicator={{
+              color: aggregatedMetrics.health_status === 'success' 
+                ? 'bg-green-500' 
+                : aggregatedMetrics.health_status === 'warning'
+                ? 'bg-yellow-500'
+                : 'bg-red-500',
+              show: true
+            }}
+          />
+        </div>
 
-      <div className="mt-8">
-        <h3 className="text-lg font-semibold mb-4">Error Metrics Trend</h3>
-        <ErrorMetricsChart data={errorMetrics} />
-      </div>
-    </Card>
+        <div className="mt-8">
+          <h3 className="text-lg font-semibold mb-4">Error Metrics Trend</h3>
+          <ErrorMetricsChart data={errorMetrics} />
+        </div>
+      </Card>
+
+      <AlertManagement />
+    </div>
   );
 }
