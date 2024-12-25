@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import FeaturesGrid from '@/components/home/FeaturesGrid';
 import QuickStartGuide from '@/components/home/QuickStartGuide';
+import Navbar from '@/components/layout/Navbar';
 
 export default function Home() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -67,7 +68,7 @@ export default function Home() {
         if (animation.fadeDirection === 'in') {
           animation.opacity += 0.02;
           animation.scale += 0.02;
-          if (animation.opacity >= 0.75) { // Reduced from 0.8 to 0.5 for lower final opacity
+          if (animation.opacity >= 0.5) { // Reduced from 0.8 to 0.5 for lower final opacity
             animation.fadeDirection = 'out';
           }
         } else {
@@ -100,14 +101,16 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-[#0D1117] text-white relative overflow-hidden">
+      <Navbar />
+      
       {/* Hero Section with Canvas Background */}
-      <section className="relative h-[600px]">
+      <section className="relative h-[600px] mt-16"> {/* Added mt-16 to account for navbar height */}
         <canvas
           ref={canvasRef}
           className="absolute inset-0 w-full h-full"
           style={{ opacity: 0.3 }}
         />
-        <div className="container mx-auto px-4 py-16 md:py-24 relative">
+        <div className="container mx-auto px-4 py-12 md:py-20 relative"> {/* Reduced padding */}
           <div className="text-center space-y-6">
             <h1 className="text-4xl md:text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#3DFF9A] to-[#50E3C2]">
               Elevate Your FPL Game
