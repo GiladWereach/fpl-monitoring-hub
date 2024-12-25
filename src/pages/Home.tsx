@@ -21,34 +21,73 @@ export default function Home() {
     updateSize();
     window.addEventListener('resize', updateSize);
 
-    // Player names for the matrix effect
+    // Player names for the animation
     const playerNames = ['Haaland', 'Salah', 'Kane', 'Saka', 'Rashford', 'De Bruyne', 'Son', 'Bruno', 'Trent', 'Foden'];
-    const columns = Math.floor(canvas.width / 20);
-    const drops: number[] = Array(columns).fill(0);
+    
+    // Array to store active name animations
+    type NameAnimation = {
+      x: number;
+      y: number;
+      name: string;
+      opacity: number;
+      scale: number;
+      fadeDirection: 'in' | 'out';
+    };
+    
+    let activeAnimations: NameAnimation[] = [];
+    
+    // Function to create a new animation at a random position
+    const createNewAnimation = () => {
+      const x = Math.random() * canvas.width;
+      const y = Math.random() * canvas.height;
+      const name = playerNames[Math.floor(Math.random() * playerNames.length)];
+      
+      return {
+        x,
+        y,
+        name,
+        opacity: 0,
+        scale: 0.5,
+        fadeDirection: 'in' as const,
+      };
+    };
 
     function draw() {
-      // Slowed down the fade effect by reducing the opacity
-      ctx.fillStyle = 'rgba(13, 17, 23, 0.05)'; // Reduced from 0.1 to 0.05
+      // Clear with a slight fade effect
+      ctx.fillStyle = 'rgba(13, 17, 23, 0.1)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      ctx.fillStyle = '#3DFF9A';
-      ctx.font = '15px monospace';
-      
-      for (let i = 0; i < drops.length; i++) {
-        const text = playerNames[Math.floor(Math.random() * playerNames.length)];
-        const x = i * 20;
-        const y = drops[i] * 20;
-        
-        ctx.fillStyle = `rgba(61, 255, 154, ${Math.random() * 0.3})`; // Reduced opacity from 0.5 to 0.3
-        ctx.fillText(text, x, y);
-        
-        // Slowed down the drop speed by reducing the probability of resetting
-        if (y > canvas.height && Math.random() > 0.995) { // Changed from 0.99 to 0.995
-          drops[i] = 0;
-        }
-        // Slowed down the falling speed by using a smaller increment
-        drops[i] += 0.5; // Changed from 1 to 0.5
+      // Randomly add new animations
+      if (Math.random() > 0.97 && activeAnimations.length < 15) {
+        activeAnimations.push(createNewAnimation());
       }
+
+      // Update and draw each animation
+      activeAnimations = activeAnimations.filter(animation => {
+        // Update opacity based on fade direction
+        if (animation.fadeDirection === 'in') {
+          animation.opacity += 0.02;
+          animation.scale += 0.02;
+          if (animation.opacity >= 0.8) {
+            animation.fadeDirection = 'out';
+          }
+        } else {
+          animation.opacity -= 0.02;
+          animation.scale -= 0.01;
+        }
+
+        // Draw the name
+        ctx.save();
+        ctx.font = '20px monospace';
+        ctx.fillStyle = `rgba(61, 255, 154, ${animation.opacity})`;
+        ctx.translate(animation.x, animation.y);
+        ctx.scale(animation.scale, animation.scale);
+        ctx.fillText(animation.name, -ctx.measureText(animation.name).width / 2, 0);
+        ctx.restore();
+
+        // Keep animation if still visible
+        return animation.opacity > 0;
+      });
 
       requestAnimationFrame(draw);
     }
