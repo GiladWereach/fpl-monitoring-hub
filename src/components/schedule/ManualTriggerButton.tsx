@@ -2,7 +2,6 @@ import { Zap } from "lucide-react";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { ensureScheduleExists, createExecutionLog, updateExecutionLog } from "@/utils/scheduleUtils";
 
 interface ManualTriggerButtonProps {
   functionName: string;
@@ -13,17 +12,63 @@ export const ManualTriggerButton = ({ functionName }: ManualTriggerButtonProps) 
     try {
       console.log(`Manually triggering function: ${functionName}`);
       
-      // Ensure we have a schedule and create execution log
-      const scheduleId = await ensureScheduleExists(functionName);
-      const log = await createExecutionLog(scheduleId);
+      // First get the schedule ID
+      const { data: schedule, error: scheduleError } = await supabase
+        .from('schedules')
+        .select('id')
+        .eq('function_name', functionName)
+        .maybeSingle();
+        
+      if (scheduleError) {
+        console.error('Error fetching schedule:', scheduleError);
+        throw scheduleError;
+      }
+
+      if (!schedule) {
+        console.error('No schedule found for function:', functionName);
+        throw new Error(`No schedule found for function: ${functionName}`);
+      }
+
+      // Create execution log with valid schedule ID
+      const { data: log, error: logError } = await supabase
+        .from('schedule_execution_logs')
+        .insert({
+          schedule_id: schedule.id,
+          status: 'running',
+          execution_context: {
+            trigger_type: 'manual',
+            triggered_at: new Date().toISOString()
+          }
+        })
+        .select()
+        .single();
+        
+      if (logError) {
+        console.error('Error creating execution log:', logError);
+        throw logError;
+      }
       
       // Execute the function
       const { error: functionError } = await supabase.functions.invoke(functionName);
       
-      if (functionError) throw functionError;
+      if (functionError) {
+        console.error('Error executing function:', functionError);
+        throw functionError;
+      }
       
       // Update execution log with success
-      await updateExecutionLog(log.id, true);
+      const { error: updateError } = await supabase
+        .from('schedule_execution_logs')
+        .update({
+          status: 'completed',
+          completed_at: new Date().toISOString()
+        })
+        .eq('id', log.id);
+
+      if (updateError) {
+        console.error('Error updating execution log:', updateError);
+        throw updateError;
+      }
 
       toast({
         title: "Success",
@@ -33,7 +78,7 @@ export const ManualTriggerButton = ({ functionName }: ManualTriggerButtonProps) 
       console.error('Error in manual trigger:', error);
       toast({
         title: "Error",
-        description: "Failed to trigger function",
+        description: error.message || "Failed to trigger function",
         variant: "destructive",
       });
     }
