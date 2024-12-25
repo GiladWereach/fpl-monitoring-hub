@@ -12,6 +12,7 @@ import { ScheduleExecutionMonitor } from "./components/scheduler/ScheduleExecuti
 import { EdgeFunctionSection } from "./components/scheduler/EdgeFunctionSection";
 import { ScheduleTestSuite } from "@/components/dashboard/testing/ScheduleTestSuite";
 import { AlertingSystem } from "@/components/dashboard/monitoring/AlertingSystem";
+import { MonitoringDashboard } from "@/components/dashboard/monitoring/MonitoringDashboard";
 import { cn } from "@/lib/utils";
 import { SidebarProvider } from "@/components/ui/sidebar";
 
@@ -61,7 +62,8 @@ export default function Scheduler() {
             <div className="space-y-8 max-w-7xl">
               <SchedulerHeader lastUpdated={lastUpdated} onRefresh={() => refetch()} />
               
-              {/* Add AlertingSystem here */}
+              <MonitoringDashboard />
+              
               <AlertingSystem />
               
               <ScheduleTestSuite />
