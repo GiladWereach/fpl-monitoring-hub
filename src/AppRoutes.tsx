@@ -8,7 +8,8 @@ import About from '@/pages/About';
 import Contact from '@/pages/Contact';
 import Login from '@/pages/Login';
 import Players from '@/pages/Players';
-import GameWeekLive from '@/pages/GameWeekLive';
+import Gameweek from '@/pages/Gameweek';
+import GameWeekLive from '@/pages/backend/GameWeekLive';
 import Dashboard from '@/pages/backend/Dashboard';
 import Calculations from '@/pages/backend/Calculations';
 import Logs from '@/pages/backend/Logs';
@@ -23,8 +24,7 @@ export const AppRoutes = () => {
       <Route path="/contact" element={<Contact />} />
       <Route path="/login" element={<Login />} />
       <Route path="/players" element={<Players />} />
-      <Route path="/gameweek" element={<GameWeekLive />} />
-      <Route path="/gameweek-live" element={<GameWeekLive />} /> {/* Keep this for backward compatibility */}
+      <Route path="/gameweek" element={<Gameweek />} />
 
       {/* Protected Backend Routes */}
       <Route path="/backend" element={<AdminGuard><Outlet /></AdminGuard>}>
@@ -32,6 +32,7 @@ export const AppRoutes = () => {
         <Route path="calculations" element={<Calculations />} />
         <Route path="logs" element={<Logs />} />
         <Route path="scheduler" element={<Scheduler />} />
+        <Route path="gameweek-live" element={<GameWeekLive />} />
       </Route>
     </Routes>
   );
