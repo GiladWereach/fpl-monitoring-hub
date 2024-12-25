@@ -40,44 +40,21 @@ export function calculateBonusPoints(playerBPS: PlayerBPS[], allFixtureBPS: Play
 
   // Handle different tie scenarios
   if (bpsValues.length > 0) {
-    const firstPlaceBps = bpsValues[0];
-    const secondPlaceBps = bpsValues[1];
-    const thirdPlaceBps = bpsValues[2];
-
-    if (currentPlayerBps === firstPlaceBps) {
-      // If tied for first, all players get 3 points
-      bonusPoints = 3;
-    } else if (currentPlayerBps === secondPlaceBps) {
-      if (bpsGroups[firstPlaceBps].length > 1) {
-        // If there was a tie for first, second place gets 1 point
-        bonusPoints = 1;
-      } else {
-        // If tied for second, all second place players get 2 points
-        bonusPoints = 2;
-      }
-    } else if (currentPlayerBps === thirdPlaceBps) {
-      if (bpsGroups[firstPlaceBps].length > 1) {
-        // If there was a tie for first, third place gets no points
+    if (currentPlayerBps === bpsValues[0]) {
+      bonusPoints = 3; // Highest BPS
+    } else if (currentPlayerBps === bpsValues[1]) {
+      bonusPoints = bpsGroups[bpsValues[0]].length > 1 ? 1 : 2;
+    } else if (currentPlayerBps === bpsValues[2]) {
+      if (bpsGroups[bpsValues[0]].length > 1) {
         bonusPoints = 0;
-      } else if (bpsGroups[secondPlaceBps]?.length > 1) {
-        // If there was a tie for second, third place gets no points
+      } else if (bpsGroups[bpsValues[1]]?.length > 1) {
         bonusPoints = 0;
       } else {
-        // Normal third place or tied for third gets 1 point
         bonusPoints = 1;
       }
     }
   }
 
   logDebug('calculate-points', `Calculated bonus points for player ${currentPlayer.player_id}: ${bonusPoints} (BPS: ${currentPlayerBps})`);
-  
   return bonusPoints;
-}
-
-export function calculateCardPoints(yellowCards: number, redCards: number, rules: any): number {
-  const points = (yellowCards * rules.yellow_cards) + (redCards * rules.red_cards);
-  if (points !== 0) {
-    logDebug('calculate-points', `Deducted ${Math.abs(points)} points for ${yellowCards} yellow and ${redCards} red cards`);
-  }
-  return points;
 }

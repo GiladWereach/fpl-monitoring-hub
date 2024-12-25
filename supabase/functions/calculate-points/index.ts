@@ -86,6 +86,7 @@ Deno.serve(async (req) => {
         ownGoalPoints +
         cardPoints;
 
+      // Important: Add bonus points to final total
       const finalTotal = rawTotal + bonusPoints;
 
       logDebug('calculate-points', `Points breakdown for player ${perf.player_id}:`, {
