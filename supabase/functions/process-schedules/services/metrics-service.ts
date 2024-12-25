@@ -22,13 +22,14 @@ export async function logExecutionMetrics(
   supabaseClient: ReturnType<typeof createClient>,
   metrics: ExecutionMetrics
 ) {
-  logDebug('metrics-service', `Logging execution metrics for ${metrics.functionName}:`, metrics);
+  const endpoint = metrics.functionName.replace(/-/g, '_');
+  logDebug('metrics-service', `Logging execution metrics for ${endpoint}:`, metrics);
 
   try {
     const { error: metricsError } = await supabaseClient
       .from('api_health_metrics')
       .insert({
-        endpoint: metrics.functionName,
+        endpoint,
         success_count: metrics.status === 'completed' ? 1 : 0,
         error_count: metrics.status === 'completed' ? 0 : 1,
         avg_response_time: metrics.duration,
@@ -46,14 +47,13 @@ export async function logExecutionMetrics(
       });
 
     if (metricsError) {
-      logError('metrics-service', `Error logging metrics for ${metrics.functionName}:`, metricsError);
+      logError('metrics-service', `Error logging metrics for ${endpoint}:`, metricsError);
       throw metricsError;
     }
 
-    logDebug('metrics-service', `Successfully logged metrics for ${metrics.functionName}`);
+    logDebug('metrics-service', `Successfully logged metrics for ${endpoint}`);
   } catch (error) {
-    logError('metrics-service', `Failed to log metrics for ${metrics.functionName}:`, error);
-    // Don't throw - we don't want metrics logging to break the main flow
+    logError('metrics-service', `Failed to log metrics for ${endpoint}:`, error);
   }
 }
 

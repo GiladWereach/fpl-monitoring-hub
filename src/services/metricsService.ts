@@ -22,13 +22,13 @@ export interface SystemMetrics {
 class MetricsService {
   private static instance: MetricsService;
   private metricsBuffer: Map<string, PerformanceMetrics>;
-  private flushInterval: number = 60000; // Flush every minute
+  private flushInterval: number = 30000; // Reduced to 30 seconds for more frequent updates
   private readonly MAX_BUFFER_SIZE = 1000;
 
   private constructor() {
     this.metricsBuffer = new Map();
     this.startPeriodicFlush();
-    console.log('Metrics service initialized');
+    console.log('Metrics service initialized with 30s flush interval');
   }
 
   public static getInstance(): MetricsService {
@@ -55,12 +55,16 @@ class MetricsService {
         .from('api_health_metrics')
         .upsert(
           metrics.map(([endpoint, data]) => ({
-            endpoint,
+            endpoint: endpoint.replace(/-/g, '_'), // Standardize endpoint naming
             success_count: Math.round(data.successRate * data.requestCount),
             error_count: Math.round(data.errorRate * data.requestCount),
             avg_response_time: data.executionTimeMs,
             last_success_time: new Date().toISOString(),
-            error_pattern: {},
+            error_pattern: data.errorRate > 0 ? {
+              type: 'execution_error',
+              count: Math.round(data.errorRate * data.requestCount),
+              timestamp: new Date().toISOString()
+            } : {},
             created_at: new Date().toISOString()
           }))
         );
@@ -103,6 +107,7 @@ class MetricsService {
     };
 
     this.metricsBuffer.set(endpoint, updated);
+    console.log(`Updated metrics buffer for ${endpoint}:`, updated);
 
     if (this.metricsBuffer.size >= this.MAX_BUFFER_SIZE) {
       console.log('Buffer size limit reached, triggering immediate flush');
@@ -114,16 +119,16 @@ class MetricsService {
     console.log('Fetching system metrics');
     try {
       const { data: metrics, error } = await supabase
-        .rpc('get_aggregated_metrics', { hours_lookback: 24 });
+        .rpc('get_aggregated_metrics', { hours_lookback: 1 }); // Reduced to 1 hour for more recent data
 
       if (error) throw error;
 
       const systemMetrics: SystemMetrics = {
         activeConnections: 0,
         queueSize: 0,
-        avgResponseTime: metrics.reduce((sum, m) => sum + m.avg_response_time, 0) / metrics.length,
-        errorCount: metrics.reduce((sum, m) => sum + m.total_errors, 0),
-        requestCount: metrics.reduce((sum, m) => sum + m.total_successes + m.total_errors, 0)
+        avgResponseTime: metrics.reduce((sum: number, m: any) => sum + m.avg_response_time, 0) / metrics.length,
+        errorCount: metrics.reduce((sum: number, m: any) => sum + m.total_errors, 0),
+        requestCount: metrics.reduce((sum: number, m: any) => sum + m.total_successes + m.total_errors, 0)
       };
 
       console.log('Retrieved system metrics:', systemMetrics);
@@ -132,6 +137,23 @@ class MetricsService {
       console.error('Error fetching system metrics:', error);
       throw error;
     }
+  }
+
+  // Method to manually trigger metrics recording for testing
+  public async recordTestMetrics(): Promise<void> {
+    const testEndpoints = ['fetch_schedule', 'fetch_fixtures', 'calculate_points'];
+    
+    for (const endpoint of testEndpoints) {
+      this.recordMetric(endpoint, {
+        executionTimeMs: Math.random() * 1000,
+        successRate: Math.random() > 0.2 ? 1 : 0,
+        errorRate: Math.random() > 0.8 ? 1 : 0,
+        requestCount: 1
+      });
+    }
+    
+    await this.flushMetrics();
+    console.log('Test metrics recorded and flushed');
   }
 }
 
