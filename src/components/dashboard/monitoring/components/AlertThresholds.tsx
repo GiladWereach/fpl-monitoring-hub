@@ -8,6 +8,8 @@ interface AlertThresholdsProps {
 }
 
 export function AlertThresholds({ thresholds }: AlertThresholdsProps) {
+  console.log('Rendering AlertThresholds with:', thresholds);
+  
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'critical':

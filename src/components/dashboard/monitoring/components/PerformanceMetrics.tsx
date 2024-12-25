@@ -9,6 +9,8 @@ interface PerformanceMetricsProps {
 }
 
 export function PerformanceMetrics({ metrics }: PerformanceMetricsProps) {
+  console.log('Rendering PerformanceMetrics with:', metrics);
+  
   return (
     <Card className="p-4">
       <h3 className="text-lg font-semibold mb-4">Performance Metrics</h3>
