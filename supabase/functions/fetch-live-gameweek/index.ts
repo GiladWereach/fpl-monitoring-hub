@@ -4,24 +4,62 @@ import { getCurrentEvent } from './db/events.ts';
 import { upsertLivePerformance } from './db/performance.ts';
 import { mapPlayerDataToUpdate } from './utils.ts';
 import { logDebug, logError } from './logging.ts';
-import { corsHeaders, handleOptions } from '../_shared/cors.ts';
+import { corsHeaders } from '../_shared/cors.ts';
+
+// Global lock tracking
+const LOCK_KEY = 'fetch-live-gameweek-lock';
+const LOCK_DURATION = 60000; // 1 minute in milliseconds
+let lastExecutionTime = 0;
 
 Deno.serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return handleOptions(req);
+    return new Response(null, { headers: corsHeaders });
   }
 
   const functionName = 'fetch-live-gameweek';
   const startTime = Date.now();
 
   try {
+    // Implement strict concurrency control
+    if (startTime - lastExecutionTime < LOCK_DURATION) {
+      logDebug(functionName, `Skipping execution - previous execution still within lock period (${Math.floor((startTime - lastExecutionTime) / 1000)}s ago)`);
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: 'Skipped execution - previous execution still in progress',
+          shouldProcess: false
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    lastExecutionTime = startTime;
     logDebug(functionName, 'Starting live gameweek data fetch...');
     
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
+
+    // Acquire database lock
+    const { data: lockAcquired, error: lockError } = await supabaseClient
+      .rpc('acquire_schedule_lock', {
+        p_schedule_id: LOCK_KEY,
+        p_locked_by: startTime.toString(),
+        p_lock_duration_seconds: 60
+      });
+
+    if (lockError || !lockAcquired) {
+      logDebug(functionName, 'Could not acquire lock, another execution is in progress');
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: 'Another execution is in progress',
+          shouldProcess: false
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     const currentEvent = await getCurrentEvent(supabaseClient);
     
@@ -33,12 +71,7 @@ Deno.serve(async (req) => {
           message: 'No current gameweek found',
           shouldProcess: false
         }),
-        { 
-          headers: { 
-            ...corsHeaders, 
-            'Content-Type': 'application/json' 
-          } 
-        }
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -61,12 +94,7 @@ Deno.serve(async (req) => {
         updatedPlayers: updates.length,
         processingTime
       }),
-      { 
-        headers: { 
-          ...corsHeaders, 
-          'Content-Type': 'application/json' 
-        } 
-      }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
@@ -79,10 +107,7 @@ Deno.serve(async (req) => {
         timestamp: new Date().toISOString()
       }),
       { 
-        headers: { 
-          ...corsHeaders, 
-          'Content-Type': 'application/json' 
-        },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500 
       }
     );
