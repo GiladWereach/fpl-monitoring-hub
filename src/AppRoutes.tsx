@@ -23,7 +23,8 @@ export const AppRoutes = () => {
       <Route path="/contact" element={<Contact />} />
       <Route path="/login" element={<Login />} />
       <Route path="/players" element={<Players />} />
-      <Route path="/gameweek-live" element={<GameWeekLive />} />
+      <Route path="/gameweek" element={<GameWeekLive />} />
+      <Route path="/gameweek-live" element={<GameWeekLive />} /> {/* Keep this for backward compatibility */}
 
       {/* Protected Backend Routes */}
       <Route path="/backend" element={<AdminGuard><Outlet /></AdminGuard>}>
