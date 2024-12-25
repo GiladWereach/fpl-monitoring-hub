@@ -5,8 +5,17 @@ export interface ExecutionMetrics {
   functionName: string;
   duration: number;
   status: 'completed' | 'failed';
-  error?: string;
+  error?: {
+    type: string;
+    message: string;
+    code?: string;
+  };
   context?: Record<string, unknown>;
+  performance?: {
+    cpuTime?: number;
+    memoryUsage?: number;
+    networkLatency?: number;
+  };
 }
 
 export async function logExecutionMetrics(
@@ -25,7 +34,14 @@ export async function logExecutionMetrics(
         avg_response_time: metrics.duration,
         last_success_time: metrics.status === 'completed' ? new Date().toISOString() : null,
         last_error_time: metrics.status === 'failed' ? new Date().toISOString() : null,
-        error_pattern: metrics.error ? { last_error: metrics.error } : null,
+        error_pattern: metrics.error ? {
+          type: metrics.error.type,
+          message: metrics.error.message,
+          code: metrics.error.code,
+          context: metrics.context,
+          performance: metrics.performance,
+          timestamp: new Date().toISOString()
+        } : null,
         created_at: new Date().toISOString()
       });
 
@@ -38,5 +54,48 @@ export async function logExecutionMetrics(
   } catch (error) {
     logError('metrics-service', `Failed to log metrics for ${metrics.functionName}:`, error);
     // Don't throw - we don't want metrics logging to break the main flow
+  }
+}
+
+export async function getAggregatedMetrics(
+  supabaseClient: ReturnType<typeof createClient>,
+  endpoint: string,
+  hours: number = 24
+) {
+  logDebug('metrics-service', `Getting aggregated metrics for ${endpoint} over ${hours}h`);
+
+  try {
+    const { data: metrics, error } = await supabaseClient
+      .from('api_health_metrics')
+      .select('*')
+      .eq('endpoint', endpoint)
+      .gte('created_at', new Date(Date.now() - hours * 60 * 60 * 1000).toISOString());
+
+    if (error) throw error;
+
+    const totalRequests = metrics.reduce((sum, m) => sum + m.success_count + m.error_count, 0);
+    const successCount = metrics.reduce((sum, m) => sum + m.success_count, 0);
+    const avgResponseTime = metrics.reduce((sum, m) => sum + m.avg_response_time, 0) / metrics.length;
+
+    return {
+      totalRequests,
+      successRate: totalRequests > 0 ? (successCount / totalRequests) * 100 : 0,
+      avgResponseTime: isNaN(avgResponseTime) ? 0 : avgResponseTime,
+      errorPatterns: metrics
+        .filter(m => m.error_pattern)
+        .map(m => m.error_pattern)
+        .reduce((acc: any[], pattern) => {
+          const existing = acc.find(p => p.type === pattern.type);
+          if (existing) {
+            existing.count++;
+          } else {
+            acc.push({ ...pattern, count: 1 });
+          }
+          return acc;
+        }, [])
+    };
+  } catch (error) {
+    logError('metrics-service', `Error getting aggregated metrics for ${endpoint}:`, error);
+    throw error;
   }
 }
