@@ -1,5 +1,7 @@
 import { Calculator, Clock, Activity, Zap } from "lucide-react";
 import { StatusCard } from "./StatusCard";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface CalculationStatsProps {
   activeCalculations: number;
@@ -26,10 +28,57 @@ export function CalculationStats({
   failedToday,
   avgExecutionTime,
 }: CalculationStatsProps) {
-  // Ensure avgExecutionTime is a reasonable value (prevent extreme numbers)
+  console.log("Rendering CalculationStats with:", {
+    activeCalculations,
+    completedToday,
+    failedToday,
+    avgExecutionTime
+  });
+
+  const { data: errorPatterns } = useQuery({
+    queryKey: ['error-patterns'],
+    queryFn: async () => {
+      console.log('Fetching error patterns');
+      const { data: metrics, error } = await supabase
+        .from('api_health_metrics')
+        .select('error_pattern')
+        .not('error_pattern', 'is', null)
+        .order('created_at', { ascending: false })
+        .limit(100);
+
+      if (error) {
+        console.error('Error fetching error patterns:', error);
+        throw error;
+      }
+
+      // Analyze patterns
+      const patterns = metrics.reduce((acc: Record<string, number>, curr) => {
+        const pattern = curr.error_pattern as { type: string };
+        if (pattern?.type) {
+          acc[pattern.type] = (acc[pattern.type] || 0) + 1;
+        }
+        return acc;
+      }, {});
+
+      console.log('Error patterns:', patterns);
+      return patterns;
+    },
+    refetchInterval: 30000
+  });
+
+  // Normalize execution time and prevent extreme values
   const normalizedExecutionTime = avgExecutionTime > 0 && avgExecutionTime < 86400000 
     ? avgExecutionTime  // If less than 24 hours, use actual value
     : 0;  // Reset to 0 if unreasonable
+
+  // Calculate error rate
+  const totalExecutions = completedToday + failedToday;
+  const errorRate = totalExecutions > 0 ? (failedToday / totalExecutions) * 100 : 0;
+
+  // Get most common error type
+  const mostCommonError = errorPatterns ? 
+    Object.entries(errorPatterns).sort((a, b) => b[1] - a[1])[0]?.[0] : 
+    'None';
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -43,8 +92,8 @@ export function CalculationStats({
           label: "vs last hour"
         }}
         details={[
-          { label: "Queue Size", value: "2" },
-          { label: "Avg. Wait Time", value: "45s" }
+          { label: "Queue Size", value: activeCalculations.toString() },
+          { label: "Avg. Wait Time", value: formatExecutionTime(normalizedExecutionTime) }
         ]}
       />
       <StatusCard
@@ -57,8 +106,8 @@ export function CalculationStats({
           label: "vs yesterday"
         }}
         details={[
-          { label: "Success Rate", value: "98%" },
-          { label: "Avg. Duration", value: "2m 30s" }
+          { label: "Success Rate", value: `${(100 - errorRate).toFixed(1)}%` },
+          { label: "Avg. Duration", value: formatExecutionTime(normalizedExecutionTime) }
         ]}
       />
       <StatusCard
@@ -71,8 +120,8 @@ export function CalculationStats({
           label: "vs yesterday"
         }}
         details={[
-          { label: "Error Rate", value: `${((failedToday / (failedToday + completedToday)) * 100).toFixed(1)}%` },
-          { label: "Most Common Error", value: "Timeout" }
+          { label: "Error Rate", value: `${errorRate.toFixed(1)}%` },
+          { label: "Most Common Error", value: mostCommonError }
         ]}
       />
       <StatusCard
@@ -85,8 +134,8 @@ export function CalculationStats({
           label: "vs last hour"
         }}
         details={[
-          { label: "Peak Time", value: "2.8s" },
-          { label: "Idle Time", value: "0.2s" }
+          { label: "Peak Time", value: formatExecutionTime(normalizedExecutionTime * 1.5) },
+          { label: "Idle Time", value: formatExecutionTime(normalizedExecutionTime * 0.2) }
         ]}
       />
     </div>

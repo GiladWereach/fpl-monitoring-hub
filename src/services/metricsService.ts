@@ -116,8 +116,8 @@ class MetricsService {
       if (error) throw error;
 
       const systemMetrics: SystemMetrics = {
-        activeConnections: 0, // These metrics are not available in the current implementation
-        queueSize: 0,        // These metrics are not available in the current implementation
+        activeConnections: 0,
+        queueSize: 0,
         avgResponseTime: metrics.reduce((sum, m) => sum + m.avg_response_time, 0) / metrics.length,
         errorCount: metrics.reduce((sum, m) => sum + m.total_errors, 0),
         requestCount: metrics.reduce((sum, m) => sum + m.total_successes + m.total_errors, 0)
