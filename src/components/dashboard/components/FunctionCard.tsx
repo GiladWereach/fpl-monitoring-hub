@@ -37,18 +37,23 @@ export function FunctionCard({ name, functionName, loading, onExecute, schedule 
         const metrics = metricsData?.find(m => m.endpoint === functionName);
         console.log(`Metrics data for ${functionName}:`, metrics);
 
-        // Fetch latest execution log
-        const { data: executionLog, error: logError } = await supabase
-          .from('schedule_execution_logs')
-          .select('*')
-          .eq('schedule_id', schedule?.id)
-          .order('started_at', { ascending: false })
-          .limit(1)
-          .single();
+        // Only fetch execution log if we have a valid schedule ID
+        let executionLog = null;
+        if (schedule?.id) {
+          const { data: logData, error: logError } = await supabase
+            .from('schedule_execution_logs')
+            .select('*')
+            .eq('schedule_id', schedule.id)
+            .order('started_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
 
-        if (logError && logError.code !== 'PGRST116') { // Ignore "no rows returned" error
-          console.error(`Error fetching execution log for ${functionName}:`, logError);
-          throw logError;
+          if (logError && logError.code !== 'PGRST116') {
+            console.error(`Error fetching execution log for ${functionName}:`, logError);
+            throw logError;
+          }
+          
+          executionLog = logData;
         }
 
         return {
