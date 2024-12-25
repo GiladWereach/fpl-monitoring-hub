@@ -63,7 +63,7 @@ Deno.serve(async (req) => {
         fixture_id: perf.fixture_id
       }];
 
-      // Calculate minutes points
+      // Calculate minutes points - this is the key change
       const minutesPoints = calculateMinutesPoints(perf.minutes, rules);
       
       const goalsPoints = calculateGoalPoints(perf.goals_scored, perf.player.element_type, rules);
@@ -109,7 +109,7 @@ Deno.serve(async (req) => {
         event_id: perf.event_id,
         player_id: perf.player_id,
         fixture_id: perf.fixture_id,
-        minutes_points: minutesPoints,
+        minutes_points: minutesPoints,  // Make sure this is included
         goals_scored_points: goalsPoints,
         clean_sheet_points: cleanSheetPoints,
         goals_conceded_points: goalsConcededPoints,
