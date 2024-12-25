@@ -1,32 +1,109 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { LineChart, ArrowRightLeft, TrendingUp, Settings, History, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function Home() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Set canvas size
+    const updateSize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    updateSize();
+    window.addEventListener('resize', updateSize);
+
+    // Matrix-like numbers (player stats)
+    const stats = ['90', '12', '38', '100', '7.5', '250', '3', '11.5'];
+    const columns = Math.floor(canvas.width / 20);
+    const drops: number[] = Array(columns).fill(0);
+    
+    const hexSize = 30;
+    const hexagons: { x: number; y: number; size: number; opacity: number }[] = [];
+    
+    // Create initial hexagons
+    for (let i = 0; i < 15; i++) {
+      hexagons.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        size: hexSize + Math.random() * 20,
+        opacity: 0.1 + Math.random() * 0.2
+      });
+    }
+
+    // Draw hexagon
+    function drawHexagon(x: number, y: number, size: number, opacity: number) {
+      ctx.beginPath();
+      for (let i = 0; i < 6; i++) {
+        const angle = (i * Math.PI) / 3;
+        const xPos = x + size * Math.cos(angle);
+        const yPos = y + size * Math.sin(angle);
+        if (i === 0) {
+          ctx.moveTo(xPos, yPos);
+        } else {
+          ctx.lineTo(xPos, yPos);
+        }
+      }
+      ctx.closePath();
+      ctx.strokeStyle = `rgba(61, 255, 154, ${opacity})`;
+      ctx.stroke();
+    }
+
+    function draw() {
+      ctx.fillStyle = 'rgba(13, 17, 23, 0.1)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Draw matrix effect
+      ctx.fillStyle = '#3DFF9A';
+      ctx.font = '15px monospace';
+      
+      for (let i = 0; i < drops.length; i++) {
+        const text = stats[Math.floor(Math.random() * stats.length)];
+        const x = i * 20;
+        const y = drops[i] * 20;
+        
+        ctx.fillStyle = `rgba(61, 255, 154, ${Math.random() * 0.5})`;
+        ctx.fillText(text, x, y);
+        
+        if (y > canvas.height && Math.random() > 0.99) {
+          drops[i] = 0;
+        }
+        drops[i]++;
+      }
+
+      // Draw and update hexagons
+      hexagons.forEach((hex, i) => {
+        drawHexagon(hex.x, hex.y, hex.size, hex.opacity);
+        hex.y = (hex.y + 0.5) % canvas.height;
+        hex.x += Math.sin(Date.now() * 0.001 + i) * 0.5;
+        if (hex.x > canvas.width + hex.size) hex.x = -hex.size;
+        if (hex.x < -hex.size) hex.x = canvas.width + hex.size;
+      });
+
+      requestAnimationFrame(draw);
+    }
+
+    draw();
+
+    return () => {
+      window.removeEventListener('resize', updateSize);
+    };
+  }, []);
+
   return (
     <div className="min-h-screen bg-[#0D1117] text-white relative overflow-hidden">
-      {/* Tech Background Elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        {/* Diagonal Shiny Stripes */}
-        <div className="absolute inset-0 opacity-10">
-          {[...Array(10)].map((_, i) => (
-            <div
-              key={i}
-              className="absolute h-[200px] w-[2000px] rotate-45 transform"
-              style={{
-                background: 'linear-gradient(90deg, transparent, rgba(61, 255, 154, 0.15), transparent)',
-                top: `${i * 200}px`,
-                left: `-${i * 100}px`,
-                animation: `slide${i} 10s infinite linear`,
-              }}
-            />
-          ))}
-        </div>
-        
-        {/* Glowing Orbs */}
-        <div className="absolute top-20 right-20 w-32 h-32 rounded-full bg-[#3DFF9A] opacity-5 blur-3xl" />
-        <div className="absolute bottom-40 left-20 w-40 h-40 rounded-full bg-[#3DFF9A] opacity-5 blur-3xl" />
-      </div>
+      <canvas
+        ref={canvasRef}
+        className="absolute inset-0 w-full h-full"
+        style={{ opacity: 0.3 }}
+      />
 
       {/* Hero Section */}
       <section className="container mx-auto px-4 py-16 md:py-24 relative">
@@ -123,20 +200,6 @@ export default function Home() {
           ))}
         </div>
       </section>
-
-      {/* Add keyframes for the sliding animations */}
-      <style jsx>{`
-        @keyframes slide0 { from { transform: translateX(-100%) rotate(45deg); } to { transform: translateX(100%) rotate(45deg); } }
-        @keyframes slide1 { from { transform: translateX(-120%) rotate(45deg); } to { transform: translateX(80%) rotate(45deg); } }
-        @keyframes slide2 { from { transform: translateX(-140%) rotate(45deg); } to { transform: translateX(60%) rotate(45deg); } }
-        @keyframes slide3 { from { transform: translateX(-160%) rotate(45deg); } to { transform: translateX(40%) rotate(45deg); } }
-        @keyframes slide4 { from { transform: translateX(-180%) rotate(45deg); } to { transform: translateX(20%) rotate(45deg); } }
-        @keyframes slide5 { from { transform: translateX(-200%) rotate(45deg); } to { transform: translateX(0%) rotate(45deg); } }
-        @keyframes slide6 { from { transform: translateX(-220%) rotate(45deg); } to { transform: translateX(-20%) rotate(45deg); } }
-        @keyframes slide7 { from { transform: translateX(-240%) rotate(45deg); } to { transform: translateX(-40%) rotate(45deg); } }
-        @keyframes slide8 { from { transform: translateX(-260%) rotate(45deg); } to { transform: translateX(-60%) rotate(45deg); } }
-        @keyframes slide9 { from { transform: translateX(-280%) rotate(45deg); } to { transform: translateX(-80%) rotate(45deg); } }
-      `}</style>
     </div>
   );
 }
