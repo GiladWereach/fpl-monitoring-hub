@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { Json } from "@/integrations/supabase/types";
 
 interface ExecutionContext {
   scheduleId: string;
@@ -7,8 +8,8 @@ interface ExecutionContext {
   attempt: number;
   startTime: Date;
   executionWindow?: {
-    start: Date;
-    end: Date;
+    start: string; // Changed from Date to string
+    end: string;   // Changed from Date to string
   };
 }
 
@@ -25,8 +26,11 @@ export const createExecutionLog = async (context: ExecutionContext) => {
         execution_context: {
           attempt: context.attempt,
           function_name: context.functionName,
-          execution_window: context.executionWindow
-        }
+          execution_window: context.executionWindow ? {
+            start: context.executionWindow.start,
+            end: context.executionWindow.end
+          } : undefined
+        } as Json
       })
       .select()
       .single();
@@ -67,7 +71,7 @@ export const updateExecutionLog = async (
         completed_at: new Date().toISOString(),
         error_details: details?.error,
         execution_duration_ms: details?.duration,
-        execution_metrics: details?.metrics
+        execution_metrics: details?.metrics as Json
       })
       .eq('id', logId);
 
@@ -92,6 +96,28 @@ export const updateExecutionLog = async (
       variant: "destructive",
     });
     throw error;
+  }
+};
+
+// Add the missing export for logFunctionExecution
+export const logFunctionExecution = async (functionName: string, startedAt: string) => {
+  console.log(`Logging execution for function: ${functionName}`);
+  try {
+    const { data: schedule } = await supabase
+      .from('schedules')
+      .select('id')
+      .eq('function_name', functionName)
+      .single();
+      
+    if (!schedule) {
+      console.warn(`No schedule found for function ${functionName}`);
+      return null;
+    }
+
+    return schedule.id;
+  } catch (error) {
+    console.error(`Error logging function execution for ${functionName}:`, error);
+    return null;
   }
 };
 

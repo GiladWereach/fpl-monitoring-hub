@@ -69,7 +69,7 @@ export const executeFetchFunction = async (
     });
 
     if (scheduleId) {
-      await updateExecutionLog(scheduleId, true);
+      await updateExecutionLog(scheduleId, 'completed');
     }
 
     toast({
@@ -92,7 +92,7 @@ export const executeFetchFunction = async (
     });
 
     if (scheduleId) {
-      await updateExecutionLog(scheduleId, false, error.message);
+      await updateExecutionLog(scheduleId, 'failed', { error: error.message });
     }
 
     toast({
