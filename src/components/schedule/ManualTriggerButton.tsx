@@ -12,7 +12,7 @@ export const ManualTriggerButton = ({ functionName }: ManualTriggerButtonProps) 
     try {
       console.log(`Manually triggering function: ${functionName}`);
       
-      // First get the schedule ID
+      // Get schedule from schedules table
       const { data: schedule, error: scheduleError } = await supabase
         .from('schedules')
         .select('id')
@@ -24,7 +24,9 @@ export const ManualTriggerButton = ({ functionName }: ManualTriggerButtonProps) 
         throw new Error(`Could not find schedule for function: ${functionName}`);
       }
 
-      // Create execution log with valid schedule ID
+      console.log(`Found schedule ID: ${schedule.id} for function: ${functionName}`);
+
+      // Create execution log
       const { data: log, error: logError } = await supabase
         .from('schedule_execution_logs')
         .insert({
