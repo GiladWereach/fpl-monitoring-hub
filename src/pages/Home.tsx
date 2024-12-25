@@ -1,11 +1,66 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { toast } from '@/hooks/use-toast';
 import FeaturesGrid from '@/components/home/FeaturesGrid';
 import QuickStartGuide from '@/components/home/QuickStartGuide';
 import Navbar from '@/components/layout/Navbar';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function Home() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [teamId, setTeamId] = useState<string>('');
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Restore last used team ID from localStorage
+    const lastTeamId = localStorage.getItem('lastTeamId');
+    if (lastTeamId) {
+      setTeamId(lastTeamId);
+    }
+  }, []);
+
+  const handleSubmit = async () => {
+    if (!teamId || isNaN(Number(teamId))) {
+      toast({
+        title: "Invalid Team ID",
+        description: "Please enter a valid FPL team ID",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('fetch-team-data', {
+        body: { teamId: Number(teamId) }
+      });
+
+      if (error) throw error;
+
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to fetch team data');
+      }
+
+      // Save team ID to localStorage
+      localStorage.setItem('lastTeamId', teamId);
+
+      // Navigate to the team view
+      navigate(`/team/${teamId}`);
+
+    } catch (error) {
+      console.error('Error fetching team data:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to fetch team data. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -120,17 +175,21 @@ export default function Home() {
             </p>
             
             {/* Team ID Input */}
-            <div className="max-w-md mx-auto mt-8 space-y-4 relative">
+            <div className="max-w-md mx-auto mt-8 space-y-4">
               <div className="relative">
-                <input 
+                <Input 
                   type="text" 
                   placeholder="Enter your Team ID"
+                  value={teamId}
+                  onChange={(e) => setTeamId(e.target.value)}
                   className="w-full px-4 py-3 bg-[#1A1F2C] border border-[#3DFF9A]/20 rounded-lg focus:border-[#3DFF9A] focus:ring-1 focus:ring-[#3DFF9A] transition-all"
                 />
                 <Button 
+                  onClick={handleSubmit}
+                  disabled={isLoading}
                   className="mt-4 w-full bg-gradient-to-r from-[#3DFF9A] to-[#50E3C2] text-[#0D1117] hover:from-[#50E3C2] hover:to-[#3DFF9A] transition-all duration-300"
                 >
-                  Get Started
+                  {isLoading ? 'Loading...' : 'Get Started'}
                 </Button>
               </div>
             </div>

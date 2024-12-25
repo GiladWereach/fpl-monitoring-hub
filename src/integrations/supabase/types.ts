@@ -603,6 +603,33 @@ export type Database = {
           },
         ]
       }
+      fpl_teams: {
+        Row: {
+          created_at: string | null
+          event: number
+          fpl_team_id: number
+          id: string
+          last_fetch: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          event: number
+          fpl_team_id: number
+          id?: string
+          last_fetch?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          event?: number
+          fpl_team_id?: number
+          id?: string
+          last_fetch?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       function_schedules: {
         Row: {
           active_period_end: string | null
@@ -2057,6 +2084,106 @@ export type Database = {
           period_type?: string | null
         }
         Relationships: []
+      }
+      team_performances: {
+        Row: {
+          active_chip: string | null
+          bank: number | null
+          bench_points: number | null
+          current_rank: number | null
+          event: number
+          fpl_team_id: number
+          id: string
+          overall_rank: number | null
+          percentile_rank: number | null
+          points: number
+          team_value: number | null
+          total_points: number
+          transfer_cost: number | null
+          transfers_made: number | null
+        }
+        Insert: {
+          active_chip?: string | null
+          bank?: number | null
+          bench_points?: number | null
+          current_rank?: number | null
+          event: number
+          fpl_team_id: number
+          id?: string
+          overall_rank?: number | null
+          percentile_rank?: number | null
+          points: number
+          team_value?: number | null
+          total_points: number
+          transfer_cost?: number | null
+          transfers_made?: number | null
+        }
+        Update: {
+          active_chip?: string | null
+          bank?: number | null
+          bench_points?: number | null
+          current_rank?: number | null
+          event?: number
+          fpl_team_id?: number
+          id?: string
+          overall_rank?: number | null
+          percentile_rank?: number | null
+          points?: number
+          team_value?: number | null
+          total_points?: number
+          transfer_cost?: number | null
+          transfers_made?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_performances_fpl_team_id_event_fkey"
+            columns: ["fpl_team_id", "event"]
+            isOneToOne: false
+            referencedRelation: "fpl_teams"
+            referencedColumns: ["fpl_team_id", "event"]
+          },
+        ]
+      }
+      team_selections: {
+        Row: {
+          auto_subs: Json | null
+          captain_id: number
+          event: number
+          formation: string
+          fpl_team_id: number
+          id: string
+          picks: Json
+          vice_captain_id: number
+        }
+        Insert: {
+          auto_subs?: Json | null
+          captain_id: number
+          event: number
+          formation: string
+          fpl_team_id: number
+          id?: string
+          picks: Json
+          vice_captain_id: number
+        }
+        Update: {
+          auto_subs?: Json | null
+          captain_id?: number
+          event?: number
+          formation?: string
+          fpl_team_id?: number
+          id?: string
+          picks?: Json
+          vice_captain_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_selections_fpl_team_id_event_fkey"
+            columns: ["fpl_team_id", "event"]
+            isOneToOne: false
+            referencedRelation: "fpl_teams"
+            referencedColumns: ["fpl_team_id", "event"]
+          },
+        ]
       }
       teams: {
         Row: {
