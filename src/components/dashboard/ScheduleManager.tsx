@@ -3,6 +3,7 @@ import { Timer } from "lucide-react";
 import { ScheduleDialog } from "./schedule/ScheduleDialog";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { checkScheduleConflicts } from "@/utils/scheduleConflictDetector";
 
 interface ScheduleManagerProps {
   functionName: string;
@@ -32,6 +33,22 @@ export function ScheduleManager({ functionName, functionDisplayName }: ScheduleM
       if (error) {
         console.error(`Error fetching schedule for ${functionName}:`, error);
         throw error;
+      }
+      
+      // Check for conflicts if schedule exists and is enabled
+      if (data && data.enabled && data.execution_window) {
+        const conflicts = await checkScheduleConflicts(
+          functionName,
+          {
+            startTime: new Date(data.execution_window.start_time),
+            endTime: new Date(data.execution_window.end_time)
+          },
+          data.id
+        );
+
+        if (conflicts.hasConflict) {
+          console.warn(`Schedule conflicts detected for ${functionName}:`, conflicts.conflictingSchedules);
+        }
       }
       
       console.log(`Schedule data for ${functionName}:`, data);
