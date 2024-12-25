@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChartLineUp, ArrowRightLeft, TrendingUp, Settings, History, Users } from 'lucide-react';
+import { LineChart, ArrowRightLeft, TrendingUp, Settings, History, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function Home() {
@@ -38,7 +38,7 @@ export default function Home() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {[
             {
-              icon: <ChartLineUp className="w-8 h-8 text-[#3DFF9A]" />,
+              icon: <LineChart className="w-8 h-8 text-[#3DFF9A]" />,
               title: "Live Performance",
               description: "Real-time point tracking and performance analytics"
             },
