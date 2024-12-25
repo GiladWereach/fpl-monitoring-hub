@@ -49,6 +49,30 @@ export function ErrorAnalyticsDashboard() {
     }
   });
 
+  const defaultAlertThresholds: AlertThreshold[] = [
+    {
+      metric: "Error Rate",
+      warning: 5,
+      critical: 10,
+      currentValue: 3,
+      status: 'normal'
+    },
+    {
+      metric: "Response Time",
+      warning: 1000,
+      critical: 2000,
+      currentValue: 800,
+      status: 'normal'
+    }
+  ];
+
+  const defaultPerformanceMetrics: PerformanceMetricsType = {
+    responseTime: 245,
+    throughput: 120,
+    errorRate: 2.5,
+    resourceUtilization: 65
+  };
+
   const handleThresholdUpdate = async (config: ThresholdConfig) => {
     try {
       const { error } = await supabase
@@ -134,8 +158,8 @@ export function ErrorAnalyticsDashboard() {
         />
       </div>
       
-      <AlertThresholds thresholds={alertThresholds} />
-      <PerformanceMetrics metrics={performanceMetrics} />
+      <AlertThresholds thresholds={defaultAlertThresholds} />
+      <PerformanceMetrics metrics={defaultPerformanceMetrics} />
       <ErrorAnalyticsSummary metrics={metrics} />
       <ErrorMetricsChart data={metrics} />
       <HistoricalMetricsChart 
