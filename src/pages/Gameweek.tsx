@@ -6,15 +6,20 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LayoutGrid, List, Loader2, Trophy, Users, TrendingUp, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+interface Pick {
+  element: number;
+  position: number;
+  multiplier: number;
+  is_captain: boolean;
+  is_vice_captain: boolean;
+}
+
 interface TeamSelection {
-  picks: {
-    element: number;
-    position: number;
-    multiplier: number;
-    is_captain: boolean;
-    is_vice_captain: boolean;
-  }[];
+  picks: Pick[];
   formation: string;
+  captain_id: number;
+  vice_captain_id: number;
+  auto_subs: any; // We'll type this properly if we need it later
 }
 
 interface Player {
@@ -52,7 +57,20 @@ export default function Gameweek() {
         .single();
       
       if (error) throw error;
-      return data as TeamSelection;
+      
+      // Transform the data to match our TeamSelection interface
+      const picks = (data.picks as any[]).map(pick => ({
+        element: pick.element,
+        position: pick.position,
+        multiplier: pick.multiplier,
+        is_captain: pick.is_captain || false,
+        is_vice_captain: pick.is_vice_captain || false
+      }));
+
+      return {
+        ...data,
+        picks
+      } as TeamSelection;
     }
   });
 
