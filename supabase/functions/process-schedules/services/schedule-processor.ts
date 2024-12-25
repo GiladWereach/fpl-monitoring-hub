@@ -3,6 +3,7 @@ import { logDebug, logError, logInfo } from '../../shared/logging-service.ts';
 import { executeInTransaction } from './transaction-service.ts';
 import { calculateBackoff } from '../utils/retry.ts';
 import { logExecutionMetrics } from './metrics-service.ts';
+import { detectMatchWindow } from '../services/matchWindowService.ts';
 
 export async function processSchedule(
   supabaseClient: ReturnType<typeof createClient>,
@@ -18,6 +19,19 @@ export async function processSchedule(
 
   try {
     return await executeInTransaction(supabaseClient, async (client) => {
+      // Check match window for match-dependent schedules
+      if (schedule.schedule_type === 'time_based' && schedule.time_config?.type === 'match_dependent') {
+        const matchWindow = await detectMatchWindow();
+        logDebug('schedule-processor', `Match window detected for ${schedule.function_name}:`, matchWindow);
+        
+        // Adjust execution interval based on match window
+        const intervalMinutes = matchWindow.hasActiveMatches 
+          ? schedule.time_config.matchDayIntervalMinutes || 2
+          : schedule.time_config.nonMatchIntervalMinutes || 30;
+        
+        logInfo('schedule-processor', `Using ${intervalMinutes} minute interval for ${schedule.function_name}`);
+      }
+
       // Try to acquire lock with proper error handling
       const { data: lockAcquired, error: lockError } = await client
         .rpc('acquire_schedule_lock', {
