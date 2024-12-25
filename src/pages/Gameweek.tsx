@@ -7,29 +7,7 @@ import { LayoutGrid, List, Loader2, Trophy, Users, TrendingUp, Clock } from 'luc
 import { cn } from '@/lib/utils';
 import { PitchView } from '@/components/gameweek/PitchView';
 import { ListView } from '@/components/gameweek/ListView';
-
-interface Pick {
-  element: number;
-  position: number;
-  multiplier: number;
-  is_captain: boolean;
-  is_vice_captain: boolean;
-}
-
-interface TeamSelection {
-  picks: Pick[];
-  formation: string;
-  captain_id: number;
-  vice_captain_id: number;
-  auto_subs: any;
-}
-
-interface Player {
-  id: number;
-  web_name: string;
-  team: number;
-  element_type: number;
-}
+import { calculateTotalPoints, calculateBenchPoints } from '@/components/gameweek/utils/points-calculator';
 
 export default function Gameweek() {
   const [viewMode, setViewMode] = useState<'pitch' | 'list'>('pitch');
@@ -111,6 +89,30 @@ export default function Gameweek() {
 
   const isLoading = gameweekLoading || teamLoading || playersLoading || liveDataLoading;
 
+  const getPlayerData = (pick: any) => {
+    if (!teamSelection || !players) return null;
+    const player = players.find(p => p.id === pick.element);
+    const playerLiveData = liveData?.find(d => d.player_id === pick.element);
+    const points = playerLiveData?.total_points || 0;
+    
+    return {
+      ...player,
+      points: pick.is_captain ? points * 2 : points,
+      liveData: playerLiveData
+    };
+  };
+
+  const totalPoints = calculateTotalPoints(teamSelection?.picks || [], getPlayerData);
+  const benchPoints = calculateBenchPoints(teamSelection?.picks || [], getPlayerData);
+  
+  // Calculate players playing (only from starting 11)
+  const playersPlaying = teamSelection?.picks
+    .filter((pick: any) => pick.position <= 11)
+    .filter((pick: any) => {
+      const playerData = getPlayerData(pick);
+      return playerData?.liveData?.minutes > 0;
+    }).length || 0;
+
   if (isLoading) {
     return (
       <div className="flex h-[50vh] items-center justify-center">
@@ -139,12 +141,7 @@ export default function Gameweek() {
               <Trophy className="h-8 w-8 text-[#3DFF9A]" />
               <div>
                 <p className="text-sm text-gray-400">Total Points</p>
-                <p className="text-2xl font-bold">
-                  {liveData?.reduce((sum, p) => {
-                    const pick = teamSelection?.picks.find(pick => pick.element === p.player_id);
-                    return sum + (pick?.is_captain ? p.total_points * 2 : p.total_points);
-                  }, 0) || 0}
-                </p>
+                <p className="text-2xl font-bold">{totalPoints}</p>
               </div>
             </div>
           </Card>
@@ -153,9 +150,7 @@ export default function Gameweek() {
               <Users className="h-8 w-8 text-[#3DFF9A]" />
               <div>
                 <p className="text-sm text-gray-400">Players Playing</p>
-                <p className="text-2xl font-bold">
-                  {liveData?.filter(p => p.minutes > 0).length || 0}/11
-                </p>
+                <p className="text-2xl font-bold">{playersPlaying}/11</p>
               </div>
             </div>
           </Card>
@@ -227,12 +222,11 @@ export default function Gameweek() {
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <span className="text-gray-400">Points</span>
-                  <span className="font-medium">
-                    {liveData?.reduce((sum, p) => {
-                      const pick = teamSelection?.picks.find(pick => pick.element === p.player_id);
-                      return sum + (pick?.is_captain ? p.total_points * 2 : p.total_points);
-                    }, 0) || 0}
-                  </span>
+                  <span className="font-medium">{totalPoints}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-400">Bench Points</span>
+                  <span className="font-medium">{benchPoints}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-400">Goals</span>
