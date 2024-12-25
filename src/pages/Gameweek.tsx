@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LayoutGrid, List, Loader2, Trophy, Users, TrendingUp, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { PitchView } from '@/components/gameweek/PitchView';
+import { ListView } from '@/components/gameweek/ListView';
 
 interface Pick {
   element: number;
@@ -19,7 +21,7 @@ interface TeamSelection {
   formation: string;
   captain_id: number;
   vice_captain_id: number;
-  auto_subs: any; // We'll type this properly if we need it later
+  auto_subs: any;
 }
 
 interface Player {
@@ -30,6 +32,8 @@ interface Player {
 }
 
 export default function Gameweek() {
+  const [viewMode, setViewMode] = useState<'pitch' | 'list'>('pitch');
+
   const { data: currentGameweek, isLoading: gameweekLoading } = useQuery({
     queryKey: ['current-gameweek'],
     queryFn: async () => {
@@ -89,7 +93,23 @@ export default function Gameweek() {
     }
   });
 
-  const isLoading = gameweekLoading || teamLoading || playersLoading;
+  const { data: liveData, isLoading: liveDataLoading } = useQuery({
+    queryKey: ['live-performance', currentGameweek?.id],
+    enabled: !!currentGameweek?.id && !!teamSelection?.picks,
+    queryFn: async () => {
+      const playerIds = teamSelection.picks.map(p => p.element);
+      const { data, error } = await supabase
+        .from('gameweek_live_performance')
+        .select('*')
+        .eq('event_id', currentGameweek.id)
+        .in('player_id', playerIds);
+      
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  const isLoading = gameweekLoading || teamLoading || playersLoading || liveDataLoading;
 
   if (isLoading) {
     return (
@@ -98,18 +118,6 @@ export default function Gameweek() {
       </div>
     );
   }
-
-  const getPlayerByPosition = (position: number) => {
-    if (!teamSelection || !players) return null;
-    const pick = teamSelection.picks.find(p => p.position === position);
-    if (!pick) return null;
-    return {
-      ...players.find(p => p.id === pick.element),
-      isCaptain: pick.is_captain,
-      isViceCaptain: pick.is_vice_captain,
-      multiplier: pick.multiplier
-    };
-  };
 
   return (
     <div className="min-h-screen bg-[#0D1117] text-white">
@@ -131,7 +139,12 @@ export default function Gameweek() {
               <Trophy className="h-8 w-8 text-[#3DFF9A]" />
               <div>
                 <p className="text-sm text-gray-400">Total Points</p>
-                <p className="text-2xl font-bold">42</p>
+                <p className="text-2xl font-bold">
+                  {liveData?.reduce((sum, p) => {
+                    const pick = teamSelection?.picks.find(pick => pick.element === p.player_id);
+                    return sum + (pick?.is_captain ? p.total_points * 2 : p.total_points);
+                  }, 0) || 0}
+                </p>
               </div>
             </div>
           </Card>
@@ -140,7 +153,9 @@ export default function Gameweek() {
               <Users className="h-8 w-8 text-[#3DFF9A]" />
               <div>
                 <p className="text-sm text-gray-400">Players Playing</p>
-                <p className="text-2xl font-bold">7/11</p>
+                <p className="text-2xl font-bold">
+                  {liveData?.filter(p => p.minutes > 0).length || 0}/11
+                </p>
               </div>
             </div>
           </Card>
@@ -164,92 +179,45 @@ export default function Gameweek() {
           </Card>
         </div>
 
+        {/* View Toggle */}
+        <div className="flex justify-end space-x-2 mb-4">
+          <button
+            onClick={() => setViewMode('pitch')}
+            className={cn(
+              "p-2 rounded-md transition-colors",
+              viewMode === 'pitch' ? "bg-[#3DFF9A]/20 text-[#3DFF9A]" : "text-gray-400 hover:bg-[#3DFF9A]/10"
+            )}
+          >
+            <LayoutGrid className="h-5 w-5" />
+          </button>
+          <button
+            onClick={() => setViewMode('list')}
+            className={cn(
+              "p-2 rounded-md transition-colors",
+              viewMode === 'list' ? "bg-[#3DFF9A]/20 text-[#3DFF9A]" : "text-gray-400 hover:bg-[#3DFF9A]/10"
+            )}
+          >
+            <List className="h-5 w-5" />
+          </button>
+        </div>
+
         {/* Main Content */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Pitch Section - Takes 2 columns on desktop */}
+          {/* Pitch/List Section - Takes 2 columns on desktop */}
           <div className="lg:col-span-2">
-            <Card className="glass-card p-6">
-              <div className="relative aspect-[16/9] w-full">
-                {/* Pitch Background */}
-                <div className="absolute inset-0 bg-gradient-to-b from-[#3DFF9A]/5 to-transparent rounded-lg border border-[#3DFF9A]/10">
-                  {/* Field Lines */}
-                  <div className="absolute inset-0 flex flex-col">
-                    <div className="h-1/3 border-b border-[#3DFF9A]/20" />
-                    <div className="h-1/3 border-b border-[#3DFF9A]/20" />
-                  </div>
-                  {/* Center Circle */}
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 border-2 border-[#3DFF9A]/20 rounded-full" />
-                </div>
-                
-                {/* Player Positions */}
-                <div className="absolute inset-0 grid grid-rows-4 gap-4 p-8">
-                  {/* Forwards Row */}
-                  <div className="flex justify-around items-center">
-                    {[9, 10, 11].map(position => {
-                      const player = getPlayerByPosition(position);
-                      if (!player) return null;
-                      return (
-                        <div key={position} className="text-center">
-                          <div className="bg-[#3DFF9A]/10 px-4 py-2 rounded-full border border-[#3DFF9A]/20">
-                            <p className="text-sm font-medium">{player.web_name}</p>
-                            {player.isCaptain && <span className="text-xs text-[#3DFF9A]">(C)</span>}
-                            {player.isViceCaptain && <span className="text-xs text-[#3DFF9A]">(V)</span>}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  {/* Midfielders Row */}
-                  <div className="flex justify-around items-center">
-                    {[6, 7, 8].map(position => {
-                      const player = getPlayerByPosition(position);
-                      if (!player) return null;
-                      return (
-                        <div key={position} className="text-center">
-                          <div className="bg-[#3DFF9A]/10 px-4 py-2 rounded-full border border-[#3DFF9A]/20">
-                            <p className="text-sm font-medium">{player.web_name}</p>
-                            {player.isCaptain && <span className="text-xs text-[#3DFF9A]">(C)</span>}
-                            {player.isViceCaptain && <span className="text-xs text-[#3DFF9A]">(V)</span>}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  {/* Defenders Row */}
-                  <div className="flex justify-around items-center">
-                    {[2, 3, 4, 5].map(position => {
-                      const player = getPlayerByPosition(position);
-                      if (!player) return null;
-                      return (
-                        <div key={position} className="text-center">
-                          <div className="bg-[#3DFF9A]/10 px-4 py-2 rounded-full border border-[#3DFF9A]/20">
-                            <p className="text-sm font-medium">{player.web_name}</p>
-                            {player.isCaptain && <span className="text-xs text-[#3DFF9A]">(C)</span>}
-                            {player.isViceCaptain && <span className="text-xs text-[#3DFF9A]">(V)</span>}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  {/* Goalkeeper Row */}
-                  <div className="flex justify-center items-center">
-                    {[1].map(position => {
-                      const player = getPlayerByPosition(position);
-                      if (!player) return null;
-                      return (
-                        <div key={position} className="text-center">
-                          <div className="bg-[#3DFF9A]/10 px-4 py-2 rounded-full border border-[#3DFF9A]/20">
-                            <p className="text-sm font-medium">{player.web_name}</p>
-                            {player.isCaptain && <span className="text-xs text-[#3DFF9A]">(C)</span>}
-                            {player.isViceCaptain && <span className="text-xs text-[#3DFF9A]">(V)</span>}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            </Card>
+            {viewMode === 'pitch' ? (
+              <PitchView 
+                teamSelection={teamSelection}
+                players={players}
+                liveData={liveData}
+              />
+            ) : (
+              <ListView
+                teamSelection={teamSelection}
+                players={players}
+                liveData={liveData}
+              />
+            )}
           </div>
 
           {/* Stats Section - Takes 1 column on desktop */}
@@ -259,34 +227,30 @@ export default function Gameweek() {
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <span className="text-gray-400">Points</span>
-                  <span className="font-medium">42</span>
+                  <span className="font-medium">
+                    {liveData?.reduce((sum, p) => {
+                      const pick = teamSelection?.picks.find(pick => pick.element === p.player_id);
+                      return sum + (pick?.is_captain ? p.total_points * 2 : p.total_points);
+                    }, 0) || 0}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-400">Rank Change</span>
-                  <span className="text-[#3DFF9A]">↑ 12,345</span>
+                  <span className="text-gray-400">Goals</span>
+                  <span className="font-medium">
+                    {liveData?.reduce((sum, p) => sum + (p.goals_scored || 0), 0) || 0}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-400">Team Value</span>
-                  <span className="font-medium">£102.5m</span>
-                </div>
-              </div>
-            </Card>
-
-            <Card className="glass-card p-6">
-              <h3 className="text-lg font-semibold mb-4">Top Performers</h3>
-              <div className="space-y-4">
-                {/* We'll implement this with real data later */}
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-400">Player 1</span>
-                  <span className="font-medium">15 pts</span>
+                  <span className="text-gray-400">Assists</span>
+                  <span className="font-medium">
+                    {liveData?.reduce((sum, p) => sum + (p.assists || 0), 0) || 0}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-400">Player 2</span>
-                  <span className="font-medium">12 pts</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-400">Player 3</span>
-                  <span className="font-medium">8 pts</span>
+                  <span className="text-gray-400">Bonus Points</span>
+                  <span className="font-medium">
+                    {liveData?.reduce((sum, p) => sum + (p.bonus || 0), 0) || 0}
+                  </span>
                 </div>
               </div>
             </Card>
