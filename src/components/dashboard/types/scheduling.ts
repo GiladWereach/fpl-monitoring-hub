@@ -33,6 +33,27 @@ export type EventCondition = {
   value: string;
 };
 
+export type Schedule = {
+  id: string;
+  function_name: string;
+  schedule_type: 'time_based' | 'event_based';
+  enabled: boolean;
+  time_config?: TimeConfig;
+  event_config?: EventConfig;
+  execution_config: ExecutionConfig;
+  execution_window?: {
+    start_time: string;
+    end_time: string;
+    days_of_week?: number[];
+  };
+  timezone: string;
+  event_conditions: EventCondition[];
+  last_execution_at?: string;
+  next_execution_at?: string;
+  description?: string;
+  priority?: number;
+};
+
 export type AdvancedScheduleFormValues = {
   function_name: string;
   enabled: boolean;
