@@ -78,7 +78,7 @@
 }
 
 .pitch-container {
-  @apply relative h-[400px] w-full bg-[#1A1F2C] rounded-lg border border-accent/20 overflow-hidden;
+  @apply relative h-[450px] w-full bg-[#1A1F2C] rounded-lg border border-accent/20 overflow-hidden;
 }
 
 .pitch-markings {
@@ -111,4 +111,12 @@
 
 .points-text {
   @apply text-center text-lg font-bold text-accent;
+}
+
+.player-name {
+  @apply text-sm font-medium text-foreground text-center mb-1;
+}
+
+.player-columns {
+  @apply px-8 flex items-center justify-center;
 }

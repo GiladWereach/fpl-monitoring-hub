@@ -49,9 +49,9 @@ export function PitchView({ teamSelection, players, liveData }: PitchViewProps) 
         <div className="goalkeeper-area right-4 top-1/2 -translate-y-1/2" />
         
         {/* Player Positions */}
-        <div className="absolute inset-0 flex">
+        <div className="absolute inset-0 flex px-16 py-8">
           {/* GK Column */}
-          <div className="w-1/4 flex items-center justify-center">
+          <div className="player-columns w-1/4">
             <div className="space-y-4">
               {[1].map(position => {
                 const player = getPlayerData(position);
@@ -70,7 +70,7 @@ export function PitchView({ teamSelection, players, liveData }: PitchViewProps) 
           </div>
           
           {/* DEF Column */}
-          <div className="w-1/4 flex items-center justify-center">
+          <div className="player-columns w-1/4">
             <div className="space-y-4">
               {defenders.map(position => {
                 const player = getPlayerData(position);
@@ -89,7 +89,7 @@ export function PitchView({ teamSelection, players, liveData }: PitchViewProps) 
           </div>
           
           {/* MID Column */}
-          <div className="w-1/4 flex items-center justify-center">
+          <div className="player-columns w-1/4">
             <div className="space-y-4">
               {midfielders.map(position => {
                 const player = getPlayerData(position);
@@ -108,7 +108,7 @@ export function PitchView({ teamSelection, players, liveData }: PitchViewProps) 
           </div>
           
           {/* FWD Column */}
-          <div className="w-1/4 flex items-center justify-center">
+          <div className="player-columns w-1/4">
             <div className="space-y-4">
               {forwards.map(position => {
                 const player = getPlayerData(position);
