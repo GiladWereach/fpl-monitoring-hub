@@ -9,28 +9,8 @@ interface PlayerStatusProps {
 
 export function PlayerStatus({ player, liveData }: PlayerStatusProps) {
   const getPlayerStatus = () => {
-    // Check if player is in play (highest priority)
-    if (liveData?.minutes > 0 && !liveData?.finished) {
-      return {
-        icon: Play,
-        color: 'text-[#3DFF9A]',
-        animate: true,
-        label: 'In Play'
-      };
-    }
-
-    // Check if match is finished
-    if (liveData?.finished) {
-      return {
-        icon: Check,
-        color: 'text-gray-400',
-        animate: false,
-        label: 'Finished'
-      };
-    }
-
-    // Check if player is not available
-    if (player?.chance_of_playing_next_round === 0) {
+    // First check player availability from players table
+    if (player?.chance_of_playing_this_round === 0) {
       return {
         icon: X,
         color: 'text-red-500',
@@ -39,14 +19,46 @@ export function PlayerStatus({ player, liveData }: PlayerStatusProps) {
       };
     }
 
-    // Check if player is doubtful
-    if (player?.chance_of_playing_next_round < 100) {
+    if (player?.chance_of_playing_this_round !== null && player?.chance_of_playing_this_round < 100) {
       return {
         icon: AlertCircle,
         color: 'text-yellow-500',
         animate: false,
         label: 'Doubtful'
       };
+    }
+
+    // Then check match and performance status
+    if (liveData) {
+      // Player is in an active match
+      if (liveData.minutes > 0 && !liveData.finished) {
+        return {
+          icon: Play,
+          color: 'text-[#3DFF9A]',
+          animate: true,
+          label: 'In Play'
+        };
+      }
+
+      // Match is finished and player participated
+      if (liveData.finished && liveData.minutes > 0) {
+        return {
+          icon: Check,
+          color: 'text-gray-400',
+          animate: false,
+          label: 'Finished'
+        };
+      }
+
+      // Match is finished but player didn't play
+      if (liveData.finished) {
+        return {
+          icon: X,
+          color: 'text-gray-400',
+          animate: false,
+          label: 'Unused'
+        };
+      }
     }
 
     // Default: Yet to play
@@ -62,7 +74,7 @@ export function PlayerStatus({ player, liveData }: PlayerStatusProps) {
   const Icon = status.icon;
 
   return (
-    <div className="absolute top-1 left-1">
+    <div className="absolute bottom-1 left-1">
       <Icon 
         className={cn(
           "h-4 w-4",
