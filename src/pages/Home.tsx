@@ -66,14 +66,14 @@ export default function Home() {
       activeAnimations = activeAnimations.filter(animation => {
         // Update opacity based on fade direction
         if (animation.fadeDirection === 'in') {
-          animation.opacity += 0.02;
-          animation.scale += 0.02;
-          if (animation.opacity >= 0.5) { // Reduced from 0.8 to 0.5 for lower final opacity
+          animation.opacity += 0.01; // Slower fade in
+          animation.scale += 0.01;
+          if (animation.opacity >= 0.75) {
             animation.fadeDirection = 'out';
           }
         } else {
-          animation.opacity -= 0.02;
-          animation.scale -= 0.01;
+          animation.opacity -= 0.01; // Slower fade out
+          animation.scale -= 0.005;
         }
 
         // Draw the name
@@ -104,13 +104,13 @@ export default function Home() {
       <Navbar />
       
       {/* Hero Section with Canvas Background */}
-      <section className="relative h-[600px] mt-16"> {/* Added mt-16 to account for navbar height */}
+      <section className="relative h-[600px] mt-16">
         <canvas
           ref={canvasRef}
           className="absolute inset-0 w-full h-full"
           style={{ opacity: 0.3 }}
         />
-        <div className="container mx-auto px-4 py-12 md:py-20 relative"> {/* Reduced padding */}
+        <div className="container mx-auto px-4 py-12 md:py-20 relative">
           <div className="text-center space-y-6">
             <h1 className="text-4xl md:text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#3DFF9A] to-[#50E3C2]">
               Elevate Your FPL Game

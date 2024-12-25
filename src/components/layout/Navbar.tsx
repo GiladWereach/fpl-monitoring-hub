@@ -14,7 +14,7 @@ const Navbar = () => {
   ];
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-sm border-b">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-[#0D1117]/80 backdrop-blur-sm border-b border-white/10 shadow-[0_4px_30px_rgba(255,255,255,0.1)]">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
@@ -59,7 +59,7 @@ const Navbar = () => {
       {/* Mobile Navigation */}
       {isOpen && (
         <div className="md:hidden">
-          <div className="px-2 pt-2 pb-3 space-y-1 bg-background border-b">
+          <div className="px-2 pt-2 pb-3 space-y-1 bg-[#0D1117] border-b border-white/10">
             {navItems.map((item) => (
               <Link
                 key={item.href}
