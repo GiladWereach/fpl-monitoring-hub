@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export function ScheduleExecutionMonitor() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -131,7 +132,11 @@ export function ScheduleExecutionMonitor() {
           dateRange={dateRange}
           onDateRangeChange={setDateRange}
         />
-        <ExecutionLogTable executions={filteredExecutions || []} />
+        <ScrollArea className="h-[500px] rounded-md border">
+          <div className="p-4">
+            <ExecutionLogTable executions={filteredExecutions?.slice(0, 5) || []} />
+          </div>
+        </ScrollArea>
       </div>
     </Card>
   );
