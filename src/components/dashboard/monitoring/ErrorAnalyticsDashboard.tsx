@@ -49,6 +49,18 @@ export function ErrorAnalyticsDashboard() {
     }
   });
 
+  const { data: thresholds } = useQuery({
+    queryKey: ['monitoring-thresholds'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('monitoring_thresholds')
+        .select('*');
+      
+      if (error) throw error;
+      return data;
+    }
+  });
+
   const defaultAlertThresholds: AlertThreshold[] = [
     {
       metric: "Error Rate",
@@ -88,6 +100,23 @@ export function ErrorAnalyticsDashboard() {
         });
 
       if (error) throw error;
+
+      // Send test alert
+      if (config.enabled) {
+        await supabase.functions.invoke('send-monitoring-alert', {
+          body: {
+            type: 'warning',
+            message: 'Test alert after threshold update',
+            details: {
+              metric: config.metricName,
+              value: 0,
+              threshold: config.warningThreshold,
+              timestamp: new Date().toISOString()
+            },
+            recipients: ['test@example.com'] // Replace with actual recipients
+          }
+        });
+      }
 
       toast({
         title: "Thresholds Updated",
@@ -158,7 +187,7 @@ export function ErrorAnalyticsDashboard() {
         />
       </div>
       
-      <AlertThresholds thresholds={defaultAlertThresholds} />
+      <AlertThresholds thresholds={thresholds || defaultAlertThresholds} />
       <PerformanceMetrics metrics={defaultPerformanceMetrics} />
       <ErrorAnalyticsSummary metrics={metrics} />
       <ErrorMetricsChart data={metrics} />
