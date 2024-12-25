@@ -1,73 +1,50 @@
 import { supabase } from "@/integrations/supabase/client";
+import { determineScheduleFrequency } from "@/services/scheduleManager";
+import { toast } from "@/hooks/use-toast";
 
-export type ScheduleFrequency = {
-  intervalMinutes: number;
-  startTime?: string;
-  endTime?: string;
-};
-
-export async function determineScheduleFrequency(functionName: string): Promise<ScheduleFrequency> {
-  console.log(`Determining schedule frequency for ${functionName}`);
+export async function updateScheduleConfiguration(functionName: string) {
+  console.log(`Updating schedule configuration for ${functionName}`);
   
-  // Get current gameweek status
-  const { data: currentEvent } = await supabase
-    .from('events')
-    .select('*')
-    .eq('is_current', true)
-    .single();
+  try {
+    const frequency = await determineScheduleFrequency(functionName);
+    
+    // Update the schedule configuration
+    const { error } = await supabase
+      .from('schedules')
+      .upsert({
+        function_name: functionName,
+        schedule_type: 'time_based',
+        time_config: {
+          type: 'match_dependent',
+          matchDayIntervalMinutes: 2,
+          nonMatchIntervalMinutes: 30
+        },
+        execution_config: {
+          retry_count: 3,
+          timeout_seconds: 30,
+          retry_delay_seconds: 60,
+          concurrent_execution: false,
+          retry_backoff: 'linear',
+          max_retry_delay: 3600
+        },
+        active_period_start: frequency.startTime,
+        active_period_end: frequency.endTime,
+        updated_at: new Date().toISOString()
+      }, {
+        onConflict: 'function_name'
+      });
 
-  if (!currentEvent) {
-    console.log('No current gameweek found, using daily collection');
-    return { intervalMinutes: 1440 }; // 24 hours
+    if (error) throw error;
+
+    console.log(`Schedule updated for ${functionName}:`, frequency);
+    return frequency;
+  } catch (error) {
+    console.error(`Error updating schedule for ${functionName}:`, error);
+    toast({
+      title: "Schedule Update Error",
+      description: `Failed to update schedule for ${functionName}`,
+      variant: "destructive",
+    });
+    throw error;
   }
-
-  // Get today's fixtures
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-
-  const { data: fixtures } = await supabase
-    .from('fixtures')
-    .select('*')
-    .eq('event', currentEvent.id)
-    .gte('kickoff_time', today.toISOString())
-    .lt('kickoff_time', tomorrow.toISOString())
-    .order('kickoff_time');
-
-  if (!fixtures?.length) {
-    // No matches today, check if gameweek is live
-    const { data: unfinishedFixtures } = await supabase
-      .from('fixtures')
-      .select('*')
-      .eq('event', currentEvent.id)
-      .eq('finished', false);
-
-    if (unfinishedFixtures?.length) {
-      console.log('Live gameweek (non-match hours), using 30-minute intervals');
-      return { intervalMinutes: 30 };
-    }
-
-    console.log('No live matches, using daily collection');
-    return { intervalMinutes: 1440 }; // 24 hours
-  }
-
-  // We have matches today, determine the window
-  const firstKickoff = new Date(fixtures[0].kickoff_time);
-  const lastKickoff = new Date(fixtures[fixtures.length - 1].kickoff_time);
-  const windowEnd = new Date(lastKickoff);
-  windowEnd.setHours(windowEnd.getHours() + 2.5); // 2.5 hours after last kickoff
-
-  const now = new Date();
-  if (now >= firstKickoff && now <= windowEnd) {
-    console.log('Match day window active, using 2-minute intervals');
-    return {
-      intervalMinutes: 2,
-      startTime: firstKickoff.toISOString(),
-      endTime: windowEnd.toISOString()
-    };
-  }
-
-  console.log('Outside match window, using 30-minute intervals');
-  return { intervalMinutes: 30 };
 }

@@ -1,6 +1,4 @@
 import { supabase } from "@/integrations/supabase/client";
-import { addHours, subHours, isWithinInterval } from "date-fns";
-import { formatInTimeZone, toZonedTime } from 'date-fns-tz';
 
 export type MatchWindow = {
   start: Date;
