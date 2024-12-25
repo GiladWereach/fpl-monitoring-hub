@@ -23,7 +23,7 @@ export const validateMatchWindow = (window: MatchWindow | null): boolean => {
   if (window.start >= window.end) return false;
   
   // Type validation
-  if (!['pre', 'live', 'post', 'none'].includes(window.type)) return false;
+  if (!['pre', 'live', 'post', 'idle'].includes(window.type)) return false;
   
   // Time window validation
   const now = new Date();
@@ -35,7 +35,7 @@ export const validateMatchWindow = (window: MatchWindow | null): boolean => {
 
 export const generateTestScenarios = () => {
   const now = new Date();
-  const scenarios = [
+  return [
     {
       name: 'Pre-match window',
       fixtures: [createMockFixture(new Date(now.getTime() + 30 * 60 * 1000))],
@@ -60,5 +60,4 @@ export const generateTestScenarios = () => {
       expectedType: 'live'
     }
   ];
-  return scenarios;
 };
