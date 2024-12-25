@@ -9,10 +9,10 @@ interface ManualTriggerButtonProps {
 
 export const ManualTriggerButton = ({ functionName }: ManualTriggerButtonProps) => {
   const handleManualTrigger = async () => {
+    console.log(`Starting manual trigger for function: ${functionName}`);
+    
     try {
-      console.log(`Manually triggering function: ${functionName}`);
-      
-      // Get schedule from schedules table
+      // Step 1: Get schedule ID for the function
       const { data: schedule, error: scheduleError } = await supabase
         .from('schedules')
         .select('id')
@@ -20,13 +20,13 @@ export const ManualTriggerButton = ({ functionName }: ManualTriggerButtonProps) 
         .single();
         
       if (scheduleError) {
-        console.error('Error fetching schedule:', scheduleError);
+        console.error(`Error fetching schedule for ${functionName}:`, scheduleError);
         throw new Error(`Could not find schedule for function: ${functionName}`);
       }
 
-      console.log(`Found schedule ID: ${schedule.id} for function: ${functionName}`);
+      console.log(`Found schedule with ID ${schedule.id} for function ${functionName}`);
 
-      // Create execution log
+      // Step 2: Create execution log with valid schedule ID
       const { data: log, error: logError } = await supabase
         .from('schedule_execution_logs')
         .insert({
@@ -46,15 +46,15 @@ export const ManualTriggerButton = ({ functionName }: ManualTriggerButtonProps) 
         throw logError;
       }
 
-      console.log('Created execution log:', log);
+      console.log(`Created execution log with ID ${log.id}`);
       
-      // Execute the function
+      // Step 3: Execute the function
       const { error: functionError } = await supabase.functions.invoke(functionName);
       
       if (functionError) {
-        console.error('Error executing function:', functionError);
+        console.error(`Error executing function ${functionName}:`, functionError);
         
-        // Update log with error
+        // Update log with error status
         await supabase
           .from('schedule_execution_logs')
           .update({
@@ -66,8 +66,10 @@ export const ManualTriggerButton = ({ functionName }: ManualTriggerButtonProps) 
           
         throw functionError;
       }
+
+      console.log(`Successfully executed function ${functionName}`);
       
-      // Update execution log with success
+      // Step 4: Update execution log with success status
       const { error: updateError } = await supabase
         .from('schedule_execution_logs')
         .update({
@@ -81,9 +83,11 @@ export const ManualTriggerButton = ({ functionName }: ManualTriggerButtonProps) 
         throw updateError;
       }
 
+      console.log(`Updated execution log ${log.id} with completed status`);
+
       toast({
         title: "Success",
-        description: "Function triggered successfully",
+        description: `${functionName} triggered successfully`,
       });
     } catch (error) {
       console.error('Error in manual trigger:', error);
