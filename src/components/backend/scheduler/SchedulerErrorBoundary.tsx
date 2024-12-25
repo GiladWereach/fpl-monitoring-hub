@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { RefreshCw, AlertTriangle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { alertingService } from "@/services/alertingService";
+import { SchedulerError, handleSchedulerError } from "@/utils/errorHandling";
 
 interface Props {
   children: ReactNode;
@@ -37,6 +38,15 @@ export class SchedulerErrorBoundary extends Component<Props, State> {
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('Scheduler error details:', error, errorInfo);
     
+    // Handle error using our new error handling system
+    if (error instanceof SchedulerError) {
+      handleSchedulerError(error, {
+        functionName: 'SchedulerErrorBoundary',
+        attempt: this.state.retryCount + 1,
+        maxAttempts: this.MAX_RETRIES
+      }).catch(console.error);
+    }
+    
     // Log to alerting service
     alertingService.alert(
       'SCHEDULER_ERROR',
@@ -50,13 +60,6 @@ export class SchedulerErrorBoundary extends Component<Props, State> {
     );
 
     this.setState({ errorInfo });
-
-    // Show toast notification
-    toast({
-      title: "Scheduler Error",
-      description: `An error occurred: ${error.message}`,
-      variant: "destructive",
-    });
   }
 
   private handleRetry = async () => {
@@ -72,10 +75,13 @@ export class SchedulerErrorBoundary extends Component<Props, State> {
       return;
     }
 
-    // Implement exponential backoff
-    const delay = this.RETRY_DELAY * Math.pow(2, this.state.retryCount);
-    
     try {
+      // Implement exponential backoff
+      const delay = Math.min(
+        Math.pow(2, this.state.retryCount) * this.RETRY_DELAY,
+        30000 // Max 30 seconds
+      );
+      
       await new Promise(resolve => setTimeout(resolve, delay));
       this.setState(prevState => ({
         hasError: false,
