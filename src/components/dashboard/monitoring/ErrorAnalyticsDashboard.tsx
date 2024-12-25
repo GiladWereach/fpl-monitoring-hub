@@ -4,7 +4,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { MetricCard } from "./components/MetricCard";
-import { ErrorMetricsChart } from "./components/ErrorMetricsChart";
 import { ErrorAnalyticsSummary } from "./components/ErrorAnalyticsSummary";
 import { AlertThresholds } from "./components/AlertThresholds";
 import { PerformanceMetrics } from "./components/PerformanceMetrics";
@@ -191,7 +190,6 @@ export function ErrorAnalyticsDashboard() {
       <AlertThresholds thresholds={thresholds || defaultAlertThresholds} />
       <PerformanceMetrics metrics={defaultPerformanceMetrics} />
       <ErrorAnalyticsSummary metrics={metrics} />
-      <ErrorMetricsChart data={metrics} />
       <HistoricalMetricsChart 
         data={metrics.map(m => ({
           timestamp: m.timestamp,
