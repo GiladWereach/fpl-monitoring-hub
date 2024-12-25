@@ -17,16 +17,11 @@ export const ManualTriggerButton = ({ functionName }: ManualTriggerButtonProps) 
         .from('schedules')
         .select('id')
         .eq('function_name', functionName)
-        .maybeSingle();
+        .single();
         
       if (scheduleError) {
         console.error('Error fetching schedule:', scheduleError);
-        throw scheduleError;
-      }
-
-      if (!schedule) {
-        console.error('No schedule found for function:', functionName);
-        throw new Error(`No schedule found for function: ${functionName}`);
+        throw new Error(`Could not find schedule for function: ${functionName}`);
       }
 
       // Create execution log with valid schedule ID
@@ -35,9 +30,10 @@ export const ManualTriggerButton = ({ functionName }: ManualTriggerButtonProps) 
         .insert({
           schedule_id: schedule.id,
           status: 'running',
+          started_at: new Date().toISOString(),
           execution_context: {
             trigger_type: 'manual',
-            triggered_at: new Date().toISOString()
+            triggered_by: 'user'
           }
         })
         .select()
@@ -47,12 +43,25 @@ export const ManualTriggerButton = ({ functionName }: ManualTriggerButtonProps) 
         console.error('Error creating execution log:', logError);
         throw logError;
       }
+
+      console.log('Created execution log:', log);
       
       // Execute the function
       const { error: functionError } = await supabase.functions.invoke(functionName);
       
       if (functionError) {
         console.error('Error executing function:', functionError);
+        
+        // Update log with error
+        await supabase
+          .from('schedule_execution_logs')
+          .update({
+            status: 'failed',
+            completed_at: new Date().toISOString(),
+            error_details: functionError.message
+          })
+          .eq('id', log.id);
+          
         throw functionError;
       }
       
