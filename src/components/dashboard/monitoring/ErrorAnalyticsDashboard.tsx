@@ -11,6 +11,7 @@ import { PerformanceMetrics } from "./components/PerformanceMetrics";
 import { ThresholdConfigDialog } from "./components/ThresholdConfigDialog";
 import { HistoricalMetricsChart } from "./components/HistoricalMetricsChart";
 import { processErrorMetrics } from "./utils/errorMetricsProcessor";
+import { mapDatabaseToAlertThresholds } from "./utils/thresholdMapper";
 import { ErrorMetrics, AlertThreshold, PerformanceMetrics as PerformanceMetricsType } from "./types/error-analytics";
 import { ThresholdConfig } from "./types/threshold-config";
 import { AlertTriangle, Activity, Clock } from "lucide-react";
@@ -57,7 +58,7 @@ export function ErrorAnalyticsDashboard() {
         .select('*');
       
       if (error) throw error;
-      return data;
+      return mapDatabaseToAlertThresholds(data);
     }
   });
 
