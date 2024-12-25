@@ -24,9 +24,29 @@ export const executeFetchFunction = async (
   try {
     console.log(`Executing function: ${functionName}`);
     
-    // Create execution log
+    // First, get the schedule ID for this function
+    const { data: schedule, error: scheduleError } = await supabase
+      .from('schedules')
+      .select('id')
+      .eq('function_name', functionName)
+      .single();
+
+    if (scheduleError) {
+      console.error(`Error fetching schedule for ${functionName}:`, scheduleError);
+      throw new Error(`Failed to find schedule for ${functionName}`);
+    }
+
+    if (!schedule) {
+      console.error(`No schedule found for ${functionName}`);
+      throw new Error(`No schedule found for ${functionName}`);
+    }
+
+    scheduleId = schedule.id;
+    console.log(`Found schedule ID ${scheduleId} for function ${functionName}`);
+    
+    // Create execution log with valid schedule ID
     const executionLog = await createExecutionLog({
-      scheduleId: functionName,
+      scheduleId: scheduleId,
       functionName,
       attempt: 1,
       startTime: new Date(),
