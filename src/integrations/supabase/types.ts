@@ -770,6 +770,42 @@ export type Database = {
           },
         ]
       }
+      monitoring_thresholds: {
+        Row: {
+          created_at: string | null
+          critical_threshold: number
+          enabled: boolean | null
+          id: number
+          metric_name: string
+          notify_on_critical: boolean | null
+          notify_on_warning: boolean | null
+          updated_at: string | null
+          warning_threshold: number
+        }
+        Insert: {
+          created_at?: string | null
+          critical_threshold: number
+          enabled?: boolean | null
+          id?: number
+          metric_name: string
+          notify_on_critical?: boolean | null
+          notify_on_warning?: boolean | null
+          updated_at?: string | null
+          warning_threshold: number
+        }
+        Update: {
+          created_at?: string | null
+          critical_threshold?: number
+          enabled?: boolean | null
+          id?: number
+          metric_name?: string
+          notify_on_critical?: boolean | null
+          notify_on_warning?: boolean | null
+          updated_at?: string | null
+          warning_threshold?: number
+        }
+        Relationships: []
+      }
       player_fixtures: {
         Row: {
           difficulty: number | null
