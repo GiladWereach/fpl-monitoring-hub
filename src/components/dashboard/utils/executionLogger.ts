@@ -1,134 +1,134 @@
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
-export const logFunctionExecution = async (functionName: string, started_at: string) => {
+interface ExecutionContext {
+  scheduleId: string;
+  functionName: string;
+  attempt: number;
+  startTime: Date;
+  executionWindow?: {
+    start: Date;
+    end: Date;
+  };
+}
+
+export const createExecutionLog = async (context: ExecutionContext) => {
+  console.log(`Creating execution log for schedule ${context.scheduleId}`);
+  
   try {
-    console.log(`Attempting to log execution for function: ${functionName}`);
-    
-    // First check if schedule exists
-    const { data: existingSchedule, error: findError } = await supabase
-      .from("schedules")
-      .select("id")
-      .eq("function_name", functionName)
-      .single();
-
-    if (findError && findError.code !== 'PGRST116') {
-      console.error("Error checking for existing schedule:", findError);
-      throw findError;
-    }
-
-    let scheduleId = existingSchedule?.id;
-
-    // If no schedule exists, create one with proper error handling
-    if (!scheduleId) {
-      console.log(`No schedule found for ${functionName}, creating new schedule`);
-      
-      // Create new schedule with proper defaults
-      const { data: newSchedule, error: createError } = await supabase
-        .from("schedules")
-        .insert({
-          function_name: functionName,
-          schedule_type: "time_based",
-          enabled: true,
-          timezone: "UTC",
-          time_config: {
-            type: "interval",
-            intervalMinutes: 5
-          },
-          execution_config: {
-            retry_count: 3,
-            timeout_seconds: 30,
-            retry_delay_seconds: 60,
-            concurrent_execution: false,
-            retry_backoff: "linear",
-            max_retry_delay: 3600
-          }
-        })
-        .select("id")
-        .single();
-
-      if (createError) {
-        console.error("Error creating schedule:", createError);
-        throw createError;
-      }
-
-      if (!newSchedule?.id) {
-        throw new Error("Failed to create schedule - no ID returned");
-      }
-
-      scheduleId = newSchedule.id;
-      console.log(`Successfully created new schedule with ID: ${scheduleId}`);
-    }
-
-    // Double check the schedule exists before proceeding
-    const { data: verifySchedule, error: verifyError } = await supabase
-      .from("schedules")
-      .select("id")
-      .eq("id", scheduleId)
-      .single();
-
-    if (verifyError || !verifySchedule) {
-      console.error("Failed to verify schedule exists:", verifyError);
-      throw new Error("Schedule verification failed");
-    }
-
-    // Create execution log with verified schedule ID
-    console.log(`Creating execution log for schedule ${scheduleId}`);
-    const { error: logError } = await supabase
-      .from("schedule_execution_logs")
+    const { data: log, error } = await supabase
+      .from('schedule_execution_logs')
       .insert({
-        schedule_id: scheduleId,
-        started_at,
-        status: "running"
-      });
+        schedule_id: context.scheduleId,
+        started_at: context.startTime.toISOString(),
+        status: 'running',
+        execution_context: {
+          attempt: context.attempt,
+          function_name: context.functionName,
+          execution_window: context.executionWindow
+        }
+      })
+      .select()
+      .single();
 
-    if (logError) {
-      console.error("Error creating execution log:", logError);
-      throw logError;
+    if (error) {
+      console.error('Error creating execution log:', error);
+      throw error;
     }
 
-    console.log(`Successfully created execution log for schedule ${scheduleId}`);
-    return scheduleId;
+    return log;
   } catch (error) {
-    console.error("Error in logFunctionExecution:", error);
+    console.error('Failed to create execution log:', error);
+    toast({
+      title: "Execution Logging Error",
+      description: "Failed to create execution log. This may affect monitoring.",
+      variant: "destructive",
+    });
     throw error;
   }
 };
 
-export const updateExecutionLog = async (scheduleId: string, success: boolean, error?: string) => {
+export const updateExecutionLog = async (
+  logId: string, 
+  status: 'completed' | 'failed' | 'cancelled',
+  details?: {
+    error?: string;
+    duration?: number;
+    metrics?: Record<string, any>;
+  }
+) => {
+  console.log(`Updating execution log ${logId} with status: ${status}`);
+  
   try {
-    console.log(`Updating execution log for schedule ${scheduleId}, success: ${success}`);
-    
-    // Verify schedule exists before updating
-    const { data: verifySchedule, error: verifyError } = await supabase
-      .from("schedules")
-      .select("id")
-      .eq("id", scheduleId)
-      .single();
-
-    if (verifyError || !verifySchedule) {
-      console.error("Failed to verify schedule exists for update:", verifyError);
-      throw new Error("Schedule verification failed");
-    }
-
-    const { error: updateError } = await supabase
-      .from("schedule_execution_logs")
+    const { error } = await supabase
+      .from('schedule_execution_logs')
       .update({
+        status,
         completed_at: new Date().toISOString(),
-        status: success ? "completed" : "failed",
-        error_details: error,
-        execution_duration_ms: Date.now() - new Date().getTime()
+        error_details: details?.error,
+        execution_duration_ms: details?.duration,
+        execution_metrics: details?.metrics
       })
-      .eq("schedule_id", scheduleId)
-      .is("completed_at", null);
+      .eq('id', logId);
 
-    if (updateError) {
-      console.error("Error updating execution log:", updateError);
-      throw updateError;
+    if (error) {
+      console.error('Error updating execution log:', error);
+      throw error;
     }
 
-    console.log(`Successfully updated execution log for schedule ${scheduleId}`);
+    // Notify user of execution completion
+    toast({
+      title: `Execution ${status === 'completed' ? 'Successful' : 'Failed'}`,
+      description: status === 'completed' 
+        ? `Completed in ${details?.duration}ms`
+        : `Failed: ${details?.error}`,
+      variant: status === 'completed' ? "default" : "destructive",
+    });
   } catch (error) {
-    console.error("Error in updateExecutionLog:", error);
+    console.error('Failed to update execution log:', error);
+    toast({
+      title: "Execution Logging Error",
+      description: "Failed to update execution log status.",
+      variant: "destructive",
+    });
+    throw error;
+  }
+};
+
+export const getRecentExecutions = async (scheduleId?: string, limit: number = 10) => {
+  console.log(`Fetching recent executions${scheduleId ? ` for schedule ${scheduleId}` : ''}`);
+  
+  try {
+    const query = supabase
+      .from('schedule_execution_logs')
+      .select(`
+        *,
+        schedules (
+          function_name
+        )
+      `)
+      .order('started_at', { ascending: false })
+      .limit(limit);
+
+    if (scheduleId) {
+      query.eq('schedule_id', scheduleId);
+    }
+
+    const { data: executions, error } = await query;
+
+    if (error) {
+      console.error('Error fetching executions:', error);
+      throw error;
+    }
+
+    return executions;
+  } catch (error) {
+    console.error('Failed to fetch recent executions:', error);
+    toast({
+      title: "Error",
+      description: "Failed to load execution history.",
+      variant: "destructive",
+    });
     throw error;
   }
 };
