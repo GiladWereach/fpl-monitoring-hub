@@ -8,7 +8,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ScheduleCategory } from "./types/scheduleTypes";
-import { ScheduleOverrideManager } from "./schedule/ScheduleOverrideManager";
 
 export function EdgeFunctionManager() {
   const [loading, setLoading] = useState<string | null>(null);
@@ -73,8 +72,6 @@ export function EdgeFunctionManager() {
           Refresh All
         </Button>
       </div>
-
-      <ScheduleOverrideManager />
 
       <ScrollArea className="h-[calc(100vh-200px)]">
         <div className="min-w-[600px] pr-4 space-y-8">
