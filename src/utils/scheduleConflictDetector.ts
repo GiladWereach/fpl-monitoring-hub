@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { ScheduleData } from "@/components/dashboard/types/scheduling";
 
 export interface ScheduleWindow {
   startTime: Date;
@@ -23,7 +24,7 @@ export async function checkScheduleConflicts(
       .from('schedules')
       .select('id, function_name, time_config, execution_window')
       .neq('id', excludeScheduleId || '')
-      .eq('enabled', true);
+      .eq('enabled', true) as { data: ScheduleData[] | null; error: any };
 
     if (error) throw error;
 

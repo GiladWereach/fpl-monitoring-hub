@@ -4,6 +4,7 @@ import { ScheduleDialog } from "./schedule/ScheduleDialog";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { checkScheduleConflicts } from "@/utils/scheduleConflictDetector";
+import { ScheduleData } from "./types/scheduling";
 
 interface ScheduleManagerProps {
   functionName: string;
@@ -28,7 +29,7 @@ export function ScheduleManager({ functionName, functionDisplayName }: ScheduleM
           )
         `)
         .eq('function_name', functionName)
-        .maybeSingle();
+        .maybeSingle() as { data: ScheduleData | null; error: any };
 
       if (error) {
         console.error(`Error fetching schedule for ${functionName}:`, error);

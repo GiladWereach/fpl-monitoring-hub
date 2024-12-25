@@ -1,17 +1,5 @@
 export type RetryBackoffStrategy = 'linear' | 'exponential' | 'fixed';
 
-export type TimeConfig = {
-  type: 'daily' | 'match_dependent';
-  hour?: number;
-  matchDayIntervalMinutes?: number;
-  nonMatchIntervalMinutes?: number;
-};
-
-export type EventConfig = {
-  triggerType: 'deadline' | 'kickoff' | 'match_status';
-  offsetMinutes: number;
-};
-
 export type ExecutionConfig = {
   retry_count: number;
   timeout_seconds: number;
@@ -19,114 +7,68 @@ export type ExecutionConfig = {
   concurrent_execution: boolean;
   retry_backoff: RetryBackoffStrategy;
   max_retry_delay: number;
+  alert_on_failure?: boolean;
+  alert_on_recovery?: boolean;
+  failure_threshold?: number;
+  auto_disable_after_failures?: boolean;
 };
 
-export type EventCondition = {
-  field: string;
-  operator: 'eq' | 'neq' | 'gt' | 'lt' | 'gte' | 'lte';
-  value: string;
+export type NotificationConfig = {
+  email?: string | null;
+  webhook_url?: string | null;
+  notify_on_failure: boolean;
+  notify_on_success: boolean;
 };
 
-export type SchedulePriority = 'override' | 'default' | 'backup';
+export type ExecutionWindow = {
+  start_time?: string | null;
+  end_time?: string | null;
+  days_of_week?: number[] | null;
+};
 
-export interface ScheduleResolution {
-  priority: SchedulePriority;
-  source: 'manual' | 'system' | 'override';
-  resolvedInterval: number;
-  nextExecutionTime: Date;
-}
+export type ResourceUsage = {
+  cpu_time_ms?: number;
+  memory_mb?: number;
+  network_bytes?: number;
+};
 
-export interface AdvancedScheduleFormValues {
-  function_name: string;  // Added this property
-  enabled: boolean;
-  schedule_type: 'time_based' | 'event_based';
-  timezone: string;
-  time_config: TimeConfig;
-  event_config: EventConfig;
-  execution_config: ExecutionConfig;
-  event_conditions: EventCondition[];
-  execution_window?: {
-    start_time: string;
-    end_time: string;
-    days_of_week: number[];
-  };
-}
+export type ScheduleGroup = {
+  id: string;
+  name: string;
+  description?: string;
+  priority: number;
+  color?: string;
+  created_at: string;
+  updated_at: string;
+};
 
-export interface ValidationError {
-  field: string;
-  message: string;
-}
-
-export interface ScheduleValidationResult {
-  isValid: boolean;
-  errors: ValidationError[];
-}
-
-export interface ScheduleData {
-  id?: string;
+export type Schedule = {
+  id: string;
   function_name: string;
   schedule_type: 'time_based' | 'event_based';
   enabled: boolean;
-  time_config?: TimeConfig;
-  event_config?: EventConfig;
+  priority: number;
+  description?: string;
+  time_config?: {
+    type: 'interval' | 'daily' | 'weekly' | 'monthly' | 'cron';
+    intervalMinutes?: number;
+    hour?: number;
+    cronExpression?: string;
+  };
+  event_config?: {
+    triggerType: string;
+    offsetMinutes: number;
+  };
   execution_config: ExecutionConfig;
+  execution_window?: ExecutionWindow;
+  notification_config: NotificationConfig;
   timezone: string;
-  event_conditions?: EventCondition[];
-  execution_window?: {
-    start_time: string;
-    end_time: string;
-    days_of_week: number[];
-  };
-}
-
-export interface TestResult {
-  success: boolean;
-  executionTime?: number;
-  error?: string;
-  functionName?: string;
-  scheduleType?: string;
-  retryCount?: number;
-}
-
-export interface TestSuite {
-  functionName: string;
-  scheduleTypes: ('time_based' | 'event_based')[];
-}
-
-export const convertScheduleData = (data: any): ScheduleData => {
-  return {
-    id: data.id,
-    function_name: data.function_name,
-    schedule_type: data.schedule_type,
-    enabled: data.enabled ?? true,
-    time_config: data.time_config,
-    event_config: data.event_config,
-    execution_config: data.execution_config || {
-      retry_count: 3,
-      timeout_seconds: 30,
-      retry_delay_seconds: 60,
-      concurrent_execution: false,
-      retry_backoff: 'linear',
-      max_retry_delay: 3600
-    },
-    timezone: data.timezone || 'UTC',
-    event_conditions: data.event_conditions || [],
-    execution_window: data.execution_window
-  };
+  last_execution_at?: string;
+  next_execution_at?: string;
+  last_failure_at?: string;
+  success_rate: number;
+  avg_duration_ms?: number;
+  dependencies: string[];
+  paused_until?: string;
+  pause_reason?: string;
 };
-
-export interface ScheduleOverride {
-  id: string;
-  scheduleId: string;
-  startTime: Date;
-  endTime: Date;
-  interval?: number;
-  enabled: boolean;
-  reason?: string;
-}
-
-export interface ResolvedSchedule {
-  baseSchedule: AdvancedScheduleFormValues;
-  override?: ScheduleOverride;
-  resolution: ScheduleResolution;
-}
