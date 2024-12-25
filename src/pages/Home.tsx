@@ -53,9 +53,8 @@ export default function Home() {
     };
 
     function draw() {
-      // Clear with a slight fade effect
-      ctx.fillStyle = 'rgba(13, 17, 23, 0.1)';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      // Clear canvas completely each frame
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       // Randomly add new animations
       if (Math.random() > 0.97 && activeAnimations.length < 15) {
@@ -68,7 +67,7 @@ export default function Home() {
         if (animation.fadeDirection === 'in') {
           animation.opacity += 0.02;
           animation.scale += 0.02;
-          if (animation.opacity >= 0.8) {
+          if (animation.opacity >= 0.5) { // Reduced from 0.8 to 0.5 for lower final opacity
             animation.fadeDirection = 'out';
           }
         } else {
