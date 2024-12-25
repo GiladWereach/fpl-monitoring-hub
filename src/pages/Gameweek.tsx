@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Pitch, List } from 'lucide-react';
+import { LayoutGrid, List } from 'lucide-react';
 
 export default function Gameweek() {
   const { data: currentGameweek, isLoading: gameweekLoading } = useQuery({
@@ -35,7 +35,7 @@ export default function Gameweek() {
       <Tabs defaultValue="pitch" className="w-full">
         <TabsList>
           <TabsTrigger value="pitch" className="flex items-center gap-2">
-            <Pitch className="h-4 w-4" />
+            <LayoutGrid className="h-4 w-4" />
             Pitch View
           </TabsTrigger>
           <TabsTrigger value="list" className="flex items-center gap-2">
