@@ -1,0 +1,54 @@
+.glass-card {
+  @apply bg-secondary/80 backdrop-blur-sm border border-accent/20 shadow-lg;
+}
+
+.player-card {
+  @apply w-32 h-[90px] bg-secondary/90 backdrop-blur-sm 
+         border border-accent/20 rounded-xl p-2 transition-all 
+         hover:bg-accent/10 cursor-pointer shadow-lg relative
+         hover:scale-105 hover:z-10;
+}
+
+.player-card-expanded {
+  @apply bg-accent/10;
+}
+
+.captain-ribbon {
+  @apply absolute -right-0 -top-0 w-8 h-8 overflow-hidden;
+}
+
+.captain-ribbon::before {
+  content: 'C';
+  @apply absolute top-1 right-1 text-xs font-bold text-background;
+}
+
+.captain-ribbon::after {
+  content: '';
+  @apply absolute top-0 right-0 w-10 h-10 bg-accent transform rotate-45 origin-top-right;
+}
+
+.vice-captain-ribbon {
+  @apply absolute -right-0 -top-0 w-8 h-8 overflow-hidden;
+}
+
+.vice-captain-ribbon::before {
+  content: 'V';
+  @apply absolute top-1 right-1 text-xs font-bold text-background;
+}
+
+.vice-captain-ribbon::after {
+  content: '';
+  @apply absolute top-0 right-0 w-10 h-10 bg-accent/50 transform rotate-45 origin-top-right;
+}
+
+.points-text {
+  @apply text-center text-2xl font-bold text-accent;
+}
+
+.player-name {
+  @apply text-sm font-medium text-foreground text-center mb-1;
+}
+
+.player-position {
+  @apply text-xs text-accent/80 text-center mt-1;
+}

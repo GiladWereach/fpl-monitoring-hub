@@ -21,6 +21,16 @@ export function PlayerCard({ player, isCaptain, isViceCaptain, liveData }: Playe
   const isDefender = player?.element_type === 2;
   const isMidfielder = player?.element_type === 3;
 
+  const getPositionText = (elementType: number) => {
+    switch (elementType) {
+      case 1: return 'GK';
+      case 2: return 'DEF';
+      case 3: return 'MID';
+      case 4: return 'FWD';
+      default: return '';
+    }
+  };
+
   return (
     <HoverCard>
       <HoverCardTrigger>
@@ -34,6 +44,7 @@ export function PlayerCard({ player, isCaptain, isViceCaptain, liveData }: Playe
           <div className="relative">
             <p className="player-name truncate">{player?.web_name}</p>
             <div className="points-text">{finalPoints}</div>
+            <div className="player-position">{getPositionText(player?.element_type)}</div>
           </div>
         </div>
       </HoverCardTrigger>
