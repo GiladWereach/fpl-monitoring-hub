@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Card } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { LayoutGrid, List, Loader2, Trophy, Users, TrendingUp, Clock } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { GameweekHeader } from '@/components/gameweek/GameweekHeader';
+import { ViewToggle } from '@/components/gameweek/ViewToggle';
+import { LivePerformance } from '@/components/gameweek/LivePerformance';
 import { PitchView } from '@/components/gameweek/PitchView';
 import { ListView } from '@/components/gameweek/ListView';
 import { calculateTotalPoints, calculateBenchPoints } from '@/components/gameweek/utils/points-calculator';
@@ -122,83 +121,16 @@ export default function Gameweek() {
 
   return (
     <div className="min-h-screen bg-[#0D1117] text-white">
-      <div className="container mx-auto p-4 space-y-6 animate-fade-in">
-        {/* Header Section */}
-        <div className="relative py-8 text-center space-y-4">
-          <h1 className="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#3DFF9A] to-[#50E3C2]">
-            Gameweek {currentGameweek?.id} Live
-          </h1>
-          <p className="text-gray-400 max-w-2xl mx-auto">
-            Track your team's performance in real-time with detailed statistics and live updates
-          </p>
-        </div>
+      <div className="container mx-auto p-4 space-y-4 animate-fade-in">
+        <GameweekHeader 
+          currentGameweek={currentGameweek}
+          totalPoints={totalPoints}
+          playersPlaying={playersPlaying}
+        />
 
-        {/* Overview Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <Card className="glass-card p-6">
-            <div className="flex items-center space-x-4">
-              <Trophy className="h-8 w-8 text-[#3DFF9A]" />
-              <div>
-                <p className="text-sm text-gray-400">Total Points</p>
-                <p className="text-2xl font-bold">{totalPoints}</p>
-              </div>
-            </div>
-          </Card>
-          <Card className="glass-card p-6">
-            <div className="flex items-center space-x-4">
-              <Users className="h-8 w-8 text-[#3DFF9A]" />
-              <div>
-                <p className="text-sm text-gray-400">Players Playing</p>
-                <p className="text-2xl font-bold">{playersPlaying}/11</p>
-              </div>
-            </div>
-          </Card>
-          <Card className="glass-card p-6">
-            <div className="flex items-center space-x-4">
-              <TrendingUp className="h-8 w-8 text-[#3DFF9A]" />
-              <div>
-                <p className="text-sm text-gray-400">Average Score</p>
-                <p className="text-2xl font-bold">38</p>
-              </div>
-            </div>
-          </Card>
-          <Card className="glass-card p-6">
-            <div className="flex items-center space-x-4">
-              <Clock className="h-8 w-8 text-[#3DFF9A]" />
-              <div>
-                <p className="text-sm text-gray-400">Next Deadline</p>
-                <p className="text-2xl font-bold">2d 4h</p>
-              </div>
-            </div>
-          </Card>
-        </div>
-
-        {/* View Toggle */}
-        <div className="flex justify-end space-x-2 mb-4">
-          <button
-            onClick={() => setViewMode('pitch')}
-            className={cn(
-              "p-2 rounded-md transition-colors",
-              viewMode === 'pitch' ? "bg-[#3DFF9A]/20 text-[#3DFF9A]" : "text-gray-400 hover:bg-[#3DFF9A]/10"
-            )}
-          >
-            <LayoutGrid className="h-5 w-5" />
-          </button>
-          <button
-            onClick={() => setViewMode('list')}
-            className={cn(
-              "p-2 rounded-md transition-colors",
-              viewMode === 'list' ? "bg-[#3DFF9A]/20 text-[#3DFF9A]" : "text-gray-400 hover:bg-[#3DFF9A]/10"
-            )}
-          >
-            <List className="h-5 w-5" />
-          </button>
-        </div>
-
-        {/* Main Content */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Pitch/List Section - Takes 2 columns on desktop */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 relative">
+            <ViewToggle viewMode={viewMode} setViewMode={setViewMode} />
             {viewMode === 'pitch' ? (
               <PitchView 
                 teamSelection={teamSelection}
@@ -214,39 +146,12 @@ export default function Gameweek() {
             )}
           </div>
 
-          {/* Stats Section - Takes 1 column on desktop */}
           <div className="space-y-4">
-            <Card className="glass-card p-6">
-              <h3 className="text-lg font-semibold mb-4">Live Performance</h3>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-400">Points</span>
-                  <span className="font-medium">{totalPoints}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-400">Bench Points</span>
-                  <span className="font-medium">{benchPoints}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-400">Goals</span>
-                  <span className="font-medium">
-                    {liveData?.reduce((sum, p) => sum + (p.goals_scored || 0), 0) || 0}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-400">Assists</span>
-                  <span className="font-medium">
-                    {liveData?.reduce((sum, p) => sum + (p.assists || 0), 0) || 0}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-400">Bonus Points</span>
-                  <span className="font-medium">
-                    {liveData?.reduce((sum, p) => sum + (p.bonus || 0), 0) || 0}
-                  </span>
-                </div>
-              </div>
-            </Card>
+            <LivePerformance 
+              totalPoints={totalPoints}
+              benchPoints={benchPoints}
+              liveData={liveData}
+            />
           </div>
         </div>
       </div>
