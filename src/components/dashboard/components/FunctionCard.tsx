@@ -6,6 +6,7 @@ import { format } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "@/hooks/use-toast";
 
 interface FunctionCardProps {
   name: string;
@@ -23,26 +24,50 @@ export function FunctionCard({ name, functionName, loading, onExecute, schedule 
     queryFn: async () => {
       console.log(`Fetching data for ${functionName}`);
       
-      // Fetch metrics using RPC function
-      const { data: metricsData, error: metricsError } = await supabase
-        .rpc('get_aggregated_metrics', { hours_lookback: 24 });
+      try {
+        // Fetch metrics using RPC function
+        const { data: metricsData, error: metricsError } = await supabase
+          .rpc('get_aggregated_metrics', { hours_lookback: 24 });
 
-      if (metricsError) {
-        console.error(`Error fetching metrics for ${functionName}:`, metricsError);
-        return null;
+        if (metricsError) {
+          console.error(`Error fetching metrics for ${functionName}:`, metricsError);
+          throw metricsError;
+        }
+
+        const metrics = metricsData?.find(m => m.endpoint === functionName);
+        console.log(`Metrics data for ${functionName}:`, metrics);
+
+        // Fetch latest execution log
+        const { data: executionLog, error: logError } = await supabase
+          .from('schedule_execution_logs')
+          .select('*')
+          .eq('schedule_id', schedule?.id)
+          .order('started_at', { ascending: false })
+          .limit(1)
+          .single();
+
+        if (logError && logError.code !== 'PGRST116') { // Ignore "no rows returned" error
+          console.error(`Error fetching execution log for ${functionName}:`, logError);
+          throw logError;
+        }
+
+        return {
+          metrics,
+          schedule,
+          lastExecution: executionLog
+        };
+      } catch (error) {
+        console.error(`Error in queryFn for ${functionName}:`, error);
+        toast({
+          title: "Error fetching function data",
+          description: "Failed to load function metrics and execution data",
+          variant: "destructive",
+        });
+        throw error;
       }
-
-      const metrics = metricsData?.find(m => m.endpoint === functionName);
-      console.log(`Metrics data for ${functionName}:`, metrics);
-
-      return {
-        metrics,
-        schedule
-      };
     },
     refetchInterval: 30000,
-    staleTime: 25000, // Prevent unnecessary refreshes
-    placeholderData: (previousData) => previousData // Replace keepPreviousData with placeholderData
+    staleTime: 25000
   });
 
   const formatDuration = (ms: number) => {
@@ -78,9 +103,11 @@ export function FunctionCard({ name, functionName, loading, onExecute, schedule 
         <div className="flex justify-between">
           <span>Last Run:</span>
           <span>
-            {schedule.last_execution_at ? 
-              format(new Date(schedule.last_execution_at), "MMM d, HH:mm:ss") : 
-              'Never'}
+            {functionData?.lastExecution?.completed_at ? 
+              format(new Date(functionData.lastExecution.completed_at), "MMM d, HH:mm:ss") : 
+              schedule.last_execution_at ? 
+                format(new Date(schedule.last_execution_at), "MMM d, HH:mm:ss") : 
+                'Never'}
           </span>
         </div>
         <div className="flex justify-between">
@@ -101,14 +128,14 @@ export function FunctionCard({ name, functionName, loading, onExecute, schedule 
                   : 'N/A'}
               </span>
             </div>
-            <div className="flex justify-between">
-              <span>Last Error:</span>
-              <span>
-                {functionData.metrics.latest_error 
-                  ? format(new Date(functionData.metrics.latest_error), "MMM d, HH:mm:ss")
-                  : 'None'}
-              </span>
-            </div>
+            {functionData.lastExecution?.error_details && (
+              <div className="flex justify-between text-destructive">
+                <span>Last Error:</span>
+                <span className="truncate max-w-[200px]" title={functionData.lastExecution.error_details}>
+                  {functionData.lastExecution.error_details}
+                </span>
+              </div>
+            )}
           </>
         )}
       </>
