@@ -23,12 +23,17 @@ export async function detectMatchWindow({ timezone = 'UTC' }: MatchWindowOptions
   const zonedNow = toZonedTime(now, timezone);
   
   // Get active matches
-  const { data: activeMatches } = await supabase
+  const { data: activeMatches, error: activeError } = await supabase
     .from('fixtures')
     .select('*')
     .eq('started', true)
     .eq('finished', false)
     .order('kickoff_time', { ascending: true });
+
+  if (activeError) {
+    console.error('Error fetching active matches:', activeError);
+    throw activeError;
+  }
 
   if (activeMatches && activeMatches.length > 0) {
     console.log(`Found ${activeMatches.length} active matches`);
@@ -46,13 +51,19 @@ export async function detectMatchWindow({ timezone = 'UTC' }: MatchWindowOptions
     };
   }
 
-  // Check for upcoming matches
-  const { data: upcomingMatches } = await supabase
+  // Check for upcoming matches in the next hour
+  const oneHourFromNow = addHours(now, 1);
+  const { data: upcomingMatches, error: upcomingError } = await supabase
     .from('fixtures')
-    .select('kickoff_time')
-    .gt('kickoff_time', now.toISOString())
-    .order('kickoff_time')
-    .limit(1);
+    .select('*')
+    .eq('started', false)
+    .lte('kickoff_time', oneHourFromNow.toISOString())
+    .order('kickoff_time');
+
+  if (upcomingError) {
+    console.error('Error fetching upcoming matches:', upcomingError);
+    throw upcomingError;
+  }
 
   if (upcomingMatches?.length) {
     const nextKickoff = new Date(upcomingMatches[0].kickoff_time);
@@ -82,12 +93,17 @@ export async function detectMatchWindow({ timezone = 'UTC' }: MatchWindowOptions
   }
 
   // Check if we're in post-match window
-  const { data: recentMatches } = await supabase
+  const { data: recentMatches, error: recentError } = await supabase
     .from('fixtures')
-    .select('kickoff_time')
+    .select('*')
     .eq('finished', true)
     .order('kickoff_time', { ascending: false })
     .limit(1);
+
+  if (recentError) {
+    console.error('Error fetching recent matches:', recentError);
+    throw recentError;
+  }
 
   if (recentMatches?.length) {
     const lastMatchEnd = addHours(new Date(recentMatches[0].kickoff_time), 2);
@@ -115,7 +131,5 @@ export async function detectMatchWindow({ timezone = 'UTC' }: MatchWindowOptions
   };
 }
 
-// Re-export getMatchWindow for backward compatibility
-export async function getMatchWindow(): Promise<MatchWindow> {
-  return detectMatchWindow();
-}
+// Re-export for backward compatibility
+export const getMatchWindow = detectMatchWindow;
