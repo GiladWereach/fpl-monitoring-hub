@@ -34,29 +34,29 @@ export function PlayerCard({ player, isCaptain, isViceCaptain, liveData }: Playe
           </div>
         </div>
       </HoverCardTrigger>
-      <HoverCardContent className="w-64 bg-secondary/95 backdrop-blur-sm border-accent/20">
+      <HoverCardContent className="w-32 bg-secondary/95 backdrop-blur-sm border-accent/20">
         <div className="space-y-2">
           <div className="flex justify-between items-center">
-            <span className="text-sm text-foreground/60">Minutes</span>
-            <span className="text-sm font-medium">{liveData?.minutes || 0}'</span>
+            <span className="text-xs text-foreground/80">Minutes</span>
+            <span className="text-xs font-medium text-foreground">{liveData?.minutes || 0}'</span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-sm text-foreground/60">Goals</span>
-            <span className="text-sm font-medium">{liveData?.goals_scored || 0}</span>
+            <span className="text-xs text-foreground/80">Goals</span>
+            <span className="text-xs font-medium text-foreground">{liveData?.goals_scored || 0}</span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-sm text-foreground/60">Assists</span>
-            <span className="text-sm font-medium">{liveData?.assists || 0}</span>
+            <span className="text-xs text-foreground/80">Assists</span>
+            <span className="text-xs font-medium text-foreground">{liveData?.assists || 0}</span>
           </div>
           {liveData?.bonus > 0 && (
             <div className="flex justify-between items-center">
-              <span className="text-sm text-foreground/60">Bonus</span>
-              <span className="text-sm font-medium">{liveData.bonus}</span>
+              <span className="text-xs text-foreground/80">Bonus</span>
+              <span className="text-xs font-medium text-foreground">{liveData.bonus}</span>
             </div>
           )}
           {(isCaptain || isViceCaptain) && (
             <div className="mt-2 pt-2 border-t border-accent/20">
-              <span className="text-sm font-medium text-accent">
+              <span className="text-xs font-medium text-accent">
                 {isCaptain ? 'Captain (2x points)' : 'Vice Captain'}
               </span>
             </div>

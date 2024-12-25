@@ -8,7 +8,7 @@ interface ViewToggleProps {
 
 export function ViewToggle({ viewMode, setViewMode }: ViewToggleProps) {
   return (
-    <div className="absolute top-4 left-4 z-10 flex space-x-2">
+    <div className="absolute top-4 right-4 z-10 flex space-x-2">
       <button
         onClick={() => setViewMode('pitch')}
         className={cn(

@@ -131,7 +131,6 @@ export default function Gameweek() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 relative">
-            <ViewToggle viewMode={viewMode} setViewMode={setViewMode} />
             {viewMode === 'pitch' ? (
               <PitchView 
                 teamSelection={teamSelection}
@@ -145,6 +144,7 @@ export default function Gameweek() {
                 liveData={liveData}
               />
             )}
+            <ViewToggle viewMode={viewMode} setViewMode={setViewMode} />
           </div>
 
           <div className="space-y-4">
