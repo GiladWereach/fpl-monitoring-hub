@@ -49,87 +49,73 @@ export function PitchView({ teamSelection, players, liveData }: PitchViewProps) 
         <div className="goalkeeper-area right-4 top-1/2 -translate-y-1/2" />
         
         {/* Player Positions */}
-        <div className="absolute inset-0 flex px-16 py-12">
+        <div className="absolute inset-0 grid grid-cols-4 px-8">
           {/* GK Column */}
-          <div className="player-columns w-1/4">
-            <div className="flex flex-col items-center justify-center h-full">
-              {[1].map(position => {
-                const player = getPlayerData(position);
-                if (!player) return null;
-                return (
-                  <PlayerCard 
-                    key={position}
-                    player={player}
-                    isCaptain={player.isCaptain}
-                    isViceCaptain={player.isViceCaptain}
-                    liveData={player.liveData}
-                  />
-                );
-              })}
-            </div>
+          <div className="gk-column">
+            {[1].map(position => {
+              const player = getPlayerData(position);
+              if (!player) return null;
+              return (
+                <PlayerCard 
+                  key={position}
+                  player={player}
+                  isCaptain={player.isCaptain}
+                  isViceCaptain={player.isViceCaptain}
+                  liveData={player.liveData}
+                />
+              );
+            })}
           </div>
           
           {/* DEF Column */}
-          <div className="player-columns w-1/4">
-            <div className="flex flex-col justify-between h-full py-16">
-              <div className="grid grid-cols-1 gap-6">
-                {defenders.map(position => {
-                  const player = getPlayerData(position);
-                  if (!player) return null;
-                  return (
-                    <PlayerCard 
-                      key={position}
-                      player={player}
-                      isCaptain={player.isCaptain}
-                      isViceCaptain={player.isViceCaptain}
-                      liveData={player.liveData}
-                    />
-                  );
-                })}
-              </div>
-            </div>
+          <div className="def-column">
+            {defenders.map(position => {
+              const player = getPlayerData(position);
+              if (!player) return null;
+              return (
+                <PlayerCard 
+                  key={position}
+                  player={player}
+                  isCaptain={player.isCaptain}
+                  isViceCaptain={player.isViceCaptain}
+                  liveData={player.liveData}
+                />
+              );
+            })}
           </div>
           
           {/* MID Column */}
-          <div className="player-columns w-1/4">
-            <div className="flex flex-col justify-between h-full py-12">
-              <div className="grid grid-cols-1 gap-6">
-                {midfielders.map(position => {
-                  const player = getPlayerData(position);
-                  if (!player) return null;
-                  return (
-                    <PlayerCard 
-                      key={position}
-                      player={player}
-                      isCaptain={player.isCaptain}
-                      isViceCaptain={player.isViceCaptain}
-                      liveData={player.liveData}
-                    />
-                  );
-                })}
-              </div>
-            </div>
+          <div className="mid-column">
+            {midfielders.map(position => {
+              const player = getPlayerData(position);
+              if (!player) return null;
+              return (
+                <PlayerCard 
+                  key={position}
+                  player={player}
+                  isCaptain={player.isCaptain}
+                  isViceCaptain={player.isViceCaptain}
+                  liveData={player.liveData}
+                />
+              );
+            })}
           </div>
           
           {/* FWD Column */}
-          <div className="player-columns w-1/4">
-            <div className="flex flex-col justify-between h-full py-8">
-              <div className="grid grid-cols-1 gap-6">
-                {forwards.map(position => {
-                  const player = getPlayerData(position);
-                  if (!player) return null;
-                  return (
-                    <PlayerCard 
-                      key={position}
-                      player={player}
-                      isCaptain={player.isCaptain}
-                      isViceCaptain={player.isViceCaptain}
-                      liveData={player.liveData}
-                    />
-                  );
-                })}
-              </div>
-            </div>
+          <div className="fwd-column">
+            {forwards.map(position => {
+              const player = getPlayerData(position);
+              if (!player) return null;
+              return (
+                <PlayerCard 
+                  key={position}
+                  player={player}
+                  isCaptain={player.isCaptain}
+                  isViceCaptain={player.isViceCaptain}
+                  liveData={player.liveData}
+                />
+              );
+            })}
           </div>
         </div>
 
