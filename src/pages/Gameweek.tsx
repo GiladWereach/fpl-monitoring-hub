@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { PitchView } from '@/components/gameweek/PitchView';
 import { ListView } from '@/components/gameweek/ListView';
 import { calculateTotalPoints, calculateBenchPoints } from '@/components/gameweek/utils/points-calculator';
+import { TeamSelection, Player } from '@/components/gameweek/types';
 
 export default function Gameweek() {
   const [viewMode, setViewMode] = useState<'pitch' | 'list'>('pitch');
@@ -30,7 +31,6 @@ export default function Gameweek() {
     queryKey: ['team-selection', currentGameweek?.id],
     enabled: !!currentGameweek?.id,
     queryFn: async () => {
-      // For now, we'll fetch the first team we find for this gameweek
       const { data, error } = await supabase
         .from('team_selections')
         .select('*')
@@ -40,7 +40,6 @@ export default function Gameweek() {
       
       if (error) throw error;
       
-      // Transform the data to match our TeamSelection interface
       const picks = (data.picks as any[]).map(pick => ({
         element: pick.element,
         position: pick.position,
