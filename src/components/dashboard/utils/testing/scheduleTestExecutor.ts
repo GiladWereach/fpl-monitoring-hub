@@ -43,7 +43,8 @@ export async function executeScheduleTest(
       return {
         success: true,
         executionTime: 0,  // Will be populated by measureExecutionTime
-        retryCount: 0
+        retryCount: 0,
+        functionName
       };
     }, `${functionName}_${scheduleType}_test`);
 
@@ -60,7 +61,8 @@ export async function executeScheduleTest(
 
     return {
       success: false,
-      error: error.message
+      error: error.message,
+      functionName
     };
   }
 }
