@@ -13,16 +13,16 @@ export function BenchPlayers({ benchPlayers, getPlayerData }: BenchPlayersProps)
       <h3 className="text-sm font-semibold mb-4">Bench Players</h3>
       <div className="grid grid-cols-2 gap-4">
         {benchPlayers.map((position) => {
-          const player = getPlayerData({ position, element: player?.id });
-          if (!player) return null;
+          const playerData = getPlayerData(position);
+          if (!playerData) return null;
           
           return (
             <PlayerCard
               key={position}
-              player={player}
-              isCaptain={false}
-              isViceCaptain={false}
-              liveData={player.liveData}
+              player={playerData}
+              isCaptain={playerData.isCaptain}
+              isViceCaptain={playerData.isViceCaptain}
+              liveData={playerData.liveData}
             />
           );
         })}
