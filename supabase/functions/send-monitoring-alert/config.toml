@@ -1,5 +1,1 @@
 project_id = "qlkhlcoyrifbvzbqkshu"
-[build]
-command = ""
-[functions.send-monitoring-alert]
-verify_jwt = true

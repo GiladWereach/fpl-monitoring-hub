@@ -9,6 +9,94 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      alert_notifications: {
+        Row: {
+          alert_id: string
+          created_at: string | null
+          delivery_status: string | null
+          error_details: string | null
+          id: string
+          recipient: string
+          sent_at: string | null
+        }
+        Insert: {
+          alert_id: string
+          created_at?: string | null
+          delivery_status?: string | null
+          error_details?: string | null
+          id?: string
+          recipient: string
+          sent_at?: string | null
+        }
+        Update: {
+          alert_id?: string
+          created_at?: string | null
+          delivery_status?: string | null
+          error_details?: string | null
+          id?: string
+          recipient?: string
+          sent_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alert_notifications_alert_id_fkey"
+            columns: ["alert_id"]
+            isOneToOne: false
+            referencedRelation: "alerts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alerts: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          created_at: string | null
+          id: string
+          message: string
+          metadata: Json | null
+          notification_error: string | null
+          notification_sent: boolean | null
+          notification_sent_at: string | null
+          severity: string
+          type: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          created_at?: string | null
+          id?: string
+          message: string
+          metadata?: Json | null
+          notification_error?: string | null
+          notification_sent?: boolean | null
+          notification_sent_at?: string | null
+          severity: string
+          type: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          created_at?: string | null
+          id?: string
+          message?: string
+          metadata?: Json | null
+          notification_error?: string | null
+          notification_sent?: boolean | null
+          notification_sent_at?: string | null
+          severity?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alerts_acknowledged_by_fkey"
+            columns: ["acknowledged_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       api_error_logs: {
         Row: {
           created_at: string | null
