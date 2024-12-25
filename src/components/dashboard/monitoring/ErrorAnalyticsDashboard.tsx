@@ -167,7 +167,7 @@ export function ErrorAnalyticsDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <MetricCard
           title="Total Errors"
-          value={metrics.reduce((sum, m) => sum + m.error_count, 0)}
+          value={metrics.reduce((sum, m) => sum + m.error_count, 0).toString()}
           subtitle="Last 24 hours"
           icon={AlertTriangle}
           iconColor="text-destructive"
