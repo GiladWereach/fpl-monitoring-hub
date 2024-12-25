@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { calculateTotalPoints, calculateBenchPoints } from './utils/points-calculator';
 
 interface ListViewProps {
   teamSelection?: any;
@@ -21,18 +22,15 @@ export function ListView({ teamSelection, players, liveData }: ListViewProps) {
     };
   };
 
-  // Calculate total points excluding bench players
-  const totalPoints = teamSelection?.picks
-    .filter((pick: any) => pick.position <= 11)
-    .reduce((sum: number, pick: any) => {
-      const playerData = getPlayerData(pick);
-      return sum + (playerData?.points || 0);
-    }, 0);
+  // Calculate points for starting 11 and bench separately
+  const totalPoints = calculateTotalPoints(teamSelection?.picks || [], getPlayerData);
+  const benchPoints = calculateBenchPoints(teamSelection?.picks || [], getPlayerData);
 
   return (
     <Card className="glass-card p-6">
-      <div className="mb-4">
+      <div className="mb-4 space-y-2">
         <h2 className="text-xl font-bold">Total Points: {totalPoints}</h2>
+        <p className="text-sm text-foreground/60">Bench Points: {benchPoints}</p>
       </div>
       <Table>
         <TableHeader>
