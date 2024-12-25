@@ -8,11 +8,12 @@ import { ErrorMetricsChart } from "./components/ErrorMetricsChart";
 import { ErrorAnalyticsSummary } from "./components/ErrorAnalyticsSummary";
 import { processErrorMetrics } from "./utils/errorMetricsProcessor";
 import { ErrorMetrics, RawErrorLog } from "./types/error-analytics";
+import { AlertTriangle, Activity, Clock } from "lucide-react";
 
 export function ErrorAnalyticsDashboard() {
   console.log('Rendering ErrorAnalyticsDashboard');
 
-  const { data: errorMetrics, isLoading, error } = useQuery({
+  const { data: errorMetrics, isLoading, error, refetch } = useQuery({
     queryKey: ['error-metrics'],
     queryFn: async () => {
       console.log('Fetching error metrics');
@@ -65,14 +66,23 @@ export function ErrorAnalyticsDashboard() {
         <MetricCard
           title="Total Errors"
           value={metrics.reduce((sum, m) => sum + m.error_count, 0)}
+          subtitle="Last 24 hours"
+          icon={AlertTriangle}
+          iconColor="text-destructive"
         />
         <MetricCard
           title="Avg Recovery Rate"
           value={`${Math.round(metrics.reduce((sum, m) => sum + m.recovery_rate, 0) / (metrics.length || 1))}%`}
+          subtitle="Success rate"
+          icon={Activity}
+          iconColor="text-green-500"
         />
         <MetricCard
           title="Avg Recovery Time"
-          value={`${Math.round(metrics.reduce((sum, m) => sum + m.avg_recovery_time, 0) / (metrics.length || 1))}s`}
+          value={`${Math.round(metrics.reduce((sum, m) => sum + (m.avg_recovery_time || 0), 0) / (metrics.length || 1))}s`}
+          subtitle="Resolution time"
+          icon={Clock}
+          iconColor="text-blue-500"
         />
       </div>
       
