@@ -52,7 +52,7 @@ export function PitchView({ teamSelection, players, liveData }: PitchViewProps) 
         <div className="absolute inset-0 flex px-16 py-12">
           {/* GK Column */}
           <div className="player-columns w-1/4">
-            <div className="flex flex-col justify-center h-full space-y-4">
+            <div className="flex flex-col items-center justify-center h-full">
               {[1].map(position => {
                 const player = getPlayerData(position);
                 if (!player) return null;
@@ -71,58 +71,64 @@ export function PitchView({ teamSelection, players, liveData }: PitchViewProps) 
           
           {/* DEF Column */}
           <div className="player-columns w-1/4">
-            <div className="flex flex-col justify-between h-full py-8">
-              {defenders.map(position => {
-                const player = getPlayerData(position);
-                if (!player) return null;
-                return (
-                  <PlayerCard 
-                    key={position}
-                    player={player}
-                    isCaptain={player.isCaptain}
-                    isViceCaptain={player.isViceCaptain}
-                    liveData={player.liveData}
-                  />
-                );
-              })}
+            <div className="flex flex-col justify-between h-full py-16">
+              <div className="grid grid-cols-1 gap-6">
+                {defenders.map(position => {
+                  const player = getPlayerData(position);
+                  if (!player) return null;
+                  return (
+                    <PlayerCard 
+                      key={position}
+                      player={player}
+                      isCaptain={player.isCaptain}
+                      isViceCaptain={player.isViceCaptain}
+                      liveData={player.liveData}
+                    />
+                  );
+                })}
+              </div>
             </div>
           </div>
           
           {/* MID Column */}
           <div className="player-columns w-1/4">
-            <div className="flex flex-col justify-between h-full py-8">
-              {midfielders.map(position => {
-                const player = getPlayerData(position);
-                if (!player) return null;
-                return (
-                  <PlayerCard 
-                    key={position}
-                    player={player}
-                    isCaptain={player.isCaptain}
-                    isViceCaptain={player.isViceCaptain}
-                    liveData={player.liveData}
-                  />
-                );
-              })}
+            <div className="flex flex-col justify-between h-full py-12">
+              <div className="grid grid-cols-1 gap-6">
+                {midfielders.map(position => {
+                  const player = getPlayerData(position);
+                  if (!player) return null;
+                  return (
+                    <PlayerCard 
+                      key={position}
+                      player={player}
+                      isCaptain={player.isCaptain}
+                      isViceCaptain={player.isViceCaptain}
+                      liveData={player.liveData}
+                    />
+                  );
+                })}
+              </div>
             </div>
           </div>
           
           {/* FWD Column */}
           <div className="player-columns w-1/4">
             <div className="flex flex-col justify-between h-full py-8">
-              {forwards.map(position => {
-                const player = getPlayerData(position);
-                if (!player) return null;
-                return (
-                  <PlayerCard 
-                    key={position}
-                    player={player}
-                    isCaptain={player.isCaptain}
-                    isViceCaptain={player.isViceCaptain}
-                    liveData={player.liveData}
-                  />
-                );
-              })}
+              <div className="grid grid-cols-1 gap-6">
+                {forwards.map(position => {
+                  const player = getPlayerData(position);
+                  if (!player) return null;
+                  return (
+                    <PlayerCard 
+                      key={position}
+                      player={player}
+                      isCaptain={player.isCaptain}
+                      isViceCaptain={player.isViceCaptain}
+                      liveData={player.liveData}
+                    />
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>

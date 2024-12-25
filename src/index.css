@@ -52,7 +52,8 @@
 .player-card {
   @apply w-32 h-[90px] bg-secondary/90 backdrop-blur-sm 
          border border-accent/20 rounded-xl p-2 transition-all 
-         hover:bg-accent/10 cursor-pointer shadow-lg relative;
+         hover:bg-accent/10 cursor-pointer shadow-lg relative
+         hover:scale-105 hover:z-10;
 }
 
 .player-card-expanded {
@@ -60,21 +61,31 @@
 }
 
 .captain-ribbon {
-  @apply absolute -right-0 -top-0 w-6 h-6 overflow-hidden rounded-tr-xl;
+  @apply absolute -right-0 -top-0 w-8 h-8 overflow-hidden;
 }
 
 .captain-ribbon::before {
+  content: 'C';
+  @apply absolute top-1 right-1 text-xs font-bold text-background;
+}
+
+.captain-ribbon::after {
   content: '';
-  @apply absolute top-0 right-0 w-8 h-8 bg-accent transform rotate-45 origin-top-right;
+  @apply absolute top-0 right-0 w-10 h-10 bg-accent transform rotate-45 origin-top-right;
 }
 
 .vice-captain-ribbon {
-  @apply absolute -right-0 -top-0 w-6 h-6 overflow-hidden rounded-tr-xl;
+  @apply absolute -right-0 -top-0 w-8 h-8 overflow-hidden;
 }
 
 .vice-captain-ribbon::before {
+  content: 'V';
+  @apply absolute top-1 right-1 text-xs font-bold text-background;
+}
+
+.vice-captain-ribbon::after {
   content: '';
-  @apply absolute top-0 right-0 w-8 h-8 bg-accent/50 transform rotate-45 origin-top-right;
+  @apply absolute top-0 right-0 w-10 h-10 bg-accent/50 transform rotate-45 origin-top-right;
 }
 
 .pitch-container {
