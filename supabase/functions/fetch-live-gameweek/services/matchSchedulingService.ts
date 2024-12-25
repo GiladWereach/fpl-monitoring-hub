@@ -1,70 +1,64 @@
 import { supabase } from '../db/client.ts';
 
-export interface ScheduleWindow {
-  intervalMinutes: number;
-  reason: string;
+export interface MatchWindow {
+  start: Date;
+  end: Date;
+  hasActiveMatches: boolean;
 }
 
-export async function determineScheduleWindow(): Promise<ScheduleWindow> {
-  console.log('Determining schedule window...');
-  
-  try {
-    // Check for active matches
-    const { data: activeMatches, error: matchError } = await supabase
-      .from('fixtures')
-      .select('*')
-      .eq('started', true)
-      .eq('finished', false);
+export async function determineExecutionFrequency(): Promise<number> {
+  const { data: fixtures } = await supabase
+    .from('fixtures')
+    .select('*')
+    .eq('started', true)
+    .eq('finished', false);
 
-    if (matchError) throw matchError;
-
-    if (activeMatches && activeMatches.length > 0) {
-      console.log('Active matches found, using 2-minute intervals');
-      return {
-        intervalMinutes: 2,
-        reason: 'Live matches in progress'
-      };
-    }
-
-    // Check if we're in post-match window (within 3 hours of last finished match)
-    const { data: recentMatches, error: recentError } = await supabase
-      .from('fixtures')
-      .select('*')
-      .eq('finished', true)
-      .order('kickoff_time', { ascending: false })
-      .limit(1);
-
-    if (recentError) throw recentError;
-
-    if (recentMatches && recentMatches.length > 0) {
-      const lastMatch = recentMatches[0];
-      const matchEndTime = new Date(lastMatch.kickoff_time);
-      matchEndTime.setMinutes(matchEndTime.getMinutes() + 90); // Approximate match end time
-      
-      const threeHoursAfterMatch = new Date(matchEndTime);
-      threeHoursAfterMatch.setHours(threeHoursAfterMatch.getHours() + 3);
-      
-      if (new Date() <= threeHoursAfterMatch) {
-        console.log('Within 3-hour post-match window, using 30-minute intervals');
-        return {
-          intervalMinutes: 30,
-          reason: 'Post-match window (within 3 hours of match completion)'
-        };
-      }
-    }
-
-    // Default to daily updates
-    console.log('Outside match and post-match windows, using daily intervals');
-    return {
-      intervalMinutes: 1440, // 24 hours
-      reason: 'No recent or upcoming matches'
-    };
-  } catch (error) {
-    console.error('Error determining schedule window:', error);
-    // Default to 30 minutes if there's an error, to be safe
-    return {
-      intervalMinutes: 30,
-      reason: 'Error occurred, using safe default interval'
-    };
+  // If we have active matches, check every 2 minutes
+  if (fixtures && fixtures.length > 0) {
+    console.log('Active matches found, using 2 minute interval');
+    return 2;
   }
+
+  // Check for upcoming matches in the next hour
+  const oneHourFromNow = new Date();
+  oneHourFromNow.setHours(oneHourFromNow.getHours() + 1);
+
+  const { data: upcomingFixtures } = await supabase
+    .from('fixtures')
+    .select('*')
+    .eq('started', false)
+    .lte('kickoff_time', oneHourFromNow.toISOString());
+
+  // If we have upcoming matches within an hour, check every 5 minutes
+  if (upcomingFixtures && upcomingFixtures.length > 0) {
+    console.log('Upcoming matches found, using 5 minute interval');
+    return 5;
+  }
+
+  // Default to checking every 30 minutes outside of match windows
+  console.log('No active or upcoming matches, using 30 minute interval');
+  return 30;
+}
+
+export async function getMatchWindow(): Promise<MatchWindow | null> {
+  const { data: fixtures } = await supabase
+    .from('fixtures')
+    .select('*')
+    .or('started.eq.true,finished.eq.false')
+    .order('kickoff_time', { ascending: true });
+
+  if (!fixtures || fixtures.length === 0) {
+    return null;
+  }
+
+  const firstMatch = new Date(fixtures[0].kickoff_time);
+  const lastMatch = new Date(fixtures[fixtures.length - 1].kickoff_time);
+  const windowEnd = new Date(lastMatch);
+  windowEnd.setHours(windowEnd.getHours() + 2); // 2 hours after last kickoff
+
+  return {
+    start: firstMatch,
+    end: windowEnd,
+    hasActiveMatches: fixtures.some(f => f.started && !f.finished)
+  };
 }

@@ -1,23 +1,17 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Json } from "@/integrations/supabase/types";
+import { cleanupStaleExecutions } from "./execution/cleanupService";
+import { startTimeoutMonitor } from "./execution/timeoutMonitor";
+import { updateExecutionLog } from "./execution/statusUpdater";
+import type { ExecutionContext } from "./execution/types";
 
-interface ExecutionContext {
-  scheduleId: string;
-  functionName: string;
-  attempt: number;
-  startTime: Date;
-  executionWindow?: {
-    start: string;
-    end: string;
-  };
-}
+export { updateExecutionLog } from "./execution/statusUpdater";
 
 export const createExecutionLog = async (context: ExecutionContext) => {
   console.log(`Creating execution log for schedule ${context.scheduleId}`);
   
   try {
-    // First cleanup any stale executions
     await cleanupStaleExecutions();
     
     const { data: log, error } = await supabase
@@ -30,7 +24,7 @@ export const createExecutionLog = async (context: ExecutionContext) => {
           attempt: context.attempt,
           function_name: context.functionName,
           execution_window: context.executionWindow,
-          instance_id: crypto.randomUUID() // Add unique instance ID
+          instance_id: crypto.randomUUID()
         } as Json
       })
       .select()
@@ -41,97 +35,13 @@ export const createExecutionLog = async (context: ExecutionContext) => {
       throw error;
     }
 
-    // Start timeout monitor
     startTimeoutMonitor(log.id, 30000); // 30 second timeout
-
     return log;
   } catch (error) {
     console.error('Failed to create execution log:', error);
     toast({
       title: "Execution Logging Error",
       description: "Failed to create execution log. This may affect monitoring.",
-      variant: "destructive",
-    });
-    throw error;
-  }
-};
-
-const startTimeoutMonitor = async (logId: string, timeoutMs: number) => {
-  setTimeout(async () => {
-    const { data: log } = await supabase
-      .from('schedule_execution_logs')
-      .select('status')
-      .eq('id', logId)
-      .single();
-
-    if (log?.status === 'running') {
-      await updateExecutionLog(logId, 'failed', {
-        error: 'Execution timed out',
-        duration: timeoutMs
-      });
-    }
-  }, timeoutMs);
-};
-
-const cleanupStaleExecutions = async () => {
-  console.log('Cleaning up stale executions');
-  
-  const { error } = await supabase
-    .from('schedule_execution_logs')
-    .update({
-      status: 'failed',
-      completed_at: new Date().toISOString(),
-      error_details: 'Execution terminated due to timeout'
-    })
-    .eq('status', 'running')
-    .lt('started_at', new Date(Date.now() - 5 * 60 * 1000).toISOString()); // 5 minutes
-
-  if (error) {
-    console.error('Error cleaning up stale executions:', error);
-  }
-};
-
-export const updateExecutionLog = async (
-  logId: string, 
-  status: 'completed' | 'failed' | 'cancelled',
-  details?: {
-    error?: string;
-    duration?: number;
-    metrics?: Record<string, any>;
-  }
-) => {
-  console.log(`Updating execution log ${logId} with status: ${status}`);
-  
-  try {
-    const { error } = await supabase
-      .from('schedule_execution_logs')
-      .update({
-        status,
-        completed_at: new Date().toISOString(),
-        error_details: details?.error,
-        execution_duration_ms: details?.duration,
-        execution_metrics: details?.metrics as Json
-      })
-      .eq('id', logId);
-
-    if (error) {
-      console.error('Error updating execution log:', error);
-      throw error;
-    }
-
-    // Notify user of execution completion
-    toast({
-      title: `Execution ${status === 'completed' ? 'Successful' : 'Failed'}`,
-      description: status === 'completed' 
-        ? `Completed in ${details?.duration}ms`
-        : `Failed: ${details?.error}`,
-      variant: status === 'completed' ? "default" : "destructive",
-    });
-  } catch (error) {
-    console.error('Failed to update execution log:', error);
-    toast({
-      title: "Execution Logging Error",
-      description: "Failed to update execution log status.",
       variant: "destructive",
     });
     throw error;
