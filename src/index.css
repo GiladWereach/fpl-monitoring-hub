@@ -50,24 +50,40 @@
 }
 
 .player-card {
-  @apply w-32 min-h-[120px] bg-secondary/90 backdrop-blur-sm 
-         border border-accent/20 rounded-xl p-3 transition-all 
-         hover:bg-accent/10 cursor-pointer shadow-lg;
+  @apply w-32 h-[100px] bg-secondary/90 backdrop-blur-sm 
+         border border-accent/20 rounded-xl p-2 transition-all 
+         hover:bg-accent/10 cursor-pointer shadow-lg relative;
 }
 
 .player-card-expanded {
   @apply bg-accent/10;
 }
 
+.captain-ribbon {
+  @apply absolute -right-1 -top-1 w-6 h-6 overflow-hidden;
+}
+
+.captain-ribbon::before {
+  content: '';
+  @apply absolute top-0 right-0 w-8 h-8 bg-accent transform rotate-45 origin-top-right;
+}
+
+.vice-captain-ribbon {
+  @apply absolute -right-1 -top-1 w-6 h-6 overflow-hidden;
+}
+
+.vice-captain-ribbon::before {
+  content: '';
+  @apply absolute top-0 right-0 w-8 h-8 bg-accent/50 transform rotate-45 origin-top-right;
+}
+
 .pitch-container {
-  @apply relative h-[500px] w-full bg-[#1A1F2C] rounded-lg border border-accent/20 overflow-hidden;
+  @apply relative h-[450px] w-full bg-[#1A1F2C] rounded-lg border border-accent/20 overflow-hidden;
 }
 
 .pitch-markings {
   @apply absolute inset-0;
-  background: 
-    linear-gradient(to right, transparent 0%, transparent 16.66%, var(--pitch-lines) 16.66%, var(--pitch-lines) 16.67%, transparent 16.67%, transparent 83.33%, var(--pitch-lines) 83.33%, var(--pitch-lines) 83.34%, transparent 83.34%, transparent 100%),
-    radial-gradient(circle at center, var(--pitch-lines) 0.5%, transparent 0.6%);
+  background: radial-gradient(circle at center, var(--pitch-lines) 0.5%, transparent 0.6%);
 }
 
 .goalkeeper-area {
@@ -76,10 +92,19 @@
 
 .bench-container {
   @apply absolute bottom-4 left-4 bg-secondary/90 backdrop-blur-sm 
-         border border-accent/20 rounded-lg p-4 w-[280px];
+         border border-accent/20 rounded-lg p-2 w-[400px];
+}
+
+.bench-players {
+  @apply flex gap-2;
 }
 
 .bench-player-card {
-  @apply flex items-center space-x-2 p-2 rounded-lg 
-         hover:bg-accent/10 transition-all cursor-pointer;
+  @apply w-24 h-[80px] bg-secondary/80 backdrop-blur-sm 
+         border border-accent/20 rounded-lg p-2 transition-all 
+         hover:bg-accent/10 cursor-pointer relative;
+}
+
+.sub-order {
+  @apply absolute top-1 right-1 text-xs text-accent font-medium;
 }

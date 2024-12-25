@@ -26,6 +26,19 @@ export function PitchView({ teamSelection, players, liveData }: PitchViewProps) 
     };
   };
 
+  const getFormationPlayers = () => {
+    const formation = teamSelection?.formation || '4-4-2';
+    const [def, mid, fwd] = formation.split('-').map(Number);
+    
+    return {
+      defenders: Array.from({ length: def }, (_, i) => i + 2),
+      midfielders: Array.from({ length: mid }, (_, i) => i + 2 + def),
+      forwards: Array.from({ length: fwd }, (_, i) => i + 2 + def + mid)
+    };
+  };
+
+  const { defenders, midfielders, forwards } = getFormationPlayers();
+
   return (
     <Card className="glass-card p-6">
       <div className="pitch-container">
@@ -59,7 +72,7 @@ export function PitchView({ teamSelection, players, liveData }: PitchViewProps) 
           {/* DEF Column */}
           <div className="w-1/4 flex items-center justify-center">
             <div className="space-y-4">
-              {[2, 3, 4, 5].map(position => {
+              {defenders.map(position => {
                 const player = getPlayerData(position);
                 if (!player) return null;
                 return (
@@ -78,7 +91,7 @@ export function PitchView({ teamSelection, players, liveData }: PitchViewProps) 
           {/* MID Column */}
           <div className="w-1/4 flex items-center justify-center">
             <div className="space-y-4">
-              {[6, 7, 8].map(position => {
+              {midfielders.map(position => {
                 const player = getPlayerData(position);
                 if (!player) return null;
                 return (
@@ -97,7 +110,7 @@ export function PitchView({ teamSelection, players, liveData }: PitchViewProps) 
           {/* FWD Column */}
           <div className="w-1/4 flex items-center justify-center">
             <div className="space-y-4">
-              {[9, 10, 11].map(position => {
+              {forwards.map(position => {
                 const player = getPlayerData(position);
                 if (!player) return null;
                 return (

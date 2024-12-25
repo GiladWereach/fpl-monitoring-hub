@@ -2,15 +2,15 @@ import React from 'react';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 
 interface BenchPlayersProps {
-  benchPlayers: any[];
+  benchPlayers: number[];
   getPlayerData: (position: number) => any;
 }
 
 export function BenchPlayers({ benchPlayers, getPlayerData }: BenchPlayersProps) {
   return (
     <div className="bench-container">
-      <h3 className="text-sm font-medium mb-2 text-foreground/60">Substitutes</h3>
-      <div className="space-y-2">
+      <h3 className="text-xs font-medium mb-2 text-foreground/60">Substitutes</h3>
+      <div className="bench-players">
         {benchPlayers.map((position, index) => {
           const player = getPlayerData(position);
           if (!player) return null;
@@ -19,11 +19,9 @@ export function BenchPlayers({ benchPlayers, getPlayerData }: BenchPlayersProps)
             <HoverCard key={position}>
               <HoverCardTrigger>
                 <div className="bench-player-card">
-                  <span className="text-xs text-foreground/60">#{index + 1}</span>
-                  <div>
-                    <p className="text-sm font-medium text-foreground">{player?.web_name}</p>
-                    <span className="text-xs text-accent">{player.points} pts</span>
-                  </div>
+                  <span className="sub-order">#{index + 1}</span>
+                  <p className="text-sm font-medium text-foreground truncate">{player?.web_name}</p>
+                  <span className="text-xs text-accent">{player.points} pts</span>
                 </div>
               </HoverCardTrigger>
               {player.liveData && (
