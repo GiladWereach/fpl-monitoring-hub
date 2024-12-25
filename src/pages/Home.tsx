@@ -22,7 +22,7 @@ export default function Home() {
     window.addEventListener('resize', updateSize);
 
     // Player names for the animation
-    const playerNames = ['Haaland', 'Salah', 'Kane', 'Saka', 'Rashford', 'De Bruyne', 'Son', 'Bruno', 'Trent', 'Foden'];
+    const playerNames = ['Haaland', 'Salah', 'Palmer','Jota','Isak','Gordon','Pickford','Semenyo','Kerkez','Mateta','Smith Rowe','Iwobi','Cucurella','Watkins','Rogers','Schär' ,'Martinez','Gibbs-White','Elanga','Kulusevski','Maddison','Solanke','Bowen','Paquetá','Kudus','Cunha','Semedo','Onana','Van Dijk','Vardy','Buonanotte', 'Mbuemo', 'Saka', 'Rashford', 'De Bruyne', 'Son', 'Bruno', 'Trent', 'Foden'];
     
     // Array to store active name animations
     type NameAnimation = {
@@ -67,7 +67,7 @@ export default function Home() {
         if (animation.fadeDirection === 'in') {
           animation.opacity += 0.02;
           animation.scale += 0.02;
-          if (animation.opacity >= 0.5) { // Reduced from 0.8 to 0.5 for lower final opacity
+          if (animation.opacity >= 0.75) { // Reduced from 0.8 to 0.5 for lower final opacity
             animation.fadeDirection = 'out';
           }
         } else {
