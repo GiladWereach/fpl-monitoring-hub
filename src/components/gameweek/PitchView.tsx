@@ -40,91 +40,93 @@ export function PitchView({ teamSelection, players, liveData }: PitchViewProps) 
   const { defenders, midfielders, forwards } = getFormationPlayers();
 
   return (
-    <Card className="glass-card p-2">
-      <div className="pitch-container">
-        <div className="pitch-markings" />
-        
-        {/* Goalkeeper Areas */}
-        <div className="goalkeeper-area left-4 top-1/2 -translate-y-1/2" />
-        <div className="goalkeeper-area right-4 top-1/2 -translate-y-1/2" />
-        
-        {/* Player Positions */}
-        <div className="absolute inset-0 grid grid-cols-4 px-8">
-          {/* GK Column */}
-          <div className="gk-column">
-            {[1].map(position => {
-              const player = getPlayerData(position);
-              if (!player) return null;
-              return (
-                <PlayerCard 
-                  key={position}
-                  player={player}
-                  isCaptain={player.isCaptain}
-                  isViceCaptain={player.isViceCaptain}
-                  liveData={player.liveData}
-                />
-              );
-            })}
-          </div>
+    <div className="space-y-4">
+      <Card className="glass-card p-2">
+        <div className="pitch-container">
+          <div className="pitch-markings" />
           
-          {/* DEF Column */}
-          <div className="def-column">
-            {defenders.map(position => {
-              const player = getPlayerData(position);
-              if (!player) return null;
-              return (
-                <PlayerCard 
-                  key={position}
-                  player={player}
-                  isCaptain={player.isCaptain}
-                  isViceCaptain={player.isViceCaptain}
-                  liveData={player.liveData}
-                />
-              );
-            })}
-          </div>
+          {/* Goalkeeper Areas */}
+          <div className="goalkeeper-area left-4 top-1/2 -translate-y-1/2" />
+          <div className="goalkeeper-area right-4 top-1/2 -translate-y-1/2" />
           
-          {/* MID Column */}
-          <div className="mid-column">
-            {midfielders.map(position => {
-              const player = getPlayerData(position);
-              if (!player) return null;
-              return (
-                <PlayerCard 
-                  key={position}
-                  player={player}
-                  isCaptain={player.isCaptain}
-                  isViceCaptain={player.isViceCaptain}
-                  liveData={player.liveData}
-                />
-              );
-            })}
-          </div>
-          
-          {/* FWD Column */}
-          <div className="fwd-column">
-            {forwards.map(position => {
-              const player = getPlayerData(position);
-              if (!player) return null;
-              return (
-                <PlayerCard 
-                  key={position}
-                  player={player}
-                  isCaptain={player.isCaptain}
-                  isViceCaptain={player.isViceCaptain}
-                  liveData={player.liveData}
-                />
-              );
-            })}
+          {/* Player Positions */}
+          <div className="absolute inset-0 grid grid-cols-4 px-8">
+            {/* GK Column */}
+            <div className="gk-column">
+              {[1].map(position => {
+                const player = getPlayerData(position);
+                if (!player) return null;
+                return (
+                  <PlayerCard 
+                    key={position}
+                    player={player}
+                    isCaptain={player.isCaptain}
+                    isViceCaptain={player.isViceCaptain}
+                    liveData={player.liveData}
+                  />
+                );
+              })}
+            </div>
+            
+            {/* DEF Column */}
+            <div className="def-column">
+              {defenders.map(position => {
+                const player = getPlayerData(position);
+                if (!player) return null;
+                return (
+                  <PlayerCard 
+                    key={position}
+                    player={player}
+                    isCaptain={player.isCaptain}
+                    isViceCaptain={player.isViceCaptain}
+                    liveData={player.liveData}
+                  />
+                );
+              })}
+            </div>
+            
+            {/* MID Column */}
+            <div className="mid-column">
+              {midfielders.map(position => {
+                const player = getPlayerData(position);
+                if (!player) return null;
+                return (
+                  <PlayerCard 
+                    key={position}
+                    player={player}
+                    isCaptain={player.isCaptain}
+                    isViceCaptain={player.isViceCaptain}
+                    liveData={player.liveData}
+                  />
+                );
+              })}
+            </div>
+            
+            {/* FWD Column */}
+            <div className="fwd-column">
+              {forwards.map(position => {
+                const player = getPlayerData(position);
+                if (!player) return null;
+                return (
+                  <PlayerCard 
+                    key={position}
+                    player={player}
+                    isCaptain={player.isCaptain}
+                    isViceCaptain={player.isViceCaptain}
+                    liveData={player.liveData}
+                  />
+                );
+              })}
+            </div>
           </div>
         </div>
+      </Card>
 
-        {/* Bench Section */}
-        <BenchPlayers 
-          benchPlayers={[12, 13, 14, 15]}
-          getPlayerData={getPlayerData}
-        />
-      </div>
-    </Card>
+      {/* Bench Section - Now below the pitch */}
+      <BenchPlayers 
+        benchPlayers={[12, 13, 14, 15]}
+        getPlayerData={getPlayerData}
+      />
+    </div>
   );
 }

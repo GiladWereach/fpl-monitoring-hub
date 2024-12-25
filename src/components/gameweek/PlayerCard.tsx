@@ -17,6 +17,9 @@ export function PlayerCard({ player, isCaptain, isViceCaptain, liveData }: Playe
   const [isExpanded, setIsExpanded] = useState(false);
   const points = liveData?.total_points || 0;
   const finalPoints = isCaptain ? points * 2 : points;
+  const isGoalkeeper = player?.element_type === 1;
+  const isDefender = player?.element_type === 2;
+  const isMidfielder = player?.element_type === 3;
 
   return (
     <HoverCard>
@@ -48,13 +51,14 @@ export function PlayerCard({ player, isCaptain, isViceCaptain, liveData }: Playe
             <span className="text-xs text-foreground/80">Assists</span>
             <span className="text-xs font-medium text-foreground">{liveData?.assists || 0}</span>
           </div>
-          {liveData?.clean_sheets > 0 && (
+          {/* Only show clean sheets for GK, DEF, and MID */}
+          {(isGoalkeeper || isDefender || isMidfielder) && liveData?.clean_sheets > 0 && (
             <div className="flex justify-between items-center">
               <span className="text-xs text-foreground/80">Clean Sheet</span>
               <span className="text-xs font-medium text-foreground">✓</span>
             </div>
           )}
-          {player?.element_type === 1 && (
+          {isGoalkeeper && (
             <div className="flex justify-between items-center">
               <span className="text-xs text-foreground/80">Saves</span>
               <span className="text-xs font-medium text-foreground">{liveData?.saves || 0}</span>
