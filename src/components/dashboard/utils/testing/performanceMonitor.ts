@@ -34,7 +34,7 @@ export async function trackTestPerformance(metrics: PerformanceMetrics) {
       toast({
         title: "Performance Warning",
         description: `Test ${metrics.testName} took longer than expected: ${metrics.executionTime}ms`,
-        variant: "warning",
+        variant: "destructive",
       });
     }
   } catch (error) {
