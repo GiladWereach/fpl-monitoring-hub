@@ -1,12 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { Play, RefreshCw } from "lucide-react";
-import { ScheduleManager } from "../ScheduleManager";
 import { Card } from "@/components/ui/card";
 import { format } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/hooks/use-toast";
+import { ScheduleManager } from "../ScheduleManager";
 
 interface FunctionCardProps {
   name: string;
@@ -69,6 +69,24 @@ export function FunctionCard({ name, functionName, loading, onExecute, schedule 
     refetchInterval: 30000,
     staleTime: 25000
   });
+
+  const handleManualTrigger = async () => {
+    console.log(`Manually triggering ${functionName}`);
+    try {
+      await onExecute(functionName);
+      toast({
+        title: "Function Triggered",
+        description: `${name} has been manually triggered`,
+      });
+    } catch (error) {
+      console.error(`Error triggering ${functionName}:`, error);
+      toast({
+        title: "Error",
+        description: `Failed to trigger ${name}`,
+        variant: "destructive",
+      });
+    }
+  };
 
   const formatDuration = (ms: number) => {
     if (ms < 1000) return `${Math.round(ms)}ms`;
@@ -164,8 +182,8 @@ export function FunctionCard({ name, functionName, loading, onExecute, schedule 
             <Button
               size="sm"
               variant="outline"
-              onClick={() => onExecute(functionName)}
-              disabled={loading !== null}
+              onClick={handleManualTrigger}
+              disabled={isLoading}
             >
               {isLoading ? (
                 <RefreshCw className="h-4 w-4 animate-spin" />
