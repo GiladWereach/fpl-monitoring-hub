@@ -46,7 +46,7 @@ export async function processSchedule(
             execution_context: {
               instance_id: instanceId,
               schedule_type: schedule.schedule_type,
-              interval: schedule.base_interval_minutes,
+              interval: schedule.time_config?.intervalMinutes,
               execution_attempt: 1,
               started_at: new Date().toISOString()
             }
@@ -170,9 +170,9 @@ export async function processSchedule(
           const { error: updateError } = await client
             .from('schedules')
             .update({
-              consecutive_failures: schedule.consecutive_failures + 1,
+              consecutive_failures: (schedule.consecutive_failures || 0) + 1,
               last_error: lastError?.message || 'Unknown error',
-              status: schedule.consecutive_failures >= 4 ? 'error' : 'active'
+              enabled: (schedule.consecutive_failures || 0) >= 4 ? false : schedule.enabled
             })
             .eq('id', schedule.id);
 
