@@ -11,7 +11,7 @@ export function BenchPlayers({ benchPlayers, getPlayerData }: BenchPlayersProps)
   return (
     <Card className="glass-card p-4">
       <h3 className="text-sm font-semibold mb-4">Bench Players</h3>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-4 gap-4">
         {benchPlayers.map((position) => {
           const playerData = getPlayerData(position);
           if (!playerData) return null;
