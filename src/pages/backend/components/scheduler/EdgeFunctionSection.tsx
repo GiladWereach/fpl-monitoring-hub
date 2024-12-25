@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Plus } from "lucide-react";
+import { EdgeFunctionManager } from "@/components/dashboard/EdgeFunctionManager";
 
 interface EdgeFunctionSectionProps {
   onNewFunction: () => void;
@@ -18,6 +19,8 @@ export function EdgeFunctionSection({ onNewFunction }: EdgeFunctionSectionProps)
           New Function
         </Button>
       </div>
+
+      <EdgeFunctionManager />
     </Card>
   );
 }
