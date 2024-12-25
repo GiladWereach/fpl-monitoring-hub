@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { determineScheduleFrequency } from "./scheduleManager";
+import { determineScheduleFrequency } from "@/services/scheduleManager";
 import { toast } from "@/hooks/use-toast";
 
 export async function updateScheduleConfiguration(functionName: string) {
@@ -10,18 +10,23 @@ export async function updateScheduleConfiguration(functionName: string) {
     
     // Update the schedule configuration
     const { error } = await supabase
-      .from('function_schedules')
+      .from('schedules')
       .upsert({
         function_name: functionName,
-        frequency_type: 'match_dependent',
-        base_interval_minutes: frequency.intervalMinutes,
-        match_day_interval_minutes: 2,
-        non_match_interval_minutes: 30,
-        status: 'active',
-        max_concurrent_executions: 1,
-        timeout_seconds: 30,
-        retry_count: 3,
-        retry_delay_seconds: 60,
+        schedule_type: 'time_based',
+        time_config: {
+          type: 'match_dependent',
+          matchDayIntervalMinutes: 2,
+          nonMatchIntervalMinutes: 30
+        },
+        execution_config: {
+          retry_count: 3,
+          timeout_seconds: 30,
+          retry_delay_seconds: 60,
+          concurrent_execution: false,
+          retry_backoff: 'linear',
+          max_retry_delay: 3600
+        },
         active_period_start: frequency.startTime,
         active_period_end: frequency.endTime,
         updated_at: new Date().toISOString()
