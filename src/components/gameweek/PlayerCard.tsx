@@ -22,6 +22,18 @@ export function PlayerCard({ player, isCaptain, isViceCaptain, liveData }: Playe
   const isDefender = player?.element_type === 2;
   const isMidfielder = player?.element_type === 3;
 
+  console.log('PlayerCard Data:', {
+    player_id: player?.id,
+    web_name: player?.web_name,
+    status: player?.status,
+    chance_of_playing: player?.chance_of_playing_this_round,
+    live_data: liveData ? {
+      minutes: liveData.minutes,
+      finished: liveData.finished,
+      total_points: liveData.total_points
+    } : 'No live data'
+  });
+
   const getPositionText = (elementType: number) => {
     switch (elementType) {
       case 1: return 'GK';

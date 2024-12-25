@@ -8,9 +8,22 @@ interface PlayerStatusProps {
 }
 
 export function PlayerStatus({ player, liveData }: PlayerStatusProps) {
+  console.log('Player Status Check:', {
+    player_id: player?.id,
+    web_name: player?.web_name,
+    chance_of_playing: player?.chance_of_playing_this_round,
+    status: player?.status,
+    liveData: liveData ? {
+      minutes: liveData.minutes,
+      finished: liveData.finished,
+      fixture_id: liveData.fixture_id
+    } : 'No live data'
+  });
+
   const getPlayerStatus = () => {
     // First check player availability from players table
-    if (player?.chance_of_playing_this_round === 0) {
+    if (player?.status === 'u' || player?.chance_of_playing_this_round === 0) {
+      console.log(`Player ${player.web_name} is not available`);
       return {
         icon: X,
         color: 'text-red-500',
@@ -20,6 +33,7 @@ export function PlayerStatus({ player, liveData }: PlayerStatusProps) {
     }
 
     if (player?.chance_of_playing_this_round !== null && player?.chance_of_playing_this_round < 100) {
+      console.log(`Player ${player.web_name} is doubtful (${player.chance_of_playing_this_round}%)`);
       return {
         icon: AlertCircle,
         color: 'text-yellow-500',
@@ -32,6 +46,7 @@ export function PlayerStatus({ player, liveData }: PlayerStatusProps) {
     if (liveData) {
       // Player is in an active match
       if (liveData.minutes > 0 && !liveData.finished) {
+        console.log(`Player ${player.web_name} is in play`);
         return {
           icon: Play,
           color: 'text-[#3DFF9A]',
@@ -42,6 +57,7 @@ export function PlayerStatus({ player, liveData }: PlayerStatusProps) {
 
       // Match is finished and player participated
       if (liveData.finished && liveData.minutes > 0) {
+        console.log(`Player ${player.web_name} has finished playing (${liveData.minutes} mins)`);
         return {
           icon: Check,
           color: 'text-gray-400',
@@ -52,6 +68,7 @@ export function PlayerStatus({ player, liveData }: PlayerStatusProps) {
 
       // Match is finished but player didn't play
       if (liveData.finished) {
+        console.log(`Player ${player.web_name} was unused in the match`);
         return {
           icon: X,
           color: 'text-gray-400',
@@ -62,6 +79,7 @@ export function PlayerStatus({ player, liveData }: PlayerStatusProps) {
     }
 
     // Default: Yet to play
+    console.log(`Player ${player.web_name} is yet to play`);
     return {
       icon: Clock,
       color: 'text-blue-400',
