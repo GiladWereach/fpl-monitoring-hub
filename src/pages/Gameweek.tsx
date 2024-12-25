@@ -6,6 +6,7 @@ import { ViewToggle } from '@/components/gameweek/ViewToggle';
 import { LivePerformance } from '@/components/gameweek/LivePerformance';
 import { PitchView } from '@/components/gameweek/PitchView';
 import { ListView } from '@/components/gameweek/ListView';
+import { BenchPlayers } from '@/components/gameweek/BenchPlayers';
 import { calculateTotalPoints, calculateBenchPoints } from '@/components/gameweek/utils/points-calculator';
 import { TeamSelection, Player } from '@/components/gameweek/types';
 import { Loader2 } from 'lucide-react';
@@ -104,7 +105,6 @@ export default function Gameweek() {
   const totalPoints = calculateTotalPoints(teamSelection?.picks || [], getPlayerData);
   const benchPoints = calculateBenchPoints(teamSelection?.picks || [], getPlayerData);
   
-  // Calculate players playing (only from starting 11)
   const playersPlaying = teamSelection?.picks
     .filter((pick: any) => pick.position <= 11)
     .filter((pick: any) => {
@@ -152,6 +152,10 @@ export default function Gameweek() {
               totalPoints={totalPoints}
               benchPoints={benchPoints}
               liveData={liveData}
+            />
+            <BenchPlayers 
+              benchPlayers={[12, 13, 14, 15]}
+              getPlayerData={getPlayerData}
             />
           </div>
         </div>

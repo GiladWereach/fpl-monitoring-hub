@@ -34,7 +34,7 @@ export function PlayerCard({ player, isCaptain, isViceCaptain, liveData }: Playe
           </div>
         </div>
       </HoverCardTrigger>
-      <HoverCardContent className="w-32 bg-secondary/95 backdrop-blur-sm border-accent/20">
+      <HoverCardContent className="w-40 bg-secondary/95 backdrop-blur-sm border-accent/20">
         <div className="space-y-2">
           <div className="flex justify-between items-center">
             <span className="text-xs text-foreground/80">Minutes</span>
@@ -48,6 +48,27 @@ export function PlayerCard({ player, isCaptain, isViceCaptain, liveData }: Playe
             <span className="text-xs text-foreground/80">Assists</span>
             <span className="text-xs font-medium text-foreground">{liveData?.assists || 0}</span>
           </div>
+          {liveData?.clean_sheets > 0 && (
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-foreground/80">Clean Sheet</span>
+              <span className="text-xs font-medium text-foreground">✓</span>
+            </div>
+          )}
+          {player?.element_type === 1 && (
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-foreground/80">Saves</span>
+              <span className="text-xs font-medium text-foreground">{liveData?.saves || 0}</span>
+            </div>
+          )}
+          {(liveData?.yellow_cards > 0 || liveData?.red_cards > 0) && (
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-foreground/80">Cards</span>
+              <span className="text-xs font-medium text-foreground">
+                {liveData?.yellow_cards > 0 && <span className="text-yellow-400">■ </span>}
+                {liveData?.red_cards > 0 && <span className="text-red-500">■</span>}
+              </span>
+            </div>
+          )}
           {liveData?.bonus > 0 && (
             <div className="flex justify-between items-center">
               <span className="text-xs text-foreground/80">Bonus</span>
