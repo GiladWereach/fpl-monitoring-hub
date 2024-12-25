@@ -66,7 +66,8 @@ export function MonitoringDashboard() {
   const errorMetrics: ErrorMetrics[] = metrics?.map((m: any) => ({
     timestamp: m.timestamp,
     error_count: m.error_count,
-    recovery_rate: m.success_rate
+    recovery_rate: m.success_rate,
+    avg_recovery_time: m.avg_response_time || 0
   })) || [];
 
   return (
