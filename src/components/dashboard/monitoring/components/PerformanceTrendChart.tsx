@@ -2,6 +2,8 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { Card } from "@/components/ui/card";
 import { format, isValid, parseISO } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 interface PerformanceTrendChartProps {
   data: Array<{
@@ -9,6 +11,7 @@ interface PerformanceTrendChartProps {
     success_rate: number;
     avg_response_time: number;
     error_count: number;
+    recovery_rate?: number;
   }>;
   timeRange: 'hour' | 'day' | 'week';
 }
@@ -43,17 +46,23 @@ export function PerformanceTrendChart({ data, timeRange }: PerformanceTrendChart
   return (
     <Card className="p-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold">Performance Trends</h3>
-        <Select defaultValue={timeRange}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Select time range" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="hour">Last Hour</SelectItem>
-            <SelectItem value="day">Last 24 Hours</SelectItem>
-            <SelectItem value="week">Last Week</SelectItem>
-          </SelectContent>
-        </Select>
+        <h3 className="text-lg font-semibold">System Performance</h3>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center space-x-2">
+            <Switch id="show-errors" defaultChecked />
+            <Label htmlFor="show-errors">Show Errors</Label>
+          </div>
+          <Select defaultValue={timeRange}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Select time range" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="hour">Last Hour</SelectItem>
+              <SelectItem value="day">Last 24 Hours</SelectItem>
+              <SelectItem value="week">Last Week</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
       <div className="h-[300px]">
         <ResponsiveContainer width="100%" height="100%">
@@ -100,6 +109,14 @@ export function PerformanceTrendChart({ data, timeRange }: PerformanceTrendChart
               dataKey="error_count"
               stroke="#ef4444"
               name="Error Count"
+              dot={false}
+            />
+            <Line
+              yAxisId="left"
+              type="monotone"
+              dataKey="recovery_rate"
+              stroke="#f59e0b"
+              name="Recovery Rate (%)"
               dot={false}
             />
           </LineChart>

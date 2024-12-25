@@ -2,10 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { MetricCard } from "./components/MetricCard";
-import { ErrorMetricsChart } from "./components/ErrorMetricsChart";
 import { AlertTriangle, CheckCircle2, Clock, Activity } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { ErrorMetrics } from "./types/error-analytics";
 import { AlertManagement } from "./AlertManagement";
 import { PerformanceTrendChart } from "./components/PerformanceTrendChart";
 import { SystemHealthOverview } from "./components/SystemHealthOverview";
@@ -75,27 +73,21 @@ export function MonitoringDashboard() {
     );
   }
 
-  // Calculate aggregated metrics from the actual API response
+  // Calculate aggregated metrics
   const aggregatedMetrics = {
     success_rate: metrics?.[0]?.success_rate || 0,
     avg_response_time: metrics?.[0]?.avg_response_time || 0,
     error_rate: 100 - (metrics?.[0]?.success_rate || 0),
-    system_load: metrics?.[0]?.total_successes + metrics?.[0]?.total_errors || 0 // Calculate system load from total requests
+    system_load: metrics?.reduce((sum, m) => sum + m.total_successes + m.total_errors, 0) || 0
   };
 
-  // Transform metrics for trend chart with proper timestamps
+  // Transform metrics for trend chart
   const trendData = metrics?.map(m => ({
-    timestamp: m.latest_success || m.latest_error || new Date().toISOString(), // Use the latest timestamp available
+    timestamp: m.latest_success || m.latest_error || new Date().toISOString(),
     success_rate: m.success_rate,
     avg_response_time: m.avg_response_time,
-    error_count: m.total_errors
-  })) || [];
-
-  const errorMetrics: ErrorMetrics[] = metrics?.map((m: any) => ({
-    timestamp: m.latest_success || m.latest_error || new Date().toISOString(),
-    error_count: m.total_errors || 0,
-    recovery_rate: m.success_rate || 0,
-    avg_recovery_time: m.avg_response_time || 0
+    error_count: m.total_errors,
+    recovery_rate: m.success_rate
   })) || [];
 
   return (
@@ -133,12 +125,11 @@ export function MonitoringDashboard() {
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="space-y-6">
         <PerformanceTrendChart 
           data={trendData}
           timeRange={timeRange}
         />
-        <ErrorMetricsChart data={errorMetrics} />
       </div>
 
       <AlertManagement />
