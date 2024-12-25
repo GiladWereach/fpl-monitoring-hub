@@ -65,7 +65,10 @@ class MetricsService {
           }))
         );
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error flushing metrics:', error);
+        throw error;
+      }
       console.log('Successfully flushed metrics to database');
     } catch (error) {
       console.error('Error flushing metrics:', error);

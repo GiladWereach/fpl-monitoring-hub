@@ -1,9 +1,9 @@
 import { Card } from "@/components/ui/card";
 import { LucideIcon } from "lucide-react";
 
-export interface MetricCardProps {
+interface MetricsCardProps {
   title: string;
-  value: string | number;
+  value: string;
   subtitle: string;
   icon: LucideIcon;
   iconColor: string;
@@ -20,7 +20,10 @@ export function MetricCard({
   icon: Icon,
   iconColor,
   indicator
-}: MetricCardProps) {
+}: MetricsCardProps) {
+  // Ensure we always have a valid display value
+  const displayValue = value || 'N/A';
+
   return (
     <Card className="p-4">
       <div className="flex items-center justify-between">
@@ -31,7 +34,7 @@ export function MetricCard({
           <Icon className={`h-4 w-4 ${iconColor}`} />
         )}
       </div>
-      <p className="text-2xl font-bold mt-2">{value}</p>
+      <p className="text-2xl font-bold mt-2">{displayValue}</p>
       <p className="text-sm text-muted-foreground mt-1">
         {subtitle}
       </p>

@@ -22,7 +22,7 @@ export function MonitoringDashboard() {
       }
       
       console.log('Fetched metrics:', healthData);
-      return healthData;
+      return healthData || [];
     },
     refetchInterval: 30000,
     meta: {
@@ -63,10 +63,20 @@ export function MonitoringDashboard() {
     );
   }
 
+  // Ensure we have default values when metrics are undefined
+  const defaultMetrics = {
+    success_rate: 0,
+    avg_response_time: 0,
+    total_errors: 0,
+    health_status: 'unknown'
+  };
+
+  const aggregatedMetrics = metrics?.[0] || defaultMetrics;
+
   const errorMetrics: ErrorMetrics[] = metrics?.map((m: any) => ({
     timestamp: m.timestamp,
-    error_count: m.error_count,
-    recovery_rate: m.success_rate,
+    error_count: m.error_count || 0,
+    recovery_rate: m.success_rate || 0,
     avg_recovery_time: m.avg_response_time || 0
   })) || [];
 
@@ -77,35 +87,35 @@ export function MonitoringDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard
           title="Success Rate"
-          value={`${metrics?.[0]?.success_rate?.toFixed(1)}%` || '0%'}
+          value={`${aggregatedMetrics.success_rate?.toFixed(1)}%`}
           icon={CheckCircle2}
           iconColor="text-green-500"
           subtitle="Last 24 hours"
         />
         <MetricCard
           title="Average Response Time"
-          value={`${metrics?.[0]?.avg_response_time?.toFixed(0)}ms` || '0ms'}
+          value={`${aggregatedMetrics.avg_response_time?.toFixed(0)}ms`}
           icon={Clock}
           iconColor="text-blue-500"
           subtitle="Last 24 hours"
         />
         <MetricCard
           title="Error Count"
-          value={metrics?.[0]?.total_errors?.toString() || '0'}
+          value={aggregatedMetrics.total_errors?.toString() || '0'}
           icon={AlertTriangle}
           iconColor="text-red-500"
           subtitle="Last 24 hours"
         />
         <MetricCard
           title="System Health"
-          value={metrics?.[0]?.health_status || 'Unknown'}
+          value={aggregatedMetrics.health_status || 'Unknown'}
           icon={Activity}
           iconColor="text-purple-500"
           subtitle="Current Status"
           indicator={{
-            color: metrics?.[0]?.health_status === 'success' 
+            color: aggregatedMetrics.health_status === 'success' 
               ? 'bg-green-500' 
-              : metrics?.[0]?.health_status === 'warning'
+              : aggregatedMetrics.health_status === 'warning'
               ? 'bg-yellow-500'
               : 'bg-red-500',
             show: true
