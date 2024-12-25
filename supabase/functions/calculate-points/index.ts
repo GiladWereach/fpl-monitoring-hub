@@ -73,7 +73,7 @@ Deno.serve(async (req) => {
       const penaltyMissPoints = perf.penalties_missed * rules.penalties_missed;
       const ownGoalPoints = perf.own_goals * rules.own_goals;
       const cardPoints = calculateCardPoints(perf.yellow_cards, perf.red_cards, rules);
-      const bonusPoints = calculateBonusPoints(perf.bonus, playerBPSData, fixtureBPSData);
+      const bonusPoints = calculateBonusPoints(playerBPSData, fixtureBPSData);
 
       const rawTotal = 
         minutesPoints +
