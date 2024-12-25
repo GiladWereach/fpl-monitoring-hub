@@ -1,6 +1,7 @@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { Card } from "@/components/ui/card";
 import { format, isValid, parseISO } from "date-fns";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface PerformanceTrendChartProps {
   data: Array<{
@@ -41,7 +42,19 @@ export function PerformanceTrendChart({ data, timeRange }: PerformanceTrendChart
 
   return (
     <Card className="p-6">
-      <h3 className="text-lg font-semibold mb-4">Performance Trends</h3>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold">Performance Trends</h3>
+        <Select defaultValue={timeRange}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Select time range" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="hour">Last Hour</SelectItem>
+            <SelectItem value="day">Last 24 Hours</SelectItem>
+            <SelectItem value="week">Last Week</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
       <div className="h-[300px]">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
