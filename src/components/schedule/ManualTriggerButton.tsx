@@ -35,7 +35,8 @@ export const ManualTriggerButton = ({ functionName }: ManualTriggerButtonProps) 
           started_at: new Date().toISOString(),
           execution_context: {
             trigger_type: 'manual',
-            triggered_by: 'user'
+            triggered_by: 'user',
+            schedule_id: schedule.id
           }
         })
         .select()
@@ -48,8 +49,16 @@ export const ManualTriggerButton = ({ functionName }: ManualTriggerButtonProps) 
 
       console.log(`Created execution log with ID ${log.id}`);
       
-      // Step 3: Execute the function
-      const { error: functionError } = await supabase.functions.invoke(functionName);
+      // Step 3: Execute the function with context
+      const { error: functionError } = await supabase.functions.invoke(functionName, {
+        body: {
+          execution_context: {
+            schedule_id: schedule.id,
+            execution_id: log.id,
+            trigger_type: 'manual'
+          }
+        }
+      });
       
       if (functionError) {
         console.error(`Error executing function ${functionName}:`, functionError);
@@ -60,7 +69,13 @@ export const ManualTriggerButton = ({ functionName }: ManualTriggerButtonProps) 
           .update({
             status: 'failed',
             completed_at: new Date().toISOString(),
-            error_details: functionError.message
+            error_details: functionError.message,
+            execution_context: {
+              trigger_type: 'manual',
+              triggered_by: 'user',
+              schedule_id: schedule.id,
+              error: functionError.message
+            }
           })
           .eq('id', log.id);
           
@@ -74,7 +89,13 @@ export const ManualTriggerButton = ({ functionName }: ManualTriggerButtonProps) 
         .from('schedule_execution_logs')
         .update({
           status: 'completed',
-          completed_at: new Date().toISOString()
+          completed_at: new Date().toISOString(),
+          execution_context: {
+            trigger_type: 'manual',
+            triggered_by: 'user',
+            schedule_id: schedule.id,
+            completed: true
+          }
         })
         .eq('id', log.id);
 
