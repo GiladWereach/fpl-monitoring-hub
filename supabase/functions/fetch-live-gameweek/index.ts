@@ -58,6 +58,21 @@ Deno.serve(async (req) => {
     const updates = data.elements.map(element => mapPlayerDataToUpdate(element, currentEvent.id));
     await upsertLivePerformance(supabaseClient, updates);
 
+    // Trigger points calculation after successful live data update
+    logDebug(functionName, 'Triggering points calculation...');
+    const { error: calcError } = await supabaseClient.functions.invoke('calculate-points', {
+      body: { 
+        triggered_by: 'live-gameweek',
+        event_id: currentEvent.id
+      }
+    });
+
+    if (calcError) {
+      logError(functionName, 'Error triggering points calculation:', calcError);
+    } else {
+      logDebug(functionName, 'Points calculation triggered successfully');
+    }
+
     const processingTime = Date.now() - startTime;
     logDebug(functionName, `Processing completed in ${processingTime}ms`);
 
@@ -68,7 +83,8 @@ Deno.serve(async (req) => {
         gameweek: currentEvent.id,
         updatedPlayers: updates.length,
         processingTime,
-        manualTrigger: manual_trigger || false
+        manualTrigger: manual_trigger || false,
+        pointsCalculationTriggered: !calcError
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
