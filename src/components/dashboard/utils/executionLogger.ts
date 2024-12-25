@@ -17,6 +17,9 @@ export const createExecutionLog = async (context: ExecutionContext) => {
   console.log(`Creating execution log for schedule ${context.scheduleId}`);
   
   try {
+    // First cleanup any stale executions
+    await cleanupStaleExecutions();
+    
     const { data: log, error } = await supabase
       .from('schedule_execution_logs')
       .insert({
@@ -26,7 +29,8 @@ export const createExecutionLog = async (context: ExecutionContext) => {
         execution_context: {
           attempt: context.attempt,
           function_name: context.functionName,
-          execution_window: context.executionWindow
+          execution_window: context.executionWindow,
+          instance_id: crypto.randomUUID() // Add unique instance ID
         } as Json
       })
       .select()
@@ -37,6 +41,9 @@ export const createExecutionLog = async (context: ExecutionContext) => {
       throw error;
     }
 
+    // Start timeout monitor
+    startTimeoutMonitor(log.id, 30000); // 30 second timeout
+
     return log;
   } catch (error) {
     console.error('Failed to create execution log:', error);
@@ -46,6 +53,41 @@ export const createExecutionLog = async (context: ExecutionContext) => {
       variant: "destructive",
     });
     throw error;
+  }
+};
+
+const startTimeoutMonitor = async (logId: string, timeoutMs: number) => {
+  setTimeout(async () => {
+    const { data: log } = await supabase
+      .from('schedule_execution_logs')
+      .select('status')
+      .eq('id', logId)
+      .single();
+
+    if (log?.status === 'running') {
+      await updateExecutionLog(logId, 'failed', {
+        error: 'Execution timed out',
+        duration: timeoutMs
+      });
+    }
+  }, timeoutMs);
+};
+
+const cleanupStaleExecutions = async () => {
+  console.log('Cleaning up stale executions');
+  
+  const { error } = await supabase
+    .from('schedule_execution_logs')
+    .update({
+      status: 'failed',
+      completed_at: new Date().toISOString(),
+      error_details: 'Execution terminated due to timeout'
+    })
+    .eq('status', 'running')
+    .lt('started_at', new Date(Date.now() - 5 * 60 * 1000).toISOString()); // 5 minutes
+
+  if (error) {
+    console.error('Error cleaning up stale executions:', error);
   }
 };
 
