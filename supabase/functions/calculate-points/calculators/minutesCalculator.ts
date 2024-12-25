@@ -7,6 +7,7 @@ export function calculateMinutesPoints(minutes: number | null, rules: ScoringRul
     return 0;
   }
 
+  // Award 2 points for playing 60 minutes or more, 1 point for playing less than 60 minutes
   const points = minutes >= 60 ? rules.long_play : rules.short_play;
   logDebug('calculate-points', `Awarded ${points} points for ${minutes} minutes played`);
   return points;

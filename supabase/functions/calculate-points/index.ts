@@ -63,8 +63,9 @@ Deno.serve(async (req) => {
         fixture_id: perf.fixture_id
       }];
 
-      const minutes = typeof perf.minutes === 'number' ? perf.minutes : 0;
-      const minutesPoints = calculateMinutesPoints(minutes, rules);
+      // Calculate minutes points
+      const minutesPoints = calculateMinutesPoints(perf.minutes, rules);
+      
       const goalsPoints = calculateGoalPoints(perf.goals_scored, perf.player.element_type, rules);
       const cleanSheetPoints = calculateCleanSheetPoints(perf.clean_sheets, perf.player.element_type, rules);
       const goalsConcededPoints = calculateGoalsConcededPoints(perf.goals_conceded, perf.player.element_type, rules);
