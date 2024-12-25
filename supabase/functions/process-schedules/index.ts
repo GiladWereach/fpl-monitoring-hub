@@ -25,13 +25,7 @@ Deno.serve(async (req) => {
     // Get all active schedules that are due for execution
     const { data: activeSchedules, error: schedulesError } = await supabaseClient
       .from('schedules')
-      .select(`
-        *,
-        schedule_groups (
-          name,
-          description
-        )
-      `)
+      .select('*')
       .eq('enabled', true)
       .or('next_execution_at.is.null,next_execution_at.lte.now()');
 
