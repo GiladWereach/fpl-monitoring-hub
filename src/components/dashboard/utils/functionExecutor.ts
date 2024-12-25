@@ -6,6 +6,7 @@ import { executeWithRetry, RetryOptions } from './retry/retryHandler';
 interface ExecuteFunctionOptions {
   isTest?: boolean;
   scheduleType?: "time_based" | "event_based";
+  manualTrigger?: boolean;
 }
 
 export const executeFetchFunction = async (
@@ -65,7 +66,12 @@ export const executeFetchFunction = async (
 
     const result = await executeWithRetry(
       async () => {
-        const response = await supabase.functions.invoke(functionName);
+        const response = await supabase.functions.invoke(functionName, {
+          body: {
+            scheduled: false,
+            manual_trigger: options.manualTrigger || false
+          }
+        });
         if (response.error) throw response.error;
         return response.data;
       },

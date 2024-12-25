@@ -20,27 +20,56 @@ Deno.serve(async (req) => {
   const startTime = Date.now();
 
   try {
-    // Implement strict concurrency control
-    if (startTime - lastExecutionTime < LOCK_DURATION) {
-      logDebug(functionName, `Skipping execution - previous execution still within lock period (${Math.floor((startTime - lastExecutionTime) / 1000)}s ago)`);
-      return new Response(
-        JSON.stringify({
-          success: true,
-          message: 'Skipped execution - previous execution still in progress',
-          shouldProcess: false
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    lastExecutionTime = startTime;
-    logDebug(functionName, 'Starting live gameweek data fetch...');
+    // Parse request body to check if this is a manual trigger
+    const { scheduled, manual_trigger } = await req.json();
     
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
+    // For manual triggers, force release any existing locks
+    if (manual_trigger) {
+      logDebug(functionName, 'Manual trigger detected - forcing lock release');
+      
+      // Delete any existing locks
+      await supabaseClient
+        .from('schedule_locks')
+        .delete()
+        .eq('schedule_id', LOCK_KEY);
+      
+      // Reset last execution time
+      lastExecutionTime = 0;
+      
+      // Mark any running executions as terminated
+      await supabaseClient
+        .from('schedule_execution_logs')
+        .update({
+          status: 'terminated',
+          completed_at: new Date().toISOString(),
+          error_details: 'Terminated by manual trigger'
+        })
+        .eq('status', 'running');
+
+      logDebug(functionName, 'Cleared existing locks and terminated running executions');
+    } else {
+      // For scheduled runs, check the lock as usual
+      if (startTime - lastExecutionTime < LOCK_DURATION) {
+        logDebug(functionName, `Skipping execution - previous execution still within lock period (${Math.floor((startTime - lastExecutionTime) / 1000)}s ago)`);
+        return new Response(
+          JSON.stringify({
+            success: true,
+            message: 'Skipped execution - previous execution still in progress',
+            shouldProcess: false
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
+    lastExecutionTime = startTime;
+    logDebug(functionName, 'Starting live gameweek data fetch...');
+    
     // Acquire database lock
     const { data: lockAcquired, error: lockError } = await supabaseClient
       .rpc('acquire_schedule_lock', {
@@ -92,7 +121,8 @@ Deno.serve(async (req) => {
         message: 'Live gameweek data updated successfully',
         gameweek: currentEvent.id,
         updatedPlayers: updates.length,
-        processingTime
+        processingTime,
+        manualTrigger: manual_trigger || false
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
