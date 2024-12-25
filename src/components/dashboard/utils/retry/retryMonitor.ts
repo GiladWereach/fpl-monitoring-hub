@@ -33,36 +33,3 @@ export const logRetryMetrics = async (metrics: RetryMetrics): Promise<void> => {
     console.error('Failed to log retry metrics:', error);
   }
 };
-
-export const getRetryStats = async (functionName: string): Promise<{
-  avgAttempts: number;
-  successRate: number;
-  avgDuration: number;
-}> => {
-  console.log(`Fetching retry stats for ${functionName}`);
-  
-  try {
-    const { data, error } = await supabase
-      .from('api_health_metrics')
-      .select('*')
-      .eq('endpoint', functionName)
-      .single();
-
-    if (error) throw error;
-
-    const errorPattern = data.error_pattern as { retry_count?: number } || {};
-    
-    return {
-      avgAttempts: errorPattern.retry_count || 1,
-      successRate: data.success_count / (data.success_count + data.error_count) * 100,
-      avgDuration: data.avg_response_time
-    };
-  } catch (error) {
-    console.error('Failed to fetch retry stats:', error);
-    return {
-      avgAttempts: 0,
-      successRate: 0,
-      avgDuration: 0
-    };
-  }
-};

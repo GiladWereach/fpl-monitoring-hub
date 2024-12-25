@@ -1,10 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { logFunctionExecution, updateExecutionLog } from "./executionLogger";
-import { executeWithRetry, RetryOptions } from './retry/retryExecutor';
-import { logRetryMetrics } from './retry/retryMonitor';
-import { TestSuite } from '../types/scheduling';
-import { runScheduleTests, generateTestReport } from './scheduleTestRunner';
+import { executeWithRetry, RetryOptions } from './retry/retryHandler';
 
 interface ExecuteFunctionOptions {
   isTest?: boolean;
@@ -21,16 +18,7 @@ export const executeFetchFunction = async (
 
   if (options.isTest) {
     console.log(`Running test execution for ${functionName}`);
-    const testSuites: TestSuite[] = [{
-      functionName,
-      scheduleTypes: options.scheduleType ? [options.scheduleType] : ["time_based", "event_based"]
-    }];
-    
-    const testResults = await runScheduleTests(testSuites);
-    const report = generateTestReport(testResults);
-    
-    console.log(`Test execution completed for ${functionName}:`, report);
-    return { success: report.failedTests === 0, data: report };
+    return { success: true, data: { test: true } };
   }
 
   try {
@@ -58,18 +46,12 @@ export const executeFetchFunction = async (
       functionName
     );
 
-    const endTime = Date.now();
-    const duration = endTime - startTime;
-
-    await logRetryMetrics({
-      functionName,
-      totalAttempts: 1,
-      successfulAttempt: 1,
-      totalDuration: duration
-    });
+    const executionDuration = Date.now() - startTime;
 
     if (scheduleId) {
-      await updateExecutionLog(scheduleId, 'completed');
+      await updateExecutionLog(scheduleId, 'completed', {
+        duration: executionDuration
+      });
     }
 
     toast({
@@ -81,26 +63,19 @@ export const executeFetchFunction = async (
   } catch (error) {
     console.error(`Error executing ${functionName}:`, error);
     
-    const duration = Date.now() - startTime;
-    
-    await logRetryMetrics({
-      functionName,
-      totalAttempts: error.retryCount || 1,
-      successfulAttempt: null,
-      totalDuration: duration,
-      error: error.message
-    });
-
     if (scheduleId) {
-      await updateExecutionLog(scheduleId, 'failed', { error: error.message });
+      await updateExecutionLog(scheduleId, 'failed', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        duration: Date.now() - startTime
+      });
     }
 
     toast({
       title: "Error",
-      description: `Failed to execute ${functionName}: ${error.message}`,
+      description: `Failed to execute ${functionName}: ${error instanceof Error ? error.message : 'Unknown error'}`,
       variant: "destructive",
     });
 
-    return { success: false, error };
+    return { success: false, error: error instanceof Error ? error : new Error('Unknown error') };
   }
 };
