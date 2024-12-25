@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib/utils";
 import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
+import { PlayerStatus } from './PlayerStatus';
 
 interface PlayerCardProps {
   player: any;
@@ -41,6 +42,8 @@ export function PlayerCard({ player, isCaptain, isViceCaptain, liveData }: Playe
           {isCaptain && <div className="captain-ribbon" />}
           {isViceCaptain && <div className="vice-captain-ribbon" />}
           
+          <PlayerStatus player={player} liveData={liveData} />
+          
           <div className="relative">
             <p className="player-name truncate">{player?.web_name}</p>
             <div className="points-text">{finalPoints}</div>
@@ -62,7 +65,6 @@ export function PlayerCard({ player, isCaptain, isViceCaptain, liveData }: Playe
             <span className="text-xs text-foreground/80">Assists</span>
             <span className="text-xs font-medium text-foreground">{liveData?.assists || 0}</span>
           </div>
-          {/* Only show clean sheets for GK, DEF, and MID */}
           {(isGoalkeeper || isDefender || isMidfielder) && liveData?.clean_sheets > 0 && (
             <div className="flex justify-between items-center">
               <span className="text-xs text-foreground/80">Clean Sheet</span>
