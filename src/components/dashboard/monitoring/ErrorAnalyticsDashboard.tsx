@@ -8,8 +8,11 @@ import { ErrorMetricsChart } from "./components/ErrorMetricsChart";
 import { ErrorAnalyticsSummary } from "./components/ErrorAnalyticsSummary";
 import { AlertThresholds } from "./components/AlertThresholds";
 import { PerformanceMetrics } from "./components/PerformanceMetrics";
+import { ThresholdConfigDialog } from "./components/ThresholdConfigDialog";
+import { HistoricalMetricsChart } from "./components/HistoricalMetricsChart";
 import { processErrorMetrics } from "./utils/errorMetricsProcessor";
-import { ErrorMetrics, RawErrorLog, AlertThreshold, PerformanceMetrics as PerformanceMetricsType } from "./types/error-analytics";
+import { ErrorMetrics, AlertThreshold, PerformanceMetrics as PerformanceMetricsType } from "./types/error-analytics";
+import { ThresholdConfig } from "./types/threshold-config";
 import { AlertTriangle, Activity, Clock } from "lucide-react";
 
 export function ErrorAnalyticsDashboard() {
@@ -30,7 +33,7 @@ export function ErrorAnalyticsDashboard() {
         throw metricsError;
       }
 
-      const processedMetrics = processErrorMetrics(metrics as RawErrorLog[]);
+      const processedMetrics = processErrorMetrics(metrics);
       console.log('Processed error metrics:', processedMetrics);
       return processedMetrics;
     },
@@ -46,37 +49,34 @@ export function ErrorAnalyticsDashboard() {
     }
   });
 
-  // Sample thresholds - in a real app, these would come from configuration
-  const alertThresholds: AlertThreshold[] = [
-    {
-      metric: 'Error Rate',
-      warning: 5,
-      critical: 10,
-      currentValue: 3.2,
-      status: 'normal'
-    },
-    {
-      metric: 'Response Time',
-      warning: 1000,
-      critical: 2000,
-      currentValue: 850,
-      status: 'normal'
-    },
-    {
-      metric: 'Failed Recoveries',
-      warning: 3,
-      critical: 5,
-      currentValue: 4,
-      status: 'warning'
-    }
-  ];
+  const handleThresholdUpdate = async (config: ThresholdConfig) => {
+    try {
+      const { error } = await supabase
+        .from('monitoring_thresholds')
+        .upsert({
+          metric_name: config.metricName,
+          warning_threshold: config.warningThreshold,
+          critical_threshold: config.criticalThreshold,
+          enabled: config.enabled,
+          notify_on_warning: config.notifyOnWarning,
+          notify_on_critical: config.notifyOnCritical,
+          updated_at: new Date().toISOString()
+        });
 
-  // Sample performance metrics
-  const performanceMetrics: PerformanceMetricsType = {
-    responseTime: 245,
-    throughput: 150,
-    errorRate: 2.5,
-    resourceUtilization: 65
+      if (error) throw error;
+
+      toast({
+        title: "Thresholds Updated",
+        description: "Monitoring thresholds have been saved successfully",
+      });
+    } catch (error) {
+      console.error('Error updating thresholds:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update thresholds",
+        variant: "destructive",
+      });
+    }
   };
 
   if (isLoading) {
@@ -95,7 +95,20 @@ export function ErrorAnalyticsDashboard() {
 
   return (
     <Card className="p-6 space-y-6">
-      <h2 className="text-xl font-semibold">Error Analytics</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-semibold">Error Analytics</h2>
+        <ThresholdConfigDialog
+          currentConfig={{
+            metricName: "Error Rate",
+            warningThreshold: 5,
+            criticalThreshold: 10,
+            enabled: true,
+            notifyOnWarning: true,
+            notifyOnCritical: true
+          }}
+          onSave={handleThresholdUpdate}
+        />
+      </div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <MetricCard
@@ -125,6 +138,14 @@ export function ErrorAnalyticsDashboard() {
       <PerformanceMetrics metrics={performanceMetrics} />
       <ErrorAnalyticsSummary metrics={metrics} />
       <ErrorMetricsChart data={metrics} />
+      <HistoricalMetricsChart 
+        data={metrics.map(m => ({
+          timestamp: m.timestamp,
+          value: m.error_count,
+          threshold: 5
+        }))}
+        metricName="Error Count"
+      />
     </Card>
   );
 }
