@@ -2,6 +2,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { logDebug, logError, logInfo } from '../../shared/logging-service.ts';
 import { executeInTransaction } from './transaction-service.ts';
 import { calculateBackoff } from '../utils/retry.ts';
+import { logExecutionMetrics } from './metrics-service.ts';
 
 export async function processSchedule(
   supabaseClient: ReturnType<typeof createClient>,
@@ -70,6 +71,7 @@ export async function processSchedule(
         const backoffStrategy = schedule.execution_config?.retry_backoff || 'linear';
 
         for (let attempt = 1; attempt <= maxRetries + 1; attempt++) {
+          const attemptStartTime = Date.now();
           try {
             const { error: invokeError } = await client.functions.invoke(
               schedule.function_name,
@@ -87,10 +89,36 @@ export async function processSchedule(
             if (invokeError) throw invokeError;
             
             success = true;
+
+            // Log successful execution metrics
+            await logExecutionMetrics(client, {
+              functionName: schedule.function_name,
+              duration: Date.now() - attemptStartTime,
+              status: 'completed',
+              context: {
+                attempt,
+                scheduleId: schedule.id,
+                instanceId
+              }
+            });
+
             break;
           } catch (error) {
             lastError = error;
             logError('schedule-processor', `Attempt ${attempt} failed for ${schedule.function_name}:`, error);
+
+            // Log failed execution metrics
+            await logExecutionMetrics(client, {
+              functionName: schedule.function_name,
+              duration: Date.now() - attemptStartTime,
+              status: 'failed',
+              error: error.message,
+              context: {
+                attempt,
+                scheduleId: schedule.id,
+                instanceId
+              }
+            });
 
             if (attempt <= maxRetries) {
               const delayMs = calculateBackoff(attempt, backoffStrategy, schedule.execution_config?.retry_delay_seconds * 1000);
