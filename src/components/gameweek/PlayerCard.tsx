@@ -23,7 +23,7 @@ export function PlayerCard({ player, isCaptain, isViceCaptain, liveData }: Playe
       
       <div className="relative">
         <p className="text-sm font-medium text-foreground truncate">{player?.web_name}</p>
-        <div className="text-xs mt-1 text-accent">{finalPoints} pts</div>
+        <div className="points-text">{finalPoints}</div>
       </div>
       
       {isExpanded && liveData && (

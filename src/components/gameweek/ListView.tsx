@@ -21,8 +21,19 @@ export function ListView({ teamSelection, players, liveData }: ListViewProps) {
     };
   };
 
+  // Calculate total points excluding bench players
+  const totalPoints = teamSelection?.picks
+    .filter((pick: any) => pick.position <= 11)
+    .reduce((sum: number, pick: any) => {
+      const playerData = getPlayerData(pick);
+      return sum + (playerData?.points || 0);
+    }, 0);
+
   return (
     <Card className="glass-card p-6">
+      <div className="mb-4">
+        <h2 className="text-xl font-bold">Total Points: {totalPoints}</h2>
+      </div>
       <Table>
         <TableHeader>
           <TableRow>

@@ -21,7 +21,7 @@ export function BenchPlayers({ benchPlayers, getPlayerData }: BenchPlayersProps)
                 <div className="bench-player-card">
                   <span className="sub-order">#{index + 1}</span>
                   <p className="text-sm font-medium text-foreground truncate">{player?.web_name}</p>
-                  <span className="text-xs text-accent">{player.points} pts</span>
+                  <span className="text-xs text-accent text-center block">{player.points} pts</span>
                 </div>
               </HoverCardTrigger>
               {player.liveData && (
