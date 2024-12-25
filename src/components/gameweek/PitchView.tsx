@@ -40,7 +40,7 @@ export function PitchView({ teamSelection, players, liveData }: PitchViewProps) 
   const { defenders, midfielders, forwards } = getFormationPlayers();
 
   return (
-    <Card className="glass-card p-6">
+    <Card className="glass-card p-2">
       <div className="pitch-container">
         <div className="pitch-markings" />
         
@@ -49,10 +49,10 @@ export function PitchView({ teamSelection, players, liveData }: PitchViewProps) 
         <div className="goalkeeper-area right-4 top-1/2 -translate-y-1/2" />
         
         {/* Player Positions */}
-        <div className="absolute inset-0 flex px-16 py-8">
+        <div className="absolute inset-0 flex px-16 py-12">
           {/* GK Column */}
           <div className="player-columns w-1/4">
-            <div className="space-y-4">
+            <div className="flex flex-col justify-center h-full space-y-4">
               {[1].map(position => {
                 const player = getPlayerData(position);
                 if (!player) return null;
@@ -71,7 +71,7 @@ export function PitchView({ teamSelection, players, liveData }: PitchViewProps) 
           
           {/* DEF Column */}
           <div className="player-columns w-1/4">
-            <div className="space-y-4">
+            <div className="flex flex-col justify-between h-full py-8">
               {defenders.map(position => {
                 const player = getPlayerData(position);
                 if (!player) return null;
@@ -90,7 +90,7 @@ export function PitchView({ teamSelection, players, liveData }: PitchViewProps) 
           
           {/* MID Column */}
           <div className="player-columns w-1/4">
-            <div className="space-y-4">
+            <div className="flex flex-col justify-between h-full py-8">
               {midfielders.map(position => {
                 const player = getPlayerData(position);
                 if (!player) return null;
@@ -109,7 +109,7 @@ export function PitchView({ teamSelection, players, liveData }: PitchViewProps) 
           
           {/* FWD Column */}
           <div className="player-columns w-1/4">
-            <div className="space-y-4">
+            <div className="flex flex-col justify-between h-full py-8">
               {forwards.map(position => {
                 const player = getPlayerData(position);
                 if (!player) return null;

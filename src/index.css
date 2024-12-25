@@ -110,7 +110,7 @@
 }
 
 .points-text {
-  @apply text-center text-lg font-bold text-accent;
+  @apply text-center text-2xl font-bold text-accent;
 }
 
 .player-name {
