@@ -27,7 +27,8 @@ export default function Home() {
     const drops: number[] = Array(columns).fill(0);
 
     function draw() {
-      ctx.fillStyle = 'rgba(13, 17, 23, 0.1)';
+      // Slowed down the fade effect by reducing the opacity
+      ctx.fillStyle = 'rgba(13, 17, 23, 0.05)'; // Reduced from 0.1 to 0.05
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       ctx.fillStyle = '#3DFF9A';
@@ -38,13 +39,15 @@ export default function Home() {
         const x = i * 20;
         const y = drops[i] * 20;
         
-        ctx.fillStyle = `rgba(61, 255, 154, ${Math.random() * 0.5})`;
+        ctx.fillStyle = `rgba(61, 255, 154, ${Math.random() * 0.3})`; // Reduced opacity from 0.5 to 0.3
         ctx.fillText(text, x, y);
         
-        if (y > canvas.height && Math.random() > 0.99) {
+        // Slowed down the drop speed by reducing the probability of resetting
+        if (y > canvas.height && Math.random() > 0.995) { // Changed from 0.99 to 0.995
           drops[i] = 0;
         }
-        drops[i]++;
+        // Slowed down the falling speed by using a smaller increment
+        drops[i] += 0.5; // Changed from 1 to 0.5
       }
 
       requestAnimationFrame(draw);
