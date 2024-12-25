@@ -11,6 +11,17 @@ import { PerformanceTrendChart } from "./components/PerformanceTrendChart";
 import { SystemHealthOverview } from "./components/SystemHealthOverview";
 import { useState } from "react";
 
+interface AggregatedMetric {
+  endpoint: string;
+  total_successes: number;
+  total_errors: number;
+  avg_response_time: number;
+  success_rate: number;
+  latest_success: string;
+  latest_error: string;
+  health_status: string;
+}
+
 export function MonitoringDashboard() {
   console.log('Rendering MonitoringDashboard');
   const [timeRange, setTimeRange] = useState<'hour' | 'day' | 'week'>('day');
@@ -32,7 +43,7 @@ export function MonitoringDashboard() {
       }
       
       console.log('Fetched metrics:', healthData);
-      return healthData;
+      return healthData as AggregatedMetric[];
     },
     refetchInterval: 30000
   });
@@ -64,25 +75,25 @@ export function MonitoringDashboard() {
     );
   }
 
-  // Calculate aggregated metrics
+  // Calculate aggregated metrics from the actual API response
   const aggregatedMetrics = {
     success_rate: metrics?.[0]?.success_rate || 0,
     avg_response_time: metrics?.[0]?.avg_response_time || 0,
     error_rate: 100 - (metrics?.[0]?.success_rate || 0),
-    system_load: metrics?.[0]?.system_load || 0
+    system_load: metrics?.[0]?.total_successes + metrics?.[0]?.total_errors || 0 // Calculate system load from total requests
   };
 
-  // Transform metrics for trend chart
+  // Transform metrics for trend chart with proper timestamps
   const trendData = metrics?.map(m => ({
-    timestamp: m.timestamp,
+    timestamp: m.latest_success || m.latest_error || new Date().toISOString(), // Use the latest timestamp available
     success_rate: m.success_rate,
     avg_response_time: m.avg_response_time,
     error_count: m.total_errors
   })) || [];
 
   const errorMetrics: ErrorMetrics[] = metrics?.map((m: any) => ({
-    timestamp: m.timestamp,
-    error_count: m.error_count || 0,
+    timestamp: m.latest_success || m.latest_error || new Date().toISOString(),
+    error_count: m.total_errors || 0,
     recovery_rate: m.success_rate || 0,
     avg_recovery_time: m.avg_response_time || 0
   })) || [];
@@ -115,10 +126,10 @@ export function MonitoringDashboard() {
         />
         <MetricCard
           title="System Load"
-          value={`${aggregatedMetrics.system_load.toFixed(1)}%`}
+          value={`${aggregatedMetrics.system_load} req/24h`}
           icon={Activity}
           iconColor="text-purple-500"
-          subtitle="Current"
+          subtitle="Total Requests"
         />
       </div>
 

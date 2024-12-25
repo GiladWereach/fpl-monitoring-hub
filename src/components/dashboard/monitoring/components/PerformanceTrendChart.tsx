@@ -1,6 +1,6 @@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { Card } from "@/components/ui/card";
-import { format } from "date-fns";
+import { format, isValid, parseISO } from "date-fns";
 
 interface PerformanceTrendChartProps {
   data: Array<{
@@ -16,16 +16,26 @@ export function PerformanceTrendChart({ data, timeRange }: PerformanceTrendChart
   console.log('Rendering PerformanceTrendChart with data:', data);
 
   const formatXAxis = (timestamp: string) => {
-    const date = new Date(timestamp);
-    switch (timeRange) {
-      case 'hour':
-        return format(date, 'HH:mm');
-      case 'day':
-        return format(date, 'HH:mm');
-      case 'week':
-        return format(date, 'MM/dd');
-      default:
-        return format(date, 'MM/dd HH:mm');
+    try {
+      const date = parseISO(timestamp);
+      if (!isValid(date)) {
+        console.warn('Invalid date:', timestamp);
+        return 'Invalid Date';
+      }
+      
+      switch (timeRange) {
+        case 'hour':
+          return format(date, 'HH:mm');
+        case 'day':
+          return format(date, 'HH:mm');
+        case 'week':
+          return format(date, 'MM/dd');
+        default:
+          return format(date, 'MM/dd HH:mm');
+      }
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'Invalid Date';
     }
   };
 
@@ -43,7 +53,15 @@ export function PerformanceTrendChart({ data, timeRange }: PerformanceTrendChart
             <YAxis yAxisId="left" />
             <YAxis yAxisId="right" orientation="right" />
             <Tooltip 
-              labelFormatter={(label) => format(new Date(label), 'MM/dd/yyyy HH:mm:ss')}
+              labelFormatter={(label) => {
+                try {
+                  const date = parseISO(label);
+                  return isValid(date) ? format(date, 'MM/dd/yyyy HH:mm:ss') : 'Invalid Date';
+                } catch (error) {
+                  console.error('Error formatting tooltip date:', error);
+                  return 'Invalid Date';
+                }
+              }}
               formatter={(value: number) => [value.toFixed(2), '']}
             />
             <Legend />
