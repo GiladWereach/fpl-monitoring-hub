@@ -8,6 +8,7 @@ import { PitchView } from '@/components/gameweek/PitchView';
 import { ListView } from '@/components/gameweek/ListView';
 import { calculateTotalPoints, calculateBenchPoints } from '@/components/gameweek/utils/points-calculator';
 import { TeamSelection, Player } from '@/components/gameweek/types';
+import { Loader2 } from 'lucide-react';
 
 export default function Gameweek() {
   const [viewMode, setViewMode] = useState<'pitch' | 'list'>('pitch');
