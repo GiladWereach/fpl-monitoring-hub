@@ -8,8 +8,8 @@ interface ExecutionContext {
   attempt: number;
   startTime: Date;
   executionWindow?: {
-    start: string; // Changed from Date to string
-    end: string;   // Changed from Date to string
+    start: string;
+    end: string;
   };
 }
 
@@ -26,10 +26,7 @@ export const createExecutionLog = async (context: ExecutionContext) => {
         execution_context: {
           attempt: context.attempt,
           function_name: context.functionName,
-          execution_window: context.executionWindow ? {
-            start: context.executionWindow.start,
-            end: context.executionWindow.end
-          } : undefined
+          execution_window: context.executionWindow
         } as Json
       })
       .select()
@@ -99,7 +96,6 @@ export const updateExecutionLog = async (
   }
 };
 
-// Add the missing export for logFunctionExecution
 export const logFunctionExecution = async (functionName: string, startedAt: string) => {
   console.log(`Logging execution for function: ${functionName}`);
   try {

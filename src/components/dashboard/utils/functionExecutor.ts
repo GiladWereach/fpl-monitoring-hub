@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { logFunctionExecution, updateExecutionLog } from "./executionLogger";
+import { createExecutionLog, updateExecutionLog } from "./executionLogger";
 import { executeWithRetry, RetryOptions } from './retry/retryHandler';
 
 interface ExecuteFunctionOptions {
@@ -23,11 +23,18 @@ export const executeFetchFunction = async (
 
   try {
     console.log(`Executing function: ${functionName}`);
-    scheduleId = await logFunctionExecution(functionName, started_at);
-
-    if (!scheduleId) {
-      throw new Error("Failed to create or find schedule for execution logging");
-    }
+    
+    // Create execution log
+    const executionLog = await createExecutionLog({
+      scheduleId: functionName,
+      functionName,
+      attempt: 1,
+      startTime: new Date(),
+      executionWindow: {
+        start: new Date().toISOString(),
+        end: new Date(Date.now() + 30000).toISOString()
+      }
+    });
 
     const retryOptions: RetryOptions = {
       maxAttempts: 3,
@@ -48,8 +55,8 @@ export const executeFetchFunction = async (
 
     const executionDuration = Date.now() - startTime;
 
-    if (scheduleId) {
-      await updateExecutionLog(scheduleId, 'completed', {
+    if (executionLog?.id) {
+      await updateExecutionLog(executionLog.id, 'completed', {
         duration: executionDuration
       });
     }
