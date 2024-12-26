@@ -23,7 +23,7 @@ export interface Schedule {
   timezone: string;
   event_conditions: any[];
   execution_window: any;
-  description?: string;
-  priority?: number;
+  status: string;
+  frequency_type: string;
   schedule_execution_logs?: any[];
 }

@@ -8,14 +8,7 @@ import { format } from "date-fns";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { QuickActionsMenu } from "./QuickActionsMenu";
-
-interface TimeConfig {
-  type: 'interval' | 'daily' | 'match_dependent';
-  intervalMinutes?: number;
-  hour?: number;
-  matchDayIntervalMinutes?: number;
-  nonMatchIntervalMinutes?: number;
-}
+import { Schedule, TimeConfig } from "@/types/scheduling";
 
 export function ScheduleList() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -44,7 +37,14 @@ export function ScheduleList() {
         throw error;
       }
 
-      return data;
+      // Transform the data to match the Schedule type
+      return data.map((schedule: any) => ({
+        ...schedule,
+        time_config: schedule.time_config as TimeConfig,
+        enabled: schedule.enabled || false,
+        status: schedule.enabled ? 'active' : 'disabled',
+        frequency_type: schedule.schedule_type
+      })) as Schedule[];
     },
     refetchInterval: 30000
   });
@@ -117,7 +117,7 @@ export function ScheduleList() {
         </TableHeader>
         <TableBody>
           {filteredSchedules?.map((schedule) => {
-            const timeConfig = schedule.time_config as TimeConfig;
+            const timeConfig = schedule.time_config;
             
             return (
               <TableRow key={schedule.id}>
@@ -149,7 +149,6 @@ export function ScheduleList() {
                 <TableCell>
                   <QuickActionsMenu
                     scheduleId={schedule.id}
-                    functionName={schedule.function_name}
                     status={schedule.enabled}
                     onStatusChange={() => toggleScheduleStatus(schedule.id, schedule.enabled)}
                   />
