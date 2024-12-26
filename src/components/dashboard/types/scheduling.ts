@@ -9,6 +9,15 @@ export type TimeConfig = {
   nonMatchIntervalMinutes?: number;
 };
 
+export const isTimeConfig = (json: Json | null): json is TimeConfig => {
+  if (!json || typeof json !== 'object') return false;
+  const config = json as Record<string, unknown>;
+  return (
+    typeof config.type === 'string' &&
+    ['daily', 'match_dependent'].includes(config.type)
+  );
+};
+
 export type EventConfig = {
   triggerType: 'deadline' | 'realtime';
   offsetMinutes: number;
@@ -30,7 +39,6 @@ export type ExecutionConfig = {
 export type EventCondition = {
   field: string;
   operator: 'eq' | 'neq' | 'gt' | 'lt' | 'gte' | 'lte';
-  value: string;
 };
 
 export type Schedule = {

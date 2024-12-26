@@ -9,8 +9,9 @@ import { toast } from "@/hooks/use-toast";
 import { FunctionExecutionStatus } from "./components/FunctionExecutionStatus";
 import { CategorySection } from "./components/CategorySection";
 import { detectMatchWindow } from "@/services/matchWindowService";
+import { isTimeConfig, TimeConfig } from "./types/scheduling";
 
-interface TimeConfig {
+interface TimeConfigBase {
   type: 'match_dependent' | 'daily' | 'fixed';
   matchDayIntervalMinutes?: number;
   nonMatchIntervalMinutes?: number;
@@ -27,7 +28,6 @@ interface Schedule {
 export function EdgeFunctionManager() {
   const [loading, setLoading] = useState<string | null>(null);
 
-  // Enhanced query with error handling and retry configuration
   const { data: schedules, refetch: refetchSchedules } = useQuery({
     queryKey: ['function-schedules'],
     queryFn: async () => {
@@ -60,7 +60,6 @@ export function EdgeFunctionManager() {
     retryDelay: (attemptIndex) => Math.min(1000 * Math.pow(2, attemptIndex), 30000)
   });
 
-  // Enhanced match window detection with monitoring
   const { data: matchWindow } = useQuery({
     queryKey: ['match-window'],
     queryFn: async () => {
@@ -69,18 +68,20 @@ export function EdgeFunctionManager() {
         const window = await detectMatchWindow();
         console.log('Match window detected:', window);
         
-        // Automatically adjust schedules based on match window
         if (window && schedules) {
           console.log('Adjusting schedules based on match window:', window);
           const matchDependentSchedules = schedules.filter(s => 
             s.schedule_type === 'time_based' && 
-            s.time_config?.type === 'match_dependent'
+            isTimeConfig(s.time_config) &&
+            s.time_config.type === 'match_dependent'
           );
 
           for (const schedule of matchDependentSchedules) {
+            if (!isTimeConfig(schedule.time_config)) continue;
+
             const intervalMinutes = window.is_active ? 
-              schedule.time_config?.matchDayIntervalMinutes : 
-              schedule.time_config?.nonMatchIntervalMinutes;
+              schedule.time_config.matchDayIntervalMinutes : 
+              schedule.time_config.nonMatchIntervalMinutes;
 
             if (intervalMinutes) {
               console.log(`Adjusting schedule ${schedule.function_name} to ${intervalMinutes} minute interval`);
@@ -95,7 +96,6 @@ export function EdgeFunctionManager() {
                   })
                   .eq('id', schedule.id);
 
-                // Log successful adjustment
                 await supabase
                   .from('api_health_metrics')
                   .insert({
@@ -110,7 +110,6 @@ export function EdgeFunctionManager() {
                   });
               } catch (error) {
                 console.error(`Error adjusting schedule ${schedule.function_name}:`, error);
-                // Log failed adjustment
                 await supabase
                   .from('api_health_metrics')
                   .insert({
