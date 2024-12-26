@@ -10,15 +10,19 @@ export function createMockMatchWindow(
 
   return {
     type: isActive ? 'live' : (nextKickoff ? 'pre_match' : 'idle'),
+    is_active: isActive,
     window_start: now,
     window_end: later,
-    is_active: isActive,
     match_count: matchCount,
-    next_kickoff: nextKickoff
+    next_kickoff: nextKickoff,
+    matchCount,
+    hasActiveMatches: isActive,
+    isMatchDay: isActive || !!nextKickoff,
+    nextMatchTime: nextKickoff
   };
 }
 
 export function isWithinMatchWindow(window: MatchWindow): boolean {
   const now = new Date();
-  return now >= window.window_end && now <= window.window_start;
+  return now >= window.window_start && now <= window.window_end;
 }

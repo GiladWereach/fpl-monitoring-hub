@@ -37,7 +37,7 @@ describe('Match Window Detection', () => {
   });
 
   it('should handle timezone correctly', async () => {
-    const window = await detectMatchWindow({ timezone: 'America/New_York' });
+    const window = await detectMatchWindow();
     expect(window).toBeDefined();
   });
 

@@ -1,10 +1,16 @@
 import { supabase } from "@/integrations/supabase/client";
 
 export interface MatchWindow {
+  type: 'live' | 'pre_match' | 'post_match' | 'idle';
+  is_active: boolean;
+  window_start: Date;
+  window_end: Date;
+  match_count: number;
+  next_kickoff: Date | null;
+  matchCount?: number; // For backward compatibility
   hasActiveMatches: boolean;
   isMatchDay: boolean;
   nextMatchTime?: Date;
-  matchCount: number;
 }
 
 export async function detectMatchWindow(): Promise<MatchWindow | null> {
@@ -51,18 +57,43 @@ export async function detectMatchWindow(): Promise<MatchWindow | null> {
 
     const hasActiveMatches = activeMatches && activeMatches.length > 0;
     const nextMatch = upcomingMatches?.find(m => !m.started);
+    const matchCount = activeMatches?.length || 0;
+
+    // Calculate window boundaries
+    const windowStart = hasActiveMatches ? new Date(activeMatches[0].kickoff_time) : null;
+    const lastActiveMatch = activeMatches?.[activeMatches.length - 1];
+    const windowEnd = lastActiveMatch ? new Date(new Date(lastActiveMatch.kickoff_time).getTime() + 2.5 * 60 * 60 * 1000) : null;
 
     console.log('Match window status:', {
-      activeMatches: activeMatches?.length || 0,
+      activeMatches: matchCount,
       upcomingMatches: upcomingMatches?.length || 0,
       nextMatch: nextMatch?.kickoff_time
     });
 
+    const nextKickoff = nextMatch ? new Date(nextMatch.kickoff_time) : null;
+    const isMatchDay = hasActiveMatches || (nextKickoff && 
+      ((nextKickoff.getTime() - new Date().getTime()) <= 2 * 60 * 60 * 1000));
+
+    let type: 'live' | 'pre_match' | 'post_match' | 'idle' = 'idle';
+    if (hasActiveMatches) {
+      type = 'live';
+    } else if (nextKickoff && new Date() <= nextKickoff) {
+      type = 'pre_match';
+    } else if (windowEnd && new Date() <= windowEnd) {
+      type = 'post_match';
+    }
+
     return {
+      type,
+      is_active: hasActiveMatches,
+      window_start: windowStart || new Date(),
+      window_end: windowEnd || new Date(),
+      match_count: matchCount,
+      next_kickoff: nextKickoff,
+      matchCount,
       hasActiveMatches,
-      isMatchDay: (activeMatches?.length || 0) + (upcomingMatches?.length || 0) > 0,
-      nextMatchTime: nextMatch ? new Date(nextMatch.kickoff_time) : undefined,
-      matchCount: activeMatches?.length || 0
+      isMatchDay,
+      nextMatchTime: nextKickoff
     };
   } catch (error) {
     console.error('Error detecting match window:', error);
