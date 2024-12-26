@@ -1,10 +1,12 @@
-export interface TimeConfig {
-  type: 'interval' | 'daily' | 'match_dependent';
-  intervalMinutes?: number;
+export type RetryBackoffStrategy = 'linear' | 'exponential' | 'fixed';
+
+export type TimeConfig = {
+  type: 'daily' | 'match_dependent' | 'interval';
   hour?: number;
   matchDayIntervalMinutes?: number;
   nonMatchIntervalMinutes?: number;
-}
+  intervalMinutes?: number;
+};
 
 export interface Schedule {
   id: string;

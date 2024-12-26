@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { ScheduleFilters } from "./ScheduleFilters";
 import { ScheduleTable } from "./ScheduleTable";
-import { Schedule } from "@/types/scheduling";
+import { Schedule, TimeConfig } from "@/types/scheduling";
 
 export function ScheduleList() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -34,7 +34,12 @@ export function ScheduleList() {
         throw error;
       }
 
-      return data as Schedule[];
+      // Transform the data to match the Schedule type
+      return data.map((schedule: any) => ({
+        ...schedule,
+        time_config: schedule.time_config as TimeConfig,
+        enabled: schedule.enabled || false
+      })) as Schedule[];
     },
     refetchInterval: 30000
   });
