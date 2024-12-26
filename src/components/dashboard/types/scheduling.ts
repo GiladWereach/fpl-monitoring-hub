@@ -80,3 +80,81 @@ export type ExecutionLog = {
     function_name: string;
   };
 };
+
+export type AdvancedScheduleFormValues = {
+  function_name: string;
+  enabled: boolean;
+  schedule_type: 'time_based' | 'event_based' | 'match_dependent';
+  timezone: string;
+  time_config: TimeConfig;
+  event_config: EventConfig;
+  execution_config: ExecutionConfig;
+  event_conditions: EventCondition[];
+  execution_window?: {
+    start_time: string;
+    end_time: string;
+    days_of_week?: number[];
+  };
+};
+
+export type ScheduleData = Schedule;
+
+export type ScheduleOverride = {
+  id: string;
+  enabled: boolean;
+  startTime: Date;
+  endTime: Date;
+  interval?: number;
+};
+
+export type ScheduleResolution = {
+  priority: 'override' | 'default';
+  source: 'override' | 'system';
+  resolvedInterval: number;
+  nextExecutionTime: Date;
+};
+
+export type ResolvedSchedule = {
+  baseSchedule: AdvancedScheduleFormValues;
+  override?: ScheduleOverride;
+  resolution: ScheduleResolution;
+};
+
+export type TestResult = {
+  success: boolean;
+  executionTime?: number;
+  error?: string;
+  functionName: string;
+  scheduleType?: 'time_based' | 'event_based' | 'retry-test';
+  retryCount?: number;
+};
+
+export type TestSuite = {
+  functionName: string;
+  scheduleTypes: ('time_based' | 'event_based')[];
+};
+
+export type ScheduleValidationResult = {
+  isValid: boolean;
+  errors: { field: string; message: string }[];
+};
+
+export const convertScheduleData = (data: any): Schedule => {
+  return {
+    id: data.id,
+    function_name: data.function_name,
+    schedule_type: data.schedule_type,
+    enabled: data.enabled,
+    time_config: isTimeConfig(data.time_config) ? data.time_config : null,
+    event_config: data.event_config,
+    execution_config: data.execution_config,
+    execution_window: data.execution_window,
+    timezone: data.timezone,
+    event_conditions: data.event_conditions || [],
+    last_execution_at: data.last_execution_at,
+    next_execution_at: data.next_execution_at,
+    created_at: data.created_at,
+    updated_at: data.updated_at,
+    schedule_execution_logs: data.schedule_execution_logs
+  };
+};
