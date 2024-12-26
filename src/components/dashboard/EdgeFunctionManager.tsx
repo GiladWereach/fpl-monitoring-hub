@@ -8,17 +8,28 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ScheduleCategory } from "./types/scheduleTypes";
+import { toast } from "@/hooks/use-toast";
 
 export function EdgeFunctionManager() {
   const [loading, setLoading] = useState<string | null>(null);
 
-  const { data: schedules } = useQuery({
+  const { data: schedules, refetch: refetchSchedules } = useQuery({
     queryKey: ['function-schedules'],
     queryFn: async () => {
       console.log('Fetching function schedules');
       const { data, error } = await supabase
         .from('schedules')
-        .select('*')
+        .select(`
+          *,
+          schedule_execution_logs (
+            id,
+            status,
+            started_at,
+            completed_at,
+            error_details,
+            execution_duration_ms
+          )
+        `)
         .order('function_name');
       
       if (error) {
@@ -28,17 +39,33 @@ export function EdgeFunctionManager() {
       
       console.log('Fetched schedules:', data);
       return data;
-    }
+    },
+    refetchInterval: 10000 // Refresh every 10 seconds during active development
   });
 
   const handleExecute = async (functionName: string) => {
     setLoading(functionName);
     try {
       console.log(`Executing function: ${functionName}`);
+      const startTime = Date.now();
       await executeFetchFunction(functionName);
-      console.log(`Successfully executed function: ${functionName}`);
+      const duration = Date.now() - startTime;
+      console.log(`Successfully executed ${functionName} in ${duration}ms`);
+      
+      toast({
+        title: "Function Executed",
+        description: `Successfully executed ${functionName} in ${duration}ms`,
+      });
+      
+      // Refresh schedules to show updated execution status
+      await refetchSchedules();
     } catch (error) {
       console.error(`Error executing function ${functionName}:`, error);
+      toast({
+        title: "Execution Error",
+        description: `Failed to execute ${functionName}: ${error.message}`,
+        variant: "destructive",
+      });
     } finally {
       setLoading(null);
     }
@@ -46,15 +73,31 @@ export function EdgeFunctionManager() {
 
   const refreshAll = async () => {
     setLoading("all");
+    const startTime = Date.now();
+    let successCount = 0;
+    let failureCount = 0;
+
     for (const func of functions) {
       try {
         console.log(`Refreshing function: ${func.function}`);
         await executeFetchFunction(func.function);
+        successCount++;
       } catch (error) {
         console.error(`Error in refresh all for ${func.function}:`, error);
+        failureCount++;
       }
     }
+
+    const duration = Date.now() - startTime;
+    
+    toast({
+      title: "Refresh Complete",
+      description: `Completed in ${duration}ms. Success: ${successCount}, Failed: ${failureCount}`,
+      variant: failureCount > 0 ? "destructive" : "default",
+    });
+    
     setLoading(null);
+    refetchSchedules();
   };
 
   const categories: ScheduleCategory[] = ['core_data', 'match_dependent', 'system', 'analytics'];
@@ -68,7 +111,7 @@ export function EdgeFunctionManager() {
           disabled={loading !== null}
           className="gap-2"
         >
-          <RefreshCw className="h-4 w-4" />
+          <RefreshCw className={`h-4 w-4 ${loading === "all" ? "animate-spin" : ""}`} />
           Refresh All
         </Button>
       </div>

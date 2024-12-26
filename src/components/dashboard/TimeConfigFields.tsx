@@ -107,7 +107,8 @@ export function TimeConfigFields({ form }: TimeConfigFieldsProps) {
             name="time_config.matchDayIntervalMinutes"
             rules={{
               required: "Match day interval is required",
-              min: { value: 1, message: "Interval must be at least 1 minute" }
+              min: { value: 1, message: "Interval must be at least 1 minute" },
+              max: { value: 5, message: "Interval cannot exceed 5 minutes during matches" }
             }}
             render={({ field }) => (
               <FormItem>
@@ -119,7 +120,7 @@ export function TimeConfigFields({ form }: TimeConfigFieldsProps) {
                         <HelpCircle className="h-4 w-4 text-muted-foreground" />
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p>Interval during active matches</p>
+                        <p>Interval during active matches (recommended: 2 minutes)</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -128,6 +129,7 @@ export function TimeConfigFields({ form }: TimeConfigFieldsProps) {
                   <Input
                     type="number"
                     min={1}
+                    max={5}
                     {...field}
                     value={field.value || ""}
                     onChange={(e) => field.onChange(parseInt(e.target.value))}
@@ -144,7 +146,8 @@ export function TimeConfigFields({ form }: TimeConfigFieldsProps) {
             name="time_config.nonMatchIntervalMinutes"
             rules={{
               required: "Non-match interval is required",
-              min: { value: 1, message: "Interval must be at least 1 minute" }
+              min: { value: 15, message: "Interval must be at least 15 minutes" },
+              max: { value: 60, message: "Interval cannot exceed 60 minutes" }
             }}
             render={({ field }) => (
               <FormItem>
@@ -156,7 +159,7 @@ export function TimeConfigFields({ form }: TimeConfigFieldsProps) {
                         <HelpCircle className="h-4 w-4 text-muted-foreground" />
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p>Interval during live gameweek</p>
+                        <p>Interval during live gameweek but no active matches</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -164,7 +167,8 @@ export function TimeConfigFields({ form }: TimeConfigFieldsProps) {
                 <FormControl>
                   <Input
                     type="number"
-                    min={1}
+                    min={15}
+                    max={60}
                     {...field}
                     value={field.value || ""}
                     onChange={(e) => field.onChange(parseInt(e.target.value))}
