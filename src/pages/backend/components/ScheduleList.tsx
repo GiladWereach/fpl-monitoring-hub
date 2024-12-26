@@ -1,18 +1,25 @@
 import { useState } from "react";
-import { toast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { QuickActionsMenu } from "./QuickActionsMenu";
-import { useQuery } from "@tanstack/react-query";
+
+interface TimeConfig {
+  type: 'interval' | 'daily' | 'match_dependent';
+  intervalMinutes?: number;
+  hour?: number;
+  matchDayIntervalMinutes?: number;
+  nonMatchIntervalMinutes?: number;
+}
 
 export function ScheduleList() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [groupFilter, setGroupFilter] = useState("all");
 
   const { data: schedules, isLoading } = useQuery({
     queryKey: ['schedules'],
@@ -65,10 +72,6 @@ export function ScheduleList() {
     }
   };
 
-  const getStatusColor = (enabled: boolean) => {
-    return enabled ? 'bg-green-500' : 'bg-yellow-500';
-  };
-
   const filteredSchedules = schedules?.filter(schedule => {
     const matchesSearch = schedule.function_name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || 
@@ -113,42 +116,47 @@ export function ScheduleList() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {filteredSchedules?.map((schedule) => (
-            <TableRow key={schedule.id}>
-              <TableCell>{schedule.function_name}</TableCell>
-              <TableCell>{schedule.schedule_type}</TableCell>
-              <TableCell>
-                {schedule.time_config?.type === 'interval' && 
-                  `Every ${schedule.time_config.intervalMinutes} minutes`}
-                {schedule.time_config?.type === 'daily' && 
-                  `Daily at ${schedule.time_config.hour}:00`}
-                {schedule.time_config?.type === 'match_dependent' &&
-                  `Match day: ${schedule.time_config.matchDayIntervalMinutes}m, Other: ${schedule.time_config.nonMatchIntervalMinutes}m`}
-              </TableCell>
-              <TableCell>
-                <Badge className={getStatusColor(schedule.enabled)}>
-                  {schedule.enabled ? 'Enabled' : 'Disabled'}
-                </Badge>
-              </TableCell>
-              <TableCell>
-                {schedule.last_execution_at ? 
-                  format(new Date(schedule.last_execution_at), "MMM d, HH:mm:ss") : 
-                  'Never'}
-              </TableCell>
-              <TableCell>
-                {schedule.next_execution_at ? 
-                  format(new Date(schedule.next_execution_at), "MMM d, HH:mm:ss") : 
-                  'Not scheduled'}
-              </TableCell>
-              <TableCell>
-                <QuickActionsMenu
-                  scheduleId={schedule.id}
-                  status={schedule.enabled}
-                  onStatusChange={() => toggleScheduleStatus(schedule.id, schedule.enabled)}
-                />
-              </TableCell>
-            </TableRow>
-          ))}
+          {filteredSchedules?.map((schedule) => {
+            const timeConfig = schedule.time_config as TimeConfig;
+            
+            return (
+              <TableRow key={schedule.id}>
+                <TableCell>{schedule.function_name}</TableCell>
+                <TableCell>{schedule.schedule_type}</TableCell>
+                <TableCell>
+                  {timeConfig?.type === 'interval' && 
+                    `Every ${timeConfig.intervalMinutes} minutes`}
+                  {timeConfig?.type === 'daily' && 
+                    `Daily at ${timeConfig.hour}:00`}
+                  {timeConfig?.type === 'match_dependent' &&
+                    `Match day: ${timeConfig.matchDayIntervalMinutes}m, Other: ${timeConfig.nonMatchIntervalMinutes}m`}
+                </TableCell>
+                <TableCell>
+                  <Badge className={schedule.enabled ? 'bg-green-500' : 'bg-yellow-500'}>
+                    {schedule.enabled ? 'Enabled' : 'Disabled'}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  {schedule.last_execution_at ? 
+                    format(new Date(schedule.last_execution_at), "MMM d, HH:mm:ss") : 
+                    'Never'}
+                </TableCell>
+                <TableCell>
+                  {schedule.next_execution_at ? 
+                    format(new Date(schedule.next_execution_at), "MMM d, HH:mm:ss") : 
+                    'Not scheduled'}
+                </TableCell>
+                <TableCell>
+                  <QuickActionsMenu
+                    scheduleId={schedule.id}
+                    functionName={schedule.function_name}
+                    status={schedule.enabled}
+                    onStatusChange={() => toggleScheduleStatus(schedule.id, schedule.enabled)}
+                  />
+                </TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
     </div>

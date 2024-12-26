@@ -61,15 +61,9 @@ export function ScheduleList() {
     }
   };
 
-  const filteredSchedules = schedules?.filter(schedule => {
-    const matchesSearch = schedule.function_name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === "all" || 
-      (statusFilter === "enabled" && schedule.enabled) ||
-      (statusFilter === "disabled" && !schedule.enabled);
-    return matchesSearch && matchesStatus;
-  });
-
   if (isLoading) return null;
+
+  const groups = [...new Set(schedules?.map(s => s.group_id) || [])];
 
   return (
     <div className="space-y-4">
@@ -78,10 +72,13 @@ export function ScheduleList() {
         onSearchChange={setSearchTerm}
         statusFilter={statusFilter}
         onStatusFilterChange={setStatusFilter}
+        groupFilter={groupFilter}
+        onGroupFilterChange={setGroupFilter}
+        groups={groups}
       />
 
       <ScheduleTable
-        schedules={filteredSchedules || []}
+        schedules={schedules || []}
         onStatusChange={toggleScheduleStatus}
       />
     </div>
