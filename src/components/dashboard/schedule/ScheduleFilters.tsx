@@ -20,8 +20,10 @@ export function ScheduleFilters({
   onGroupFilterChange,
   groups,
 }: ScheduleFiltersProps) {
+  console.log('Rendering ScheduleFilters with groups:', groups);
+  
   return (
-    <div className="flex items-center gap-4">
+    <div className="flex items-center gap-4 mb-6">
       <Input
         placeholder="Search functions..."
         value={searchTerm}
@@ -41,13 +43,13 @@ export function ScheduleFilters({
       </Select>
       <Select value={groupFilter} onValueChange={onGroupFilterChange}>
         <SelectTrigger className="w-[180px]">
-          <SelectValue placeholder="Filter by group" />
+          <SelectValue placeholder="Filter by type" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">All Groups</SelectItem>
+          <SelectItem value="all">All Types</SelectItem>
           {groups.map((group) => (
-            <SelectItem key={group} value={group || "ungrouped"}>
-              {group || "Ungrouped"}
+            <SelectItem key={group} value={group}>
+              {group.charAt(0).toUpperCase() + group.slice(1).replace('_', ' ')}
             </SelectItem>
           ))}
         </SelectContent>
