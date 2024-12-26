@@ -4,7 +4,11 @@ import { getCurrentEvent } from './db/events.ts';
 import { upsertLivePerformance } from './db/performance.ts';
 import { mapPlayerDataToUpdate } from './utils.ts';
 import { logDebug, logError } from './logging.ts';
-import { corsHeaders } from '../_shared/cors.ts';
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -58,6 +62,18 @@ Deno.serve(async (req) => {
     const updates = data.elements.map(element => mapPlayerDataToUpdate(element, currentEvent.id));
     await upsertLivePerformance(supabaseClient, updates);
 
+    // Log success metrics
+    const executionTime = Date.now() - startTime;
+    await supabaseClient
+      .from('api_health_metrics')
+      .insert({
+        endpoint: functionName,
+        success_count: 1,
+        error_count: 0,
+        avg_response_time: executionTime,
+        last_success_time: new Date().toISOString()
+      });
+
     // Trigger points calculation after successful live data update
     logDebug(functionName, 'Triggering points calculation...');
     const { error: calcError } = await supabaseClient.functions.invoke('calculate-points', {
@@ -73,16 +89,13 @@ Deno.serve(async (req) => {
       logDebug(functionName, 'Points calculation triggered successfully');
     }
 
-    const processingTime = Date.now() - startTime;
-    logDebug(functionName, `Processing completed in ${processingTime}ms`);
-
     return new Response(
       JSON.stringify({ 
         success: true, 
         message: 'Live gameweek data updated successfully',
         gameweek: currentEvent.id,
         updatedPlayers: updates.length,
-        processingTime,
+        executionTime,
         manualTrigger: manual_trigger || false,
         pointsCalculationTriggered: !calcError
       }),
@@ -90,7 +103,25 @@ Deno.serve(async (req) => {
     );
 
   } catch (error) {
+    const executionTime = Date.now() - startTime;
     logError(functionName, 'Error in fetch-live-gameweek:', error);
+    
+    // Log error metrics
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    await supabaseClient
+      .from('api_health_metrics')
+      .insert({
+        endpoint: functionName,
+        success_count: 0,
+        error_count: 1,
+        avg_response_time: executionTime,
+        last_error_time: new Date().toISOString(),
+        error_pattern: { error: error.message }
+      });
     
     return new Response(
       JSON.stringify({ 

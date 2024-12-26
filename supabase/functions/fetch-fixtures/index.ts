@@ -53,6 +53,17 @@ Deno.serve(async (req) => {
     const executionTime = Date.now() - startTime;
     logInfo(functionName, `Fixtures data processed successfully in ${executionTime}ms`);
 
+    // Log metrics
+    await supabaseClient
+      .from('api_health_metrics')
+      .insert({
+        endpoint: functionName,
+        success_count: 1,
+        error_count: 0,
+        avg_response_time: executionTime,
+        last_success_time: new Date().toISOString()
+      });
+
     return new Response(
       JSON.stringify({ 
         success: true, 
@@ -65,6 +76,23 @@ Deno.serve(async (req) => {
   } catch (error) {
     const executionTime = Date.now() - startTime;
     logError(functionName, 'Error:', error);
+    
+    // Log error metrics
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    await supabaseClient
+      .from('api_health_metrics')
+      .insert({
+        endpoint: functionName,
+        success_count: 0,
+        error_count: 1,
+        avg_response_time: executionTime,
+        last_error_time: new Date().toISOString(),
+        error_pattern: { error: error.message }
+      });
     
     return new Response(
       JSON.stringify({ 
