@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { cn } from "@/lib/utils";
+import { Copyright } from "lucide-react";
 import {
   HoverCard,
   HoverCardContent,
@@ -48,11 +49,20 @@ export function PlayerCard({ player, isCaptain, isViceCaptain, liveData }: Playe
     <HoverCard>
       <HoverCardTrigger>
         <div 
-          className={cn("player-card", isExpanded && "player-card-expanded")}
+          className={cn("player-card relative", isExpanded && "player-card-expanded")}
           onClick={() => setIsExpanded(!isExpanded)}
         >
-          {isCaptain && <div className="captain-ribbon" />}
-          {isViceCaptain && <div className="vice-captain-ribbon" />}
+          {(isCaptain || isViceCaptain) && (
+            <div className="absolute top-1 right-1">
+              <Copyright 
+                size={16} 
+                className={cn(
+                  "transition-colors",
+                  isCaptain ? "text-[#eaff80]" : "text-gray-400"
+                )}
+              />
+            </div>
+          )}
           
           <PlayerStatus player={player} liveData={liveData} />
           

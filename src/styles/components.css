@@ -13,34 +13,6 @@
   @apply bg-accent/10;
 }
 
-.captain-ribbon {
-  @apply absolute -right-0 -top-0 w-8 h-8 overflow-hidden;
-}
-
-.captain-ribbon::before {
-  content: 'C';
-  @apply absolute top-1 right-1 text-xs font-bold text-background;
-}
-
-.captain-ribbon::after {
-  content: '';
-  @apply absolute top-0 right-0 w-10 h-10 bg-accent transform rotate-45 origin-top-right;
-}
-
-.vice-captain-ribbon {
-  @apply absolute -right-0 -top-0 w-8 h-8 overflow-hidden;
-}
-
-.vice-captain-ribbon::before {
-  content: 'V';
-  @apply absolute top-1 right-1 text-xs font-bold text-background;
-}
-
-.vice-captain-ribbon::after {
-  content: '';
-  @apply absolute top-0 right-0 w-10 h-10 bg-accent/50 transform rotate-45 origin-top-right;
-}
-
 .points-text {
   @apply text-center text-2xl font-bold text-accent;
 }
