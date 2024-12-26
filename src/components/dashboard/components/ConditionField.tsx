@@ -78,12 +78,12 @@ export function ConditionField({ form, index, field }: ConditionFieldProps) {
 
       <FormField
         control={form.control}
-        name={`event_conditions.${index}.value`}
+        name={`event_conditions.${index}.value` as const}
         render={({ field: valueField }) => (
           <FormItem className="flex-1 w-full sm:w-auto">
             <FormLabel>Value</FormLabel>
             {FIELD_VALUES[field.field as keyof typeof FIELD_VALUES] ? (
-              <Select onValueChange={valueField.onChange} value={valueField.value}>
+              <Select onValueChange={valueField.onChange} value={String(valueField.value)}>
                 <FormControl>
                   <SelectTrigger className="h-10 sm:h-11">
                     <SelectValue placeholder="Select value" />
@@ -103,6 +103,7 @@ export function ConditionField({ form, index, field }: ConditionFieldProps) {
                 <Input
                   className="h-10 sm:h-11"
                   {...valueField}
+                  value={String(valueField.value)}
                 />
               </FormControl>
             )}

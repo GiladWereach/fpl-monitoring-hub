@@ -39,6 +39,7 @@ export type ExecutionConfig = {
 export type EventCondition = {
   field: string;
   operator: 'eq' | 'neq' | 'gt' | 'lt' | 'gte' | 'lte';
+  value: string;  // Added this property
 };
 
 export type Schedule = {
@@ -157,3 +158,4 @@ export const convertScheduleData = (data: any): ScheduleData => {
     updated_at: data.updated_at
   };
 };
+
