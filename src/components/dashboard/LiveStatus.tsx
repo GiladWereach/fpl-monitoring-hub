@@ -53,12 +53,10 @@ export const LiveStatus = ({
   }
 
   const getStatusVariant = () => {
-    // Check for gameweek transition first
     if (currentGameweek?.transition_status === 'in_progress') {
       return "warning";
     }
 
-    // Then check match window status
     switch (matchWindow?.type) {
       case 'live':
         return "success";
@@ -72,12 +70,10 @@ export const LiveStatus = ({
   };
 
   const getStatusLabel = () => {
-    // Gameweek transition takes precedence
     if (currentGameweek?.transition_status === 'in_progress') {
       return "Gameweek Transition";
     }
 
-    // Regular match window status
     switch (matchWindow?.type) {
       case 'live':
         return `Live (${matchWindow.match_count} matches)`;
@@ -97,7 +93,6 @@ export const LiveStatus = ({
     }
   };
 
-  // Show transition error if exists
   if (currentGameweek?.transition_error) {
     return (
       <Alert variant="destructive" className="mt-4">

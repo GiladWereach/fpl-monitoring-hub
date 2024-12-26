@@ -9,7 +9,7 @@ import { toast } from "@/hooks/use-toast";
 import { FunctionExecutionStatus } from "./components/FunctionExecutionStatus";
 import { CategorySection } from "./components/CategorySection";
 import { detectMatchWindow } from "@/services/matchWindowService";
-import { isTimeConfig, TimeConfig } from "./types/scheduling";
+import { isTimeConfig } from "./types/scheduling";
 
 interface TimeConfigBase {
   type: 'match_dependent' | 'daily' | 'fixed';
@@ -55,9 +55,7 @@ export function EdgeFunctionManager() {
       console.log('Fetched schedules:', data);
       return data;
     },
-    refetchInterval: 10000,
-    retry: 3,
-    retryDelay: (attemptIndex) => Math.min(1000 * Math.pow(2, attemptIndex), 30000)
+    refetchInterval: 10000
   });
 
   const { data: matchWindow } = useQuery({
@@ -138,9 +136,7 @@ export function EdgeFunctionManager() {
         throw error;
       }
     },
-    refetchInterval: 60000,
-    retry: 3,
-    retryDelay: (attemptIndex) => Math.min(1000 * Math.pow(2, attemptIndex), 30000)
+    refetchInterval: 60000
   });
 
   const handleExecute = async (functionName: string) => {
