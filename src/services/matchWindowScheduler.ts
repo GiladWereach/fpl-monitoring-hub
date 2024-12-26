@@ -13,7 +13,8 @@ export async function getCurrentMatchWindow(): Promise<MatchWindow | null> {
   
   try {
     const { data: currentWindow, error } = await supabase
-      .rpc('get_current_match_window');
+      .rpc('get_current_match_window')
+      .single();
 
     if (error) {
       console.error('Error detecting match window:', error);

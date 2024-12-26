@@ -38,7 +38,7 @@ export function FunctionExecutionStatus({
         </Button>
 
         {matchWindow && (
-          <Alert variant={matchWindow.hasActiveMatches ? "default" : "secondary"}>
+          <Alert variant="default">
             <Clock className="h-4 w-4" />
             <AlertDescription>
               {matchWindow.type === 'live' && (
