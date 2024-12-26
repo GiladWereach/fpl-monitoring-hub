@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { GameweekHeader } from '@/components/gameweek/GameweekHeader';
@@ -10,9 +10,28 @@ import { BenchPlayers } from '@/components/gameweek/BenchPlayers';
 import { calculateTotalPoints, calculateBenchPoints } from '@/components/gameweek/utils/points-calculator';
 import { TeamSelection, Player } from '@/components/gameweek/types';
 import { Loader2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
 
 export default function Gameweek() {
   const [viewMode, setViewMode] = useState<'pitch' | 'list'>('pitch');
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  // Get team ID from localStorage
+  const teamId = localStorage.getItem('lastTeamId');
+
+  // Redirect if no team ID
+  useEffect(() => {
+    if (!teamId) {
+      toast({
+        title: "No team selected",
+        description: "Please enter your team ID first",
+        variant: "destructive",
+      });
+      navigate('/');
+    }
+  }, [teamId, navigate, toast]);
 
   const { data: currentGameweek, isLoading: gameweekLoading } = useQuery({
     queryKey: ['current-gameweek'],
@@ -24,58 +43,52 @@ export default function Gameweek() {
         .single();
       
       if (error) throw error;
+      console.log('Current gameweek:', data);
       return data;
     }
   });
 
   const { data: teamSelection, isLoading: teamLoading } = useQuery({
-    queryKey: ['team-selection', currentGameweek?.id],
-    enabled: !!currentGameweek?.id,
+    queryKey: ['team-selection', currentGameweek?.id, teamId],
+    enabled: !!currentGameweek?.id && !!teamId,
     queryFn: async () => {
+      console.log('Fetching team selection for team:', teamId, 'gameweek:', currentGameweek.id);
       const { data, error } = await supabase
         .from('team_selections')
         .select('*')
         .eq('event', currentGameweek.id)
-        .limit(1)
+        .eq('fpl_team_id', teamId)
         .single();
       
       if (error) throw error;
-      
-      const picks = (data.picks as any[]).map(pick => ({
-        element: pick.element,
-        position: pick.position,
-        multiplier: pick.multiplier,
-        is_captain: pick.is_captain || false,
-        is_vice_captain: pick.is_vice_captain || false
-      }));
-
-      return {
-        ...data,
-        picks
-      } as TeamSelection;
+      console.log('Team selection:', data);
+      return data as TeamSelection;
     }
   });
 
   const { data: players, isLoading: playersLoading } = useQuery({
-    queryKey: ['players'],
+    queryKey: ['players', teamSelection?.picks],
     enabled: !!teamSelection,
     queryFn: async () => {
       const playerIds = teamSelection.picks.map(pick => pick.element);
+      console.log('Fetching players:', playerIds);
       const { data, error } = await supabase
         .from('players')
         .select('id, web_name, team, element_type')
         .in('id', playerIds);
       
       if (error) throw error;
+      console.log('Players data:', data);
       return data as Player[];
     }
   });
 
   const { data: liveData, isLoading: liveDataLoading } = useQuery({
-    queryKey: ['live-performance', currentGameweek?.id],
+    queryKey: ['live-performance', currentGameweek?.id, teamSelection?.picks],
     enabled: !!currentGameweek?.id && !!teamSelection?.picks,
     queryFn: async () => {
       const playerIds = teamSelection.picks.map(p => p.element);
+      console.log('Fetching live data for players:', playerIds);
       const { data, error } = await supabase
         .from('gameweek_live_performance')
         .select('*')
@@ -83,6 +96,7 @@ export default function Gameweek() {
         .in('player_id', playerIds);
       
       if (error) throw error;
+      console.log('Live performance data:', data);
       return data;
     }
   });
@@ -116,6 +130,20 @@ export default function Gameweek() {
     return (
       <div className="flex h-[50vh] items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-[#3DFF9A]" />
+      </div>
+    );
+  }
+
+  if (!teamSelection) {
+    return (
+      <div className="flex h-[50vh] items-center justify-center flex-col gap-4">
+        <p className="text-lg">No team data found for gameweek {currentGameweek?.id}</p>
+        <button 
+          onClick={() => navigate('/')}
+          className="px-4 py-2 bg-[#3DFF9A] text-black rounded-lg hover:bg-[#3DFF9A]/90"
+        >
+          Go back home
+        </button>
       </div>
     );
   }
