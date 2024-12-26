@@ -67,7 +67,6 @@ export function useScheduleForm({ functionName, onSuccess }: UseScheduleFormProp
         const endTime = Date.now();
         await updateAPIHealthMetrics("fetch_schedule", true, endTime - startTime);
 
-        // Convert the raw data to our strongly typed ScheduleData
         return scheduleData ? convertScheduleData(scheduleData) : null;
       } catch (error) {
         console.error("Error in schedule fetch:", error);
@@ -145,7 +144,7 @@ export function useScheduleForm({ functionName, onSuccess }: UseScheduleFormProp
     try {
       const { error } = await supabase
         .from('schedules')
-        .upsert({
+        .upsert([{
           function_name: functionName,
           schedule_type: values.schedule_type,
           enabled: values.enabled,
@@ -155,7 +154,7 @@ export function useScheduleForm({ functionName, onSuccess }: UseScheduleFormProp
           event_conditions: values.event_conditions,
           execution_config: values.execution_config,
           execution_window: values.execution_window
-        }, {
+        }], {
           onConflict: 'function_name'
         });
 
