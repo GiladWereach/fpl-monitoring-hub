@@ -2473,6 +2473,7 @@ export type Database = {
         | "override"
       schedule_status: "active" | "paused" | "error"
       schedule_type: "time_based" | "event_based"
+      schedule_type_new: "time_based" | "event_based" | "match_dependent"
       time_schedule_type: "interval" | "daily" | "weekly" | "monthly" | "cron"
       user_role: "admin" | "user"
     }
