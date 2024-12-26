@@ -114,9 +114,9 @@ const BonusPointsTracker = ({ gameweek, matchId }: BonusPointsTrackerProps) => {
 
   const getBonusColor = (bonusPoints: number) => {
     switch (bonusPoints) {
-      case 3: return 'bg-yellow-100';
-      case 2: return 'bg-gray-100';
-      case 1: return 'bg-orange-100';
+      case 3: return 'bg-yellow-100 text-yellow-900'; // Darker text for contrast
+      case 2: return 'bg-gray-100 text-gray-900';     // Darker text for contrast
+      case 1: return 'bg-orange-100 text-orange-900'; // Darker text for contrast
       default: return '';
     }
   };
@@ -124,7 +124,6 @@ const BonusPointsTracker = ({ gameweek, matchId }: BonusPointsTrackerProps) => {
   return (
     <div className="space-y-6">
       {matches?.map((match) => {
-        // Get all BPS values for this match
         const matchBpsValues = bpsByMatch?.[match.id]?.map((p: any) => p.bps) || [];
         
         return (
@@ -150,7 +149,7 @@ const BonusPointsTracker = ({ gameweek, matchId }: BonusPointsTrackerProps) => {
                       key={bps.id}
                       className={getBonusColor(calculatedBonus)}
                     >
-                      <TableCell>{bps.player.web_name}</TableCell>
+                      <TableCell className="font-medium">{bps.player.web_name}</TableCell>
                       <TableCell className="text-right">{bps.bps}</TableCell>
                       <TableCell className="text-right font-bold">
                         {calculatedBonus}
