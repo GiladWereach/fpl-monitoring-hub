@@ -1,5 +1,5 @@
 import React from 'react';
-import { Check, AlertCircle, Clock, X, Play } from 'lucide-react';
+import { Check, Clock, Play, HexagonAlert, HexagonX } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -44,7 +44,7 @@ export function PlayerStatus({ player, liveData }: PlayerStatusProps) {
     if (player?.chance_of_playing_this_round === 0) {
       console.log(`Player ${player.web_name} is not available (0% chance)`);
       return {
-        icon: X,
+        icon: HexagonX,
         color: 'text-red-500',
         animate: false,
         label: 'Not Available'
@@ -54,7 +54,7 @@ export function PlayerStatus({ player, liveData }: PlayerStatusProps) {
     if (player?.chance_of_playing_this_round !== null && player?.chance_of_playing_this_round < 100) {
       console.log(`Player ${player.web_name} is doubtful (${player.chance_of_playing_this_round}%)`);
       return {
-        icon: AlertCircle,
+        icon: HexagonAlert,
         color: 'text-yellow-500',
         animate: false,
         label: 'Doubtful'
@@ -89,7 +89,7 @@ export function PlayerStatus({ player, liveData }: PlayerStatusProps) {
       if (fixtureStatus.finished || fixtureStatus.finished_provisional) {
         console.log(`Player ${player.web_name} was unused in the match`);
         return {
-          icon: X,
+          icon: HexagonX,
           color: 'text-gray-400',
           animate: false,
           label: 'Unused'
