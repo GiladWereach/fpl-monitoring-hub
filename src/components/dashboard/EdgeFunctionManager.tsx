@@ -25,7 +25,7 @@ export function EdgeFunctionManager() {
   return (
     <div className="space-y-6">
       <FunctionExecutionStatus 
-        loading={loading} 
+        loading={Boolean(loading)} 
         onRefreshAll={refreshAll}
         matchWindow={formattedMatchWindow}
       />
