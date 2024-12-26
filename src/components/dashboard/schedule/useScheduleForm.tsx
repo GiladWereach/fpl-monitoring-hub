@@ -37,7 +37,12 @@ export function useScheduleForm({ functionName, onSuccess }: UseScheduleFormProp
         retry_backoff: "linear",
         max_retry_delay: 3600
       },
-      event_conditions: []
+      event_conditions: [],
+      execution_window: {
+        start_time: '00:00',
+        end_time: '23:59',
+        days_of_week: [1, 2, 3, 4, 5]
+      }
     },
   });
 
@@ -124,7 +129,12 @@ export function useScheduleForm({ functionName, onSuccess }: UseScheduleFormProp
           retry_backoff: "linear",
           max_retry_delay: 3600
         },
-        event_conditions: schedule.event_conditions ?? []
+        event_conditions: schedule.event_conditions ?? [],
+        execution_window: schedule.execution_window ?? {
+          start_time: '00:00',
+          end_time: '23:59',
+          days_of_week: [1, 2, 3, 4, 5]
+        }
       });
     }
   }, [schedule, form, functionName]);
@@ -143,9 +153,8 @@ export function useScheduleForm({ functionName, onSuccess }: UseScheduleFormProp
           time_config: values.schedule_type === 'time_based' ? values.time_config : null,
           event_config: values.schedule_type === 'event_based' ? values.event_config : null,
           event_conditions: values.event_conditions,
-          execution_config: values.execution_config
-        }, {
-          onConflict: 'function_name'
+          execution_config: values.execution_config,
+          execution_window: values.execution_window
         });
 
       if (error) throw error;

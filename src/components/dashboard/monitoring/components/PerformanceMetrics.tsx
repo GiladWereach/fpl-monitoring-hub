@@ -3,36 +3,13 @@ import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { Activity, Clock, Server } from "lucide-react";
 import { MetricCard } from "./MetricCard";
+import { PerformanceMetrics as PerformanceMetricsType } from "../types/performance-metrics";
 
-interface ProcessingMetrics {
-  avg_processing_time: number;
-  error_rate: number;
-  data_quality_score: number;
-  active_processes?: number;
-  system_load?: number;
+interface PerformanceMetricsProps {
+  metrics: PerformanceMetricsType;
 }
 
-export function PerformanceMetrics() {
-  const { data: metrics } = useQuery({
-    queryKey: ['performance-metrics'],
-    queryFn: async () => {
-      console.log('Fetching performance metrics');
-      const { data, error } = await supabase.rpc('get_processing_metrics', { hours_ago: 24 });
-      
-      if (error) throw error;
-
-      return {
-        ...data[0],
-        system_load: data[0]?.active_processes || 0
-      } as ProcessingMetrics;
-    },
-    refetchInterval: 30000
-  });
-
-  if (!metrics) {
-    return null;
-  }
-
+export function PerformanceMetrics({ metrics }: PerformanceMetricsProps) {
   return (
     <Card className="p-6">
       <h3 className="text-lg font-semibold mb-4">Performance Metrics</h3>
@@ -57,7 +34,7 @@ export function PerformanceMetrics() {
         
         <MetricCard
           title="System Load"
-          value={metrics.system_load?.toString() || '0'}
+          value={metrics.active_processes?.toString() || '0'}
           subtitle="Active processes"
           icon={Server}
           iconColor="text-amber-500"
