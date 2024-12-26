@@ -26,8 +26,8 @@ export const LiveStatus = ({
   timezone = 'UTC'
 }: LiveStatusProps) => {
   const { data: matchWindow, isLoading: windowLoading } = useQuery({
-    queryKey: ['match-window', timezone],
-    queryFn: () => detectMatchWindow({ timezone }),
+    queryKey: ['match-window'],
+    queryFn: () => detectMatchWindow(),
     refetchInterval: 30000
   });
 

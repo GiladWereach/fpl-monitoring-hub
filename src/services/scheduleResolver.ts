@@ -1,111 +1,123 @@
-import { supabase } from "@/integrations/supabase/client";
-import { detectMatchWindow } from "./matchWindowService";
-import { toast } from "@/hooks/use-toast";
+import { 
+  AdvancedScheduleFormValues, 
+  ScheduleOverride, 
+  ResolvedSchedule, 
+  ScheduleResolution 
+} from '../components/dashboard/types/scheduling';
+import { determineMatchStatus } from './matchStatusService';
 
-interface ScheduleResolution {
-  intervalMinutes: number;
-  nextExecutionTime: Date;
-  reason: string;
+interface TimeConfig {
+  type: 'daily' | 'match_dependent';
+  matchDayIntervalMinutes?: number;
+  nonMatchIntervalMinutes?: number;
+  hour?: number;
 }
 
-export async function resolveSchedule(functionName: string): Promise<ScheduleResolution> {
-  console.log(`Resolving schedule for ${functionName}`);
+export async function resolveSchedule(
+  schedule: AdvancedScheduleFormValues,
+  overrides: ScheduleOverride[] = []
+): Promise<ResolvedSchedule> {
+  console.log('Resolving schedule:', schedule);
   
-  try {
-    // Get current schedule configuration
-    const { data: schedule, error: scheduleError } = await supabase
-      .from('schedules')
-      .select('*')
-      .eq('function_name', functionName)
-      .single();
+  // Check for active overrides
+  const activeOverride = overrides.find(override => {
+    const now = new Date();
+    return override.enabled && 
+           now >= override.startTime && 
+           now <= override.endTime;
+  });
 
-    if (scheduleError) throw scheduleError;
-
-    if (!schedule) {
-      console.error(`No schedule found for ${functionName}`);
-      return {
-        intervalMinutes: 30,
-        nextExecutionTime: new Date(Date.now() + 30 * 60 * 1000),
-        reason: 'No schedule configuration found'
-      };
-    }
-
-    // Detect match window
-    const matchWindow = await detectMatchWindow();
-    console.log('Match window status:', matchWindow);
-
-    if (!matchWindow) {
-      console.log('No match window detected, using default interval');
-      return {
-        intervalMinutes: 30,
-        nextExecutionTime: new Date(Date.now() + 30 * 60 * 1000),
-        reason: 'No active match window'
-      };
-    }
-
-    // Calculate interval based on match window
-    let intervalMinutes: number;
-    let reason: string;
-
-    if (matchWindow.hasActiveMatches) {
-      intervalMinutes = schedule.time_config?.matchDayIntervalMinutes || 2;
-      reason = 'Active matches in progress';
-      console.log(`Using match day interval: ${intervalMinutes} minutes`);
-    } else if (matchWindow.isMatchDay) {
-      // Check if we're approaching kickoff (within 30 minutes)
-      const nextKickoff = matchWindow.nextMatchTime;
-      if (nextKickoff) {
-        const timeToKickoff = (new Date(nextKickoff).getTime() - Date.now()) / (1000 * 60);
-        if (timeToKickoff <= 30) {
-          intervalMinutes = 5; // More frequent updates approaching kickoff
-          reason = 'Approaching match kickoff';
-          console.log('Approaching kickoff, using 5 minute intervals');
-        } else {
-          intervalMinutes = schedule.time_config?.nonMatchIntervalMinutes || 30;
-          reason = 'Match day but no active matches';
-          console.log(`Using non-match interval: ${intervalMinutes} minutes`);
-        }
-      } else {
-        intervalMinutes = schedule.time_config?.nonMatchIntervalMinutes || 30;
-        reason = 'Match day but no upcoming matches';
-      }
-    } else {
-      intervalMinutes = schedule.time_config?.nonMatchIntervalMinutes || 30;
-      reason = 'Outside match window';
-    }
-
-    const nextExecutionTime = new Date(Date.now() + intervalMinutes * 60 * 1000);
-
-    // Update schedule in database
-    const { error: updateError } = await supabase
-      .from('schedules')
-      .update({
-        next_execution_at: nextExecutionTime.toISOString(),
-        last_execution_at: new Date().toISOString()
-      })
-      .eq('id', schedule.id);
-
-    if (updateError) {
-      console.error('Error updating schedule:', updateError);
-      toast({
-        title: "Schedule Update Error",
-        description: "Failed to update schedule execution time",
-        variant: "destructive",
-      });
-    }
-
-    return {
-      intervalMinutes,
-      nextExecutionTime,
-      reason
-    };
-  } catch (error) {
-    console.error('Error resolving schedule:', error);
-    toast({
-      title: "Schedule Resolution Error",
-      description: "Failed to resolve schedule interval",
-      variant: "destructive",
-    });
-    throw error;
+  if (activeOverride) {
+    console.log('Found active override:', activeOverride);
+    return resolveWithOverride(schedule, activeOverride);
   }
+
+  // Default resolution based on schedule type
+  return resolveDefault(schedule);
+}
+
+async function resolveWithOverride(
+  schedule: AdvancedScheduleFormValues,
+  override: ScheduleOverride
+): Promise<ResolvedSchedule> {
+  const resolution: ScheduleResolution = {
+    priority: 'override',
+    source: 'override',
+    resolvedInterval: override.interval || getDefaultInterval(schedule),
+    nextExecutionTime: calculateNextExecution(override.interval || getDefaultInterval(schedule))
+  };
+
+  return {
+    baseSchedule: schedule,
+    override,
+    resolution
+  };
+}
+
+async function resolveDefault(
+  schedule: AdvancedScheduleFormValues
+): Promise<ResolvedSchedule> {
+  const interval = await calculateDynamicInterval(schedule);
+  console.log(`Calculated interval for ${schedule.function_name}:`, interval);
+  
+  const resolution: ScheduleResolution = {
+    priority: 'default',
+    source: 'system',
+    resolvedInterval: interval,
+    nextExecutionTime: calculateNextExecution(interval)
+  };
+
+  return {
+    baseSchedule: schedule,
+    resolution
+  };
+}
+
+async function calculateDynamicInterval(
+  schedule: AdvancedScheduleFormValues
+): Promise<number> {
+  console.log('Calculating dynamic interval for schedule:', schedule);
+
+  if (schedule.schedule_type === 'time_based' && 
+      schedule.time_config.type === 'match_dependent') {
+    return await getMatchDependentInterval(schedule);
+  }
+
+  // Default to schedule's configured interval or 30 minutes
+  const timeConfig = schedule.time_config as TimeConfig;
+  return timeConfig.matchDayIntervalMinutes || 30;
+}
+
+async function getMatchDependentInterval(
+  schedule: AdvancedScheduleFormValues
+): Promise<number> {
+  console.log('Getting match dependent interval');
+  const matchStatus = await determineMatchStatus();
+  console.log('Match status:', matchStatus);
+  
+  const timeConfig = schedule.time_config as TimeConfig;
+  
+  if (matchStatus.hasActiveMatches) {
+    console.log('Active matches found, using match day interval');
+    return timeConfig.matchDayIntervalMinutes || 2;
+  }
+  
+  if (matchStatus.isMatchDay) {
+    console.log('Match day but no active matches, using non-match interval');
+    return timeConfig.nonMatchIntervalMinutes || 30;
+  }
+  
+  console.log('No matches, using default interval');
+  return timeConfig.matchDayIntervalMinutes || 1440;
+}
+
+function getDefaultInterval(schedule: AdvancedScheduleFormValues): number {
+  const timeConfig = schedule.time_config as TimeConfig;
+  return timeConfig.matchDayIntervalMinutes || 1440;
+}
+
+function calculateNextExecution(intervalMinutes: number): Date {
+  const next = new Date();
+  next.setMinutes(next.getMinutes() + intervalMinutes);
+  return next;
 }
