@@ -35,8 +35,8 @@ Deno.serve(async (req) => {
       .from('scoring_rules')
       .upsert([{
         id: 1,
-        long_play: data.game_settings.minutes_limit,
-        short_play: Math.floor(data.game_settings.minutes_limit / 2),
+        long_play: 2,  // Hardcoded: 2 points for playing 60+ minutes
+        short_play: 1, // Hardcoded: 1 point for playing 1-59 minutes
         goals_scored_gkp: 6,
         goals_scored_def: 6,
         goals_scored_mid: 5,
