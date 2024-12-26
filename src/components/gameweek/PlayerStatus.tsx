@@ -45,7 +45,7 @@ export function PlayerStatus({ player, liveData }: PlayerStatusProps) {
       console.log(`Player ${player.web_name} is not available (0% chance)`);
       return {
         icon: OctagonX,
-        color: 'text-red-500',
+        color: 'text-destructive',
         animate: false,
         label: 'Not Available'
       };
@@ -55,7 +55,7 @@ export function PlayerStatus({ player, liveData }: PlayerStatusProps) {
       console.log(`Player ${player.web_name} is doubtful (${player.chance_of_playing_this_round}%)`);
       return {
         icon: OctagonAlert,
-        color: 'text-yellow-500',
+        color: 'text-warning',
         animate: false,
         label: 'Doubtful'
       };
