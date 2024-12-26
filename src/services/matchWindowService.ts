@@ -1,67 +1,71 @@
 import { supabase } from "@/integrations/supabase/client";
 
-export type MatchWindowType = 'live' | 'pre_match' | 'post_match' | 'idle';
-
 export interface MatchWindow {
-  type: MatchWindowType;
-  window_start: Date;
-  window_end: Date;
-  is_active: boolean;
-  match_count: number;
-  next_kickoff: Date | null;
+  hasActiveMatches: boolean;
+  isMatchDay: boolean;
+  nextMatchTime?: Date;
+  matchCount: number;
 }
 
-export interface MatchWindowOptions {
-  timezone?: string;
-}
-
-export async function detectMatchWindow(options: MatchWindowOptions = {}): Promise<MatchWindow> {
-  console.log('Detecting match window...', options);
+export async function detectMatchWindow(): Promise<MatchWindow | null> {
+  console.log('Detecting match window...');
   
   try {
-    const { data, error } = await supabase
-      .rpc('get_current_match_window');
+    // Get current event
+    const { data: currentEvent } = await supabase
+      .from('events')
+      .select('*')
+      .eq('is_current', true)
+      .single();
 
-    if (error) {
-      console.error('Error detecting match window:', error);
-      throw error;
+    if (!currentEvent) {
+      console.log('No current event found');
+      return null;
     }
 
-    if (!data || data.length === 0) {
-      console.log('No active match window found');
-      return {
-        type: 'idle',
-        window_start: new Date(),
-        window_end: new Date(),
-        is_active: false,
-        match_count: 0,
-        next_kickoff: null
-      };
-    }
+    // Check for active matches
+    const { data: activeMatches, error: activeError } = await supabase
+      .from('fixtures')
+      .select('*')
+      .eq('event', currentEvent.id)
+      .eq('started', true)
+      .eq('finished', false);
 
-    const window = data[0];
-    console.log('Match window data:', window);
+    if (activeError) throw activeError;
 
-    // Determine window type
-    let type: MatchWindowType = 'idle';
-    if (window.is_active && window.match_count > 0) {
-      type = 'live';
-    } else if (window.next_kickoff && new Date(window.next_kickoff) > new Date()) {
-      type = 'pre_match';
-    } else if (window.match_count === 0) {
-      type = 'post_match';
-    }
+    // Get upcoming matches for today
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const { data: upcomingMatches, error: upcomingError } = await supabase
+      .from('fixtures')
+      .select('*')
+      .eq('event', currentEvent.id)
+      .gte('kickoff_time', today.toISOString())
+      .lt('kickoff_time', tomorrow.toISOString())
+      .order('kickoff_time');
+
+    if (upcomingError) throw upcomingError;
+
+    const hasActiveMatches = activeMatches && activeMatches.length > 0;
+    const nextMatch = upcomingMatches?.find(m => !m.started);
+
+    console.log('Match window status:', {
+      activeMatches: activeMatches?.length || 0,
+      upcomingMatches: upcomingMatches?.length || 0,
+      nextMatch: nextMatch?.kickoff_time
+    });
 
     return {
-      type,
-      window_start: new Date(window.window_start),
-      window_end: new Date(window.window_end),
-      is_active: window.is_active,
-      match_count: window.match_count,
-      next_kickoff: window.next_kickoff ? new Date(window.next_kickoff) : null
+      hasActiveMatches,
+      isMatchDay: (activeMatches?.length || 0) + (upcomingMatches?.length || 0) > 0,
+      nextMatchTime: nextMatch ? new Date(nextMatch.kickoff_time) : undefined,
+      matchCount: activeMatches?.length || 0
     };
   } catch (error) {
-    console.error('Error in detectMatchWindow:', error);
+    console.error('Error detecting match window:', error);
     throw error;
   }
 }
