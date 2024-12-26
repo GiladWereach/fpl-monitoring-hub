@@ -14,11 +14,11 @@ export function EdgeFunctionManager() {
 
   const categories: ScheduleCategory[] = ['core_data', 'match_dependent', 'system', 'analytics'];
 
-  // Convert Date objects to ISO strings for the matchWindow
+  // Convert Date objects to ISO strings for the matchWindow and ensure boolean type for is_active
   const formattedMatchWindow = matchWindow ? {
     window_start: matchWindow.window_start.toISOString(),
     window_end: matchWindow.window_end.toISOString(),
-    is_active: matchWindow.is_active,
+    is_active: Boolean(matchWindow.is_active),
     match_count: matchWindow.match_count
   } : null;
 
@@ -42,7 +42,7 @@ export function EdgeFunctionManager() {
                 category={category}
                 description={getCategoryDescription(category)}
                 functions={categoryFunctions}
-                loading={loading}
+                loading={Boolean(loading)}
                 onExecute={handleExecute}
                 schedules={schedules || []}
                 matchWindow={formattedMatchWindow}
