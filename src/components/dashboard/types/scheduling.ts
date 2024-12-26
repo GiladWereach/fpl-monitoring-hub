@@ -39,7 +39,7 @@ export type ExecutionConfig = {
 export type EventCondition = {
   field: string;
   operator: 'eq' | 'neq' | 'gt' | 'lt' | 'gte' | 'lte';
-  value: string;  // Added this property
+  value: string;
 };
 
 export type Schedule = {
@@ -47,7 +47,7 @@ export type Schedule = {
   function_name: string;
   schedule_type: 'time_based' | 'event_based';
   enabled: boolean;
-  time_config?: TimeConfig;
+  time_config?: TimeConfig | null;
   event_config?: EventConfig;
   execution_config: ExecutionConfig;
   execution_window?: {
@@ -61,6 +61,8 @@ export type Schedule = {
   next_execution_at?: string;
   description?: string;
   priority?: number;
+  created_at?: string;
+  updated_at?: string;
 };
 
 export type AdvancedScheduleFormValues = {
