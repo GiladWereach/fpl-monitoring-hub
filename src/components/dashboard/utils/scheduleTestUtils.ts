@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { TestResult } from "../../types/scheduling";
+import { TestResult } from "../types/scheduling";
 import { toast } from "@/hooks/use-toast";
 
 export async function testScheduleExecution(
