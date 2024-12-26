@@ -2,20 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { Activity, CheckCircle2, XCircle } from "lucide-react";
-
-type ExecutionLog = {
-  id: string;
-  schedule_id: string;
-  started_at: string;
-  completed_at: string | null;
-  status: string;
-  error_details: string | null;
-  execution_duration_ms: number | null;
-  created_at: string;
-  schedules: {
-    function_name: string;
-  } | null;
-};
+import { ExecutionLog } from "./types/scheduling";
 
 export function RecentActivity() {
   const { data: executions } = useQuery({

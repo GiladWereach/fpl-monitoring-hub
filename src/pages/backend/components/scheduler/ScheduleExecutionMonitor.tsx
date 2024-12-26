@@ -13,6 +13,7 @@ import { useState } from "react";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { ExecutionLog } from "@/components/dashboard/types/scheduling";
 
 export function ScheduleExecutionMonitor() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -59,8 +60,7 @@ export function ScheduleExecutionMonitor() {
         throw error;
       }
 
-      console.log('Fetched executions:', data);
-      return data;
+      return data as ExecutionLog[];
     },
     refetchInterval: 30000
   });
