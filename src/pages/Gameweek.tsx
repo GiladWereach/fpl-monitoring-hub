@@ -8,7 +8,7 @@ import { PitchView } from '@/components/gameweek/PitchView';
 import { ListView } from '@/components/gameweek/ListView';
 import { BenchPlayers } from '@/components/gameweek/BenchPlayers';
 import { calculateTotalPoints, calculateBenchPoints } from '@/components/gameweek/utils/points-calculator';
-import { TeamSelection, Player } from '@/components/gameweek/types';
+import { TeamSelection, Pick } from '@/components/gameweek/types';
 import { Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -62,7 +62,18 @@ export default function Gameweek() {
       
       if (error) throw error;
       console.log('Team selection:', data);
-      return data as TeamSelection;
+      
+      // Transform the data to match our TeamSelection type
+      const transformedData: TeamSelection = {
+        ...data,
+        picks: data.picks as Pick[],
+        formation: data.formation,
+        captain_id: data.captain_id,
+        vice_captain_id: data.vice_captain_id,
+        auto_subs: data.auto_subs
+      };
+      
+      return transformedData;
     }
   });
 
@@ -79,7 +90,7 @@ export default function Gameweek() {
       
       if (error) throw error;
       console.log('Players data:', data);
-      return data as Player[];
+      return data;
     }
   });
 
