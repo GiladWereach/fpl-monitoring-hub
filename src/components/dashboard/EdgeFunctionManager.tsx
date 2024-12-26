@@ -9,7 +9,7 @@ import { toast } from "@/hooks/use-toast";
 import { FunctionExecutionStatus } from "./components/FunctionExecutionStatus";
 import { CategorySection } from "./components/CategorySection";
 import { detectMatchWindow } from "@/services/matchWindowService";
-import { isTimeConfig } from "./types/scheduling";
+import { isTimeConfig, TimeConfig } from "./types/scheduling";
 
 interface TimeConfigBase {
   type: 'match_dependent' | 'daily' | 'fixed';
