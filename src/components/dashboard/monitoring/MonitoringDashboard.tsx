@@ -43,6 +43,13 @@ export function MonitoringDashboard() {
     return <div>Loading metrics...</div>;
   }
 
+  const performanceMetrics = {
+    avg_processing_time: metrics?.avg_response_time || 0,
+    error_rate: metrics?.error_rate || 0,
+    data_quality_score: metrics?.success_rate || 0,
+    active_processes: metrics?.system_load || 0
+  };
+
   return (
     <Card className="p-6 space-y-6">
       <h2 className="text-2xl font-semibold">System Monitoring</h2>
@@ -58,7 +65,7 @@ export function MonitoringDashboard() {
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <PerformanceMetrics />
+        <PerformanceMetrics metrics={performanceMetrics} />
         <ErrorAnalyticsDashboard />
       </div>
     </Card>

@@ -79,10 +79,10 @@ export function ErrorAnalyticsDashboard() {
   ];
 
   const defaultPerformanceMetrics: PerformanceMetricsType = {
-    responseTime: 245,
-    throughput: 120,
-    errorRate: 2.5,
-    resourceUtilization: 65
+    avg_processing_time: 245,
+    error_rate: 2.5,
+    data_quality_score: 95,
+    active_processes: 120
   };
 
   const handleThresholdUpdate = async (config: ThresholdConfig) => {

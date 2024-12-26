@@ -140,12 +140,12 @@ export function useScheduleForm({ functionName, onSuccess }: UseScheduleFormProp
   }, [schedule, form, functionName]);
 
   const onSubmit = async (values: AdvancedScheduleFormValues) => {
-    const startTime = Date.now();
+    console.log("Submitting schedule form:", values);
+    
     try {
-      console.log(`Saving schedule for ${functionName}:`, values);
       const { error } = await supabase
         .from('schedules')
-        .upsert({
+        .upsert([{
           function_name: functionName,
           schedule_type: values.schedule_type,
           enabled: values.enabled,
@@ -155,12 +155,11 @@ export function useScheduleForm({ functionName, onSuccess }: UseScheduleFormProp
           event_conditions: values.event_conditions,
           execution_config: values.execution_config,
           execution_window: values.execution_window
+        }], {
+          onConflict: 'function_name'
         });
 
       if (error) throw error;
-
-      const endTime = Date.now();
-      await updateAPIHealthMetrics("save_schedule", true, endTime - startTime);
 
       toast({
         title: "Success",
@@ -169,17 +168,6 @@ export function useScheduleForm({ functionName, onSuccess }: UseScheduleFormProp
       onSuccess?.();
     } catch (error) {
       console.error("Error saving schedule:", error);
-      
-      await logAPIError({
-        type: "SERVER_ERROR",
-        message: error.message,
-        endpoint: "save_schedule",
-        statusCode: error.status || 500,
-        retryCount: 0,
-        requestParams: { functionName, values }
-      });
-      
-      await updateAPIHealthMetrics("save_schedule", false);
       
       toast({
         title: "Error",
