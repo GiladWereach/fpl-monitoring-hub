@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { ScheduleFilters } from "./ScheduleFilters";
 import { ScheduleTable } from "./ScheduleTable";
-import { Schedule } from "@/types/scheduling";
+import { Schedule, convertScheduleData } from "@/components/dashboard/types/scheduling";
 
 export function ScheduleList() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -34,12 +34,8 @@ export function ScheduleList() {
         throw error;
       }
 
-      return data.map((schedule: any) => ({
-        ...schedule,
-        enabled: schedule.enabled || false,
-        status: schedule.enabled ? 'active' : 'disabled',
-        frequency_type: schedule.schedule_type
-      })) as Schedule[];
+      console.log('Raw schedule data:', data);
+      return data.map(schedule => convertScheduleData(schedule)) as Schedule[];
     },
     refetchInterval: 30000
   });
@@ -47,6 +43,8 @@ export function ScheduleList() {
   const toggleScheduleStatus = async (scheduleId: string, currentStatus: string) => {
     try {
       const newEnabled = currentStatus !== 'active';
+      console.log(`Toggling schedule ${scheduleId} to ${newEnabled ? 'enabled' : 'disabled'}`);
+      
       const { error } = await supabase
         .from('schedules')
         .update({ enabled: newEnabled })
@@ -70,7 +68,14 @@ export function ScheduleList() {
 
   if (isLoading) return null;
 
-  const groups = [...new Set(schedules?.map(s => s.schedule_type) || [])];
+  const filteredSchedules = schedules?.filter(schedule => {
+    const matchesSearch = schedule.function_name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === "all" || 
+      (statusFilter === "enabled" && schedule.enabled) ||
+      (statusFilter === "disabled" && !schedule.enabled);
+    const matchesGroup = groupFilter === "all" || schedule.schedule_type === groupFilter;
+    return matchesSearch && matchesStatus && matchesGroup;
+  });
 
   return (
     <div className="space-y-4">
@@ -81,11 +86,11 @@ export function ScheduleList() {
         onStatusFilterChange={setStatusFilter}
         groupFilter={groupFilter}
         onGroupFilterChange={setGroupFilter}
-        groups={groups}
+        groups={[...new Set(schedules?.map(s => s.schedule_type) || [])]}
       />
 
       <ScheduleTable
-        schedules={schedules || []}
+        schedules={filteredSchedules || []}
         onStatusChange={toggleScheduleStatus}
       />
     </div>

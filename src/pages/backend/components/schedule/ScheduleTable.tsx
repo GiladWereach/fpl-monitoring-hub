@@ -2,16 +2,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { QuickActionsMenu } from "./QuickActionsMenu";
-
-interface Schedule {
-  id: string;
-  function_name: string;
-  status: string;
-  schedule_groups?: { name: string } | null;
-  frequency_type: string;
-  last_execution_at: string | null;
-  next_execution_at: string | null;
-}
+import { Schedule } from "@/components/dashboard/types/scheduling";
 
 interface ScheduleTableProps {
   schedules: Schedule[];
@@ -19,16 +10,22 @@ interface ScheduleTableProps {
 }
 
 export function ScheduleTable({ schedules, onStatusChange }: ScheduleTableProps) {
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active':
-        return 'bg-green-500';
-      case 'paused':
-        return 'bg-yellow-500';
-      case 'error':
-        return 'bg-red-500';
+  const getStatusColor = (enabled: boolean) => {
+    return enabled ? 'bg-green-500' : 'bg-yellow-500';
+  };
+
+  const formatTimeConfig = (schedule: Schedule) => {
+    if (!schedule.time_config) return 'Not configured';
+    
+    switch (schedule.time_config.type) {
+      case 'interval':
+        return `Every ${schedule.time_config.intervalMinutes} minutes`;
+      case 'daily':
+        return `Daily at ${schedule.time_config.hour}:00`;
+      case 'match_dependent':
+        return `Match day: ${schedule.time_config.matchDayIntervalMinutes}m, Other: ${schedule.time_config.nonMatchIntervalMinutes}m`;
       default:
-        return 'bg-gray-500';
+        return 'Unknown configuration';
     }
   };
 
@@ -36,8 +33,8 @@ export function ScheduleTable({ schedules, onStatusChange }: ScheduleTableProps)
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Group</TableHead>
           <TableHead>Function</TableHead>
+          <TableHead>Type</TableHead>
           <TableHead>Frequency</TableHead>
           <TableHead>Status</TableHead>
           <TableHead>Last Run</TableHead>
@@ -48,21 +45,12 @@ export function ScheduleTable({ schedules, onStatusChange }: ScheduleTableProps)
       <TableBody>
         {schedules.map((schedule) => (
           <TableRow key={schedule.id}>
-            <TableCell>
-              {schedule.schedule_groups?.name || 'Ungrouped'}
-            </TableCell>
             <TableCell>{schedule.function_name}</TableCell>
+            <TableCell>{schedule.schedule_type}</TableCell>
+            <TableCell>{formatTimeConfig(schedule)}</TableCell>
             <TableCell>
-              {schedule.frequency_type === 'fixed_interval' && 
-                'Every X minutes'}
-              {schedule.frequency_type === 'daily' && 
-                'Daily at specific time'}
-              {schedule.frequency_type === 'match_dependent' &&
-                'Based on match schedule'}
-            </TableCell>
-            <TableCell>
-              <Badge className={getStatusColor(schedule.status)}>
-                {schedule.status}
+              <Badge className={getStatusColor(schedule.enabled)}>
+                {schedule.enabled ? 'Enabled' : 'Disabled'}
               </Badge>
             </TableCell>
             <TableCell>
@@ -78,9 +66,8 @@ export function ScheduleTable({ schedules, onStatusChange }: ScheduleTableProps)
             <TableCell>
               <QuickActionsMenu
                 scheduleId={schedule.id}
-                functionName={schedule.function_name}
-                status={schedule.status}
-                onStatusChange={() => onStatusChange(schedule.id, schedule.status)}
+                status={schedule.enabled}
+                onStatusChange={() => onStatusChange(schedule.id, schedule.enabled ? 'active' : 'disabled')}
               />
             </TableCell>
           </TableRow>
