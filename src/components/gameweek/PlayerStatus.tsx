@@ -89,7 +89,7 @@ export function PlayerStatus({ player, liveData }: PlayerStatusProps) {
       if (fixtureStatus.finished || fixtureStatus.finished_provisional) {
         console.log(`Player ${player.web_name} was unused in the match`);
         return {
-          icon: OctagonX,
+          icon: CircleOff,
           color: '#9CA3AF', // gray-400
           animate: false,
           label: 'Unused'
