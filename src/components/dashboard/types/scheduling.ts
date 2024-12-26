@@ -3,10 +3,11 @@ import { Json } from "@/integrations/supabase/types";
 export type RetryBackoffStrategy = 'linear' | 'exponential' | 'fixed';
 
 export type TimeConfig = {
-  type: 'daily' | 'match_dependent';
+  type: 'daily' | 'match_dependent' | 'interval';
   hour?: number;
   matchDayIntervalMinutes?: number;
   nonMatchIntervalMinutes?: number;
+  intervalMinutes?: number;
 };
 
 export const isTimeConfig = (json: Json | null): json is TimeConfig => {
@@ -14,7 +15,7 @@ export const isTimeConfig = (json: Json | null): json is TimeConfig => {
   const config = json as Record<string, unknown>;
   return (
     typeof config.type === 'string' &&
-    ['daily', 'match_dependent'].includes(config.type)
+    ['daily', 'match_dependent', 'interval'].includes(config.type)
   );
 };
 
