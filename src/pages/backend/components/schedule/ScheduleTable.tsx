@@ -66,6 +66,7 @@ export function ScheduleTable({ schedules, onStatusChange }: ScheduleTableProps)
             <TableCell>
               <QuickActionsMenu
                 scheduleId={schedule.id}
+                functionName={schedule.function_name}
                 status={schedule.enabled ? 'active' : 'disabled'}
                 onStatusChange={() => onStatusChange(schedule.id, schedule.enabled ? 'active' : 'disabled')}
               />
