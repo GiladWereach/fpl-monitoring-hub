@@ -4,14 +4,7 @@ import {
   ResolvedSchedule, 
   ScheduleResolution 
 } from '../components/dashboard/types/scheduling';
-import { determineMatchStatus } from './matchStatusService';
-
-interface TimeConfig {
-  type: 'daily' | 'match_dependent';
-  matchDayIntervalMinutes?: number;
-  nonMatchIntervalMinutes?: number;
-  hour?: number;
-}
+import { detectMatchWindow } from './matchWindowService';
 
 export async function resolveSchedule(
   schedule: AdvancedScheduleFormValues,
@@ -84,36 +77,32 @@ async function calculateDynamicInterval(
   }
 
   // Default to schedule's configured interval or 30 minutes
-  const timeConfig = schedule.time_config as TimeConfig;
-  return timeConfig.matchDayIntervalMinutes || 30;
+  return schedule.time_config.matchDayIntervalMinutes || 30;
 }
 
 async function getMatchDependentInterval(
   schedule: AdvancedScheduleFormValues
 ): Promise<number> {
   console.log('Getting match dependent interval');
-  const matchStatus = await determineMatchStatus();
+  const matchStatus = await detectMatchWindow();
   console.log('Match status:', matchStatus);
   
-  const timeConfig = schedule.time_config as TimeConfig;
-  
-  if (matchStatus.hasActiveMatches) {
+  if (matchStatus?.hasActiveMatches) {
     console.log('Active matches found, using match day interval');
-    return timeConfig.matchDayIntervalMinutes || 2;
+    return schedule.time_config.matchDayIntervalMinutes || 2;
   }
   
-  if (matchStatus.isMatchDay) {
+  if (matchStatus?.isMatchDay) {
     console.log('Match day but no active matches, using non-match interval');
-    return timeConfig.nonMatchIntervalMinutes || 30;
+    return schedule.time_config.nonMatchIntervalMinutes || 30;
   }
   
   console.log('No matches, using default interval');
-  return timeConfig.matchDayIntervalMinutes || 1440;
+  return schedule.time_config.matchDayIntervalMinutes || 1440;
 }
 
 function getDefaultInterval(schedule: AdvancedScheduleFormValues): number {
-  const timeConfig = schedule.time_config as TimeConfig;
-  return timeConfig.matchDayIntervalMinutes || 1440;
+  return schedule.time_config.matchDayIntervalMinutes || 1440;
 }
 
 function calculateNextExecution(intervalMinutes: number): Date {
