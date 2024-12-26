@@ -59,8 +59,6 @@ export type Schedule = {
   event_conditions: EventCondition[];
   last_execution_at?: string;
   next_execution_at?: string;
-  description?: string;
-  priority?: number;
   created_at?: string;
   updated_at?: string;
   schedule_execution_logs?: ExecutionLog[];
@@ -76,7 +74,7 @@ export type ExecutionLog = {
   execution_duration_ms?: number | null;
   execution_context?: Json | null;
   created_at?: string | null;
-  schedules: {
+  schedules?: {
     function_name: string;
   };
 };
@@ -125,13 +123,13 @@ export type TestResult = {
   executionTime?: number;
   error?: string;
   functionName: string;
-  scheduleType?: 'time_based' | 'event_based' | 'retry-test';
+  scheduleType?: 'time_based' | 'event_based' | 'match_dependent' | 'retry-test';
   retryCount?: number;
 };
 
 export type TestSuite = {
   functionName: string;
-  scheduleTypes: ('time_based' | 'event_based')[];
+  scheduleTypes: ('time_based' | 'event_based' | 'match_dependent')[];
 };
 
 export type ScheduleValidationResult = {
