@@ -13,18 +13,18 @@ export function UpcomingExecutions() {
     queryFn: async () => {
       console.log('Fetching upcoming executions');
       try {
-        // First fetch regular schedules
-        const { data: regularSchedules, error: scheduleError } = await supabase
+        const { data: schedules, error: scheduleError } = await supabase
           .from('schedules')
           .select(`
             id,
             function_name,
-            next_execution_at,
-            enabled,
             schedule_type,
+            enabled,
             time_config,
-            event_config
+            next_execution_at,
+            last_execution_at
           `)
+          .eq('enabled', true)
           .order('next_execution_at', { ascending: true })
           .limit(10);
 
@@ -33,45 +33,8 @@ export function UpcomingExecutions() {
           throw scheduleError;
         }
 
-        console.log('Regular schedules fetched:', regularSchedules);
-
-        // Then fetch function schedules
-        const { data: functionSchedules, error: fsError } = await supabase
-          .from('function_schedules')
-          .select('*')
-          .eq('status', 'active')
-          .order('next_execution_at', { ascending: true });
-
-        if (fsError) {
-          console.error('Error fetching function schedules:', fsError);
-          throw fsError;
-        }
-
-        console.log('Function schedules fetched:', functionSchedules);
-
-        // Combine and normalize both types of schedules
-        const allSchedules = [
-          ...(regularSchedules || []),
-          ...(functionSchedules || []).map(fs => ({
-            id: fs.id,
-            function_name: fs.function_name,
-            next_execution_at: fs.next_execution_at,
-            enabled: fs.status === 'active',
-            schedule_type: 'time_based',
-            time_config: {
-              type: fs.frequency_type === 'fixed_interval' ? 'interval' : 'daily',
-              intervalMinutes: fs.base_interval_minutes,
-              hour: fs.fixed_time ? parseInt(fs.fixed_time.split(':')[0]) : null
-            }
-          }))
-        ];
-
-        // Sort by next execution time
-        return allSchedules.sort((a, b) => {
-          if (!a.next_execution_at) return 1;
-          if (!b.next_execution_at) return -1;
-          return new Date(a.next_execution_at).getTime() - new Date(b.next_execution_at).getTime();
-        });
+        console.log('Schedules fetched:', schedules);
+        return schedules;
       } catch (error) {
         console.error('Error in queryFn:', error);
         toast({

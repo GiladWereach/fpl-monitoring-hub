@@ -22,36 +22,42 @@ export function FunctionDialogHandler({
     try {
       console.log("Creating new function schedule:", data);
       
-      const { data: group, error: groupError } = await supabase
-        .from('function_schedules')
+      // Get base settings from existing schedule if any
+      const { data: existingSchedule, error: scheduleError } = await supabase
+        .from('schedules')
         .select('*')
-        .eq('group_id', data.groupId)
+        .eq('function_name', data.name)
         .maybeSingle();
 
-      if (groupError) throw groupError;
+      if (scheduleError) throw scheduleError;
 
-      const baseSettings = group || {
-        frequency_type: 'fixed_interval',
-        base_interval_minutes: 5,
-        status: 'paused',
-        max_concurrent_executions: 3,
-        timeout_seconds: 30,
-        retry_count: 3,
-        retry_delay_seconds: 60
+      // Default settings if no existing schedule
+      const baseSettings = existingSchedule || {
+        schedule_type: 'time_based',
+        time_config: {
+          type: 'interval',
+          intervalMinutes: 5
+        },
+        enabled: false,
+        execution_config: {
+          retry_count: 3,
+          timeout_seconds: 30,
+          retry_delay_seconds: 60,
+          concurrent_execution: false,
+          retry_backoff: 'linear',
+          max_retry_delay: 3600
+        }
       };
 
       const { error } = await supabase
-        .from('function_schedules')
+        .from('schedules')
         .insert({
           function_name: data.name,
-          group_id: data.groupId,
-          frequency_type: baseSettings.frequency_type,
-          base_interval_minutes: baseSettings.base_interval_minutes,
-          status: baseSettings.status,
-          max_concurrent_executions: baseSettings.max_concurrent_executions,
-          timeout_seconds: baseSettings.timeout_seconds,
-          retry_count: baseSettings.retry_count,
-          retry_delay_seconds: baseSettings.retry_delay_seconds
+          schedule_type: baseSettings.schedule_type,
+          enabled: baseSettings.enabled,
+          time_config: baseSettings.time_config,
+          execution_config: baseSettings.execution_config,
+          timezone: 'UTC'
         });
 
       if (error) throw error;

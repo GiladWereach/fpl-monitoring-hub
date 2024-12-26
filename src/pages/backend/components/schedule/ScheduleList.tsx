@@ -11,16 +11,19 @@ export function ScheduleList() {
   const [groupFilter, setGroupFilter] = useState("all");
 
   const { data: schedules, isLoading } = useQuery({
-    queryKey: ['function-schedules'],
+    queryKey: ['schedules'],
     queryFn: async () => {
-      console.log('Fetching function schedules');
+      console.log('Fetching schedules');
       const { data, error } = await supabase
-        .from('function_schedules')
+        .from('schedules')
         .select(`
           *,
-          schedule_groups (
-            name,
-            description
+          schedule_execution_logs (
+            id,
+            status,
+            started_at,
+            completed_at,
+            error_details
           )
         `)
         .order('created_at', { ascending: false });
@@ -35,20 +38,18 @@ export function ScheduleList() {
     refetchInterval: 30000
   });
 
-  const toggleScheduleStatus = async (scheduleId: string, currentStatus: string) => {
-    const newStatus = currentStatus === 'active' ? 'paused' : 'active';
-    
+  const toggleScheduleStatus = async (scheduleId: string, currentEnabled: boolean) => {
     try {
       const { error } = await supabase
-        .from('function_schedules')
-        .update({ status: newStatus })
+        .from('schedules')
+        .update({ enabled: !currentEnabled })
         .eq('id', scheduleId);
 
       if (error) throw error;
 
       toast({
         title: "Success",
-        description: `Schedule ${newStatus === 'active' ? 'activated' : 'paused'} successfully`,
+        description: `Schedule ${!currentEnabled ? 'enabled' : 'disabled'} successfully`,
       });
     } catch (error) {
       console.error('Error toggling schedule status:', error);
@@ -62,14 +63,13 @@ export function ScheduleList() {
 
   const filteredSchedules = schedules?.filter(schedule => {
     const matchesSearch = schedule.function_name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === "all" || schedule.status === statusFilter;
-    const matchesGroup = groupFilter === "all" || schedule.schedule_groups?.name === groupFilter;
-    return matchesSearch && matchesStatus && matchesGroup;
+    const matchesStatus = statusFilter === "all" || 
+      (statusFilter === "enabled" && schedule.enabled) ||
+      (statusFilter === "disabled" && !schedule.enabled);
+    return matchesSearch && matchesStatus;
   });
 
   if (isLoading) return null;
-
-  const uniqueGroups = Array.from(new Set(schedules?.map(s => s.schedule_groups?.name)));
 
   return (
     <div className="space-y-4">
@@ -78,9 +78,6 @@ export function ScheduleList() {
         onSearchChange={setSearchTerm}
         statusFilter={statusFilter}
         onStatusFilterChange={setStatusFilter}
-        groupFilter={groupFilter}
-        onGroupFilterChange={setGroupFilter}
-        groups={uniqueGroups}
       />
 
       <ScheduleTable
