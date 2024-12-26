@@ -1,117 +1,102 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Bell, CheckCircle2, XCircle, AlertTriangle } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { Bell, CheckCircle2, XCircle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { format } from "date-fns";
 
 export function AlertingSystem() {
-  const { data: alerts, isLoading } = useQuery({
+  const { data: alerts, refetch } = useQuery({
     queryKey: ['system-alerts'],
     queryFn: async () => {
       console.log('Fetching system alerts');
-      const { data: healthMetrics, error } = await supabase
-        .from('api_health_metrics')
-        .select('*')
+      const { data, error } = await supabase
+        .from('alerts')
+        .select(`
+          *,
+          alert_notifications (*)
+        `)
         .order('created_at', { ascending: false })
         .limit(10);
 
-      if (error) {
-        console.error('Error fetching alerts:', error);
-        throw error;
-      }
-
-      return healthMetrics?.map(metric => ({
-        endpoint: metric.endpoint,
-        status: metric.error_count > 0 ? 'error' : 'healthy',
-        timestamp: metric.created_at,
-        details: metric.error_pattern,
-        successCount: metric.success_count,
-        errorCount: metric.error_count,
-        avgResponseTime: metric.avg_response_time
-      }));
+      if (error) throw error;
+      return data;
     },
     refetchInterval: 30000
   });
 
-  const getAlertIcon = (status: string) => {
-    switch (status) {
-      case 'error':
-        return <XCircle className="h-5 w-5 text-destructive" />;
-      case 'warning':
-        return <AlertTriangle className="h-5 w-5 text-yellow-500" />;
-      default:
-        return <CheckCircle2 className="h-5 w-5 text-success" />;
+  const acknowledgeAlert = async (alertId: string) => {
+    try {
+      const { error } = await supabase
+        .from('alerts')
+        .update({
+          acknowledged_at: new Date().toISOString(),
+          acknowledged_by: (await supabase.auth.getUser()).data.user?.id
+        })
+        .eq('id', alertId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Alert Acknowledged",
+        description: "The alert has been marked as acknowledged",
+      });
+      
+      refetch();
+    } catch (error) {
+      console.error('Error acknowledging alert:', error);
+      toast({
+        title: "Error",
+        description: "Failed to acknowledge alert",
+        variant: "destructive",
+      });
     }
   };
 
-  if (isLoading) {
-    return null;
-  }
-
-  const getHealthStatus = (successCount: number, errorCount: number) => {
-    const total = successCount + errorCount;
-    const successRate = total > 0 ? (successCount / total) * 100 : 100;
-    if (successRate >= 95) return 'healthy';
-    if (successRate >= 80) return 'warning';
-    return 'error';
-  };
-
   return (
-    <Card className="p-4">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold">System Health</h3>
+    <Card className="p-6">
+      <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
-          <Switch
-            id="alerts-enabled"
-            onCheckedChange={(checked) => {
-              toast({
-                title: checked ? "Alerts Enabled" : "Alerts Disabled",
-                description: checked 
-                  ? "You will now receive system alerts" 
-                  : "System alerts have been disabled",
-              });
-            }}
-          />
-          <Bell className="h-4 w-4" />
+          <Bell className="h-5 w-5" />
+          <h2 className="text-xl font-semibold">System Alerts</h2>
         </div>
+        <Badge variant="outline">
+          {alerts?.filter(a => !a.acknowledged_at).length || 0} Active
+        </Badge>
       </div>
 
-      <ScrollArea className="h-[300px]">
-        <div className="space-y-2">
-          {alerts?.map((alert, index) => {
-            const status = getHealthStatus(alert.successCount, alert.errorCount);
-            return (
-              <Alert 
-                key={index} 
-                variant={status === 'error' ? 'destructive' : status === 'warning' ? 'default' : 'default'}
-                className="border-l-4 border-l-primary"
-              >
-                <div className="flex items-center gap-2">
-                  {getAlertIcon(status)}
-                  <AlertDescription>
-                    <div className="flex flex-col gap-1">
-                      <div className="flex justify-between items-center">
-                        <span className="font-medium">{alert.endpoint}</span>
-                        <span className="text-sm text-muted-foreground">
-                          {new Date(alert.timestamp).toLocaleTimeString()}
-                        </span>
-                      </div>
-                      <div className="text-sm grid grid-cols-3 gap-2">
-                        <span>Success: {alert.successCount}</span>
-                        <span>Errors: {alert.errorCount}</span>
-                        <span>Avg Time: {alert.avgResponseTime?.toFixed(2)}ms</span>
-                      </div>
-                    </div>
-                  </AlertDescription>
+      <div className="space-y-4">
+        {alerts?.map((alert) => (
+          <Card key={alert.id} className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                {alert.severity === 'critical' ? (
+                  <XCircle className="h-5 w-5 text-destructive" />
+                ) : (
+                  <CheckCircle2 className="h-5 w-5 text-success" />
+                )}
+                <div>
+                  <p className="font-medium">{alert.message}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {format(new Date(alert.created_at), "MMM d, HH:mm:ss")}
+                  </p>
                 </div>
-              </Alert>
-            );
-          })}
-        </div>
-      </ScrollArea>
+              </div>
+              {!alert.acknowledged_at && (
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => acknowledgeAlert(alert.id)}
+                >
+                  Acknowledge
+                </Button>
+              )}
+            </div>
+          </Card>
+        ))}
+      </div>
     </Card>
   );
 }
