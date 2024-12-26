@@ -1,14 +1,13 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { RefreshCw } from "lucide-react";
-import { functions, getCategoryDescription } from "./utils/functionConfigs";
-import { executeFetchFunction } from "./utils/functionExecutor";
-import { FunctionList } from "./components/FunctionList";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ScheduleCategory } from "./types/scheduleTypes";
+import { functions, getCategoryDescription } from "./utils/functionConfigs";
+import { executeFetchFunction } from "./utils/functionExecutor";
 import { toast } from "@/hooks/use-toast";
+import { FunctionExecutionStatus } from "./components/FunctionExecutionStatus";
+import { CategorySection } from "./components/CategorySection";
 
 export function EdgeFunctionManager() {
   const [loading, setLoading] = useState<string | null>(null);
@@ -40,7 +39,7 @@ export function EdgeFunctionManager() {
       console.log('Fetched schedules:', data);
       return data;
     },
-    refetchInterval: 10000 // Refresh every 10 seconds during active development
+    refetchInterval: 10000
   });
 
   const handleExecute = async (functionName: string) => {
@@ -57,7 +56,6 @@ export function EdgeFunctionManager() {
         description: `Successfully executed ${functionName} in ${duration}ms`,
       });
       
-      // Refresh schedules to show updated execution status
       await refetchSchedules();
     } catch (error) {
       console.error(`Error executing function ${functionName}:`, error);
@@ -73,7 +71,6 @@ export function EdgeFunctionManager() {
 
   const refreshAll = async () => {
     setLoading("all");
-    const startTime = Date.now();
     let successCount = 0;
     let failureCount = 0;
 
@@ -104,17 +101,7 @@ export function EdgeFunctionManager() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Edge Functions Manager</h2>
-        <Button
-          onClick={refreshAll}
-          disabled={loading !== null}
-          className="gap-2"
-        >
-          <RefreshCw className={`h-4 w-4 ${loading === "all" ? "animate-spin" : ""}`} />
-          Refresh All
-        </Button>
-      </div>
+      <FunctionExecutionStatus loading={loading} onRefreshAll={refreshAll} />
 
       <ScrollArea className="h-[calc(100vh-200px)]">
         <div className="min-w-[600px] pr-4 space-y-8">
@@ -123,18 +110,15 @@ export function EdgeFunctionManager() {
             if (categoryFunctions.length === 0) return null;
 
             return (
-              <div key={category} className="space-y-4">
-                <div className="border-b pb-2">
-                  <h3 className="text-lg font-semibold capitalize">{category.replace('_', ' ')}</h3>
-                  <p className="text-sm text-muted-foreground">{getCategoryDescription(category)}</p>
-                </div>
-                <FunctionList 
-                  loading={loading} 
-                  onExecute={handleExecute} 
-                  schedules={schedules || []}
-                  functions={categoryFunctions}
-                />
-              </div>
+              <CategorySection
+                key={category}
+                category={category}
+                description={getCategoryDescription(category)}
+                functions={categoryFunctions}
+                loading={loading}
+                onExecute={handleExecute}
+                schedules={schedules || []}
+              />
             );
           })}
         </div>
