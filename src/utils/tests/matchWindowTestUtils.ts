@@ -17,8 +17,7 @@ export function createMockMatchWindow(
     next_kickoff: nextKickoff,
     matchCount,
     hasActiveMatches: isActive,
-    isMatchDay: isActive || !!nextKickoff,
-    nextMatchTime: nextKickoff
+    isMatchDay: isActive || !!nextKickoff
   };
 }
 
