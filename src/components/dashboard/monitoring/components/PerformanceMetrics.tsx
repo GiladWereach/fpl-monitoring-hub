@@ -8,6 +8,7 @@ interface ProcessingMetrics {
   avg_processing_time: number;
   error_rate: number;
   data_quality_score: number;
+  active_processes?: number;
   system_load?: number;
 }
 
@@ -20,7 +21,6 @@ export function PerformanceMetrics() {
       
       if (error) throw error;
 
-      // Add system_load to match expected interface
       return {
         ...data[0],
         system_load: data[0]?.active_processes || 0

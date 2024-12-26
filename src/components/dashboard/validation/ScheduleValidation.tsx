@@ -4,22 +4,13 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { CheckCircle2, AlertTriangle, XCircle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { ExecutionWindow, ExecutionConfig } from "../types/scheduling";
 
 interface ValidationResult {
   schedule_id: string;
   function_name: string;
   status: 'valid' | 'warning' | 'invalid';
   issues: string[];
-}
-
-interface ExecutionWindow {
-  start_time: string;
-  end_time: string;
-}
-
-interface ExecutionConfig {
-  retry_count: number;
-  timeout_seconds: number;
 }
 
 export function ScheduleValidation() {
@@ -44,15 +35,15 @@ export function ScheduleValidation() {
           issues.push('Missing time configuration');
         }
         
-        // Validate execution window
-        const executionWindow = schedule.execution_window as ExecutionWindow;
+        // Validate execution window with proper type casting
+        const executionWindow = schedule.execution_window as unknown as ExecutionWindow;
         if (executionWindow && 
             (!executionWindow.start_time || !executionWindow.end_time)) {
           issues.push('Invalid execution window');
         }
         
-        // Validate execution config
-        const executionConfig = schedule.execution_config as ExecutionConfig;
+        // Validate execution config with proper type casting
+        const executionConfig = schedule.execution_config as unknown as ExecutionConfig;
         if (!executionConfig?.retry_count || 
             !executionConfig?.timeout_seconds) {
           issues.push('Incomplete execution configuration');
