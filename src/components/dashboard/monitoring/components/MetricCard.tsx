@@ -7,6 +7,8 @@ interface MetricsCardProps {
   subtitle: string;
   icon: LucideIcon;
   iconColor: string;
+  status?: string;
+  description?: string;
   indicator?: {
     color: string;
     show?: boolean;
@@ -19,11 +21,10 @@ export function MetricCard({
   subtitle,
   icon: Icon,
   iconColor,
+  description,
+  status,
   indicator
 }: MetricsCardProps) {
-  // Ensure we always have a valid display value
-  const displayValue = value || 'N/A';
-
   return (
     <Card className="p-4">
       <div className="flex items-center justify-between">
@@ -34,10 +35,18 @@ export function MetricCard({
           <Icon className={`h-4 w-4 ${iconColor}`} />
         )}
       </div>
-      <p className="text-2xl font-bold mt-2">{displayValue}</p>
+      <p className="text-2xl font-bold mt-2">{value}</p>
       <p className="text-sm text-muted-foreground mt-1">
         {subtitle}
       </p>
+      {description && (
+        <p className="text-sm text-muted-foreground mt-1">{description}</p>
+      )}
+      {status && (
+        <div className={`mt-2 text-sm ${status === 'success' ? 'text-success' : 'text-destructive'}`}>
+          {status}
+        </div>
+      )}
     </Card>
   );
 }
