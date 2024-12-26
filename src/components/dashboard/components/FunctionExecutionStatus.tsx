@@ -42,10 +42,10 @@ export function FunctionExecutionStatus({
             <Clock className="h-4 w-4" />
             <AlertDescription>
               {matchWindow.type === 'live' && (
-                <>Active matches until {format(matchWindow.end, 'HH:mm')}</>
+                <>Active matches until {format(matchWindow.window_end, 'HH:mm')}</>
               )}
-              {matchWindow.type === 'pre' && matchWindow.nextKickoff && (
-                <>Next match at {format(matchWindow.nextKickoff, 'HH:mm')}</>
+              {matchWindow.type === 'pre_match' && matchWindow.next_kickoff && (
+                <>Next match at {format(matchWindow.next_kickoff, 'HH:mm')}</>
               )}
               {matchWindow.type === 'idle' && (
                 <>No active matches</>
