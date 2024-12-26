@@ -1,6 +1,8 @@
 import React from 'react';
 import { Check, AlertCircle, Clock, X, Play } from 'lucide-react';
 import { cn } from "@/lib/utils";
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 interface PlayerStatusProps {
   player: any;
@@ -8,22 +10,39 @@ interface PlayerStatusProps {
 }
 
 export function PlayerStatus({ player, liveData }: PlayerStatusProps) {
+  // Query fixture status when we have live data
+  const { data: fixtureStatus } = useQuery({
+    queryKey: ['fixture-status', liveData?.fixture_id],
+    enabled: !!liveData?.fixture_id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('fixtures')
+        .select('started, finished, finished_provisional')
+        .eq('id', liveData.fixture_id)
+        .single();
+      
+      if (error) throw error;
+      console.log('Fixture status for fixture', liveData.fixture_id, ':', data);
+      return data;
+    }
+  });
+
   console.log('Player Status Check:', {
     player_id: player?.id,
     web_name: player?.web_name,
     chance_of_playing: player?.chance_of_playing_this_round,
     status: player?.status,
+    fixture_status: fixtureStatus,
     liveData: liveData ? {
       minutes: liveData.minutes,
-      finished: liveData.finished,
       fixture_id: liveData.fixture_id
     } : 'No live data'
   });
 
   const getPlayerStatus = () => {
-    // First check player availability from players table
-    if (player?.status === 'u' || player?.chance_of_playing_this_round === 0) {
-      console.log(`Player ${player.web_name} is not available`);
+    // Check player availability from players table
+    if (player?.chance_of_playing_this_round === 0) {
+      console.log(`Player ${player.web_name} is not available (0% chance)`);
       return {
         icon: X,
         color: 'text-red-500',
@@ -43,9 +62,9 @@ export function PlayerStatus({ player, liveData }: PlayerStatusProps) {
     }
 
     // Then check match and performance status
-    if (liveData) {
+    if (liveData && fixtureStatus) {
       // Player is in an active match
-      if (liveData.minutes > 0 && !liveData.finished) {
+      if (liveData.minutes > 0 && fixtureStatus.started && !fixtureStatus.finished) {
         console.log(`Player ${player.web_name} is in play`);
         return {
           icon: Play,
@@ -56,7 +75,7 @@ export function PlayerStatus({ player, liveData }: PlayerStatusProps) {
       }
 
       // Match is finished and player participated
-      if (liveData.finished && liveData.minutes > 0) {
+      if ((fixtureStatus.finished || fixtureStatus.finished_provisional) && liveData.minutes > 0) {
         console.log(`Player ${player.web_name} has finished playing (${liveData.minutes} mins)`);
         return {
           icon: Check,
@@ -67,7 +86,7 @@ export function PlayerStatus({ player, liveData }: PlayerStatusProps) {
       }
 
       // Match is finished but player didn't play
-      if (liveData.finished) {
+      if (fixtureStatus.finished || fixtureStatus.finished_provisional) {
         console.log(`Player ${player.web_name} was unused in the match`);
         return {
           icon: X,
