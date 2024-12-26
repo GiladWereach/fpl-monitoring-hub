@@ -7,11 +7,14 @@ export interface Pick {
 }
 
 export interface TeamSelection {
-  picks: Pick[];
+  id: string;
+  fpl_team_id: number;
+  event: number;
   formation: string;
   captain_id: number;
   vice_captain_id: number;
-  auto_subs: any;
+  picks: Pick[];
+  auto_subs: any[] | null;
 }
 
 export interface Player {

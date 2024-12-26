@@ -6,9 +6,8 @@ import { ViewToggle } from '@/components/gameweek/ViewToggle';
 import { LivePerformance } from '@/components/gameweek/LivePerformance';
 import { PitchView } from '@/components/gameweek/PitchView';
 import { ListView } from '@/components/gameweek/ListView';
-import { BenchPlayers } from '@/components/gameweek/BenchPlayers';
 import { calculateTotalPoints, calculateBenchPoints } from '@/components/gameweek/utils/points-calculator';
-import { TeamSelection, Pick } from '@/components/gameweek/types';
+import { TeamSelection, Pick, Player } from '@/components/gameweek/types';
 import { Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -40,9 +39,11 @@ export default function Gameweek() {
         .from('events')
         .select('*')
         .eq('is_current', true)
-        .single();
+        .maybeSingle();
       
       if (error) throw error;
+      if (!data) throw new Error('No current gameweek found');
+      
       console.log('Current gameweek:', data);
       return data;
     }
@@ -58,18 +59,28 @@ export default function Gameweek() {
         .select('*')
         .eq('event', currentGameweek.id)
         .eq('fpl_team_id', teamId)
-        .single();
+        .maybeSingle();
       
       if (error) throw error;
+      if (!data) throw new Error('No team selection found');
+      
       console.log('Team selection:', data);
       
       // Transform the data to match our TeamSelection type
       const transformedData: TeamSelection = {
-        ...data,
-        picks: data.picks as Pick[],
+        id: data.id,
+        fpl_team_id: data.fpl_team_id,
+        event: data.event,
         formation: data.formation,
         captain_id: data.captain_id,
         vice_captain_id: data.vice_captain_id,
+        picks: (data.picks as any[]).map(pick => ({
+          element: pick.element,
+          position: pick.position,
+          multiplier: pick.multiplier,
+          is_captain: pick.is_captain,
+          is_vice_captain: pick.is_vice_captain
+        })),
         auto_subs: data.auto_subs
       };
       
