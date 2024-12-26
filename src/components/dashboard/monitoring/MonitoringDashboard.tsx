@@ -6,6 +6,13 @@ import { SystemHealthOverview } from "@/components/dashboard/monitoring/componen
 import { PerformanceMetrics } from "@/components/dashboard/monitoring/components/PerformanceMetrics";
 import { ErrorAnalyticsDashboard } from "@/components/dashboard/monitoring/ErrorAnalyticsDashboard";
 
+interface SystemMetrics {
+  success_rate: number;
+  avg_response_time: number;
+  error_rate: number;
+  system_load: number;
+}
+
 export function MonitoringDashboard() {
   const { data: metrics, isLoading } = useQuery({
     queryKey: ['system-metrics'],
@@ -18,8 +25,16 @@ export function MonitoringDashboard() {
         throw error;
       }
       
-      console.log('Fetched metrics:', healthData);
-      return healthData;
+      // Transform the data to match the expected interface
+      const transformedData: SystemMetrics = {
+        success_rate: healthData[0]?.success_rate || 0,
+        avg_response_time: healthData[0]?.avg_response_time || 0,
+        error_rate: 100 - (healthData[0]?.success_rate || 0),
+        system_load: healthData[0]?.total_successes || 0
+      };
+      
+      console.log('Fetched metrics:', transformedData);
+      return transformedData;
     },
     refetchInterval: 30000
   });
@@ -34,7 +49,12 @@ export function MonitoringDashboard() {
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <APIHealthStatus />
-        <SystemHealthOverview metrics={metrics} />
+        <SystemHealthOverview metrics={metrics || {
+          success_rate: 0,
+          avg_response_time: 0,
+          error_rate: 0,
+          system_load: 0
+        }} />
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

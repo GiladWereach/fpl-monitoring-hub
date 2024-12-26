@@ -12,6 +12,16 @@ interface ValidationResult {
   issues: string[];
 }
 
+interface ExecutionWindow {
+  start_time: string;
+  end_time: string;
+}
+
+interface ExecutionConfig {
+  retry_count: number;
+  timeout_seconds: number;
+}
+
 export function ScheduleValidation() {
   const { data: validations } = useQuery({
     queryKey: ['schedule-validations'],
@@ -35,14 +45,16 @@ export function ScheduleValidation() {
         }
         
         // Validate execution window
-        if (schedule.execution_window && 
-            (!schedule.execution_window.start_time || !schedule.execution_window.end_time)) {
+        const executionWindow = schedule.execution_window as ExecutionWindow;
+        if (executionWindow && 
+            (!executionWindow.start_time || !executionWindow.end_time)) {
           issues.push('Invalid execution window');
         }
         
         // Validate execution config
-        if (!schedule.execution_config?.retry_count || 
-            !schedule.execution_config?.timeout_seconds) {
+        const executionConfig = schedule.execution_config as ExecutionConfig;
+        if (!executionConfig?.retry_count || 
+            !executionConfig?.timeout_seconds) {
           issues.push('Incomplete execution configuration');
         }
 
