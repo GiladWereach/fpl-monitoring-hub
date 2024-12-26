@@ -1,106 +1,40 @@
 import { supabase } from "@/integrations/supabase/client";
-import { addHours, subHours } from "date-fns";
-import { formatInTimeZone, toZonedTime } from 'date-fns-tz';
 
-export interface MatchWindow {
-  start: Date;
-  end: Date;
-  type: 'pre' | 'live' | 'post' | 'idle';
-  hasActiveMatches: boolean;
-  activeMatches?: number;
-  nextKickoff?: Date;
-  timezone?: string;
-}
+export type MatchWindow = {
+  type: 'live' | 'pre_match' | 'post_match';
+  window_start: string;
+  window_end: string;
+  is_active: boolean;
+  match_count: number;
+  next_kickoff: string | null;
+};
 
-export interface MatchWindowOptions {
-  timezone?: string;
-}
-
-export async function detectMatchWindow({ timezone = 'UTC' }: MatchWindowOptions = {}): Promise<MatchWindow> {
+export async function detectMatchWindow(): Promise<MatchWindow | null> {
   console.log('Detecting match window...');
   
-  const now = new Date();
-  const zonedNow = toZonedTime(now, timezone);
-  
-  // Get active matches
-  const { data: activeMatches, error: activeError } = await supabase
-    .from('fixtures')
-    .select('*')
-    .eq('started', true)
-    .eq('finished', false)
-    .order('kickoff_time', { ascending: true });
+  const { data, error } = await supabase
+    .rpc('get_current_match_window');
 
-  if (activeError) {
-    console.error('Error fetching active matches:', activeError);
-    throw activeError;
+  if (error) {
+    console.error('Error detecting match window:', error);
+    return null;
   }
 
-  if (activeMatches && activeMatches.length > 0) {
-    console.log(`Found ${activeMatches.length} active matches`);
-    const firstMatch = new Date(activeMatches[0].kickoff_time);
-    const lastMatch = new Date(activeMatches[activeMatches.length - 1].kickoff_time);
-    const windowEnd = addHours(lastMatch, 2.5); // 2.5 hours after last kickoff
-
-    return {
-      start: firstMatch,
-      end: windowEnd,
-      type: 'live',
-      hasActiveMatches: true,
-      activeMatches: activeMatches.length,
-      timezone
-    };
+  if (!data || data.length === 0) {
+    console.log('No active match window found');
+    return null;
   }
 
-  // Check for upcoming matches in the next hour
-  const oneHourFromNow = addHours(now, 1);
-  const { data: upcomingMatches, error: upcomingError } = await supabase
-    .from('fixtures')
-    .select('*')
-    .eq('started', false)
-    .lte('kickoff_time', oneHourFromNow.toISOString())
-    .order('kickoff_time');
+  // Determine the window type based on match status
+  const windowType = data[0].is_active ? 'live' : 
+    (new Date(data[0].window_start) > new Date() ? 'pre_match' : 'post_match');
 
-  if (upcomingError) {
-    console.error('Error fetching upcoming matches:', upcomingError);
-    throw upcomingError;
-  }
-
-  if (upcomingMatches?.length) {
-    const nextKickoff = new Date(upcomingMatches[0].kickoff_time);
-    const preMatchWindow = subHours(nextKickoff, 2);
-
-    if (now >= preMatchWindow && now < nextKickoff) {
-      console.log('In pre-match window');
-      return {
-        start: preMatchWindow,
-        end: nextKickoff,
-        type: 'pre',
-        hasActiveMatches: false,
-        nextKickoff,
-        timezone
-      };
-    }
-
-    // Outside pre-match window but have upcoming match
-    return {
-      start: now,
-      end: preMatchWindow,
-      type: 'idle',
-      hasActiveMatches: false,
-      nextKickoff,
-      timezone
-    };
-  }
-
-  // Default idle state
   return {
-    start: now,
-    end: addHours(now, 24),
-    type: 'idle',
-    hasActiveMatches: false,
-    timezone
+    type: windowType,
+    window_start: data[0].window_start,
+    window_end: data[0].window_end,
+    is_active: data[0].is_active,
+    match_count: data[0].match_count,
+    next_kickoff: data[0].next_kickoff
   };
 }
-
-// Re-export for backward compatibility
-export const getMatchWindow = detectMatchWindow;

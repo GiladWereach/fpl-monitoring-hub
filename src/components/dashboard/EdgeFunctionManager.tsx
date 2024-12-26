@@ -8,7 +8,21 @@ import { executeFetchFunction } from "./utils/functionExecutor";
 import { toast } from "@/hooks/use-toast";
 import { FunctionExecutionStatus } from "./components/FunctionExecutionStatus";
 import { CategorySection } from "./components/CategorySection";
-import { detectMatchWindow } from "@/services/matchWindowService";
+import { detectMatchWindow, MatchWindow } from "@/services/matchWindowService";
+
+interface TimeConfig {
+  type: 'match_dependent' | 'daily' | 'fixed';
+  matchDayIntervalMinutes?: number;
+  nonMatchIntervalMinutes?: number;
+}
+
+interface Schedule {
+  id: string;
+  function_name: string;
+  schedule_type: 'time_based' | 'event_based';
+  time_config?: TimeConfig;
+  enabled: boolean;
+}
 
 export function EdgeFunctionManager() {
   const [loading, setLoading] = useState<string | null>(null);
@@ -30,7 +44,7 @@ export function EdgeFunctionManager() {
             execution_duration_ms
           )
         `)
-        .order('function_name');
+        .order('function_name') as { data: Schedule[]; error: any };
       
       if (error) {
         console.error('Error fetching schedules:', error);
@@ -60,20 +74,22 @@ export function EdgeFunctionManager() {
 
         for (const schedule of matchDependentSchedules) {
           const intervalMinutes = window.type === 'live' ? 
-            schedule.time_config.matchDayIntervalMinutes : 
-            schedule.time_config.nonMatchIntervalMinutes;
+            schedule.time_config?.matchDayIntervalMinutes : 
+            schedule.time_config?.nonMatchIntervalMinutes;
 
-          console.log(`Adjusting schedule ${schedule.function_name} to ${intervalMinutes} minute interval`);
-          
-          try {
-            await supabase
-              .from('schedules')
-              .update({ 
-                next_execution_at: new Date(Date.now() + intervalMinutes * 60 * 1000).toISOString()
-              })
-              .eq('id', schedule.id);
-          } catch (error) {
-            console.error(`Error adjusting schedule ${schedule.function_name}:`, error);
+          if (intervalMinutes) {
+            console.log(`Adjusting schedule ${schedule.function_name} to ${intervalMinutes} minute interval`);
+            
+            try {
+              await supabase
+                .from('schedules')
+                .update({ 
+                  next_execution_at: new Date(Date.now() + intervalMinutes * 60 * 1000).toISOString()
+                })
+                .eq('id', schedule.id);
+            } catch (error) {
+              console.error(`Error adjusting schedule ${schedule.function_name}:`, error);
+            }
           }
         }
       }
