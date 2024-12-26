@@ -51,6 +51,7 @@ async function resolveDefault(
   schedule: AdvancedScheduleFormValues
 ): Promise<ResolvedSchedule> {
   const interval = await calculateDynamicInterval(schedule);
+  console.log(`Calculated interval for ${schedule.function_name}:`, interval);
   
   const resolution: ScheduleResolution = {
     priority: 'default',
@@ -68,29 +69,35 @@ async function resolveDefault(
 async function calculateDynamicInterval(
   schedule: AdvancedScheduleFormValues
 ): Promise<number> {
-  if (schedule.schedule_type === 'time_based') {
-    return schedule.time_config.type === 'match_dependent' 
-      ? await getMatchDependentInterval(schedule)
-      : schedule.time_config.matchDayIntervalMinutes || 1440;
+  console.log('Calculating dynamic interval for schedule:', schedule);
+
+  if (schedule.schedule_type === 'time_based' && 
+      schedule.time_config.type === 'match_dependent') {
+    return await getMatchDependentInterval(schedule);
   }
 
-  // Event-based schedules default to checking every 30 minutes
-  return 30;
+  // Default to schedule's configured interval or 30 minutes
+  return schedule.time_config.matchDayIntervalMinutes || 30;
 }
 
 async function getMatchDependentInterval(
   schedule: AdvancedScheduleFormValues
 ): Promise<number> {
+  console.log('Getting match dependent interval');
   const matchStatus = await determineMatchStatus();
+  console.log('Match status:', matchStatus);
   
   if (matchStatus.hasActiveMatches) {
+    console.log('Active matches found, using match day interval');
     return schedule.time_config.matchDayIntervalMinutes || 2;
   }
   
   if (matchStatus.isMatchDay) {
+    console.log('Match day but no active matches, using non-match interval');
     return schedule.time_config.nonMatchIntervalMinutes || 30;
   }
   
+  console.log('No matches, using default interval');
   return schedule.time_config.matchDayIntervalMinutes || 1440;
 }
 
