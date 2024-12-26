@@ -44,11 +44,11 @@ export function EdgeFunctionManager() {
 
   const handleExecute = async (functionName: string) => {
     setLoading(functionName);
+    const executionStartTime = Date.now();
     try {
       console.log(`Executing function: ${functionName}`);
-      const startTime = Date.now();
       await executeFetchFunction(functionName);
-      const duration = Date.now() - startTime;
+      const duration = Date.now() - executionStartTime;
       console.log(`Successfully executed ${functionName} in ${duration}ms`);
       
       toast({
@@ -71,6 +71,7 @@ export function EdgeFunctionManager() {
 
   const refreshAll = async () => {
     setLoading("all");
+    const executionStartTime = Date.now();
     let successCount = 0;
     let failureCount = 0;
 
@@ -85,7 +86,7 @@ export function EdgeFunctionManager() {
       }
     }
 
-    const duration = Date.now() - startTime;
+    const duration = Date.now() - executionStartTime;
     
     toast({
       title: "Refresh Complete",
