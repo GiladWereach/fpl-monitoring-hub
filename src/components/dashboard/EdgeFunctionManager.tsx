@@ -27,6 +27,7 @@ interface Schedule {
 export function EdgeFunctionManager() {
   const [loading, setLoading] = useState<string | null>(null);
 
+  // Enhanced query with error handling and retry configuration
   const { data: schedules, refetch: refetchSchedules } = useQuery({
     queryKey: ['function-schedules'],
     queryFn: async () => {
@@ -44,7 +45,7 @@ export function EdgeFunctionManager() {
             execution_duration_ms
           )
         `)
-        .order('function_name') as { data: Schedule[]; error: any };
+        .order('function_name');
       
       if (error) {
         console.error('Error fetching schedules:', error);
@@ -54,49 +55,93 @@ export function EdgeFunctionManager() {
       console.log('Fetched schedules:', data);
       return data;
     },
-    refetchInterval: 10000
+    refetchInterval: 10000,
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * Math.pow(2, attemptIndex), 30000)
   });
 
-  // Add match window detection with automatic adjustment
+  // Enhanced match window detection with monitoring
   const { data: matchWindow } = useQuery({
     queryKey: ['match-window'],
     queryFn: async () => {
       console.log('Detecting match window...');
-      const window = await detectMatchWindow();
-      
-      // Automatically adjust schedules based on match window
-      if (window && schedules) {
-        console.log('Adjusting schedules based on match window:', window);
-        const matchDependentSchedules = schedules.filter(s => 
-          s.schedule_type === 'time_based' && 
-          s.time_config?.type === 'match_dependent'
-        );
+      try {
+        const window = await detectMatchWindow();
+        console.log('Match window detected:', window);
+        
+        // Automatically adjust schedules based on match window
+        if (window && schedules) {
+          console.log('Adjusting schedules based on match window:', window);
+          const matchDependentSchedules = schedules.filter(s => 
+            s.schedule_type === 'time_based' && 
+            s.time_config?.type === 'match_dependent'
+          );
 
-        for (const schedule of matchDependentSchedules) {
-          const intervalMinutes = window.is_active ? 
-            schedule.time_config?.matchDayIntervalMinutes : 
-            schedule.time_config?.nonMatchIntervalMinutes;
+          for (const schedule of matchDependentSchedules) {
+            const intervalMinutes = window.is_active ? 
+              schedule.time_config?.matchDayIntervalMinutes : 
+              schedule.time_config?.nonMatchIntervalMinutes;
 
-          if (intervalMinutes) {
-            console.log(`Adjusting schedule ${schedule.function_name} to ${intervalMinutes} minute interval`);
-            
-            try {
-              await supabase
-                .from('schedules')
-                .update({ 
-                  next_execution_at: new Date(Date.now() + intervalMinutes * 60 * 1000).toISOString()
-                })
-                .eq('id', schedule.id);
-            } catch (error) {
-              console.error(`Error adjusting schedule ${schedule.function_name}:`, error);
+            if (intervalMinutes) {
+              console.log(`Adjusting schedule ${schedule.function_name} to ${intervalMinutes} minute interval`);
+              
+              try {
+                const nextExecution = new Date(Date.now() + intervalMinutes * 60 * 1000);
+                await supabase
+                  .from('schedules')
+                  .update({ 
+                    next_execution_at: nextExecution.toISOString(),
+                    updated_at: new Date().toISOString()
+                  })
+                  .eq('id', schedule.id);
+
+                // Log successful adjustment
+                await supabase
+                  .from('api_health_metrics')
+                  .insert({
+                    endpoint: `schedule_adjustment_${schedule.function_name}`,
+                    success_count: 1,
+                    error_count: 0,
+                    avg_response_time: 0,
+                    error_pattern: {
+                      match_window: window.is_active ? 'active' : 'inactive',
+                      interval: intervalMinutes
+                    }
+                  });
+              } catch (error) {
+                console.error(`Error adjusting schedule ${schedule.function_name}:`, error);
+                // Log failed adjustment
+                await supabase
+                  .from('api_health_metrics')
+                  .insert({
+                    endpoint: `schedule_adjustment_${schedule.function_name}`,
+                    success_count: 0,
+                    error_count: 1,
+                    avg_response_time: 0,
+                    error_pattern: {
+                      error: error.message,
+                      match_window: window.is_active ? 'active' : 'inactive'
+                    }
+                  });
+              }
             }
           }
         }
+        
+        return window;
+      } catch (error) {
+        console.error('Error in match window detection:', error);
+        toast({
+          title: "Match Window Detection Error",
+          description: error.message,
+          variant: "destructive",
+        });
+        throw error;
       }
-      
-      return window;
     },
-    refetchInterval: 60000
+    refetchInterval: 60000,
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * Math.pow(2, attemptIndex), 30000)
   });
 
   const handleExecute = async (functionName: string) => {
