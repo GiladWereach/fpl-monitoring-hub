@@ -140,13 +140,13 @@ export type ScheduleValidationResult = {
   errors: { field: string; message: string }[];
 };
 
-export const convertScheduleData = (data: any): ScheduleData => {
+export const convertScheduleData = (data: any): Schedule => {
   return {
     id: data.id,
     function_name: data.function_name,
     schedule_type: data.schedule_type,
     enabled: data.enabled,
-    time_config: data.time_config,
+    time_config: isTimeConfig(data.time_config) ? data.time_config : null,
     event_config: data.event_config,
     execution_config: data.execution_config,
     execution_window: data.execution_window,
@@ -158,4 +158,3 @@ export const convertScheduleData = (data: any): ScheduleData => {
     updated_at: data.updated_at
   };
 };
-

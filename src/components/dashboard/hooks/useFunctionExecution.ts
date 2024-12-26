@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { executeFetchFunction } from "../utils/functionExecutor";
 import { toast } from "@/hooks/use-toast";
+import { functions } from "../utils/functionConfigs";
 
 export function useFunctionExecution(refetchSchedules: () => void) {
   const [loading, setLoading] = useState<string | null>(null);

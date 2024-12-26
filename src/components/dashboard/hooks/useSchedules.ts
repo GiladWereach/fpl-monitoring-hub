@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Schedule } from "../types/scheduling";
+import { Schedule, convertScheduleData } from "../types/scheduling";
 
 export function useSchedules() {
   return useQuery({
@@ -28,7 +28,8 @@ export function useSchedules() {
       }
       
       console.log('Fetched schedules:', data);
-      return data as Schedule[];
+      // Use the convertScheduleData helper to ensure proper type conversion
+      return data.map(schedule => convertScheduleData(schedule)) as Schedule[];
     },
     refetchInterval: 10000
   });
