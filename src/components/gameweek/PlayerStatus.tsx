@@ -45,7 +45,7 @@ export function PlayerStatus({ player, liveData }: PlayerStatusProps) {
       console.log(`Player ${player.web_name} is not available (0% chance)`);
       return {
         icon: OctagonX,
-        color: 'text-red-500 hover:text-red-600',
+        color: '#EF4444', // red-500
         animate: false,
         label: 'Not Available'
       };
@@ -55,7 +55,7 @@ export function PlayerStatus({ player, liveData }: PlayerStatusProps) {
       console.log(`Player ${player.web_name} is doubtful (${player.chance_of_playing_this_round}%)`);
       return {
         icon: OctagonAlert,
-        color: 'text-[#FFB020] hover:text-[#FFB020]/90',
+        color: '#FFB020', // warning yellow
         animate: false,
         label: 'Doubtful'
       };
@@ -68,7 +68,7 @@ export function PlayerStatus({ player, liveData }: PlayerStatusProps) {
         console.log(`Player ${player.web_name} is in play`);
         return {
           icon: Play,
-          color: 'text-[#3DFF9A] hover:text-[#3DFF9A]/90',
+          color: '#3DFF9A',
           animate: true,
           label: 'In Play'
         };
@@ -79,7 +79,7 @@ export function PlayerStatus({ player, liveData }: PlayerStatusProps) {
         console.log(`Player ${player.web_name} has finished playing (${liveData.minutes} mins)`);
         return {
           icon: Check,
-          color: 'text-gray-400 hover:text-gray-500',
+          color: '#9CA3AF', // gray-400
           animate: false,
           label: 'Finished'
         };
@@ -90,7 +90,7 @@ export function PlayerStatus({ player, liveData }: PlayerStatusProps) {
         console.log(`Player ${player.web_name} was unused in the match`);
         return {
           icon: OctagonX,
-          color: 'text-gray-400 hover:text-gray-500',
+          color: '#9CA3AF', // gray-400
           animate: false,
           label: 'Unused'
         };
@@ -101,7 +101,7 @@ export function PlayerStatus({ player, liveData }: PlayerStatusProps) {
     console.log(`Player ${player.web_name} is yet to play`);
     return {
       icon: Clock,
-      color: 'text-blue-400 hover:text-blue-500',
+      color: '#60A5FA', // blue-400
       animate: false,
       label: 'Yet to Play'
     };
@@ -115,9 +115,9 @@ export function PlayerStatus({ player, liveData }: PlayerStatusProps) {
       <Icon 
         className={cn(
           "h-4 w-4",
-          status.color,
           status.animate && "animate-pulse"
         )}
+        color={status.color}
         aria-label={status.label}
       />
     </div>
