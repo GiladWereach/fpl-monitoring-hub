@@ -14,12 +14,20 @@ export function EdgeFunctionManager() {
 
   const categories: ScheduleCategory[] = ['core_data', 'match_dependent', 'system', 'analytics'];
 
+  // Convert Date objects to ISO strings for the matchWindow
+  const formattedMatchWindow = matchWindow ? {
+    window_start: matchWindow.window_start.toISOString(),
+    window_end: matchWindow.window_end.toISOString(),
+    is_active: matchWindow.is_active,
+    match_count: matchWindow.match_count
+  } : null;
+
   return (
     <div className="space-y-6">
       <FunctionExecutionStatus 
         loading={loading} 
         onRefreshAll={refreshAll}
-        matchWindow={matchWindow}
+        matchWindow={formattedMatchWindow}
       />
 
       <ScrollArea className="h-[calc(100vh-200px)]">
@@ -37,7 +45,7 @@ export function EdgeFunctionManager() {
                 loading={loading}
                 onExecute={handleExecute}
                 schedules={schedules || []}
-                matchWindow={matchWindow}
+                matchWindow={formattedMatchWindow}
               />
             );
           })}
