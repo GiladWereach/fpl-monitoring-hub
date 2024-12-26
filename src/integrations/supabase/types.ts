@@ -1938,15 +1938,7 @@ export type Database = {
           started_at?: string
           status?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "schedule_execution_logs_schedule_id_fkey"
-            columns: ["schedule_id"]
-            isOneToOne: false
-            referencedRelation: "schedules"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       schedule_groups: {
         Row: {
@@ -1994,15 +1986,7 @@ export type Database = {
           locked_by?: string
           schedule_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "schedule_locks_schedule_id_fkey"
-            columns: ["schedule_id"]
-            isOneToOne: true
-            referencedRelation: "schedules"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       schedules: {
         Row: {
@@ -2550,7 +2534,7 @@ export type Database = {
         | "daily"
         | "override"
       schedule_status: "active" | "paused" | "error"
-      schedule_type: "time_based" | "event_based"
+      schedule_type: "time_based" | "event_based" | "match_dependent"
       schedule_type_new: "time_based" | "event_based" | "match_dependent"
       time_schedule_type: "interval" | "daily" | "weekly" | "monthly" | "cron"
       user_role: "admin" | "user"
