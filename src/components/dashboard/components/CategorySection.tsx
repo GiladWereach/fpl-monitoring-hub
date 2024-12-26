@@ -49,7 +49,7 @@ export function CategorySection({
               name={func.name}
               functionName={func.function}
               group={func.group}
-              loading={loading}
+              loading={loading ? func.function : null}
               onExecute={onExecute}
               schedule={schedule}
               matchWindow={matchWindow}

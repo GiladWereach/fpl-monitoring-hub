@@ -1,87 +1,62 @@
 import { Button } from "@/components/ui/button";
-import { Play, RefreshCw } from "lucide-react";
-import { Card } from "@/components/ui/card";
-import { format } from "date-fns";
-import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "@/hooks/use-toast";
-import { ScheduleManager } from "../ScheduleManager";
-import { useFunctionData } from "../hooks/useFunctionData";
-import { FunctionCardMetrics } from "./FunctionCardMetrics";
-import { FunctionCardSchedule } from "./FunctionCardSchedule";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Schedule } from "../types/scheduling";
+import { RefreshCw } from "lucide-react";
 
 interface FunctionCardProps {
   name: string;
   functionName: string;
+  group?: string;
   loading: string | null;
   onExecute: (functionName: string) => Promise<void>;
-  schedule?: any;
+  schedule?: Schedule;
+  matchWindow?: {
+    window_start: string;
+    window_end: string;
+    is_active: boolean;
+    match_count: number;
+  } | null;
 }
 
-export function FunctionCard({ name, functionName, loading, onExecute, schedule }: FunctionCardProps) {
-  const isLoading = loading === functionName || loading === "all";
-  const { data: functionData, isLoading: dataLoading } = useFunctionData(functionName, schedule);
-
-  const handleManualTrigger = async () => {
-    console.log(`Manually triggering ${functionName}`);
-    try {
-      await onExecute(functionName);
-      toast({
-        title: "Function Triggered",
-        description: `${name} has been manually triggered`,
-      });
-    } catch (error) {
-      console.error(`Error triggering ${functionName}:`, error);
-      toast({
-        title: "Error",
-        description: `Failed to trigger ${name}`,
-        variant: "destructive",
-      });
-    }
-  };
-
+export function FunctionCard({
+  name,
+  functionName,
+  group,
+  loading,
+  onExecute,
+  schedule,
+  matchWindow
+}: FunctionCardProps) {
+  const isLoading = loading === functionName;
+  
   return (
-    <Card className="p-4 bg-background">
-      <div className="space-y-4">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex-1">
-            <h3 className="font-semibold truncate">{name}</h3>
-            <FunctionCardMetrics metrics={functionData?.metrics} />
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg font-semibold">{name}</CardTitle>
+        {group && (
+          <p className="text-sm text-muted-foreground">{group}</p>
+        )}
+      </CardHeader>
+      <CardContent>
+        {schedule && (
+          <div className="text-sm space-y-2">
+            <p>Last run: {schedule.last_execution_at || 'Never'}</p>
+            <p>Next run: {schedule.next_execution_at || 'Not scheduled'}</p>
+            <p>Status: {schedule.enabled ? 'Enabled' : 'Disabled'}</p>
           </div>
-          <div className="flex gap-2 shrink-0">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handleManualTrigger}
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <RefreshCw className="h-4 w-4 animate-spin" />
-              ) : (
-                <Play className="h-4 w-4" />
-              )}
-            </Button>
-            <ScheduleManager
-              functionName={functionName}
-              functionDisplayName={name}
-            />
-          </div>
-        </div>
-
-        <div className="text-sm text-muted-foreground space-y-1">
-          {dataLoading ? (
-            <div className="space-y-2">
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-full" />
-            </div>
-          ) : (
-            <FunctionCardSchedule 
-              schedule={schedule}
-              functionData={functionData}
-            />
-          )}
-        </div>
-      </div>
+        )}
+      </CardContent>
+      <CardFooter>
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={() => onExecute(functionName)}
+          disabled={isLoading}
+        >
+          <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+          Execute Now
+        </Button>
+      </CardFooter>
     </Card>
   );
 }
