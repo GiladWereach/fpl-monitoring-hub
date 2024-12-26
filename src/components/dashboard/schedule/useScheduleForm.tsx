@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { AdvancedScheduleFormValues, ScheduleData, convertScheduleData } from "../types/scheduling";
 import { logAPIError, updateAPIHealthMetrics } from "@/utils/api/errorHandling";
+import { Json } from "@/integrations/supabase/types";
 
 interface UseScheduleFormProps {
   functionName: string;
@@ -142,19 +143,21 @@ export function useScheduleForm({ functionName, onSuccess }: UseScheduleFormProp
     console.log("Submitting schedule form:", values);
     
     try {
+      const scheduleData = {
+        function_name: functionName,
+        schedule_type: values.schedule_type,
+        enabled: values.enabled,
+        timezone: values.timezone,
+        time_config: values.time_config as Json,
+        event_config: values.event_config as Json,
+        event_conditions: values.event_conditions as Json,
+        execution_config: values.execution_config as Json,
+        execution_window: values.execution_window as Json
+      };
+
       const { error } = await supabase
         .from('schedules')
-        .upsert([{
-          function_name: functionName,
-          schedule_type: values.schedule_type,
-          enabled: values.enabled,
-          timezone: values.timezone,
-          time_config: values.time_config,
-          event_config: values.event_config,
-          event_conditions: values.event_conditions,
-          execution_config: values.execution_config,
-          execution_window: values.execution_window
-        }], {
+        .upsert([scheduleData], {
           onConflict: 'function_name'
         });
 
