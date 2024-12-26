@@ -2,16 +2,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { Clock, CheckCircle2, XCircle } from "lucide-react";
-
-interface ExecutionLog {
-  id: string;
-  schedules: { function_name: string };
-  started_at: string;
-  completed_at: string | null;
-  status: string;
-  error_details: string | null;
-  execution_duration_ms: number | null;
-}
+import { ExecutionLog } from "@/components/dashboard/types/scheduling";
 
 interface ExecutionLogTableProps {
   executions: ExecutionLog[];
@@ -54,7 +45,7 @@ export function ExecutionLogTable({ executions }: ExecutionLogTableProps) {
       <TableBody>
         {executions.map((log) => (
           <TableRow key={log.id}>
-            <TableCell>{log.schedules?.function_name}</TableCell>
+            <TableCell>{log.schedules?.function_name || 'Unknown'}</TableCell>
             <TableCell>
               {format(new Date(log.started_at), "MMM d, HH:mm:ss")}
             </TableCell>
