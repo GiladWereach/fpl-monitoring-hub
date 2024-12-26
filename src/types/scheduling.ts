@@ -25,5 +25,7 @@ export interface Schedule {
   execution_window: any;
   status: string;
   frequency_type: string;
+  description?: string;
+  priority?: number;
   schedule_execution_logs?: any[];
 }
