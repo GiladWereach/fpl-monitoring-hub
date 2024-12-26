@@ -21,5 +21,7 @@ export interface Schedule {
   timezone: string;
   event_conditions: any[];
   execution_window: any;
+  description?: string;
+  priority?: number;
   schedule_execution_logs?: any[];
 }

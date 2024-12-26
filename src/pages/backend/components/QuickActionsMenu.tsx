@@ -5,7 +5,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Play, Pause, Settings } from "lucide-react";
+import { MoreHorizontal, Play, Pause } from "lucide-react";
 
 interface QuickActionsMenuProps {
   scheduleId: string;
@@ -13,7 +13,11 @@ interface QuickActionsMenuProps {
   onStatusChange: () => void;
 }
 
-export function QuickActionsMenu({ scheduleId, status, onStatusChange }: QuickActionsMenuProps) {
+export function QuickActionsMenu({ 
+  scheduleId, 
+  status, 
+  onStatusChange 
+}: QuickActionsMenuProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>

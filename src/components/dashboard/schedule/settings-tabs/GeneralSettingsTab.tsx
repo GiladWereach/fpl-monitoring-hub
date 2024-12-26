@@ -13,9 +13,9 @@ interface GeneralSettingsTabProps {
 }
 
 type GeneralSettingsForm = {
-  description: string;
-  priority: number;
-  group_id: string;
+  description?: string;
+  priority?: number;
+  group_id?: string;
 };
 
 export function GeneralSettingsTab({ schedule, onSave }: GeneralSettingsTabProps) {

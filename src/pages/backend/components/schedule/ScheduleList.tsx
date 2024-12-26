@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { ScheduleFilters } from "./ScheduleFilters";
 import { ScheduleTable } from "./ScheduleTable";
+import { Schedule } from "@/types/scheduling";
 
 export function ScheduleList() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -33,7 +34,7 @@ export function ScheduleList() {
         throw error;
       }
 
-      return data;
+      return data as Schedule[];
     },
     refetchInterval: 30000
   });
@@ -63,7 +64,7 @@ export function ScheduleList() {
 
   if (isLoading) return null;
 
-  const groups = [...new Set(schedules?.map(s => s.group_id) || [])];
+  const groups = [...new Set(schedules?.map(s => s.schedule_type) || [])];
 
   return (
     <div className="space-y-4">
