@@ -148,11 +148,11 @@ export function useScheduleForm({ functionName, onSuccess }: UseScheduleFormProp
         schedule_type: values.schedule_type,
         enabled: values.enabled,
         timezone: values.timezone,
-        time_config: values.time_config as Json,
-        event_config: values.event_config as Json,
-        event_conditions: values.event_conditions as Json,
-        execution_config: values.execution_config as Json,
-        execution_window: values.execution_window as Json
+        time_config: JSON.parse(JSON.stringify(values.time_config)) as Json,
+        event_config: JSON.parse(JSON.stringify(values.event_config)) as Json,
+        event_conditions: JSON.parse(JSON.stringify(values.event_conditions)) as Json,
+        execution_config: JSON.parse(JSON.stringify(values.execution_config)) as Json,
+        execution_window: JSON.parse(JSON.stringify(values.execution_window)) as Json
       };
 
       const { error } = await supabase

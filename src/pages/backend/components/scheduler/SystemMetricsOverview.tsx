@@ -19,7 +19,7 @@ export function SystemMetricsOverview({ metrics, isLoading, error }: SystemMetri
     try {
       const csvContent = [
         ["Endpoint", "Success Rate", "Response Time", "Health Status"],
-        ...metrics.map(m => [
+        ...(metrics || []).map(m => [
           m.endpoint,
           `${m.success_rate}%`,
           `${m.avg_response_time}ms`,
@@ -80,10 +80,15 @@ export function SystemMetricsOverview({ metrics, isLoading, error }: SystemMetri
     );
   }
 
-  // Calculate high-level metrics
-  const overallSuccessRate = metrics?.reduce((acc, m) => acc + parseFloat(m.success_rate), 0) / (metrics?.length || 1);
-  const avgResponseTime = Math.round(metrics?.reduce((acc, m) => acc + m.avg_response_time, 0) / (metrics?.length || 1));
-  const healthyEndpoints = metrics?.filter(m => m.health_status === 'success').length || 0;
+  // Ensure metrics is an array and calculate high-level metrics
+  const metricsArray = Array.isArray(metrics) ? metrics : [];
+  const overallSuccessRate = metricsArray.length > 0 
+    ? metricsArray.reduce((acc, m) => acc + (parseFloat(m.success_rate) || 0), 0) / metricsArray.length 
+    : 0;
+  const avgResponseTime = metricsArray.length > 0
+    ? Math.round(metricsArray.reduce((acc, m) => acc + (m.avg_response_time || 0), 0) / metricsArray.length)
+    : 0;
+  const healthyEndpoints = metricsArray.filter(m => m.health_status === 'success').length || 0;
 
   return (
     <div className="space-y-6">
