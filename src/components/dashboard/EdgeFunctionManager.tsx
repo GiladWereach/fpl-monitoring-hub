@@ -43,14 +43,44 @@ export function EdgeFunctionManager() {
     refetchInterval: 10000
   });
 
-  // Add match window detection
+  // Add match window detection with automatic adjustment
   const { data: matchWindow } = useQuery({
     queryKey: ['match-window'],
     queryFn: async () => {
       console.log('Detecting match window...');
-      return detectMatchWindow();
+      const window = await detectMatchWindow();
+      
+      // Automatically adjust schedules based on match window
+      if (window && schedules) {
+        console.log('Adjusting schedules based on match window:', window);
+        const matchDependentSchedules = schedules.filter(s => 
+          s.schedule_type === 'time_based' && 
+          s.time_config?.type === 'match_dependent'
+        );
+
+        for (const schedule of matchDependentSchedules) {
+          const intervalMinutes = window.type === 'live' ? 
+            schedule.time_config.matchDayIntervalMinutes : 
+            schedule.time_config.nonMatchIntervalMinutes;
+
+          console.log(`Adjusting schedule ${schedule.function_name} to ${intervalMinutes} minute interval`);
+          
+          try {
+            await supabase
+              .from('schedules')
+              .update({ 
+                next_execution_at: new Date(Date.now() + intervalMinutes * 60 * 1000).toISOString()
+              })
+              .eq('id', schedule.id);
+          } catch (error) {
+            console.error(`Error adjusting schedule ${schedule.function_name}:`, error);
+          }
+        }
+      }
+      
+      return window;
     },
-    refetchInterval: 60000 // Check every minute
+    refetchInterval: 60000
   });
 
   const handleExecute = async (functionName: string) => {
