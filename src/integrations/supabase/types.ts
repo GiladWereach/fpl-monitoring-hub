@@ -710,6 +710,84 @@ export type Database = {
           },
         ]
       }
+      function_schedules_backup: {
+        Row: {
+          active_period_end: string | null
+          active_period_start: string | null
+          base_interval_minutes: number | null
+          consecutive_failures: number | null
+          created_at: string | null
+          fixed_time: string | null
+          frequency_type:
+            | Database["public"]["Enums"]["schedule_frequency"]
+            | null
+          function_name: string | null
+          group_id: string | null
+          id: string | null
+          last_error: string | null
+          last_execution_at: string | null
+          match_day_interval_minutes: number | null
+          max_concurrent_executions: number | null
+          next_execution_at: string | null
+          non_match_interval_minutes: number | null
+          retry_count: number | null
+          retry_delay_seconds: number | null
+          status: Database["public"]["Enums"]["schedule_status"] | null
+          timeout_seconds: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          active_period_end?: string | null
+          active_period_start?: string | null
+          base_interval_minutes?: number | null
+          consecutive_failures?: number | null
+          created_at?: string | null
+          fixed_time?: string | null
+          frequency_type?:
+            | Database["public"]["Enums"]["schedule_frequency"]
+            | null
+          function_name?: string | null
+          group_id?: string | null
+          id?: string | null
+          last_error?: string | null
+          last_execution_at?: string | null
+          match_day_interval_minutes?: number | null
+          max_concurrent_executions?: number | null
+          next_execution_at?: string | null
+          non_match_interval_minutes?: number | null
+          retry_count?: number | null
+          retry_delay_seconds?: number | null
+          status?: Database["public"]["Enums"]["schedule_status"] | null
+          timeout_seconds?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          active_period_end?: string | null
+          active_period_start?: string | null
+          base_interval_minutes?: number | null
+          consecutive_failures?: number | null
+          created_at?: string | null
+          fixed_time?: string | null
+          frequency_type?:
+            | Database["public"]["Enums"]["schedule_frequency"]
+            | null
+          function_name?: string | null
+          group_id?: string | null
+          id?: string | null
+          last_error?: string | null
+          last_execution_at?: string | null
+          match_day_interval_minutes?: number | null
+          max_concurrent_executions?: number | null
+          next_execution_at?: string | null
+          non_match_interval_minutes?: number | null
+          retry_count?: number | null
+          retry_delay_seconds?: number | null
+          status?: Database["public"]["Enums"]["schedule_status"] | null
+          timeout_seconds?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       game_settings: {
         Row: {
           cup_qualifying_method: string | null
