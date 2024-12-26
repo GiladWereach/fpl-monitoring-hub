@@ -6,6 +6,7 @@ import { ViewToggle } from '@/components/gameweek/ViewToggle';
 import { LivePerformance } from '@/components/gameweek/LivePerformance';
 import { PitchView } from '@/components/gameweek/PitchView';
 import { ListView } from '@/components/gameweek/ListView';
+import { BenchPlayers } from '@/components/gameweek/BenchPlayers';
 import { calculateTotalPoints, calculateBenchPoints } from '@/components/gameweek/utils/points-calculator';
 import { TeamSelection, Pick, Player } from '@/components/gameweek/types';
 import { Loader2 } from 'lucide-react';
@@ -81,7 +82,7 @@ export default function Gameweek() {
           is_captain: pick.is_captain,
           is_vice_captain: pick.is_vice_captain
         })),
-        auto_subs: data.auto_subs
+        auto_subs: Array.isArray(data.auto_subs) ? data.auto_subs : []
       };
       
       return transformedData;
