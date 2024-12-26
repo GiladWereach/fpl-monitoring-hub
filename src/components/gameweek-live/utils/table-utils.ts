@@ -7,5 +7,5 @@ export const getRowClassName = (
   awayTeam?: string
 ): string => {
   if (!matchId || !homeTeam || !awayTeam) return '';
-  return perf.player.team.short_name === awayTeam ? 'bg-[#f3f3f3]' : '';
+  return perf.player.team.short_name === awayTeam ? 'bg-[#1a2234]' : '';
 };
