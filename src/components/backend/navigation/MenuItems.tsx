@@ -14,7 +14,7 @@ export const menuItems = [
 ];
 
 export const monitoringItems = [
-  { title: "Live Gameweek", icon: Timer, path: "/gameweek-live" }
+  { title: "Live Gameweek", icon: Timer, path: "/backend/gameweek-live" }
 ];
 
 interface MenuItemsProps {
