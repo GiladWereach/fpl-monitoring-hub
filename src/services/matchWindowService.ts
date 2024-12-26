@@ -92,36 +92,7 @@ export async function detectMatchWindow({ timezone = 'UTC' }: MatchWindowOptions
     };
   }
 
-  // Check if we're in post-match window
-  const { data: recentMatches, error: recentError } = await supabase
-    .from('fixtures')
-    .select('*')
-    .eq('finished', true)
-    .order('kickoff_time', { ascending: false })
-    .limit(1);
-
-  if (recentError) {
-    console.error('Error fetching recent matches:', recentError);
-    throw recentError;
-  }
-
-  if (recentMatches?.length) {
-    const lastMatchEnd = addHours(new Date(recentMatches[0].kickoff_time), 2);
-    const postMatchEnd = addHours(lastMatchEnd, 3);
-
-    if (now <= postMatchEnd) {
-      console.log('In post-match window');
-      return {
-        start: lastMatchEnd,
-        end: postMatchEnd,
-        type: 'post',
-        hasActiveMatches: false,
-        timezone
-      };
-    }
-  }
-
-  // Default idle window
+  // Default idle state
   return {
     start: now,
     end: addHours(now, 24),

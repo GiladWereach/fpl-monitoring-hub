@@ -1,24 +1,59 @@
-import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { RefreshCw } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Loader2, RefreshCw, Clock } from "lucide-react";
+import { MatchWindow } from "@/services/matchWindowService";
+import { format } from "date-fns";
 
 interface FunctionExecutionStatusProps {
   loading: string | null;
-  onRefreshAll: () => Promise<void>;
+  onRefreshAll: () => void;
+  matchWindow?: MatchWindow;
 }
 
-export function FunctionExecutionStatus({ loading, onRefreshAll }: FunctionExecutionStatusProps) {
+export function FunctionExecutionStatus({ 
+  loading, 
+  onRefreshAll,
+  matchWindow 
+}: FunctionExecutionStatusProps) {
   return (
     <div className="flex items-center justify-between">
-      <h2 className="text-2xl font-bold">Edge Functions Manager</h2>
-      <Button
-        onClick={onRefreshAll}
-        disabled={loading !== null}
-        className="gap-2"
-      >
-        <RefreshCw className={`h-4 w-4 ${loading === "all" ? "animate-spin" : ""}`} />
-        Refresh All
-      </Button>
+      <div className="flex items-center gap-4">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onRefreshAll}
+          disabled={loading !== null}
+        >
+          {loading === "all" ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Refreshing...
+            </>
+          ) : (
+            <>
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Refresh All
+            </>
+          )}
+        </Button>
+
+        {matchWindow && (
+          <Alert variant={matchWindow.hasActiveMatches ? "default" : "secondary"}>
+            <Clock className="h-4 w-4" />
+            <AlertDescription>
+              {matchWindow.type === 'live' && (
+                <>Active matches until {format(matchWindow.end, 'HH:mm')}</>
+              )}
+              {matchWindow.type === 'pre' && matchWindow.nextKickoff && (
+                <>Next match at {format(matchWindow.nextKickoff, 'HH:mm')}</>
+              )}
+              {matchWindow.type === 'idle' && (
+                <>No active matches</>
+              )}
+            </AlertDescription>
+          </Alert>
+        )}
+      </div>
     </div>
   );
 }

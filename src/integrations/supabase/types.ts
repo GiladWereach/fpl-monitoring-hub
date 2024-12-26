@@ -2415,6 +2415,16 @@ export type Database = {
           success_rate: number
         }[]
       }
+      get_current_match_window: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          window_start: string
+          window_end: string
+          is_active: boolean
+          match_count: number
+          next_kickoff: string
+        }[]
+      }
       get_processing_metrics: {
         Args: {
           hours_ago: number

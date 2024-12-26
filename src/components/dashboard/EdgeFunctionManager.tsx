@@ -8,6 +8,7 @@ import { executeFetchFunction } from "./utils/functionExecutor";
 import { toast } from "@/hooks/use-toast";
 import { FunctionExecutionStatus } from "./components/FunctionExecutionStatus";
 import { CategorySection } from "./components/CategorySection";
+import { detectMatchWindow } from "@/services/matchWindowService";
 
 export function EdgeFunctionManager() {
   const [loading, setLoading] = useState<string | null>(null);
@@ -40,6 +41,16 @@ export function EdgeFunctionManager() {
       return data;
     },
     refetchInterval: 10000
+  });
+
+  // Add match window detection
+  const { data: matchWindow } = useQuery({
+    queryKey: ['match-window'],
+    queryFn: async () => {
+      console.log('Detecting match window...');
+      return detectMatchWindow();
+    },
+    refetchInterval: 60000 // Check every minute
   });
 
   const handleExecute = async (functionName: string) => {
@@ -102,7 +113,11 @@ export function EdgeFunctionManager() {
 
   return (
     <div className="space-y-6">
-      <FunctionExecutionStatus loading={loading} onRefreshAll={refreshAll} />
+      <FunctionExecutionStatus 
+        loading={loading} 
+        onRefreshAll={refreshAll}
+        matchWindow={matchWindow}
+      />
 
       <ScrollArea className="h-[calc(100vh-200px)]">
         <div className="min-w-[600px] pr-4 space-y-8">
@@ -119,6 +134,7 @@ export function EdgeFunctionManager() {
                 loading={loading}
                 onExecute={handleExecute}
                 schedules={schedules || []}
+                matchWindow={matchWindow}
               />
             );
           })}
