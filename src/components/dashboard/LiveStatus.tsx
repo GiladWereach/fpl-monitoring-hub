@@ -62,9 +62,9 @@ export const LiveStatus = ({
     switch (matchWindow?.type) {
       case 'live':
         return "success";
-      case 'pre':
+      case 'pre_match':
         return "warning";
-      case 'post':
+      case 'post_match':
         return "default";
       default:
         return "secondary";
@@ -80,15 +80,15 @@ export const LiveStatus = ({
     // Regular match window status
     switch (matchWindow?.type) {
       case 'live':
-        return `Live (${matchWindow.activeMatches} matches)`;
-      case 'pre':
+        return `Live (${matchWindow.match_count} matches)`;
+      case 'pre_match':
         return "Pre-match";
-      case 'post':
+      case 'post_match':
         return "Post-match";
       default:
-        if (matchWindow?.nextKickoff) {
+        if (matchWindow?.next_kickoff) {
           const timeUntil = Math.floor(
-            (matchWindow.nextKickoff.getTime() - Date.now()) / (1000 * 60)
+            (matchWindow.next_kickoff.getTime() - Date.now()) / (1000 * 60)
           );
           if (timeUntil < 60) return `Next match in ${timeUntil}m`;
           return `Next match in ${Math.floor(timeUntil / 60)}h`;
@@ -135,10 +135,10 @@ export const LiveStatus = ({
           {getStatusLabel()}
         </span>
       )}
-      {showWindow && matchWindow?.start && matchWindow?.end && (
+      {showWindow && matchWindow?.window_start && matchWindow?.window_end && (
         <span className="text-xs text-muted-foreground">
-          ({formatInTimeZone(matchWindow.start, timezone, 'HH:mm')} - {
-            formatInTimeZone(matchWindow.end, timezone, 'HH:mm')
+          ({formatInTimeZone(matchWindow.window_start, timezone, 'HH:mm')} - {
+            formatInTimeZone(matchWindow.window_end, timezone, 'HH:mm')
           })
         </span>
       )}
