@@ -4,7 +4,7 @@ import { toast } from "@/hooks/use-toast";
 
 export async function testScheduleExecution(
   functionName: string,
-  scheduleType: "time_based" | "event_based"
+  scheduleType: "time_based" | "event_based" | "match_dependent"
 ): Promise<TestResult> {
   console.log(`Testing schedule execution for ${functionName} (${scheduleType})`);
   const startTime = Date.now();
