@@ -1,11 +1,17 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { logDebug, logError } from '../logging.ts';
+import { getMatchStatus } from './matchStatusService.ts';
 import { addMinutes, isAfter, isBefore } from 'date-fns';
 
 export interface ScheduleWindow {
   intervalMinutes: number;
   reason: string;
   nextCheck?: Date;
+  matchStatus?: {
+    hasActiveMatches: boolean;
+    isPostMatch: boolean;
+    nextMatchTime?: Date;
+  };
 }
 
 export async function determineScheduleWindow(
@@ -15,15 +21,13 @@ export async function determineScheduleWindow(
   logDebug(functionName, 'Determining schedule window...');
   
   try {
-    // Get current gameweek
-    const { data: currentEvent, error: eventError } = await supabaseClient
+    // Get current gameweek and match status
+    const { data: currentEvent } = await supabaseClient
       .from('events')
       .select('*')
       .eq('is_current', true)
       .single();
 
-    if (eventError) throw eventError;
-    
     if (!currentEvent) {
       return {
         intervalMinutes: 1440, // Check daily if no current gameweek
@@ -44,43 +48,52 @@ export async function determineScheduleWindow(
       };
     }
 
-    // Check for active matches
-    const { data: activeMatches } = await supabaseClient
-      .from('fixtures')
-      .select('*')
-      .eq('event', currentEvent.id)
-      .eq('started', true)
-      .eq('finished', false);
-
-    if (activeMatches && activeMatches.length > 0) {
-      logDebug(functionName, `Found ${activeMatches.length} active matches`);
+    // Get match status
+    const matchStatus = await getMatchStatus();
+    
+    if (matchStatus.hasActiveMatches) {
+      logDebug(functionName, 'Active matches found, using 2-minute interval');
       return {
         intervalMinutes: 2,
         reason: 'Active matches in progress',
-        nextCheck: addMinutes(now, 2)
+        nextCheck: addMinutes(now, 2),
+        matchStatus: {
+          hasActiveMatches: true,
+          isPostMatch: false
+        }
       };
     }
 
-    // Check for upcoming matches in next hour
-    const { data: upcomingMatches } = await supabaseClient
-      .from('fixtures')
-      .select('*')
-      .eq('event', currentEvent.id)
-      .eq('started', false)
-      .eq('finished', false)
-      .gt('kickoff_time', now.toISOString())
-      .order('kickoff_time', { ascending: true })
-      .limit(1);
+    // Handle postponed matches
+    if (matchStatus.hasPostponedMatches) {
+      logDebug(functionName, 'Postponed matches found, adjusting schedule');
+      return {
+        intervalMinutes: 30,
+        reason: 'Monitoring postponed matches',
+        nextCheck: addMinutes(now, 30),
+        matchStatus: {
+          hasActiveMatches: false,
+          isPostMatch: false
+        }
+      };
+    }
 
-    if (upcomingMatches && upcomingMatches.length > 0) {
-      const kickoffTime = new Date(upcomingMatches[0].kickoff_time);
-      const timeToKickoff = Math.floor((kickoffTime.getTime() - now.getTime()) / (1000 * 60));
+    // Check for upcoming matches
+    if (matchStatus.nextScheduledMatch) {
+      const timeToKickoff = Math.floor(
+        (matchStatus.nextScheduledMatch.getTime() - now.getTime()) / (1000 * 60)
+      );
 
       if (timeToKickoff <= 60) {
         return {
           intervalMinutes: 15,
           reason: 'Approaching match kickoff',
-          nextCheck: addMinutes(now, 15)
+          nextCheck: addMinutes(now, 15),
+          matchStatus: {
+            hasActiveMatches: false,
+            isPostMatch: false,
+            nextMatchTime: matchStatus.nextScheduledMatch
+          }
         };
       }
     }
@@ -89,14 +102,23 @@ export async function determineScheduleWindow(
     return {
       intervalMinutes: 30,
       reason: 'Active gameweek - between matches',
-      nextCheck: addMinutes(now, 30)
+      nextCheck: addMinutes(now, 30),
+      matchStatus: {
+        hasActiveMatches: false,
+        isPostMatch: false,
+        nextMatchTime: matchStatus.nextScheduledMatch
+      }
     };
   } catch (error) {
     logError(functionName, 'Error determining schedule window:', error);
     // Default to safe 30-minute interval on error
     return {
       intervalMinutes: 30,
-      reason: 'Error occurred, using safe default interval'
+      reason: 'Error occurred, using safe default interval',
+      matchStatus: {
+        hasActiveMatches: false,
+        isPostMatch: false
+      }
     };
   }
 }
