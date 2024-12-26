@@ -12,12 +12,21 @@ export interface MatchWindow {
   matchCount?: number;
 }
 
+interface MatchWindowResponse {
+  window_start: string;
+  window_end: string;
+  is_active: boolean;
+  match_count: number;
+  next_kickoff: string | null;
+}
+
 export async function detectMatchWindow(): Promise<MatchWindow | null> {
   console.log('Detecting match window...');
   
   try {
     const { data: currentWindow, error } = await supabase
-      .rpc('get_current_match_window');
+      .rpc('get_current_match_window')
+      .single();
 
     if (error) {
       console.error('Error detecting match window:', error);
@@ -30,29 +39,33 @@ export async function detectMatchWindow(): Promise<MatchWindow | null> {
     }
 
     console.log('Current match window:', currentWindow);
+    const response = currentWindow as MatchWindowResponse;
     
     // Determine window type based on match status
     let windowType: 'live' | 'pre_match' | 'post_match' | 'idle' = 'idle';
-    if (currentWindow.is_active && currentWindow.match_count > 0) {
+    if (response.is_active && response.match_count > 0) {
       windowType = 'live';
-    } else if (currentWindow.next_kickoff && new Date(currentWindow.next_kickoff) > new Date()) {
+    } else if (response.next_kickoff && new Date(response.next_kickoff) > new Date()) {
       windowType = 'pre_match';
-    } else if (currentWindow.window_end && new Date() <= new Date(currentWindow.window_end)) {
+    } else if (response.window_end && new Date() <= new Date(response.window_end)) {
       windowType = 'post_match';
     }
 
-    return {
+    // Transform the response into our MatchWindow type
+    const matchWindow: MatchWindow = {
       type: windowType,
-      is_active: currentWindow.is_active,
-      window_start: new Date(currentWindow.window_start),
-      window_end: new Date(currentWindow.window_end),
-      match_count: currentWindow.match_count,
-      next_kickoff: currentWindow.next_kickoff ? new Date(currentWindow.next_kickoff) : null,
-      hasActiveMatches: currentWindow.is_active && currentWindow.match_count > 0,
-      isMatchDay: currentWindow.is_active || (currentWindow.next_kickoff && 
-        ((new Date(currentWindow.next_kickoff).getTime() - new Date().getTime()) <= 2 * 60 * 60 * 1000)),
-      matchCount: currentWindow.match_count
+      is_active: response.is_active,
+      window_start: new Date(response.window_start),
+      window_end: new Date(response.window_end),
+      match_count: response.match_count,
+      next_kickoff: response.next_kickoff ? new Date(response.next_kickoff) : null,
+      hasActiveMatches: response.is_active && response.match_count > 0,
+      isMatchDay: response.is_active || (response.next_kickoff && 
+        ((new Date(response.next_kickoff).getTime() - new Date().getTime()) <= 2 * 60 * 60 * 1000)),
+      matchCount: response.match_count
     };
+
+    return matchWindow;
   } catch (error) {
     console.error('Failed to get match window:', error);
     throw error;
