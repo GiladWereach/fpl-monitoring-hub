@@ -1,160 +1,112 @@
 import { supabase } from "@/integrations/supabase/client";
-import { addHours, subHours, isWithinInterval } from "date-fns";
-import { formatInTimeZone, toZonedTime } from 'date-fns-tz';
+import { toast } from "@/hooks/use-toast";
 
-export type MatchStatus = {
+export interface MatchStatus {
+  hasActiveMatches: boolean;
+  matchDayWindow: {
+    start: Date | null;
+    end: Date | null;
+  };
   isMatchDay: boolean;
-  currentWindow: MatchWindow | null;
-  activeMatches: number;
-  nextKickoff: Date | null;
-  isPreMatch: boolean;
-  isPostMatch: boolean;
-  deadlineTime: Date | null;
-  hasPostponedMatches?: boolean;
-  postponedMatchCount?: number;
-  matchesInExtraTime?: number;
-  abandonedMatches?: number;
-};
-
-export type MatchWindow = {
-  start: Date;
-  end: Date;
-  type: 'pre' | 'live' | 'post';
-};
-
-export async function getMatchStatus(): Promise<MatchStatus> {
-  console.log('Fetching match status...');
-  
-  const now = new Date();
-  
-  // Get current gameweek deadline
-  const { data: currentGameweek } = await supabase
-    .from('events')
-    .select('deadline_time')
-    .eq('is_current', true)
-    .single();
-
-  const deadlineTime = currentGameweek?.deadline_time ? new Date(currentGameweek.deadline_time) : null;
-  
-  // Get active matches with detailed status
-  const { data: matches } = await supabase
-    .from('fixtures')
-    .select('*')
-    .eq('started', true)
-    .eq('finished', false)
-    .eq('postponed', false)
-    .order('kickoff_time', { ascending: true });
-
-  // Check for postponed matches
-  const { data: postponedMatches } = await supabase
-    .from('fixtures')
-    .select('*')
-    .eq('postponed', true)
-    .order('original_kickoff_time', { ascending: true });
-
-  const { data: upcomingMatches } = await supabase
-    .from('fixtures')
-    .select('kickoff_time')
-    .gt('kickoff_time', now.toISOString())
-    .eq('postponed', false)
-    .order('kickoff_time', { ascending: true })
-    .limit(1);
-
-  const nextKickoff = upcomingMatches?.[0]?.kickoff_time ? new Date(upcomingMatches[0].kickoff_time) : null;
-  
-  // Determine match windows
-  let currentWindow: MatchWindow | null = null;
-  let isPreMatch = false;
-  let isPostMatch = false;
-  let matchesInExtraTime = 0;
-
-  // Calculate matches in extra time (over 90 minutes)
-  if (matches) {
-    matchesInExtraTime = matches.filter(match => match.minutes > 90).length;
-  }
-
-  if (matches && matches.length > 0) {
-    // We have active matches
-    const firstMatch = new Date(matches[0].kickoff_time);
-    const lastMatch = new Date(matches[matches.length - 1].kickoff_time);
-    
-    // Add 2.5 hours after last kickoff for post-match window
-    // This accounts for potential extra time and delays
-    const windowEnd = new Date(lastMatch);
-    windowEnd.setHours(windowEnd.getHours() + 2.5);
-
-    currentWindow = {
-      start: firstMatch,
-      end: windowEnd,
-      type: 'live'
-    };
-  } else if (nextKickoff) {
-    // Check if we're in pre-match window (2 hours before kickoff)
-    const preMatchStart = new Date(nextKickoff);
-    preMatchStart.setHours(preMatchStart.getHours() - 2);
-    
-    if (now >= preMatchStart && now < nextKickoff) {
-      currentWindow = {
-        start: preMatchStart,
-        end: nextKickoff,
-        type: 'pre'
-      };
-      isPreMatch = true;
-    }
-  } else {
-    // Check if we're in post-match window (within 3 hours of last finished match)
-    const { data: recentMatches } = await supabase
-      .from('fixtures')
-      .select('kickoff_time')
-      .eq('finished', true)
-      .eq('postponed', false)
-      .order('kickoff_time', { ascending: false })
-      .limit(1);
-
-    if (recentMatches?.[0]) {
-      const matchEnd = new Date(recentMatches[0].kickoff_time);
-      matchEnd.setMinutes(matchEnd.getMinutes() + 115); // 90 mins + potential extra time
-      
-      const postMatchEnd = new Date(matchEnd);
-      postMatchEnd.setHours(postMatchEnd.getHours() + 3);
-      
-      if (now <= postMatchEnd) {
-        currentWindow = {
-          start: matchEnd,
-          end: postMatchEnd,
-          type: 'post'
-        };
-        isPostMatch = true;
-      }
-    }
-  }
-
-  // Count abandoned matches if any
-  const { data: abandonedMatchesData } = await supabase
-    .from('fixtures')
-    .select('id')
-    .eq('started', true)
-    .eq('finished', false)
-    .gt('minutes', 0)
-    .eq('postponed', true);
-
-  return {
-    isMatchDay: Boolean(currentWindow),
-    currentWindow,
-    activeMatches: matches?.length || 0,
-    nextKickoff,
-    isPreMatch,
-    isPostMatch,
-    deadlineTime,
-    hasPostponedMatches: Boolean(postponedMatches?.length),
-    postponedMatchCount: postponedMatches?.length || 0,
-    matchesInExtraTime,
-    abandonedMatches: abandonedMatchesData?.length || 0
+  hasPostponedMatches: boolean;
+  nextScheduledMatch: Date | null;
+  recoveryStatus?: {
+    hasRecoveringMatches: boolean;
+    nextRecoveryWindow?: Date;
   };
 }
 
-// Utility to check if we're within a specific window
-export function isWithinMatchWindow(window: MatchWindow): boolean {
-  const now = new Date();
-  return now >= window.start && now <= window.end;
+export async function detectMatchWindow({ timezone = 'UTC' }: { timezone?: string } = {}): Promise<MatchStatus> {
+  console.log('Detecting match window...');
+  
+  try {
+    // Check for active matches
+    const { data: activeMatches, error: activeError } = await supabase
+      .from('fixtures')
+      .select('*')
+      .eq('started', true)
+      .eq('finished', false);
+
+    if (activeError) {
+      console.error('Error fetching active matches:', activeError);
+      throw activeError;
+    }
+
+    // Check for postponed matches that are rescheduled
+    const { data: recoveringMatches, error: recoveryError } = await supabase
+      .from('fixtures')
+      .select('*')
+      .eq('postponed', true)
+      .not('original_kickoff_time', 'is', null)
+      .order('kickoff_time', { ascending: true });
+
+    if (recoveryError) {
+      console.error('Error fetching recovering matches:', recoveryError);
+      throw recoveryError;
+    }
+
+    const now = new Date();
+    const hasRecoveringMatches = recoveringMatches && recoveringMatches.length > 0;
+    const nextRecoveryWindow = hasRecoveringMatches ? new Date(recoveringMatches[0].kickoff_time) : undefined;
+
+    if (activeMatches && activeMatches.length > 0) {
+      console.log(`Found ${activeMatches.length} active matches`);
+      const firstMatch = new Date(activeMatches[0].kickoff_time);
+      const lastMatch = new Date(activeMatches[activeMatches.length - 1].kickoff_time);
+      const windowEnd = new Date(lastMatch);
+      windowEnd.setHours(windowEnd.getHours() + 2.5); // 2.5 hours after last kickoff
+
+      return {
+        hasActiveMatches: true,
+        matchDayWindow: {
+          start: firstMatch,
+          end: windowEnd
+        },
+        isMatchDay: true,
+        hasPostponedMatches: hasRecoveringMatches,
+        nextScheduledMatch: null,
+        recoveryStatus: {
+          hasRecoveringMatches,
+          nextRecoveryWindow
+        }
+      };
+    }
+
+    // Check for upcoming matches
+    const { data: upcomingMatches, error: upcomingError } = await supabase
+      .from('fixtures')
+      .select('*')
+      .eq('started', false)
+      .gt('kickoff_time', now.toISOString())
+      .order('kickoff_time', { ascending: true })
+      .limit(1);
+
+    if (upcomingError) {
+      console.error('Error fetching upcoming matches:', upcomingError);
+      throw upcomingError;
+    }
+
+    return {
+      hasActiveMatches: false,
+      matchDayWindow: {
+        start: null,
+        end: null
+      },
+      isMatchDay: false,
+      hasPostponedMatches: hasRecoveringMatches,
+      nextScheduledMatch: upcomingMatches?.[0]?.kickoff_time ? new Date(upcomingMatches[0].kickoff_time) : null,
+      recoveryStatus: {
+        hasRecoveringMatches,
+        nextRecoveryWindow
+      }
+    };
+  } catch (error) {
+    console.error('Error in detectMatchWindow:', error);
+    toast({
+      title: "Error Detecting Match Window",
+      description: "Failed to check match status. Please try again.",
+      variant: "destructive",
+    });
+    throw error;
+  }
 }

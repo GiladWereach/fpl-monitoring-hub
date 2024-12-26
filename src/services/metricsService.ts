@@ -22,7 +22,7 @@ export interface SystemMetrics {
 class MetricsService {
   private static instance: MetricsService;
   private metricsBuffer: Map<string, PerformanceMetrics>;
-  private flushInterval: number = 30000; // Reduced to 30 seconds for more frequent updates
+  private flushInterval: number = 30000; // 30 seconds
   private readonly MAX_BUFFER_SIZE = 1000;
 
   private constructor() {
@@ -55,24 +55,16 @@ class MetricsService {
         .from('api_health_metrics')
         .upsert(
           metrics.map(([endpoint, data]) => ({
-            endpoint: endpoint.replace(/-/g, '_'), // Standardize endpoint naming
+            endpoint: endpoint.replace(/-/g, '_'),
             success_count: Math.round(data.successRate * data.requestCount),
             error_count: Math.round(data.errorRate * data.requestCount),
             avg_response_time: data.executionTimeMs,
-            last_success_time: new Date().toISOString(),
-            error_pattern: data.errorRate > 0 ? {
-              type: 'execution_error',
-              count: Math.round(data.errorRate * data.requestCount),
-              timestamp: new Date().toISOString()
-            } : {},
+            error_pattern: {},
             created_at: new Date().toISOString()
           }))
         );
 
-      if (error) {
-        console.error('Error flushing metrics:', error);
-        throw error;
-      }
+      if (error) throw error;
       console.log('Successfully flushed metrics to database');
     } catch (error) {
       console.error('Error flushing metrics:', error);
@@ -119,7 +111,7 @@ class MetricsService {
     console.log('Fetching system metrics');
     try {
       const { data: metrics, error } = await supabase
-        .rpc('get_aggregated_metrics', { hours_lookback: 1 }); // Reduced to 1 hour for more recent data
+        .rpc('get_aggregated_metrics', { hours_lookback: 1 });
 
       if (error) throw error;
 
@@ -137,23 +129,6 @@ class MetricsService {
       console.error('Error fetching system metrics:', error);
       throw error;
     }
-  }
-
-  // Method to manually trigger metrics recording for testing
-  public async recordTestMetrics(): Promise<void> {
-    const testEndpoints = ['fetch_schedule', 'fetch_fixtures', 'calculate_points'];
-    
-    for (const endpoint of testEndpoints) {
-      this.recordMetric(endpoint, {
-        executionTimeMs: Math.random() * 1000,
-        successRate: Math.random() > 0.2 ? 1 : 0,
-        errorRate: Math.random() > 0.8 ? 1 : 0,
-        requestCount: 1
-      });
-    }
-    
-    await this.flushMetrics();
-    console.log('Test metrics recorded and flushed');
   }
 }
 
