@@ -89,7 +89,7 @@ describe('Schedule System End-to-End Tests', () => {
       // 2. Execute schedule
       const executionResult = await executeScheduleTest(
         testSchedule.function_name,
-        testSchedule.schedule_type
+        testSchedule.schedule_type as "time_based" | "event_based"
       );
       expect(executionResult.success).toBe(true);
       expect(executionResult.executionTime).toBeDefined();
@@ -107,7 +107,7 @@ describe('Schedule System End-to-End Tests', () => {
       // 2. Execute and verify retry behavior
       const executionResult = await executeScheduleTest(
         testSchedule.function_name,
-        testSchedule.schedule_type
+        testSchedule.schedule_type as "time_based" | "event_based"
       );
 
       expect(executionResult.success).toBe(true);
@@ -125,7 +125,7 @@ describe('Schedule System End-to-End Tests', () => {
       // 2. Execute schedule
       const executionResult = await executeScheduleTest(
         testSchedule.function_name,
-        testSchedule.schedule_type
+        testSchedule.schedule_type as "time_based" | "event_based"
       );
       expect(executionResult.success).toBe(true);
 
