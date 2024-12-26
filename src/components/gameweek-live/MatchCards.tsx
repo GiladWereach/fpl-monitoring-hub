@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
-import { getMatchStatus } from '@/services/matchStatusService';
+import { determineMatchStatus, MatchStatus } from '@/components/dashboard/services/matchStatusService';
 
 interface MatchCardsProps {
   gameweek: number;
@@ -16,7 +16,7 @@ const MatchCards = ({ gameweek, onMatchSelect, selectedMatchId }: MatchCardsProp
   // Fetch match status
   const { data: matchStatus } = useQuery({
     queryKey: ['match-status'],
-    queryFn: getMatchStatus,
+    queryFn: determineMatchStatus,
     refetchInterval: 30000
   });
 
@@ -68,7 +68,7 @@ const MatchCards = ({ gameweek, onMatchSelect, selectedMatchId }: MatchCardsProp
     }
     
     // Pre-match window check
-    if (!match.started && matchStatus?.isPreMatch) {
+    if (!match.started && matchStatus?.isMatchDay) {
       const preMatchStart = new Date(kickoff);
       preMatchStart.setHours(preMatchStart.getHours() - 2);
       if (now >= preMatchStart) {
