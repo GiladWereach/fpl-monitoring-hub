@@ -8,7 +8,7 @@ import { executeFetchFunction } from "./utils/functionExecutor";
 import { toast } from "@/hooks/use-toast";
 import { FunctionExecutionStatus } from "./components/FunctionExecutionStatus";
 import { CategorySection } from "./components/CategorySection";
-import { detectMatchWindow, MatchWindow } from "@/services/matchWindowService";
+import { detectMatchWindow } from "@/services/matchWindowService";
 
 interface TimeConfig {
   type: 'match_dependent' | 'daily' | 'fixed';
@@ -73,7 +73,7 @@ export function EdgeFunctionManager() {
         );
 
         for (const schedule of matchDependentSchedules) {
-          const intervalMinutes = window.type === 'live' ? 
+          const intervalMinutes = window.is_active ? 
             schedule.time_config?.matchDayIntervalMinutes : 
             schedule.time_config?.nonMatchIntervalMinutes;
 
