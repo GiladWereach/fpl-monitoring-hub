@@ -1,6 +1,30 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { logDebug, logError } from '../logging.ts';
 
+export async function getCurrentEvent(
+  supabaseClient: ReturnType<typeof createClient>
+): Promise<{ id: number } | null> {
+  try {
+    const { data: currentEvent, error: currentError } = await supabaseClient
+      .from('events')
+      .select('*')
+      .eq('is_current', true)
+      .single();
+
+    if (currentError) throw currentError;
+    
+    if (!currentEvent) {
+      logDebug('events', 'No current gameweek found');
+      return null;
+    }
+
+    return currentEvent;
+  } catch (error) {
+    logError('events', 'Error fetching current event:', error);
+    throw error;
+  }
+}
+
 export async function checkGameweekTransition(
   supabaseClient: ReturnType<typeof createClient>
 ): Promise<boolean> {
