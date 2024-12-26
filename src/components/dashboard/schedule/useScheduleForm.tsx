@@ -145,17 +145,17 @@ export function useScheduleForm({ functionName, onSuccess }: UseScheduleFormProp
     try {
       const { error } = await supabase
         .from('schedules')
-        .upsert([{
+        .upsert({
           function_name: functionName,
           schedule_type: values.schedule_type,
           enabled: values.enabled,
           timezone: values.timezone,
-          time_config: values.schedule_type === 'time_based' ? values.time_config : null,
-          event_config: values.schedule_type === 'event_based' ? values.event_config : null,
+          time_config: values.time_config,
+          event_config: values.event_config,
           event_conditions: values.event_conditions,
           execution_config: values.execution_config,
           execution_window: values.execution_window
-        }], {
+        }, {
           onConflict: 'function_name'
         });
 

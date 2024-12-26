@@ -11,7 +11,8 @@ import { ThresholdConfigDialog } from "./components/ThresholdConfigDialog";
 import { HistoricalMetricsChart } from "./components/HistoricalMetricsChart";
 import { processErrorMetrics } from "./utils/errorMetricsProcessor";
 import { mapDatabaseToAlertThresholds } from "./utils/thresholdMapper";
-import { ErrorMetrics, AlertThreshold, PerformanceMetrics as PerformanceMetricsType } from "./types/error-analytics";
+import { ErrorMetrics, AlertThreshold } from "./types/error-analytics";
+import { PerformanceMetrics as PerformanceMetricsType } from "./types/performance-metrics";
 import { ThresholdConfig } from "./types/threshold-config";
 import { AlertTriangle, Activity, Clock } from "lucide-react";
 
