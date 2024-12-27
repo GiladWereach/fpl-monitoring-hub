@@ -1,5 +1,5 @@
-import { FPLFixture, TransformedFixture } from './types';
-import { logDebug, logError } from './logging';
+import { FPLFixture, TransformedFixture } from './types.ts';
+import { logDebug, logError } from './logging.ts';
 
 export function transformFixture(fixture: FPLFixture): TransformedFixture {
   logDebug('transformer', `Transforming fixture ${fixture.id}`);
