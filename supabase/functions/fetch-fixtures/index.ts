@@ -3,6 +3,8 @@ import { fetchWithRetry } from './api-client.ts';
 import { upsertFixtures } from './database.ts';
 import { logDebug, logError, logInfo } from './logging.ts';
 import { validateFixturesData } from './validation.ts';
+import { transformFixture, validateTransformedData } from './transformer.ts';
+import { FPLFixture, TransformedFixture } from './types.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -28,7 +30,7 @@ Deno.serve(async (req) => {
     // Fetch data with retry logic
     const response = await fetchWithRetry('https://fantasy.premierleague.com/api/fixtures/');
     
-    let fixtures;
+    let rawFixtures: FPLFixture[];
     try {
       const text = await response.text();
       logDebug(functionName, `Raw response length: ${text.length}`);
@@ -37,10 +39,10 @@ Deno.serve(async (req) => {
         throw new Error('Empty response from FPL API');
       }
       
-      fixtures = JSON.parse(text);
+      rawFixtures = JSON.parse(text);
       
       // Validate response structure
-      const validationResult = validateFixturesData(fixtures);
+      const validationResult = validateFixturesData(rawFixtures);
       if (!validationResult.isValid) {
         throw new Error(`Invalid fixtures data: ${validationResult.errors.join(', ')}`);
       }
@@ -49,10 +51,28 @@ Deno.serve(async (req) => {
       throw new Error(`Failed to parse fixtures data: ${error.message}`);
     }
     
-    logInfo(functionName, `Fetched ${fixtures.length} fixtures successfully`);
+    logInfo(functionName, `Fetched ${rawFixtures.length} fixtures successfully`);
+
+    // Transform fixtures
+    const transformedFixtures: TransformedFixture[] = [];
+    for (const fixture of rawFixtures) {
+      try {
+        const transformed = transformFixture(fixture);
+        if (!validateTransformedData(transformed)) {
+          throw new Error(`Transformed fixture ${fixture.id} failed validation`);
+        }
+        transformedFixtures.push(transformed);
+      } catch (error) {
+        logError(functionName, `Error transforming fixture ${fixture.id}:`, error);
+        // Continue with other fixtures
+        continue;
+      }
+    }
+
+    logInfo(functionName, `Successfully transformed ${transformedFixtures.length} fixtures`);
 
     // Upsert fixtures with validation
-    await upsertFixtures(supabaseClient, fixtures);
+    await upsertFixtures(supabaseClient, transformedFixtures);
 
     const executionTime = Date.now() - startTime;
     logInfo(functionName, `Fixtures data processed successfully in ${executionTime}ms`);
@@ -71,9 +91,9 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: `Successfully processed ${fixtures.length} fixtures`,
+        message: `Successfully processed ${transformedFixtures.length} fixtures`,
         executionTime,
-        data: fixtures
+        data: transformedFixtures
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
