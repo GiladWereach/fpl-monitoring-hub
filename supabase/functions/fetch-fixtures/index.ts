@@ -2,6 +2,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { fetchWithRetry } from './api-client.ts';
 import { upsertFixtures } from './database.ts';
 import { logDebug, logError, logInfo } from './logging.ts';
+import { validateFixturesData } from './validation.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -24,6 +25,7 @@ Deno.serve(async (req) => {
 
     logInfo(functionName, 'Starting fixtures data fetch...');
     
+    // Fetch data with retry logic
     const response = await fetchWithRetry('https://fantasy.premierleague.com/api/fixtures/');
     
     let fixtures;
@@ -37,9 +39,10 @@ Deno.serve(async (req) => {
       
       fixtures = JSON.parse(text);
       
-      if (!Array.isArray(fixtures)) {
-        logError(functionName, `Invalid data format. Received: ${typeof fixtures}`);
-        throw new Error('Invalid fixtures data format - expected array');
+      // Validate response structure
+      const validationResult = validateFixturesData(fixtures);
+      if (!validationResult.isValid) {
+        throw new Error(`Invalid fixtures data: ${validationResult.errors.join(', ')}`);
       }
     } catch (error) {
       logError(functionName, 'Failed to parse fixtures JSON:', error);
@@ -48,6 +51,7 @@ Deno.serve(async (req) => {
     
     logInfo(functionName, `Fetched ${fixtures.length} fixtures successfully`);
 
+    // Upsert fixtures with validation
     await upsertFixtures(supabaseClient, fixtures);
 
     const executionTime = Date.now() - startTime;
@@ -68,7 +72,8 @@ Deno.serve(async (req) => {
       JSON.stringify({ 
         success: true, 
         message: `Successfully processed ${fixtures.length} fixtures`,
-        executionTime
+        executionTime,
+        data: fixtures
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
