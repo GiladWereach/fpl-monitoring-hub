@@ -5,10 +5,16 @@ export function transformFixture(fixture: FPLFixture): TransformedFixture {
   logDebug('transformer', `Transforming fixture ${fixture.id}`);
   
   try {
+    // Ensure event is a number or default to null
+    const event = typeof fixture.event === 'number' ? fixture.event : null;
+    if (event === null) {
+      logError('transformer', `Invalid event value for fixture ${fixture.id}: ${fixture.event}`);
+    }
+
     const transformed: TransformedFixture = {
       id: fixture.id,
       code: null, // Will be populated if available
-      event: fixture.event,
+      event: event,
       kickoff_time: new Date(fixture.kickoff_time).toISOString(),
       minutes: fixture.minutes || 0,
       provisional_start_time: fixture.provisional_start_time || false,

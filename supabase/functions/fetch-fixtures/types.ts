@@ -23,7 +23,7 @@ export interface FPLFixture {
 export interface TransformedFixture {
   id: number;
   code: number | null;
-  event: number;
+  event: number | null;
   kickoff_time: string;
   minutes: number;
   provisional_start_time: boolean;

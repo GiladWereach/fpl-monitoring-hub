@@ -19,23 +19,28 @@ export function validateFixturesData(data: any): ValidationResult {
       }
     }
 
-    // Type validation
+    // Type validation with better error handling
     if (typeof fixture.id !== 'number') {
-      errors.push(`Invalid id type for fixture ${fixture.id || 'unknown'}`);
+      errors.push(`Invalid id type for fixture ${fixture.id || 'unknown'}, got ${typeof fixture.id}`);
     }
-    if (typeof fixture.event !== 'number') {
-      errors.push(`Invalid event type for fixture ${fixture.id || 'unknown'}`);
+
+    // Handle null or undefined event values
+    if (fixture.event === null || fixture.event === undefined) {
+      errors.push(`Missing event value for fixture ${fixture.id || 'unknown'}`);
+    } else if (typeof fixture.event !== 'number') {
+      errors.push(`Invalid event type for fixture ${fixture.id || 'unknown'}, got ${typeof fixture.event}, value: ${fixture.event}`);
     }
+
     if (typeof fixture.team_h !== 'number') {
-      errors.push(`Invalid team_h type for fixture ${fixture.id || 'unknown'}`);
+      errors.push(`Invalid team_h type for fixture ${fixture.id || 'unknown'}, got ${typeof fixture.team_h}`);
     }
     if (typeof fixture.team_a !== 'number') {
-      errors.push(`Invalid team_a type for fixture ${fixture.id || 'unknown'}`);
+      errors.push(`Invalid team_a type for fixture ${fixture.id || 'unknown'}, got ${typeof fixture.team_a}`);
     }
 
     // Date validation
     if (fixture.kickoff_time && !isValidDate(fixture.kickoff_time)) {
-      errors.push(`Invalid kickoff_time format for fixture ${fixture.id || 'unknown'}`);
+      errors.push(`Invalid kickoff_time format for fixture ${fixture.id || 'unknown'}: ${fixture.kickoff_time}`);
     }
 
     // Stats validation if present
