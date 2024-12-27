@@ -105,8 +105,10 @@ export type Database = {
           error_type: Database["public"]["Enums"]["api_error_type"]
           id: number
           request_params: Json | null
+          response_body: string | null
           response_code: number | null
           retry_count: number | null
+          validation_details: Json | null
         }
         Insert: {
           created_at?: string | null
@@ -115,8 +117,10 @@ export type Database = {
           error_type: Database["public"]["Enums"]["api_error_type"]
           id?: number
           request_params?: Json | null
+          response_body?: string | null
           response_code?: number | null
           retry_count?: number | null
+          validation_details?: Json | null
         }
         Update: {
           created_at?: string | null
@@ -125,8 +129,10 @@ export type Database = {
           error_type?: Database["public"]["Enums"]["api_error_type"]
           id?: number
           request_params?: Json | null
+          response_body?: string | null
           response_code?: number | null
           retry_count?: number | null
+          validation_details?: Json | null
         }
         Relationships: []
       }
