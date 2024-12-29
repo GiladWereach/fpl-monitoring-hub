@@ -1,5 +1,5 @@
-import { SupabaseClient } from '@supabase/supabase-js';
-import { logDebug, logError } from '../../shared/logging-service.ts';
+import { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { logDebug, logError } from '../shared/logging-service.ts';
 
 export type MatchWindowState = 'pre_match' | 'live' | 'post_match' | 'idle';
 

@@ -19,6 +19,12 @@ export async function transitionState(
   try {
     logDebug('state-management', `Transitioning schedule ${schedule_id} from ${from_state} to ${to_state}`);
     
+    // Validate the transition
+    if (!await validateStateTransition(from_state, to_state)) {
+      logError('state-management', `Invalid state transition from ${from_state} to ${to_state}`);
+      return false;
+    }
+
     // Insert new state
     const { error: insertError } = await client
       .from('schedule_states')
@@ -74,4 +80,22 @@ export async function getCurrentState(
     logError('state-management', `Error getting current state for schedule ${schedule_id}:`, error);
     throw error;
   }
+}
+
+export async function validateStateTransition(
+  from_state: ScheduleState,
+  to_state: ScheduleState
+): Promise<boolean> {
+  const validTransitions: Record<ScheduleState, ScheduleState[]> = {
+    'idle': ['scheduled'],
+    'scheduled': ['pending', 'failed'],
+    'pending': ['executing', 'failed'],
+    'executing': ['completed', 'failed', 'retry'],
+    'completed': ['idle', 'scheduled'],
+    'failed': ['retry', 'max_retries', 'idle'],
+    'retry': ['pending'],
+    'max_retries': ['idle']
+  };
+
+  return validTransitions[from_state]?.includes(to_state) || false;
 }
