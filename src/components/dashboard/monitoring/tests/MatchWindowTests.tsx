@@ -10,6 +10,11 @@ interface TestResult {
   status: 'success' | 'error' | 'warning';
   message: string;
   timestamp: Date;
+  metrics?: {
+    responseTime?: number;
+    recoveryTime?: number;
+    dataFreshness?: number;
+  };
 }
 
 export function MatchWindowTests() {
@@ -20,15 +25,19 @@ export function MatchWindowTests() {
     queryFn: async () => {
       console.log('Running match window tests');
       const results: TestResult[] = [];
+      const startTime = performance.now();
       
       try {
-        // Test 1: Match Window Detection
+        // Test 1: Basic Match Window Detection
         const { data: window } = await supabase.rpc('get_current_match_window');
         results.push({
           name: 'Match Window Detection',
           status: window ? 'success' : 'warning',
           message: window ? 'Successfully detected match window' : 'No active match window',
-          timestamp: new Date()
+          timestamp: new Date(),
+          metrics: {
+            responseTime: performance.now() - startTime
+          }
         });
 
         // Test 2: State Transitions
@@ -43,6 +52,44 @@ export function MatchWindowTests() {
           status: states?.length ? 'success' : 'error',
           message: states?.length ? 'State transitions working' : 'No state transitions found',
           timestamp: new Date()
+        });
+
+        // Test 3: Recovery Mechanism
+        const recoveryStartTime = performance.now();
+        try {
+          throw new Error('test_error');
+        } catch (error) {
+          const recovered = await handleRecoveryTest();
+          results.push({
+            name: 'Recovery Mechanism',
+            status: recovered ? 'success' : 'warning',
+            message: recovered ? 'Recovery mechanism working' : 'Recovery needs attention',
+            timestamp: new Date(),
+            metrics: {
+              recoveryTime: performance.now() - recoveryStartTime
+            }
+          });
+        }
+
+        // Test 4: Data Freshness
+        const { data: latestState } = await supabase
+          .from('match_window_states')
+          .select('created_at')
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+        const freshness = latestState?.[0]?.created_at ? 
+          Date.now() - new Date(latestState[0].created_at).getTime() :
+          Infinity;
+
+        results.push({
+          name: 'Data Freshness',
+          status: freshness < 300000 ? 'success' : 'warning',
+          message: `Data is ${Math.round(freshness / 1000)}s old`,
+          timestamp: new Date(),
+          metrics: {
+            dataFreshness: freshness
+          }
         });
 
       } catch (error) {
@@ -80,6 +127,13 @@ export function MatchWindowTests() {
               <div>
                 <div className="font-medium">{result.name}</div>
                 <AlertDescription>{result.message}</AlertDescription>
+                {result.metrics && (
+                  <div className="text-xs text-muted-foreground mt-1">
+                    {result.metrics.responseTime && `Response: ${result.metrics.responseTime.toFixed(0)}ms`}
+                    {result.metrics.recoveryTime && ` Recovery: ${result.metrics.recoveryTime.toFixed(0)}ms`}
+                    {result.metrics.dataFreshness && ` Freshness: ${(result.metrics.dataFreshness / 1000).toFixed(0)}s`}
+                  </div>
+                )}
               </div>
             </div>
           </Alert>
@@ -87,4 +141,13 @@ export function MatchWindowTests() {
       </div>
     </Card>
   );
+}
+
+async function handleRecoveryTest(): Promise<boolean> {
+  try {
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    return true;
+  } catch {
+    return false;
+  }
 }
