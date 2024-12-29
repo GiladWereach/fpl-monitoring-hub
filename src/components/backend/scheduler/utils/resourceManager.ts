@@ -1,7 +1,14 @@
-import { ResourcePoolManager, ResourceLimits, DEFAULT_LIMITS } from './resourcePool';
+import { ResourcePoolManager, ResourceLimits, DEFAULT_LIMITS, ResourcePool } from './resourcePool';
 import { MetricsCollector } from './metricsCollector';
-import { ResourcePredictor } from './resourcePredictor';
+import { ResourcePredictor, PredictionResult } from './resourcePredictor';
 import { toast } from "@/hooks/use-toast";
+
+interface ResourceMetrics {
+  activeTasks: number;
+  requestRate: number;
+  poolStatus?: { available: number; total: number };
+  predictedUsage: number;
+}
 
 export class ResourceManager {
   private static instance: ResourceManager;
@@ -37,7 +44,6 @@ export class ResourceManager {
       console.log(`${functionName} has no available resources in pool`);
       this.metricsCollector.recordMetric('error', 0);
       
-      // Alert on resource exhaustion with more context
       const prediction = this.predictor.predictNextUsage(functionName);
       toast({
         title: "Resource Pool Exhausted",
@@ -76,18 +82,16 @@ export class ResourceManager {
     const currentPool = this.poolManager.getPool(functionName);
     
     if (!currentPool) {
-      // Initialize pool with predicted size
       const initialSize = Math.max(
         limits.poolSize || DEFAULT_LIMITS.poolSize!,
-        Math.ceil(prediction.predictedUsage * 1.2) // 20% buffer
+        Math.ceil(prediction.predictedUsage * 1.2)
       );
-      this.poolManager.initializePool(functionName, { ...limits, poolSize: initialSize });
+      await this.poolManager.initializePool(functionName, { ...limits, poolSize: initialSize });
       return;
     }
 
-    // Adjust pool size based on prediction and confidence
     const recommendedSize = Math.ceil(prediction.predictedUsage * (1 + (1 - prediction.confidence)));
-    if (Math.abs(recommendedSize - currentPool.total) > currentPool.total * 0.2) { // 20% threshold
+    if (Math.abs(recommendedSize - currentPool.total) > currentPool.total * 0.2) {
       const newSize = Math.max(limits.poolSize || DEFAULT_LIMITS.poolSize!, recommendedSize);
       await this.poolManager.resizePool(functionName, newSize);
       console.log(`Adjusted pool size for ${functionName} to ${newSize} based on predictions`);
@@ -95,7 +99,6 @@ export class ResourceManager {
   }
 
   private calculateAdjustedRateLimit(baseLimit: number, prediction: PredictionResult): number {
-    // Adjust rate limit based on prediction confidence and anomaly score
     const adjustmentFactor = Math.max(0.5, Math.min(1.5, 
       1 + (prediction.confidence - 0.5) - (prediction.anomalyScore * 0.1)
     ));
@@ -103,29 +106,24 @@ export class ResourceManager {
   }
 
   private estimateAvailabilityTime(prediction: PredictionResult): number {
-    // Estimate time until resources become available based on prediction
-    const baseTime = 5; // Base waiting time in minutes
+    const baseTime = 5;
     return Math.round(baseTime * (1 + prediction.anomalyScore));
   }
 
   async trackExecution(functionName: string): Promise<void> {
     console.log(`Tracking execution for ${functionName}`);
     
-    // Update concurrent tasks
     const currentTasks = this.activeTasks.get(functionName) || 0;
     this.activeTasks.set(functionName, currentTasks + 1);
     
-    // Update rate limiting
     const requests = this.requestCounts.get(functionName) || [];
     requests.push(Date.now());
     this.requestCounts.set(functionName, requests);
 
-    // Update resource pool
-    this.poolManager.decrementPool(functionName);
+    await this.poolManager.decrementPool(functionName);
 
-    // Record metrics and predict usage
     this.metricsCollector.recordMetric('success', currentTasks + 1);
-    this.predictor.recordUsage(functionName, currentTasks + 1);
+    await this.predictor.recordUsage(functionName, currentTasks + 1);
   }
 
   async releaseExecution(functionName: string): Promise<void> {
@@ -134,34 +132,27 @@ export class ResourceManager {
     const currentTasks = this.activeTasks.get(functionName) || 1;
     this.activeTasks.set(functionName, Math.max(0, currentTasks - 1));
     
-    // Clean up old rate limit entries
     const now = Date.now();
     const requests = this.requestCounts.get(functionName) || [];
     const recentRequests = requests.filter(time => now - time < 60000);
     this.requestCounts.set(functionName, recentRequests);
 
-    // Refill pool if needed
-    this.poolManager.refillPool(functionName);
+    await this.poolManager.refillPool(functionName);
   }
 
-  getResourceMetrics(functionName: string): {
-    activeTasks: number;
-    requestRate: number;
-    poolStatus?: { available: number; total: number };
-    predictedUsage: number;
-  } {
+  getResourceMetrics(functionName: string): ResourceMetrics {
     const currentTasks = this.activeTasks.get(functionName) || 0;
     const requests = this.requestCounts.get(functionName) || [];
     const now = Date.now();
     const recentRequests = requests.filter(time => now - time < 60000).length;
     const pool = this.poolManager.getPool(functionName);
-    const predictedUsage = this.predictor.predictNextUsage(functionName);
+    const prediction = this.predictor.predictNextUsage(functionName);
 
     return {
       activeTasks: currentTasks,
       requestRate: recentRequests,
       poolStatus: pool ? { available: pool.available, total: pool.total } : undefined,
-      predictedUsage
+      predictedUsage: prediction.predictedUsage
     };
   }
 }
