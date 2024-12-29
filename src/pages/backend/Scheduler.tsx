@@ -15,6 +15,7 @@ import { AlertingSystem } from "@/components/dashboard/monitoring/AlertingSystem
 import { MonitoringDashboard } from "@/components/dashboard/monitoring/MonitoringDashboard";
 import { MatchWindowMonitor } from "@/components/dashboard/monitoring/MatchWindowMonitor";
 import { MatchWindowTests } from "@/components/dashboard/monitoring/tests/MatchWindowTests";
+import { ResourceMonitoringDashboard } from "@/components/dashboard/monitoring/ResourceMonitoringDashboard";
 import { cn } from "@/lib/utils";
 import { SidebarProvider } from "@/components/ui/sidebar";
 
@@ -63,6 +64,8 @@ export default function Scheduler() {
           <SchedulerErrorBoundary>
             <div className="space-y-8 max-w-7xl">
               <SchedulerHeader lastUpdated={lastUpdated} onRefresh={() => refetch()} />
+              
+              <ResourceMonitoringDashboard />
               
               <MonitoringDashboard />
               
