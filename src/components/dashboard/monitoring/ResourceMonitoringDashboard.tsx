@@ -1,8 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
-import { Activity, Server, Clock, AlertTriangle } from "lucide-react";
-import { MetricCard } from "./components/MetricCard";
+import { AlertTriangle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/hooks/use-toast";
@@ -11,6 +10,7 @@ import { performanceTracker } from "./utils/performanceTracker";
 import { useEffect, useRef } from "react";
 import { ResourceUsageChart } from "./components/ResourceUsageChart";
 import { PredictionAccuracyChart } from "./components/PredictionAccuracyChart";
+import { MetricsOverview } from "./components/MetricsOverview";
 
 interface ResourceMetric {
   name: string;
@@ -105,116 +105,12 @@ export function ResourceMonitoringDashboard() {
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <MetricCard
-          title="Active Tasks"
-          value={metrics?.reduce((sum, m) => sum + m.activeTasks, 0)?.toString() || '0'}
-          subtitle="Current executions"
-          icon={Activity}
-          iconColor="text-blue-500"
-        />
-        
-        <MetricCard
-          title="Request Rate"
-          value={`${metrics?.reduce((sum, m) => sum + m.requestRate, 0) || 0}/min`}
-          subtitle="Across all functions"
-          icon={Clock}
-          iconColor="text-amber-500"
-        />
-        
-        <MetricCard
-          title="Pool Utilization"
-          value={(() => {
-            const pools = metrics?.filter(m => m.poolStatus).map(m => m.poolStatus!);
-            if (!pools?.length) return '0%';
-            const used = pools.reduce((sum, p) => sum + (p.total - p.available), 0);
-            const total = pools.reduce((sum, p) => sum + p.total, 0);
-            return `${Math.round((used / total) * 100)}%`;
-          })()}
-          subtitle="Resource pool usage"
-          icon={Server}
-          iconColor="text-green-500"
-        />
-
-        <MetricCard
-          title="Prediction Confidence"
-          value={(() => {
-            if (!metrics?.length) return 'N/A';
-            const avgConfidence = metrics.reduce((sum, m) => sum + m.predictedUsage.confidence, 0) / metrics.length;
-            return `${Math.round(avgConfidence * 100)}%`;
-          })()}
-          subtitle="Resource prediction accuracy"
-          icon={AlertTriangle}
-          iconColor="text-purple-500"
-        />
-      </div>
+      <MetricsOverview metrics={metrics} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="p-4">
-          <h3 className="text-sm font-medium mb-4">Resource Usage Trends</h3>
-          <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={metrics || []}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Area 
-                  type="monotone" 
-                  dataKey="activeTasks" 
-                  stackId="1"
-                  stroke="#3b82f6" 
-                  fill="#3b82f6" 
-                  fillOpacity={0.3}
-                  name="Active Tasks" 
-                />
-                <Area 
-                  type="monotone" 
-                  dataKey="requestRate" 
-                  stackId="2"
-                  stroke="#f59e0b" 
-                  fill="#f59e0b"
-                  fillOpacity={0.3}
-                  name="Request Rate" 
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </Card>
-
-        <Card className="p-4">
-          <h3 className="text-sm font-medium mb-4">Prediction Accuracy</h3>
-          <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={metrics || []}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Line 
-                  type="monotone" 
-                  dataKey="predictedUsage.predictedUsage" 
-                  stroke="#8b5cf6" 
-                  name="Predicted Usage" 
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="predictedUsage.confidence" 
-                  stroke="#10b981" 
-                  name="Confidence" 
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="predictedUsage.anomalyScore" 
-                  stroke="#ef4444" 
-                  name="Anomaly Score" 
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </Card>
+        <ResourceUsageChart data={metrics || []} />
+        <PredictionAccuracyChart data={metrics || []} />
       </div>
     </Card>
   );
+}
