@@ -11,14 +11,7 @@ import { useEffect, useRef } from "react";
 import { ResourceUsageChart } from "./components/ResourceUsageChart";
 import { PredictionAccuracyChart } from "./components/PredictionAccuracyChart";
 import { MetricsOverview } from "./components/MetricsOverview";
-
-interface ResourceMetric {
-  name: string;
-  activeTasks: number;
-  requestRate: number;
-  poolStatus?: { available: number; total: number };
-  predictedUsage: PredictionResult;
-}
+import { MetricsData } from "./types/monitoring-types";
 
 export function ResourceMonitoringDashboard() {
   const startTimeRef = useRef<number>(0);
@@ -54,7 +47,7 @@ export function ResourceMonitoringDashboard() {
         }
 
         console.log('Fetched metrics:', data);
-        return data;
+        return data as MetricsData[];
       } catch (err) {
         console.error('Error in queryFn:', err);
         throw err;
@@ -64,7 +57,7 @@ export function ResourceMonitoringDashboard() {
     retry: 3,
   });
 
-  const hasAnomalies = metrics?.some(m => m.predictedUsage.anomalyScore > 2.0);
+  const hasAnomalies = metrics?.some(m => m.predictedUsage?.anomalyScore > 2.0);
 
   if (error) {
     return (
@@ -105,7 +98,7 @@ export function ResourceMonitoringDashboard() {
         )}
       </div>
 
-      <MetricsOverview metrics={metrics} />
+      <MetricsOverview metrics={metrics || []} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <ResourceUsageChart data={metrics || []} />
