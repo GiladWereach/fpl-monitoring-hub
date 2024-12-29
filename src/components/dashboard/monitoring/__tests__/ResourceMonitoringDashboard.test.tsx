@@ -4,7 +4,7 @@ import '@testing-library/jest-dom';
 import { ResourceMonitoringDashboard } from '../ResourceMonitoringDashboard';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import type { PostgrestResponse } from '@supabase/supabase-js';
+import type { PostgrestResponse, PostgrestSingleResponse } from '@supabase/supabase-js';
 import { MetricsData } from '../types/monitoring-types';
 
 // Mock data
@@ -28,8 +28,34 @@ const mockMetricsData: MetricsData[] = [{
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     rpc: vi.fn().mockImplementation(() => ({
-      then: (callback: any): Promise<PostgrestResponse<MetricsData[]>> => 
-        Promise.resolve(callback({ data: mockMetricsData, error: null }))
+      data: mockMetricsData,
+      error: null,
+      count: null,
+      status: 200,
+      statusText: "OK",
+      eq: vi.fn(),
+      neq: vi.fn(),
+      gt: vi.fn(),
+      gte: vi.fn(),
+      lt: vi.fn(),
+      lte: vi.fn(),
+      is: vi.fn(),
+      in: vi.fn(),
+      contains: vi.fn(),
+      containedBy: vi.fn(),
+      rangeLt: vi.fn(),
+      rangeGt: vi.fn(),
+      rangeGte: vi.fn(),
+      rangeLte: vi.fn(),
+      rangeAdjacent: vi.fn(),
+      overlaps: vi.fn(),
+      like: vi.fn(),
+      ilike: vi.fn(),
+      match: vi.fn(),
+      imatch: vi.fn(),
+      not: vi.fn(),
+      or: vi.fn(),
+      filter: vi.fn()
     }))
   }
 }));
@@ -42,7 +68,6 @@ describe('ResourceMonitoringDashboard', () => {
       defaultOptions: {
         queries: {
           retry: false,
-          gcTime: 0
         },
       },
     });
@@ -60,10 +85,34 @@ describe('ResourceMonitoringDashboard', () => {
   it('renders error state when fetch fails', async () => {
     const errorMock = vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.mocked(supabase.rpc).mockImplementationOnce(() => ({
-      then: (callback: any) => Promise.resolve(callback({ 
-        data: null, 
-        error: { message: 'Failed to fetch metrics' } 
-      })),
+      data: null,
+      error: { message: 'Failed to fetch metrics' },
+      count: null,
+      status: 500,
+      statusText: "Error",
+      eq: vi.fn(),
+      neq: vi.fn(),
+      gt: vi.fn(),
+      gte: vi.fn(),
+      lt: vi.fn(),
+      lte: vi.fn(),
+      is: vi.fn(),
+      in: vi.fn(),
+      contains: vi.fn(),
+      containedBy: vi.fn(),
+      rangeLt: vi.fn(),
+      rangeGt: vi.fn(),
+      rangeGte: vi.fn(),
+      rangeLte: vi.fn(),
+      rangeAdjacent: vi.fn(),
+      overlaps: vi.fn(),
+      like: vi.fn(),
+      ilike: vi.fn(),
+      match: vi.fn(),
+      imatch: vi.fn(),
+      not: vi.fn(),
+      or: vi.fn(),
+      filter: vi.fn()
     }));
 
     render(
