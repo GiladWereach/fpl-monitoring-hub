@@ -18,7 +18,7 @@ const mockData = {
 // Mock Supabase client
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
-    from: vi.fn((table: string) => ({
+    from: vi.fn((table: keyof Database['public']['Tables']) => ({
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
       single: vi.fn().mockReturnThis(),
@@ -64,7 +64,7 @@ describe('ResourceMonitoringDashboard', () => {
 
   it('renders error state when fetch fails', async () => {
     const errorMock = vi.spyOn(console, 'error').mockImplementation(() => {});
-    vi.mocked(supabase.from).mockImplementationOnce((table: string) => ({
+    vi.mocked(supabase.from).mockImplementationOnce((table: keyof Database['public']['Tables']) => ({
       ...vi.mocked(supabase.from)(table),
       then: vi.fn().mockImplementation((callback) => 
         Promise.resolve(callback({ data: null, error: { message: 'Failed to fetch metrics' } }))
