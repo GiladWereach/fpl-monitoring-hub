@@ -7,6 +7,11 @@ export interface WindowAnalytics {
   matchDensity: number;
 }
 
+interface WindowStateMetadata {
+  error?: string;
+  details?: Record<string, unknown>;
+}
+
 export async function getHistoricalAnalytics(days: number = 7): Promise<WindowAnalytics> {
   console.log(`Fetching historical analytics for last ${days} days`);
   
@@ -32,7 +37,10 @@ export async function getHistoricalAnalytics(days: number = 7): Promise<WindowAn
       new Date(w.end_time).getTime() - new Date(w.start_time).getTime()
     );
     const averageDuration = durations.reduce((a, b) => a + b, 0) / totalWindows;
-    const errorCount = windows.filter(w => w.metadata?.error).length;
+    const errorCount = windows.filter(w => {
+      const metadata = w.metadata as WindowStateMetadata;
+      return metadata?.error !== undefined;
+    }).length;
     const totalMatches = windows.reduce((sum, w) => sum + (w.active_fixtures || 0), 0);
 
     return {
