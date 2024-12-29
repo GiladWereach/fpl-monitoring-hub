@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react';
-import { act } from '@testing-library/react';
-import { vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ResourceMonitoringDashboard } from '../ResourceMonitoringDashboard';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 // Mock Supabase client
 vi.mock('@/integrations/supabase/client', () => ({
@@ -62,36 +62,32 @@ describe('ResourceMonitoringDashboard', () => {
 
   it('renders error state when fetch fails', async () => {
     const errorMock = vi.spyOn(console, 'error').mockImplementation(() => {});
-    vi.mocked(supabase.from).mockImplementation(() => ({
+    vi.mocked(supabase.from).mockImplementationOnce(() => ({
       ...vi.mocked(supabase.from)(),
       then: vi.fn().mockImplementation((callback) => 
         Promise.resolve(callback({ data: null, error: { message: 'Failed to fetch metrics' } }))
       ),
     }));
 
-    await act(async () => {
-      render(
-        <QueryClientProvider client={queryClient}>
-          <ResourceMonitoringDashboard />
-        </QueryClientProvider>
-      );
-    });
+    render(
+      <QueryClientProvider client={queryClient}>
+        <ResourceMonitoringDashboard />
+      </QueryClientProvider>
+    );
 
-    expect(screen.getByText(/Failed to load resource metrics/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Failed to load resource metrics/i)).toBeInTheDocument();
     errorMock.mockRestore();
   });
 
   it('renders metrics when data is loaded', async () => {
-    await act(async () => {
-      render(
-        <QueryClientProvider client={queryClient}>
-          <ResourceMonitoringDashboard />
-        </QueryClientProvider>
-      );
-    });
+    render(
+      <QueryClientProvider client={queryClient}>
+        <ResourceMonitoringDashboard />
+      </QueryClientProvider>
+    );
 
-    expect(screen.getByText(/Resource Usage/i)).toBeInTheDocument();
-    expect(screen.getByText(/95%/)).toBeInTheDocument();
-    expect(screen.getByText(/150ms/)).toBeInTheDocument();
+    expect(await screen.findByText(/Resource Usage/i)).toBeInTheDocument();
+    expect(await screen.findByText(/95%/)).toBeInTheDocument();
+    expect(await screen.findByText(/150ms/)).toBeInTheDocument();
   });
 });
