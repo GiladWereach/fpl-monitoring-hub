@@ -13,6 +13,14 @@ interface MatchWindowState {
   next_kickoff: string | null;
 }
 
+interface WindowState {
+  isActive: boolean;
+  matchCount: number;
+  windowStart: Date | null;
+  windowEnd: Date | null;
+  nextKickoff: Date | null;
+}
+
 export function MatchWindowMonitor() {
   console.log('Rendering MatchWindowMonitor');
 
@@ -24,20 +32,27 @@ export function MatchWindowMonitor() {
       
       if (error) throw error;
       
-      const state: MatchWindowState = window || {
-        window_start: '',
-        window_end: '',
-        is_active: false,
-        match_count: 0,
-        next_kickoff: null
-      };
+      // Handle the case where no window is returned
+      if (!window || !Array.isArray(window) || window.length === 0) {
+        const defaultState: WindowState = {
+          isActive: false,
+          matchCount: 0,
+          windowStart: null,
+          windowEnd: null,
+          nextKickoff: null
+        };
+        return defaultState;
+      }
+
+      // Take the first window from the array
+      const currentWindow = window[0] as MatchWindowState;
       
       return {
-        isActive: state.is_active,
-        matchCount: state.match_count,
-        windowStart: state.window_start ? new Date(state.window_start) : null,
-        windowEnd: state.window_end ? new Date(state.window_end) : null,
-        nextKickoff: state.next_kickoff ? new Date(state.next_kickoff) : null
+        isActive: currentWindow.is_active,
+        matchCount: currentWindow.match_count,
+        windowStart: currentWindow.window_start ? new Date(currentWindow.window_start) : null,
+        windowEnd: currentWindow.window_end ? new Date(currentWindow.window_end) : null,
+        nextKickoff: currentWindow.next_kickoff ? new Date(currentWindow.next_kickoff) : null
       };
     },
     refetchInterval: 60000
