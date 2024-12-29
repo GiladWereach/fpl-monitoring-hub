@@ -1,29 +1,31 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import '@testing-library/jest-dom';
 import { ResourceMonitoringDashboard } from '../ResourceMonitoringDashboard';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import type { PostgrestQueryBuilder } from '@supabase/postgrest-js';
+import type { Database } from '@/integrations/supabase/types';
 
 // Mock Supabase client
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
-    from: () => ({
+    from: vi.fn().mockReturnValue({
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
       single: vi.fn().mockReturnThis(),
       order: vi.fn().mockReturnThis(),
       limit: vi.fn().mockReturnThis(),
-      maybeSingle: vi.fn().mockReturnThis(),
-      url: 'mock-url',
-      headers: {},
-      insert: vi.fn().mockReturnThis(),
-      upsert: vi.fn().mockReturnThis(),
-      delete: vi.fn().mockReturnThis(),
-      update: vi.fn().mockReturnThis(),
       then: vi.fn().mockImplementation((callback) => 
         Promise.resolve(callback({ data: mockData, error: null }))
       ),
-    }),
+      url: 'mock-url',
+      headers: {},
+      insert: vi.fn(),
+      upsert: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+    } as unknown as PostgrestQueryBuilder<Database['public'], any, any>),
     rpc: vi.fn().mockImplementation(() => ({
       single: () => Promise.resolve({ data: mockData, error: null }),
     })),
@@ -67,7 +69,7 @@ describe('ResourceMonitoringDashboard', () => {
       then: vi.fn().mockImplementation((callback) => 
         Promise.resolve(callback({ data: null, error: { message: 'Failed to fetch metrics' } }))
       ),
-    }));
+    } as unknown as PostgrestQueryBuilder<Database['public'], any, any>));
 
     render(
       <QueryClientProvider client={queryClient}>
