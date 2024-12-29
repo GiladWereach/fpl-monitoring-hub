@@ -1,16 +1,16 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
-import { ResourceManager } from "@/components/backend/scheduler/utils/resourceManager";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Area, AreaChart } from 'recharts';
+import { supabase } from "@/integrations/supabase/client";
 import { Activity, Server, Clock, AlertTriangle } from "lucide-react";
 import { MetricCard } from "./components/MetricCard";
-import { PredictionResult } from "@/components/backend/scheduler/utils/resourcePredictor";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/hooks/use-toast";
 import { persistMetrics } from "./utils/metricsPersistence";
 import { performanceTracker } from "./utils/performanceTracker";
 import { useEffect, useRef } from "react";
+import { ResourceUsageChart } from "./components/ResourceUsageChart";
+import { PredictionAccuracyChart } from "./components/PredictionAccuracyChart";
 
 interface ResourceMetric {
   name: string;
@@ -36,49 +36,35 @@ export function ResourceMonitoringDashboard() {
     queryFn: async () => {
       console.log('Fetching resource metrics');
       try {
-        const resourceManager = ResourceManager.getInstance();
-        const functions = ['fetch-live-gameweek', 'fetch-fixtures', 'process-schedules'];
-        
-        const rawMetrics = functions.map(fn => ({
-          name: fn,
-          ...resourceManager.getResourceMetrics(fn)
-        }));
+        const { data, error } = await supabase
+          .rpc('get_aggregated_metrics', { hours_lookback: 24 });
 
-        // Validate metrics data
-        const validatedMetrics = rawMetrics.map(metric => {
-          if (!metric.predictedUsage || typeof metric.predictedUsage.confidence !== 'number') {
-            console.error(`Invalid prediction data for ${metric.name}:`, metric.predictedUsage);
-            throw new Error(`Invalid prediction data for ${metric.name}`);
-          }
-          return metric;
-        });
+        if (error) {
+          console.error('Error fetching metrics:', error);
+          toast({
+            title: "Error Fetching Metrics",
+            description: error.message || "Failed to fetch resource metrics",
+            variant: "destructive",
+          });
+          throw error;
+        }
 
-        // Persist metrics with performance data
-        const performanceData = performanceTracker.endTracking(startTimeRef.current);
-        await persistMetrics(validatedMetrics, {
-          render_time: performanceData.renderTime,
-          memory_usage: performanceData.memoryUsage
-        });
+        if (!data) {
+          throw new Error('No metrics data received');
+        }
 
-        return validatedMetrics as ResourceMetric[];
+        console.log('Fetched metrics:', data);
+        return data;
       } catch (err) {
-        console.error('Error fetching metrics:', err);
-        toast({
-          title: "Error Fetching Metrics",
-          description: "Failed to fetch resource metrics. Please try again.",
-          variant: "destructive",
-        });
+        console.error('Error in queryFn:', err);
         throw err;
       }
     },
     refetchInterval: 5000,
     retry: 3,
-    meta: {
-      errorMessage: "Failed to fetch resource metrics"
-    }
   });
 
-  console.log('Current resource metrics:', metrics);
+  const hasAnomalies = metrics?.some(m => m.predictedUsage.anomalyScore > 2.0);
 
   if (error) {
     return (
@@ -106,8 +92,6 @@ export function ResourceMonitoringDashboard() {
       </Card>
     );
   }
-
-  const hasAnomalies = metrics?.some(m => m.predictedUsage.anomalyScore > 2.0);
 
   return (
     <Card className="p-6 space-y-6">
@@ -234,4 +218,3 @@ export function ResourceMonitoringDashboard() {
       </div>
     </Card>
   );
-}

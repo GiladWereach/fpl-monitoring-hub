@@ -15,7 +15,7 @@ const mockData = {
   system_load: 75,
 };
 
-// Mock Supabase client
+// Mock Supabase client with proper typing
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     from: vi.fn((table: keyof Database['public']['Tables']) => ({
@@ -34,8 +34,8 @@ vi.mock('@/integrations/supabase/client', () => ({
       update: vi.fn(),
       delete: vi.fn(),
     } as unknown as PostgrestQueryBuilder<Database['public'], any, any>)),
-    rpc: vi.fn().mockImplementation(() => ({
-      single: () => Promise.resolve({ data: mockData, error: null }),
+    rpc: vi.fn().mockImplementation((functionName: string) => ({
+      then: (callback: any) => Promise.resolve(callback({ data: [mockData], error: null })),
     })),
   },
 }));
@@ -48,6 +48,7 @@ describe('ResourceMonitoringDashboard', () => {
       defaultOptions: {
         queries: {
           retry: false,
+          cacheTime: 0,
         },
       },
     });
@@ -64,12 +65,12 @@ describe('ResourceMonitoringDashboard', () => {
 
   it('renders error state when fetch fails', async () => {
     const errorMock = vi.spyOn(console, 'error').mockImplementation(() => {});
-    vi.mocked(supabase.from).mockImplementationOnce((table: keyof Database['public']['Tables']) => ({
-      ...vi.mocked(supabase.from)(table),
-      then: vi.fn().mockImplementation((callback) => 
-        Promise.resolve(callback({ data: null, error: { message: 'Failed to fetch metrics' } }))
-      ),
-    } as unknown as PostgrestQueryBuilder<Database['public'], any, any>));
+    vi.mocked(supabase.rpc).mockImplementationOnce(() => ({
+      then: (callback: any) => Promise.resolve(callback({ 
+        data: null, 
+        error: { message: 'Failed to fetch metrics' } 
+      })),
+    }));
 
     render(
       <QueryClientProvider client={queryClient}>
