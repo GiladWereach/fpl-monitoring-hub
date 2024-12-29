@@ -21,9 +21,9 @@ export function SystemMetricsOverview({ metrics, isLoading, error }: SystemMetri
         ["Endpoint", "Success Rate", "Response Time", "Health Status"],
         ...(metrics || []).map(m => [
           m.endpoint,
-          `${m.success_rate}%`,
-          `${m.avg_response_time}ms`,
-          m.health_status
+          `${m.success_rate ?? 0}%`,
+          `${m.avg_response_time ?? 0}ms`,
+          m.health_status ?? 'unknown'
         ])
       ].map(row => row.join(",")).join("\n");
 
@@ -80,15 +80,15 @@ export function SystemMetricsOverview({ metrics, isLoading, error }: SystemMetri
     );
   }
 
-  // Ensure metrics is an array and calculate high-level metrics
+  // Ensure metrics is an array and calculate high-level metrics with null checks
   const metricsArray = Array.isArray(metrics) ? metrics : [];
   const overallSuccessRate = metricsArray.length > 0 
-    ? metricsArray.reduce((acc, m) => acc + (parseFloat(m.success_rate) || 0), 0) / metricsArray.length 
+    ? metricsArray.reduce((acc, m) => acc + (parseFloat(m?.success_rate) || 0), 0) / metricsArray.length 
     : 0;
   const avgResponseTime = metricsArray.length > 0
-    ? Math.round(metricsArray.reduce((acc, m) => acc + (m.avg_response_time || 0), 0) / metricsArray.length)
+    ? Math.round(metricsArray.reduce((acc, m) => acc + (m?.avg_response_time || 0), 0) / metricsArray.length)
     : 0;
-  const healthyEndpoints = metricsArray.filter(m => m.health_status === 'success').length || 0;
+  const healthyEndpoints = metricsArray.filter(m => m?.health_status === 'success').length || 0;
 
   return (
     <div className="space-y-6">
@@ -103,15 +103,15 @@ export function SystemMetricsOverview({ metrics, isLoading, error }: SystemMetri
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="p-4">
           <h3 className="text-sm font-medium mb-2">Overall Success Rate</h3>
-          <p className="text-2xl font-bold">{overallSuccessRate.toFixed(1)}%</p>
+          <p className="text-2xl font-bold">{overallSuccessRate?.toFixed(1) ?? '0.0'}%</p>
         </Card>
         <Card className="p-4">
           <h3 className="text-sm font-medium mb-2">Healthy Endpoints</h3>
-          <p className="text-2xl font-bold">{healthyEndpoints}/{metrics?.length || 0}</p>
+          <p className="text-2xl font-bold">{healthyEndpoints}/{metricsArray.length || 0}</p>
         </Card>
         <Card className="p-4">
           <h3 className="text-sm font-medium mb-2">Avg Response Time</h3>
-          <p className="text-2xl font-bold">{avgResponseTime}ms</p>
+          <p className="text-2xl font-bold">{avgResponseTime || 0}ms</p>
         </Card>
       </div>
 
@@ -119,7 +119,7 @@ export function SystemMetricsOverview({ metrics, isLoading, error }: SystemMetri
         <h2 className="text-lg font-semibold mb-4">Performance Trends</h2>
         <div className="h-[300px]">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={metrics}>
+            <LineChart data={metrics || []}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="endpoint" />
               <YAxis yAxisId="left" />
