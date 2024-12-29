@@ -1,4 +1,4 @@
-import { render, screen, act } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { renderHook } from '@testing-library/react-hooks';
 import { describe, beforeEach, expect, it, vi } from 'vitest';
 import { ResourceMonitoringDashboard } from '../ResourceMonitoringDashboard';
@@ -74,13 +74,11 @@ describe('ResourceMonitoringDashboard', () => {
   it('handles error states gracefully', async () => {
     // Mock error response
     vi.mocked(supabase.from).mockImplementationOnce(() => ({
-      select: () => ({
-        eq: () => ({
-          single: () => Promise.resolve({
-            data: null,
-            error: { message: 'Failed to fetch metrics' }
-          })
-        })
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({
+        data: null,
+        error: { message: 'Failed to fetch metrics' }
       })
     }));
 
