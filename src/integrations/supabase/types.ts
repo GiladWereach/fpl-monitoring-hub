@@ -512,6 +512,62 @@ export type Database = {
         }
         Relationships: []
       }
+      execution_queue: {
+        Row: {
+          attempts: number | null
+          created_at: string | null
+          error_details: string | null
+          execution_window: Json | null
+          id: string
+          last_attempt: string | null
+          max_attempts: number | null
+          next_attempt: string | null
+          priority: number | null
+          schedule_id: string | null
+          scheduled_time: string
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          attempts?: number | null
+          created_at?: string | null
+          error_details?: string | null
+          execution_window?: Json | null
+          id?: string
+          last_attempt?: string | null
+          max_attempts?: number | null
+          next_attempt?: string | null
+          priority?: number | null
+          schedule_id?: string | null
+          scheduled_time: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          attempts?: number | null
+          created_at?: string | null
+          error_details?: string | null
+          execution_window?: Json | null
+          id?: string
+          last_attempt?: string | null
+          max_attempts?: number | null
+          next_attempt?: string | null
+          priority?: number | null
+          schedule_id?: string | null
+          scheduled_time?: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "execution_queue_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "schedules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fixtures: {
         Row: {
           code: number | null
@@ -888,6 +944,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      match_window_states: {
+        Row: {
+          active_fixtures: number | null
+          created_at: string | null
+          end_time: string | null
+          id: string
+          metadata: Json | null
+          start_time: string
+          state: Database["public"]["Enums"]["match_window_state"]
+          updated_at: string | null
+        }
+        Insert: {
+          active_fixtures?: number | null
+          created_at?: string | null
+          end_time?: string | null
+          id?: string
+          metadata?: Json | null
+          start_time: string
+          state: Database["public"]["Enums"]["match_window_state"]
+          updated_at?: string | null
+        }
+        Update: {
+          active_fixtures?: number | null
+          created_at?: string | null
+          end_time?: string | null
+          id?: string
+          metadata?: Json | null
+          start_time?: string
+          state?: Database["public"]["Enums"]["match_window_state"]
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       monitoring_thresholds: {
         Row: {
@@ -1922,6 +2011,44 @@ export type Database = {
         }
         Relationships: []
       }
+      schedule_states: {
+        Row: {
+          created_at: string | null
+          id: string
+          metadata: Json | null
+          schedule_id: string | null
+          state: Database["public"]["Enums"]["schedule_state"]
+          transition_time: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          schedule_id?: string | null
+          state: Database["public"]["Enums"]["schedule_state"]
+          transition_time?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          schedule_id?: string | null
+          state?: Database["public"]["Enums"]["schedule_state"]
+          transition_time?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "schedule_states_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "schedules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       schedules: {
         Row: {
           created_at: string | null
@@ -2462,11 +2589,25 @@ export type Database = {
       calculation_trigger_type: "time_based" | "event_based"
       event_trigger_type: "deadline" | "kickoff" | "match_status"
       frequency_unit: "minutes" | "hours" | "days"
+      match_window_state:
+        | "non_match_day"
+        | "pre_match"
+        | "active_matches"
+        | "post_match"
       schedule_frequency:
         | "fixed_interval"
         | "match_dependent"
         | "daily"
         | "override"
+      schedule_state:
+        | "idle"
+        | "scheduled"
+        | "pending"
+        | "executing"
+        | "completed"
+        | "failed"
+        | "retry"
+        | "max_retries"
       schedule_status: "active" | "paused" | "error"
       schedule_type: "time_based" | "event_based" | "match_dependent"
       schedule_type_new: "time_based" | "event_based" | "match_dependent"
