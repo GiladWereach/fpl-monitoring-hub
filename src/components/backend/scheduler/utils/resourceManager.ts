@@ -1,34 +1,21 @@
-import { supabase } from "@/integrations/supabase/client";
-
-interface ResourceLimits {
-  maxConcurrent: number;
-  rateLimit: number; // requests per minute
-  poolSize?: number;
-}
-
-interface ResourcePool {
-  available: number;
-  total: number;
-  lastRefill: number;
-}
-
-const DEFAULT_LIMITS: ResourceLimits = {
-  maxConcurrent: 3,
-  rateLimit: 30,
-  poolSize: 10
-};
+import { ResourcePoolManager, ResourceLimits, DEFAULT_LIMITS } from './resourcePool';
+import { MetricsCollector } from './metricsCollector';
+import { ResourcePredictor } from './resourcePredictor';
+import { toast } from "@/hooks/use-toast";
 
 export class ResourceManager {
   private static instance: ResourceManager;
   private activeTasks: Map<string, number> = new Map();
   private requestCounts: Map<string, number[]> = new Map();
-  private resourcePools: Map<string, ResourcePool> = new Map();
-  private metricsBuffer: { timestamp: number, type: string, value: number }[] = [];
-  private readonly METRICS_FLUSH_INTERVAL = 60000; // 1 minute
+  private poolManager: ResourcePoolManager;
+  private metricsCollector: MetricsCollector;
+  private predictor: ResourcePredictor;
   
   private constructor() {
     console.log('Initializing ResourceManager');
-    this.startMetricsFlush();
+    this.poolManager = new ResourcePoolManager();
+    this.metricsCollector = new MetricsCollector();
+    this.predictor = new ResourcePredictor();
   }
 
   static getInstance(): ResourceManager {
@@ -38,58 +25,22 @@ export class ResourceManager {
     return this.instance;
   }
 
-  private startMetricsFlush(): void {
-    setInterval(() => this.flushMetrics(), this.METRICS_FLUSH_INTERVAL);
-    console.log('Started metrics flush interval');
-  }
-
-  private async flushMetrics(): Promise<void> {
-    if (this.metricsBuffer.length === 0) return;
-
-    console.log(`Flushing ${this.metricsBuffer.length} metrics`);
-    const metrics = [...this.metricsBuffer];
-    this.metricsBuffer = [];
-
-    try {
-      await supabase.from('api_health_metrics').insert({
-        endpoint: 'resource_manager_metrics',
-        success_count: metrics.filter(m => m.type === 'success').length,
-        error_count: metrics.filter(m => m.type === 'error').length,
-        avg_response_time: 0,
-        error_pattern: {
-          metrics: metrics,
-          timestamp: new Date().toISOString()
-        }
-      });
-    } catch (error) {
-      console.error('Error flushing resource metrics:', error);
-    }
-  }
-
-  private initializePool(functionName: string, limits: ResourceLimits): void {
-    if (!this.resourcePools.has(functionName)) {
-      console.log(`Initializing resource pool for ${functionName}`);
-      this.resourcePools.set(functionName, {
-        available: limits.poolSize || DEFAULT_LIMITS.poolSize!,
-        total: limits.poolSize || DEFAULT_LIMITS.poolSize!,
-        lastRefill: Date.now()
-      });
-    }
-  }
-
   async canExecute(functionName: string, limits: ResourceLimits = DEFAULT_LIMITS): Promise<boolean> {
     console.log(`Checking if ${functionName} can execute with limits:`, limits);
     
-    this.initializePool(functionName, limits);
+    this.poolManager.initializePool(functionName, limits);
     
     // Check resource pool
-    const pool = this.resourcePools.get(functionName)!;
-    if (pool.available <= 0) {
+    const pool = this.poolManager.getPool(functionName);
+    if (pool?.available <= 0) {
       console.log(`${functionName} has no available resources in pool`);
-      this.metricsBuffer.push({
-        timestamp: Date.now(),
-        type: 'error',
-        value: 0
+      this.metricsCollector.recordMetric('error', 0);
+      
+      // Alert on resource exhaustion
+      toast({
+        title: "Resource Pool Exhausted",
+        description: `${functionName} has depleted its resource pool`,
+        variant: "destructive",
       });
       return false;
     }
@@ -128,34 +79,11 @@ export class ResourceManager {
     this.requestCounts.set(functionName, requests);
 
     // Update resource pool
-    const pool = this.resourcePools.get(functionName);
-    if (pool) {
-      pool.available--;
-      console.log(`${functionName} pool resources remaining: ${pool.available}/${pool.total}`);
-    }
+    this.poolManager.decrementPool(functionName);
 
-    this.metricsBuffer.push({
-      timestamp: Date.now(),
-      type: 'success',
-      value: currentTasks + 1
-    });
-
-    // Log to database for monitoring
-    try {
-      await supabase.from('api_health_metrics').insert({
-        endpoint: functionName,
-        success_count: 1,
-        error_count: 0,
-        avg_response_time: 0,
-        error_pattern: {
-          concurrent_tasks: currentTasks + 1,
-          rate_limit_status: requests.length,
-          pool_status: pool ? `${pool.available}/${pool.total}` : 'N/A'
-        }
-      });
-    } catch (error) {
-      console.error('Error logging resource metrics:', error);
-    }
+    // Record metrics and predict usage
+    this.metricsCollector.recordMetric('success', currentTasks + 1);
+    this.predictor.recordUsage(functionName, currentTasks + 1);
   }
 
   async releaseExecution(functionName: string): Promise<void> {
@@ -171,33 +99,27 @@ export class ResourceManager {
     this.requestCounts.set(functionName, recentRequests);
 
     // Refill pool if needed
-    const pool = this.resourcePools.get(functionName);
-    if (pool) {
-      const timeSinceRefill = now - pool.lastRefill;
-      if (timeSinceRefill >= 60000) { // Refill every minute
-        const refillAmount = Math.floor(timeSinceRefill / 60000);
-        pool.available = Math.min(pool.total, pool.available + refillAmount);
-        pool.lastRefill = now;
-        console.log(`Refilled ${functionName} pool. Now at ${pool.available}/${pool.total}`);
-      }
-    }
+    this.poolManager.refillPool(functionName);
   }
 
   getResourceMetrics(functionName: string): {
     activeTasks: number;
     requestRate: number;
     poolStatus?: { available: number; total: number };
+    predictedUsage: number;
   } {
     const currentTasks = this.activeTasks.get(functionName) || 0;
     const requests = this.requestCounts.get(functionName) || [];
     const now = Date.now();
     const recentRequests = requests.filter(time => now - time < 60000).length;
-    const pool = this.resourcePools.get(functionName);
+    const pool = this.poolManager.getPool(functionName);
+    const predictedUsage = this.predictor.predictNextUsage(functionName);
 
     return {
       activeTasks: currentTasks,
       requestRate: recentRequests,
-      poolStatus: pool ? { available: pool.available, total: pool.total } : undefined
+      poolStatus: pool ? { available: pool.available, total: pool.total } : undefined,
+      predictedUsage
     };
   }
 }
