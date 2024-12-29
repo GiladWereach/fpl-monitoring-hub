@@ -84,7 +84,20 @@ vi.mock('@/integrations/supabase/client', () => ({
       sr: vi.fn(),
       nxl: vi.fn(),
       nxr: vi.fn(),
-      adj: vi.fn()
+      adj: vi.fn(),
+      // New required methods
+      geojson: vi.fn(),
+      explain: vi.fn(),
+      rollback: vi.fn(),
+      returns: vi.fn(),
+      execute: vi.fn(),
+      schema: vi.fn(),
+      snapshot: vi.fn(),
+      alter: vi.fn(),
+      upsert: vi.fn(),
+      delete: vi.fn(),
+      insert: vi.fn(),
+      update: vi.fn()
     }))
   }
 }));
@@ -175,7 +188,20 @@ describe('ResourceMonitoringDashboard', () => {
       sr: vi.fn(),
       nxl: vi.fn(),
       nxr: vi.fn(),
-      adj: vi.fn()
+      adj: vi.fn(),
+      // New required methods
+      geojson: vi.fn(),
+      explain: vi.fn(),
+      rollback: vi.fn(),
+      returns: vi.fn(),
+      execute: vi.fn(),
+      schema: vi.fn(),
+      snapshot: vi.fn(),
+      alter: vi.fn(),
+      upsert: vi.fn(),
+      delete: vi.fn(),
+      insert: vi.fn(),
+      update: vi.fn()
     }));
 
     render(
