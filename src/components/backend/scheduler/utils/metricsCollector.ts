@@ -16,6 +16,7 @@ export class MetricsCollector {
     hourly: [],
     daily: []
   };
+  private supabase: any;
   
   constructor() {
     this.startMetricsFlush();
@@ -28,10 +29,11 @@ export class MetricsCollector {
     console.log('Started metrics flush interval');
   }
 
-  private setupRealtimeSubscription(): void {
+  private async setupRealtimeSubscription(): Promise<void> {
     const { supabase } = await import("@/integrations/supabase/client");
+    this.supabase = supabase;
     
-    const channel = supabase
+    const channel = this.supabase
       .channel('metrics-updates')
       .on(
         'postgres_changes',
@@ -65,9 +67,7 @@ export class MetricsCollector {
     const hourTimestamp = Math.floor(entry.timestamp / 3600000) * 3600000;
     const dayTimestamp = Math.floor(entry.timestamp / 86400000) * 86400000;
 
-    // Update hourly aggregation
     this.updateAggregation('hourly', hourTimestamp, entry.value);
-    // Update daily aggregation
     this.updateAggregation('daily', dayTimestamp, entry.value);
 
     console.log('Updated metric aggregations');
@@ -103,8 +103,7 @@ export class MetricsCollector {
         })),
         summary: {
           total_entries: metrics.length,
-          timestamp: new Date().toISOString(),
-          aggregations: this.aggregatedMetrics
+          timestamp: new Date().toISOString()
         }
       };
 
@@ -113,7 +112,7 @@ export class MetricsCollector {
         success_count: metrics.filter(m => m.type === 'success').length,
         error_count: metrics.filter(m => m.type === 'error').length,
         avg_response_time: metrics.reduce((sum, m) => sum + m.value, 0) / metrics.length,
-        error_pattern: formattedMetrics,
+        error_pattern: JSON.stringify(formattedMetrics),
         created_at: new Date().toISOString()
       });
 

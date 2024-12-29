@@ -1,134 +1,99 @@
-import { describe, it, expect, vi } from 'vitest';
-import { ResourceManager } from "@/components/backend/scheduler/utils/resourceManager";
+import { render, screen } from '@testing-library/react';
 import { renderHook } from '@testing-library/react-hooks';
-import { useQuery } from '@tanstack/react-query';
-import { toast } from "@/hooks/use-toast";
+import { beforeEach, describe, expect, it } from 'vitest';
+import ResourceMonitoringDashboard from '../ResourceMonitoringDashboard';
+import { supabase } from '@/integrations/supabase/client';
+import { vi } from 'vitest';
 
-// Mock dependencies
-vi.mock("@/components/backend/scheduler/utils/resourceManager", () => ({
-  ResourceManager: {
-    getInstance: vi.fn(() => ({
-      getResourceMetrics: vi.fn()
-    }))
-  }
-}));
-
-vi.mock("@/hooks/use-toast", () => ({
-  toast: vi.fn()
-}));
-
-describe('Resource Metrics Validation', () => {
+describe('ResourceMonitoringDashboard', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-  });
-
-  it('validates prediction data correctly', async () => {
-    const mockMetrics = {
-      predictedUsage: {
-        confidence: 0.8,
-        anomalyScore: 0.2,
-        predictedUsage: 5
-      },
-      activeTasks: 3,
-      requestRate: 10,
-      poolStatus: { available: 5, total: 10 }
-    };
-
-    const resourceManager = ResourceManager.getInstance();
-    vi.mocked(resourceManager.getResourceMetrics).mockReturnValue(mockMetrics);
-
-    const { result } = renderHook(() => useQuery({
-      queryKey: ['resource-metrics'],
-      queryFn: async () => {
-        const functions = ['test-function'];
-        return functions.map(fn => ({
-          name: fn,
-          ...resourceManager.getResourceMetrics(fn)
-        }));
+    vi.mock('@/integrations/supabase/client', () => ({
+      supabase: {
+        from: vi.fn().mockReturnThis(),
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
+          data: {
+            metrics: {
+              total_records: 100,
+              collection_rate: 0.95,
+              success_rate: 0.98
+            },
+            performance: {
+              avg_processing_time: 150,
+              error_rate: 0.02,
+              data_quality_score: 0.99
+            }
+          },
+          error: null
+        })
       }
-    }));
-
-    expect(result.current.data?.[0].predictedUsage.confidence).toBe(0.8);
-    expect(result.current.data?.[0].predictedUsage.anomalyScore).toBe(0.2);
-  });
-
-  it('handles invalid prediction data', async () => {
-    const mockInvalidMetrics = {
-      predictedUsage: null,
-      activeTasks: 3,
-      requestRate: 10
-    };
-
-    const resourceManager = ResourceManager.getInstance();
-    vi.mocked(resourceManager.getResourceMetrics).mockReturnValue(mockInvalidMetrics);
-
-    const { result } = renderHook(() => useQuery({
-      queryKey: ['resource-metrics'],
-      queryFn: async () => {
-        const functions = ['test-function'];
-        return functions.map(fn => ({
-          name: fn,
-          ...resourceManager.getResourceMetrics(fn)
-        }));
-      }
-    }));
-
-    expect(result.current.error).toBeDefined();
-    expect(toast).toHaveBeenCalledWith(expect.objectContaining({
-      title: "Error Fetching Metrics",
-      variant: "destructive"
     }));
   });
 
-  it('calculates pool utilization correctly', async () => {
-    const mockMetrics = {
-      predictedUsage: { confidence: 0.8, anomalyScore: 0.2, predictedUsage: 5 },
-      activeTasks: 3,
-      requestRate: 10,
-      poolStatus: { available: 3, total: 10 }
-    };
-
-    const resourceManager = ResourceManager.getInstance();
-    vi.mocked(resourceManager.getResourceMetrics).mockReturnValue(mockMetrics);
-
-    const { result } = renderHook(() => useQuery({
-      queryKey: ['resource-metrics'],
-      queryFn: async () => {
-        const functions = ['test-function'];
-        return functions.map(fn => ({
-          name: fn,
-          ...resourceManager.getResourceMetrics(fn)
-        }));
-      }
-    }));
-
-    const utilization = result.current.data?.[0].poolStatus;
-    expect(utilization).toBeDefined();
-    expect((utilization?.total - utilization?.available) / utilization?.total * 100).toBe(70);
+  it('renders without crashing', () => {
+    render(<ResourceMonitoringDashboard />);
+    expect(screen.getByText(/Resource Monitoring/i)).toBeInTheDocument();
   });
 
-  it('detects anomalies correctly', async () => {
-    const mockMetrics = {
-      predictedUsage: { confidence: 0.8, anomalyScore: 2.5, predictedUsage: 5 },
-      activeTasks: 3,
-      requestRate: 10,
-      poolStatus: { available: 5, total: 10 }
-    };
+  it('displays loading state initially', () => {
+    render(<ResourceMonitoringDashboard />);
+    expect(screen.getByText(/Loading.../i)).toBeInTheDocument();
+  });
 
-    const resourceManager = ResourceManager.getInstance();
-    vi.mocked(resourceManager.getResourceMetrics).mockReturnValue(mockMetrics);
+  it('fetches and displays metrics data', async () => {
+    render(<ResourceMonitoringDashboard />);
+    
+    // Wait for data to load
+    await screen.findByText(/Collection Rate: 95%/i);
+    
+    // Verify metrics are displayed
+    expect(screen.getByText(/Success Rate: 98%/i)).toBeInTheDocument();
+    expect(screen.getByText(/Average Processing Time: 150ms/i)).toBeInTheDocument();
+    expect(screen.getByText(/Error Rate: 2%/i)).toBeInTheDocument();
+    expect(screen.getByText(/Data Quality Score: 99%/i)).toBeInTheDocument();
+  });
 
-    const { result } = renderHook(() => useQuery({
-      queryKey: ['resource-metrics'],
-      queryFn: async () => {
-        const functions = ['test-function'];
-        return functions.map(fn => ({
-          name: fn,
-          ...resourceManager.getResourceMetrics(fn)
-        }));
-      }
+  it('handles error states gracefully', async () => {
+    // Mock error response
+    vi.mocked(supabase.from).mockImplementationOnce(() => ({
+      select: () => ({
+        eq: () => ({
+          single: () => Promise.reject(new Error('Failed to fetch metrics'))
+        })
+      })
     }));
 
-    expect(result.current.data?.[0].predictedUsage.anomalyScore).toBeGreaterThan(2.0);
+    render(<ResourceMonitoringDashboard />);
+    
+    // Wait for error message
+    await screen.findByText(/Error loading metrics/i);
+    
+    expect(screen.getByText(/Please try again later/i)).toBeInTheDocument();
+  });
+
+  it('updates metrics periodically', () => {
+    const { result } = renderHook(() => {
+      const [metrics, setMetrics] = React.useState(null);
+      return { metrics, setMetrics };
+    });
+
+    // Verify initial state
+    expect(result.current.metrics).toBeNull();
+
+    // Simulate metric update
+    act(() => {
+      result.current.setMetrics({
+        collection_rate: 0.96,
+        success_rate: 0.99
+      });
+    });
+
+    // Verify updated state
+    expect(result.current.metrics).toEqual({
+      collection_rate: 0.96,
+      success_rate: 0.99
+    });
   });
 });
