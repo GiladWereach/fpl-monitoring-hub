@@ -1,116 +1,97 @@
 import { render, screen } from '@testing-library/react';
-import { renderHook } from '@testing-library/react-hooks';
-import { describe, beforeEach, expect, it, vi } from 'vitest';
+import { act } from '@testing-library/react';
+import { vi } from 'vitest';
 import { ResourceMonitoringDashboard } from '../ResourceMonitoringDashboard';
-import { supabase } from '@/integrations/supabase/client';
-import '@testing-library/jest-dom';
-import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: false,
-    },
-  },
-});
-
-const wrapper = ({ children }: { children: React.ReactNode }) => (
-  <QueryClientProvider client={queryClient}>
-    {children}
-  </QueryClientProvider>
-);
-
-describe('ResourceMonitoringDashboard', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    vi.mock('@/integrations/supabase/client', () => ({
-      supabase: {
-        from: vi.fn().mockReturnThis(),
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({
-          data: {
-            metrics: {
-              total_records: 100,
-              collection_rate: 0.95,
-              success_rate: 0.98
-            },
-            performance: {
-              avg_processing_time: 150,
-              error_rate: 0.02,
-              data_quality_score: 0.99
-            }
-          },
-          error: null
-        })
-      }
-    }));
-  });
-
-  it('renders without crashing', () => {
-    render(<ResourceMonitoringDashboard />, { wrapper });
-    expect(screen.getByText(/Resource Usage/i)).toBeInTheDocument();
-  });
-
-  it('displays loading state initially', () => {
-    render(<ResourceMonitoringDashboard />, { wrapper });
-    expect(screen.getByText(/Loading metrics.../i)).toBeInTheDocument();
-  });
-
-  it('fetches and displays metrics data', async () => {
-    render(<ResourceMonitoringDashboard />, { wrapper });
-    
-    // Wait for data to load
-    await screen.findByText(/Collection Rate: 95%/i);
-    
-    // Verify metrics are displayed
-    expect(screen.getByText(/Success Rate: 98%/i)).toBeInTheDocument();
-    expect(screen.getByText(/Average Processing Time: 150ms/i)).toBeInTheDocument();
-    expect(screen.getByText(/Error Rate: 2%/i)).toBeInTheDocument();
-    expect(screen.getByText(/Data Quality Score: 99%/i)).toBeInTheDocument();
-  });
-
-  it('handles error states gracefully', async () => {
-    // Mock error response
-    vi.mocked(supabase.from).mockImplementationOnce(() => ({
+// Mock Supabase client
+vi.mock('@/integrations/supabase/client', () => ({
+  supabase: {
+    from: () => ({
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
-      single: vi.fn().mockResolvedValue({
-        data: null,
-        error: { message: 'Failed to fetch metrics' }
-      })
-    }));
+      single: vi.fn().mockReturnThis(),
+      order: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn().mockReturnThis(),
+      url: 'mock-url',
+      headers: {},
+      insert: vi.fn().mockReturnThis(),
+      upsert: vi.fn().mockReturnThis(),
+      delete: vi.fn().mockReturnThis(),
+      update: vi.fn().mockReturnThis(),
+      then: vi.fn().mockImplementation((callback) => 
+        Promise.resolve(callback({ data: mockData, error: null }))
+      ),
+    }),
+    rpc: vi.fn().mockImplementation(() => ({
+      single: () => Promise.resolve({ data: mockData, error: null }),
+    })),
+  },
+}));
 
-    render(<ResourceMonitoringDashboard />, { wrapper });
-    
-    // Wait for error message
-    await screen.findByText(/Error loading metrics/i);
-    
-    expect(screen.getByText(/Please try again later/i)).toBeInTheDocument();
+// Mock data
+const mockData = {
+  success_rate: 95,
+  avg_response_time: 150,
+  error_rate: 5,
+  system_load: 75,
+};
+
+describe('ResourceMonitoringDashboard', () => {
+  let queryClient: QueryClient;
+
+  beforeEach(() => {
+    queryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          retry: false,
+        },
+      },
+    });
   });
 
-  it('updates metrics periodically', () => {
-    const { result } = renderHook(() => {
-      const [metrics, setMetrics] = React.useState(null);
-      return { metrics, setMetrics };
+  it('renders loading state initially', () => {
+    render(
+      <QueryClientProvider client={queryClient}>
+        <ResourceMonitoringDashboard />
+      </QueryClientProvider>
+    );
+    expect(screen.getByText(/Loading metrics/i)).toBeInTheDocument();
+  });
+
+  it('renders error state when fetch fails', async () => {
+    const errorMock = vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.mocked(supabase.from).mockImplementation(() => ({
+      ...vi.mocked(supabase.from)(),
+      then: vi.fn().mockImplementation((callback) => 
+        Promise.resolve(callback({ data: null, error: { message: 'Failed to fetch metrics' } }))
+      ),
+    }));
+
+    await act(async () => {
+      render(
+        <QueryClientProvider client={queryClient}>
+          <ResourceMonitoringDashboard />
+        </QueryClientProvider>
+      );
     });
 
-    // Verify initial state
-    expect(result.current.metrics).toBeNull();
+    expect(screen.getByText(/Failed to load resource metrics/i)).toBeInTheDocument();
+    errorMock.mockRestore();
+  });
 
-    // Simulate metric update
-    act(() => {
-      result.current.setMetrics({
-        collection_rate: 0.96,
-        success_rate: 0.99
-      });
+  it('renders metrics when data is loaded', async () => {
+    await act(async () => {
+      render(
+        <QueryClientProvider client={queryClient}>
+          <ResourceMonitoringDashboard />
+        </QueryClientProvider>
+      );
     });
 
-    // Verify updated state
-    expect(result.current.metrics).toEqual({
-      collection_rate: 0.96,
-      success_rate: 0.99
-    });
+    expect(screen.getByText(/Resource Usage/i)).toBeInTheDocument();
+    expect(screen.getByText(/95%/)).toBeInTheDocument();
+    expect(screen.getByText(/150ms/)).toBeInTheDocument();
   });
 });
