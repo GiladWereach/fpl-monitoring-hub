@@ -4,6 +4,8 @@ export interface PerformanceMetrics {
   responseTime: number;
   dataFreshness: number;
   errorRate: number;
+  matchCount?: number;
+  windowDuration?: number;
 }
 
 export async function trackWindowPerformance(metrics: PerformanceMetrics) {
@@ -17,7 +19,9 @@ export async function trackWindowPerformance(metrics: PerformanceMetrics) {
         avg_response_time: metrics.responseTime,
         error_pattern: {
           data_freshness: metrics.dataFreshness,
-          error_rate: metrics.errorRate
+          error_rate: metrics.errorRate,
+          match_count: metrics.matchCount,
+          window_duration: metrics.windowDuration
         }
       });
   } catch (error) {

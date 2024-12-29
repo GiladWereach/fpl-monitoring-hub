@@ -6,15 +6,7 @@ import { Clock, Activity, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { format } from "date-fns";
 import { handleMatchWindowFailure } from "./utils/recoveryHandler";
 import { trackWindowPerformance, calculateDataFreshness } from "./utils/performanceTracker";
-import { getHistoricalAnalytics, type WindowAnalytics } from "./utils/windowAnalytics";
-
-interface MatchWindowState {
-  window_start: string;
-  window_end: string;
-  is_active: boolean;
-  match_count: number;
-  next_kickoff: string | null;
-}
+import { getHistoricalAnalytics } from "./utils/windowAnalytics";
 
 interface WindowState {
   isActive: boolean;
@@ -40,6 +32,7 @@ export function MatchWindowMonitor() {
         
         // Handle the case where no window is returned
         if (!window || !Array.isArray(window) || window.length === 0) {
+          console.log('No active match window found');
           const defaultState: WindowState = {
             isActive: false,
             matchCount: 0,
@@ -51,7 +44,7 @@ export function MatchWindowMonitor() {
         }
 
         // Take the first window from the array
-        const currentWindow = window[0] as MatchWindowState;
+        const currentWindow = window[0];
         
         const state = {
           isActive: currentWindow.is_active,
@@ -71,6 +64,7 @@ export function MatchWindowMonitor() {
           errorRate: 0
         });
 
+        console.log('Processed window state:', state);
         return state;
       } catch (error) {
         console.error('Error in match window detection:', error);

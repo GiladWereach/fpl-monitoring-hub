@@ -19,7 +19,8 @@ export async function handleMatchWindowFailure(error: Error): Promise<boolean> {
         error_count: 1,
         error_pattern: {
           error: error.message,
-          recovery_attempt: new Date().toISOString()
+          recovery_attempt: new Date().toISOString(),
+          recovery_type: 'automatic'
         }
       });
 
@@ -33,6 +34,12 @@ export async function handleMatchWindowFailure(error: Error): Promise<boolean> {
     if (error.message.includes('connection')) {
       console.log('Attempting recovery from connection error');
       await new Promise(resolve => setTimeout(resolve, 3000));
+      return true;
+    }
+
+    if (error.message.includes('rate limit')) {
+      console.log('Attempting recovery from rate limit');
+      await new Promise(resolve => setTimeout(resolve, 10000));
       return true;
     }
 
