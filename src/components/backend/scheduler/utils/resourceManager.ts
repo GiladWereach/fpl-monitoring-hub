@@ -7,7 +7,7 @@ interface ResourceMetrics {
   activeTasks: number;
   requestRate: number;
   poolStatus?: { available: number; total: number };
-  predictedUsage: number;
+  predictedUsage: PredictionResult;
 }
 
 export class ResourceManager {
@@ -152,7 +152,7 @@ export class ResourceManager {
       activeTasks: currentTasks,
       requestRate: recentRequests,
       poolStatus: pool ? { available: pool.available, total: pool.total } : undefined,
-      predictedUsage: prediction.predictedUsage
+      predictedUsage: prediction
     };
   }
 }

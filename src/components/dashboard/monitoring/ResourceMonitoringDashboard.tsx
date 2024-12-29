@@ -32,7 +32,7 @@ export function ResourceMonitoringDashboard() {
 
   console.log('Current resource metrics:', metrics);
 
-  const hasAnomalies = metrics?.some(m => m.predictedUsage?.anomalyScore > 2.0);
+  const hasAnomalies = metrics?.some(m => m.predictedUsage.anomalyScore > 2.0);
 
   return (
     <Card className="p-6 space-y-6">
@@ -81,7 +81,7 @@ export function ResourceMonitoringDashboard() {
           title="Prediction Confidence"
           value={(() => {
             if (!metrics?.length) return 'N/A';
-            const avgConfidence = metrics.reduce((sum, m) => sum + (m.predictedUsage?.confidence || 0), 0) / metrics.length;
+            const avgConfidence = metrics.reduce((sum, m) => sum + m.predictedUsage.confidence, 0) / metrics.length;
             return `${Math.round(avgConfidence * 100)}%`;
           })()}
           subtitle="Resource prediction accuracy"
