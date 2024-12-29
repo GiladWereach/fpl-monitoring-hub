@@ -76,7 +76,10 @@ describe('ResourceMonitoringDashboard', () => {
     vi.mocked(supabase.from).mockImplementationOnce(() => ({
       select: () => ({
         eq: () => ({
-          single: () => Promise.reject(new Error('Failed to fetch metrics'))
+          single: () => Promise.resolve({
+            data: null,
+            error: { message: 'Failed to fetch metrics' }
+          })
         })
       })
     }));
