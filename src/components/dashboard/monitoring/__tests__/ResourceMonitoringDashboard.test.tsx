@@ -28,12 +28,15 @@ vi.mock('@/integrations/supabase/client', () => ({
       count: null,
       status: 200,
       statusText: "OK",
+      // Required PostgrestFilterBuilder methods
       eq: vi.fn(),
       neq: vi.fn(),
       gt: vi.fn(),
       gte: vi.fn(),
       lt: vi.fn(),
       lte: vi.fn(),
+      like: vi.fn(),
+      ilike: vi.fn(),
       is: vi.fn(),
       in: vi.fn(),
       contains: vi.fn(),
@@ -44,13 +47,21 @@ vi.mock('@/integrations/supabase/client', () => ({
       rangeLte: vi.fn(),
       rangeAdjacent: vi.fn(),
       overlaps: vi.fn(),
-      like: vi.fn(),
-      ilike: vi.fn(),
       match: vi.fn(),
       imatch: vi.fn(),
       not: vi.fn(),
       or: vi.fn(),
       filter: vi.fn(),
+      order: vi.fn(),
+      limit: vi.fn(),
+      range: vi.fn(),
+      abortSignal: vi.fn(),
+      single: vi.fn(),
+      maybeSingle: vi.fn(),
+      csv: vi.fn(),
+      then: vi.fn(),
+      select: vi.fn(),
+      // Additional required methods
       likeAllOf: vi.fn(),
       likeAnyOf: vi.fn(),
       ilikeAllOf: vi.fn(),
@@ -73,8 +84,7 @@ vi.mock('@/integrations/supabase/client', () => ({
       sr: vi.fn(),
       nxl: vi.fn(),
       nxr: vi.fn(),
-      adj: vi.fn(),
-      select: vi.fn()
+      adj: vi.fn()
     }))
   }
 }));
@@ -109,12 +119,15 @@ describe('ResourceMonitoringDashboard', () => {
       count: null,
       status: 500,
       statusText: "Error",
+      // Required PostgrestFilterBuilder methods
       eq: vi.fn(),
       neq: vi.fn(),
       gt: vi.fn(),
       gte: vi.fn(),
       lt: vi.fn(),
       lte: vi.fn(),
+      like: vi.fn(),
+      ilike: vi.fn(),
       is: vi.fn(),
       in: vi.fn(),
       contains: vi.fn(),
@@ -125,13 +138,21 @@ describe('ResourceMonitoringDashboard', () => {
       rangeLte: vi.fn(),
       rangeAdjacent: vi.fn(),
       overlaps: vi.fn(),
-      like: vi.fn(),
-      ilike: vi.fn(),
       match: vi.fn(),
       imatch: vi.fn(),
       not: vi.fn(),
       or: vi.fn(),
       filter: vi.fn(),
+      order: vi.fn(),
+      limit: vi.fn(),
+      range: vi.fn(),
+      abortSignal: vi.fn(),
+      single: vi.fn(),
+      maybeSingle: vi.fn(),
+      csv: vi.fn(),
+      then: vi.fn(),
+      select: vi.fn(),
+      // Additional required methods
       likeAllOf: vi.fn(),
       likeAnyOf: vi.fn(),
       ilikeAllOf: vi.fn(),
@@ -154,8 +175,7 @@ describe('ResourceMonitoringDashboard', () => {
       sr: vi.fn(),
       nxl: vi.fn(),
       nxr: vi.fn(),
-      adj: vi.fn(),
-      select: vi.fn()
+      adj: vi.fn()
     }));
 
     render(
