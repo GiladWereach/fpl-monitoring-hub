@@ -1,17 +1,20 @@
 import { Card } from "@/components/ui/card";
 import { Activity, Server, Clock, AlertTriangle } from "lucide-react";
 import { MetricCard } from "./MetricCard";
+import { MetricsData } from "../types/monitoring-types";
 
 interface MetricsOverviewProps {
-  metrics: any[];
+  metrics: MetricsData[];
 }
 
 export function MetricsOverview({ metrics }: MetricsOverviewProps) {
+  console.log('Rendering MetricsOverview with metrics:', metrics);
+  
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
       <MetricCard
         title="Active Tasks"
-        value={metrics?.reduce((sum, m) => sum + m.activeTasks, 0)?.toString() || '0'}
+        value={metrics?.reduce((sum, m) => sum + (m.total_successes || 0), 0)?.toString() || '0'}
         subtitle="Current executions"
         icon={Activity}
         iconColor="text-blue-500"
@@ -19,36 +22,35 @@ export function MetricsOverview({ metrics }: MetricsOverviewProps) {
       
       <MetricCard
         title="Request Rate"
-        value={`${metrics?.reduce((sum, m) => sum + m.requestRate, 0) || 0}/min`}
+        value={`${metrics?.reduce((sum, m) => sum + (m.total_successes || 0) + (m.total_errors || 0), 0) || 0}/min`}
         subtitle="Across all functions"
         icon={Clock}
         iconColor="text-amber-500"
       />
       
       <MetricCard
-        title="Pool Utilization"
+        title="System Health"
         value={(() => {
-          const pools = metrics?.filter(m => m.poolStatus).map(m => m.poolStatus!);
-          if (!pools?.length) return '0%';
-          const used = pools.reduce((sum, p) => sum + (p.total - p.available), 0);
-          const total = pools.reduce((sum, p) => sum + p.total, 0);
-          return `${Math.round((used / total) * 100)}%`;
+          const totalEndpoints = metrics?.length || 0;
+          const healthyEndpoints = metrics?.filter(m => m.health_status === 'success').length || 0;
+          return `${Math.round((healthyEndpoints / totalEndpoints) * 100)}%`;
         })()}
-        subtitle="Resource pool usage"
+        subtitle="Overall system status"
         icon={Server}
         iconColor="text-green-500"
       />
 
       <MetricCard
-        title="Prediction Confidence"
+        title="Error Rate"
         value={(() => {
-          if (!metrics?.length) return 'N/A';
-          const avgConfidence = metrics.reduce((sum, m) => sum + m.predictedUsage.confidence, 0) / metrics.length;
-          return `${Math.round(avgConfidence * 100)}%`;
+          const totalErrors = metrics?.reduce((sum, m) => sum + (m.total_errors || 0), 0) || 0;
+          const totalRequests = metrics?.reduce((sum, m) => 
+            sum + (m.total_successes || 0) + (m.total_errors || 0), 0) || 1;
+          return `${Math.round((totalErrors / totalRequests) * 100)}%`;
         })()}
-        subtitle="Resource prediction accuracy"
+        subtitle="System-wide error rate"
         icon={AlertTriangle}
-        iconColor="text-purple-500"
+        iconColor="text-red-500"
       />
     </div>
   );

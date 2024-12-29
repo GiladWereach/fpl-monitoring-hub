@@ -16,12 +16,7 @@ const mockMetricsData: MetricsData[] = [{
   success_rate: 95,
   latest_success: '2024-01-01T00:00:00Z',
   latest_error: '2024-01-01T00:00:00Z',
-  health_status: 'healthy',
-  predictedUsage: {
-    predictedUsage: 100,
-    confidence: 0.95,
-    anomalyScore: 0.1
-  }
+  health_status: 'healthy'
 }];
 
 // Mock Supabase client
@@ -55,7 +50,31 @@ vi.mock('@/integrations/supabase/client', () => ({
       imatch: vi.fn(),
       not: vi.fn(),
       or: vi.fn(),
-      filter: vi.fn()
+      filter: vi.fn(),
+      likeAllOf: vi.fn(),
+      likeAnyOf: vi.fn(),
+      ilikeAllOf: vi.fn(),
+      ilikeAnyOf: vi.fn(),
+      textSearch: vi.fn(),
+      textSearchAllOf: vi.fn(),
+      textSearchAnyOf: vi.fn(),
+      withTextSearch: vi.fn(),
+      withTextSearchAllOf: vi.fn(),
+      withTextSearchAnyOf: vi.fn(),
+      fts: vi.fn(),
+      plfts: vi.fn(),
+      phfts: vi.fn(),
+      wfts: vi.fn(),
+      cs: vi.fn(),
+      cd: vi.fn(),
+      ova: vi.fn(),
+      ovr: vi.fn(),
+      sl: vi.fn(),
+      sr: vi.fn(),
+      nxl: vi.fn(),
+      nxr: vi.fn(),
+      adj: vi.fn(),
+      select: vi.fn()
     }))
   }
 }));
@@ -112,7 +131,31 @@ describe('ResourceMonitoringDashboard', () => {
       imatch: vi.fn(),
       not: vi.fn(),
       or: vi.fn(),
-      filter: vi.fn()
+      filter: vi.fn(),
+      likeAllOf: vi.fn(),
+      likeAnyOf: vi.fn(),
+      ilikeAllOf: vi.fn(),
+      ilikeAnyOf: vi.fn(),
+      textSearch: vi.fn(),
+      textSearchAllOf: vi.fn(),
+      textSearchAnyOf: vi.fn(),
+      withTextSearch: vi.fn(),
+      withTextSearchAllOf: vi.fn(),
+      withTextSearchAnyOf: vi.fn(),
+      fts: vi.fn(),
+      plfts: vi.fn(),
+      phfts: vi.fn(),
+      wfts: vi.fn(),
+      cs: vi.fn(),
+      cd: vi.fn(),
+      ova: vi.fn(),
+      ovr: vi.fn(),
+      sl: vi.fn(),
+      sr: vi.fn(),
+      nxl: vi.fn(),
+      nxr: vi.fn(),
+      adj: vi.fn(),
+      select: vi.fn()
     }));
 
     render(
