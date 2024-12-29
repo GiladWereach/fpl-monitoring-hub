@@ -1,5 +1,5 @@
 import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { logDebug, logError } from '../../../shared/logging-service.ts';
+import { logDebug, logError } from '../shared/logging-service.ts';
 
 export type ScheduleState = 'idle' | 'scheduled' | 'pending' | 'executing' | 'completed' | 'failed' | 'retry' | 'max_retries';
 
@@ -74,22 +74,4 @@ export async function getCurrentState(
     logError('state-management', `Error getting current state for schedule ${schedule_id}:`, error);
     throw error;
   }
-}
-
-export async function validateStateTransition(
-  from_state: ScheduleState,
-  to_state: ScheduleState
-): Promise<boolean> {
-  const validTransitions: Record<ScheduleState, ScheduleState[]> = {
-    'idle': ['scheduled'],
-    'scheduled': ['pending', 'failed'],
-    'pending': ['executing', 'failed'],
-    'executing': ['completed', 'failed', 'retry'],
-    'completed': ['idle', 'scheduled'],
-    'failed': ['retry', 'max_retries', 'idle'],
-    'retry': ['pending'],
-    'max_retries': ['idle']
-  };
-
-  return validTransitions[from_state]?.includes(to_state) || false;
 }
