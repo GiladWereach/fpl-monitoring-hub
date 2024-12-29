@@ -1,34 +1,43 @@
-import { supabase } from "@/integrations/supabase/client";
-
 export interface PerformanceMetrics {
-  responseTime: number;
-  dataFreshness: number;
-  errorRate: number;
-  matchCount?: number;
-  windowDuration?: number;
+  renderTime: number;
+  memoryUsage: number;
+  timestamp: number;
 }
 
-export async function trackWindowPerformance(metrics: PerformanceMetrics) {
-  console.log('Tracking window performance:', metrics);
-  
-  try {
-    await supabase
-      .from('api_health_metrics')
-      .insert({
-        endpoint: 'match_window_performance',
-        avg_response_time: metrics.responseTime,
-        error_pattern: {
-          data_freshness: metrics.dataFreshness,
-          error_rate: metrics.errorRate,
-          match_count: metrics.matchCount,
-          window_duration: metrics.windowDuration
-        }
-      });
-  } catch (error) {
-    console.error('Error tracking performance:', error);
+class PerformanceTracker {
+  private static instance: PerformanceTracker;
+  private metrics: PerformanceMetrics[] = [];
+
+  private constructor() {}
+
+  static getInstance(): PerformanceTracker {
+    if (!this.instance) {
+      this.instance = new PerformanceTracker();
+    }
+    return this.instance;
+  }
+
+  startTracking(): number {
+    return performance.now();
+  }
+
+  endTracking(startTime: number): PerformanceMetrics {
+    const endTime = performance.now();
+    const metrics = {
+      renderTime: endTime - startTime,
+      memoryUsage: performance.memory?.usedJSHeapSize || 0,
+      timestamp: Date.now()
+    };
+    
+    this.metrics.push(metrics);
+    console.log('Performance metrics recorded:', metrics);
+    
+    return metrics;
+  }
+
+  getMetrics(): PerformanceMetrics[] {
+    return this.metrics;
   }
 }
 
-export function calculateDataFreshness(lastUpdate: Date): number {
-  return Date.now() - lastUpdate.getTime();
-}
+export const performanceTracker = PerformanceTracker.getInstance();

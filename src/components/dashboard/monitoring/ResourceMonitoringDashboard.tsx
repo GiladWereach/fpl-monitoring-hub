@@ -1,13 +1,16 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { ResourceManager } from "@/components/backend/scheduler/utils/resourceManager";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Area, AreaChart } from 'recharts';
 import { Activity, Server, Clock, AlertTriangle } from "lucide-react";
 import { MetricCard } from "./components/MetricCard";
 import { PredictionResult } from "@/components/backend/scheduler/utils/resourcePredictor";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/hooks/use-toast";
+import { persistMetrics } from "./utils/metricsPersistence";
+import { performanceTracker } from "./utils/performanceTracker";
+import { useEffect, useRef } from "react";
 
 interface ResourceMetric {
   name: string;
@@ -18,6 +21,16 @@ interface ResourceMetric {
 }
 
 export function ResourceMonitoringDashboard() {
+  const startTimeRef = useRef<number>(0);
+
+  useEffect(() => {
+    startTimeRef.current = performanceTracker.startTracking();
+    return () => {
+      const metrics = performanceTracker.endTracking(startTimeRef.current);
+      console.log('Component performance metrics:', metrics);
+    };
+  }, []);
+
   const { data: metrics, isLoading, error } = useQuery({
     queryKey: ['resource-metrics'],
     queryFn: async () => {
@@ -38,6 +51,13 @@ export function ResourceMonitoringDashboard() {
             throw new Error(`Invalid prediction data for ${metric.name}`);
           }
           return metric;
+        });
+
+        // Persist metrics with performance data
+        const performanceData = performanceTracker.endTracking(startTimeRef.current);
+        await persistMetrics(validatedMetrics, {
+          render_time: performanceData.renderTime,
+          memory_usage: performanceData.memoryUsage
         });
 
         return validatedMetrics as ResourceMetric[];
@@ -145,18 +165,72 @@ export function ResourceMonitoringDashboard() {
         />
       </div>
 
-      <div className="h-[300px] mt-6">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={metrics || []}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="name" />
-            <YAxis />
-            <Tooltip />
-            <Line type="monotone" dataKey="activeTasks" stroke="#3b82f6" name="Active Tasks" />
-            <Line type="monotone" dataKey="requestRate" stroke="#f59e0b" name="Request Rate" />
-            <Line type="monotone" dataKey="predictedUsage.predictedUsage" stroke="#8b5cf6" name="Predicted Usage" />
-          </LineChart>
-        </ResponsiveContainer>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card className="p-4">
+          <h3 className="text-sm font-medium mb-4">Resource Usage Trends</h3>
+          <div className="h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={metrics || []}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Area 
+                  type="monotone" 
+                  dataKey="activeTasks" 
+                  stackId="1"
+                  stroke="#3b82f6" 
+                  fill="#3b82f6" 
+                  fillOpacity={0.3}
+                  name="Active Tasks" 
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="requestRate" 
+                  stackId="2"
+                  stroke="#f59e0b" 
+                  fill="#f59e0b"
+                  fillOpacity={0.3}
+                  name="Request Rate" 
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+
+        <Card className="p-4">
+          <h3 className="text-sm font-medium mb-4">Prediction Accuracy</h3>
+          <div className="h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={metrics || []}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Line 
+                  type="monotone" 
+                  dataKey="predictedUsage.predictedUsage" 
+                  stroke="#8b5cf6" 
+                  name="Predicted Usage" 
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="predictedUsage.confidence" 
+                  stroke="#10b981" 
+                  name="Confidence" 
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="predictedUsage.anomalyScore" 
+                  stroke="#ef4444" 
+                  name="Anomaly Score" 
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
       </div>
     </Card>
   );
