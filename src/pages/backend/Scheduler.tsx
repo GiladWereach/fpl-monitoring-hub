@@ -64,6 +64,10 @@ export default function Scheduler() {
               
               <MonitoringDashboard />
               
+              <MatchWindowMonitor />
+              
+              <MatchWindowTests />
+              
               <AlertingSystem />
               
               <ScheduleTestSuite />
