@@ -1,8 +1,10 @@
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from './auth.ts';
 import { logDebug, logError } from '../shared/logging-service.ts';
+import { transitionState, getCurrentState } from './services/state-management-service.ts';
 
-Deno.serve(async (req) => {
+serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -34,23 +36,24 @@ Deno.serve(async (req) => {
 
     for (const schedule of (activeSchedules || [])) {
       try {
-        // Create execution log
-        const { data: log, error: logError } = await supabaseClient
-          .from('schedule_execution_logs')
-          .insert({
-            schedule_id: schedule.id,
-            status: 'running',
-            execution_context: {
-              instance_id: instanceId,
-              schedule_type: schedule.schedule_type,
-              execution_attempt: 1,
-              started_at: new Date().toISOString()
-            }
-          })
-          .select()
-          .single();
+        const currentState = await getCurrentState(supabaseClient, schedule.id);
+        
+        // Only process schedules in valid states
+        if (!['idle', 'scheduled'].includes(currentState)) {
+          logDebug('process-schedules', `Skipping schedule ${schedule.id} in state ${currentState}`);
+          continue;
+        }
 
-        if (logError) throw logError;
+        // Transition to pending
+        await transitionState(supabaseClient, {
+          schedule_id: schedule.id,
+          from_state: currentState,
+          to_state: 'pending',
+          metadata: {
+            instance_id: instanceId,
+            started_at: new Date().toISOString()
+          }
+        });
 
         // Execute the function
         const { error: invokeError } = await supabaseClient.functions.invoke(
@@ -60,7 +63,6 @@ Deno.serve(async (req) => {
               scheduled: true,
               context: {
                 schedule_id: schedule.id,
-                execution_id: log.id,
                 instance_id: instanceId
               }
             }
@@ -69,25 +71,15 @@ Deno.serve(async (req) => {
 
         if (invokeError) throw invokeError;
 
-        // Update execution log with success
-        await supabaseClient
-          .from('schedule_execution_logs')
-          .update({
-            status: 'completed',
-            completed_at: new Date().toISOString(),
+        // Transition to completed
+        await transitionState(supabaseClient, {
+          schedule_id: schedule.id,
+          from_state: 'pending',
+          to_state: 'completed',
+          metadata: {
             execution_duration_ms: Date.now() - startTime
-          })
-          .eq('id', log.id);
-
-        // Calculate and update next execution time
-        const nextRun = calculateNextExecution(schedule);
-        await supabaseClient
-          .from('schedules')
-          .update({
-            last_execution_at: new Date().toISOString(),
-            next_execution_at: nextRun.toISOString()
-          })
-          .eq('id', schedule.id);
+          }
+        });
 
         processedSchedules.push({
           id: schedule.id,
@@ -97,6 +89,17 @@ Deno.serve(async (req) => {
 
       } catch (error) {
         logError('process-schedules', `Failed to process schedule ${schedule.id}:`, error);
+        
+        await transitionState(supabaseClient, {
+          schedule_id: schedule.id,
+          from_state: 'pending',
+          to_state: 'failed',
+          metadata: {
+            error: error.message,
+            error_time: new Date().toISOString()
+          }
+        });
+
         processedSchedules.push({
           id: schedule.id,
           function: schedule.function_name,
@@ -134,31 +137,3 @@ Deno.serve(async (req) => {
     );
   }
 });
-
-function calculateNextExecution(schedule: any): Date {
-  const now = new Date();
-  
-  if (schedule.schedule_type === 'time_based') {
-    if (schedule.time_config?.type === 'interval') {
-      const intervalMinutes = schedule.time_config.intervalMinutes || 1440;
-      const next = new Date(now);
-      next.setMinutes(next.getMinutes() + intervalMinutes);
-      return next;
-    }
-    
-    if (schedule.time_config?.type === 'daily') {
-      const [hours, minutes] = (schedule.time_config.hour || '03:00').split(':').map(Number);
-      const next = new Date(now);
-      next.setHours(hours, minutes, 0, 0);
-      if (next <= now) {
-        next.setDate(next.getDate() + 1);
-      }
-      return next;
-    }
-  }
-  
-  // Default to 30 minutes for event-based or unknown types
-  const next = new Date(now);
-  next.setMinutes(next.getMinutes() + 30);
-  return next;
-}
