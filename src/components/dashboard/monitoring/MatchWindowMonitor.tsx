@@ -5,6 +5,14 @@ import { StatusCard } from "../StatusCard";
 import { Clock, Activity, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { format } from "date-fns";
 
+interface MatchWindowState {
+  window_start: string;
+  window_end: string;
+  is_active: boolean;
+  match_count: number;
+  next_kickoff: string | null;
+}
+
 export function MatchWindowMonitor() {
   console.log('Rendering MatchWindowMonitor');
 
@@ -16,12 +24,20 @@ export function MatchWindowMonitor() {
       
       if (error) throw error;
       
+      const state: MatchWindowState = window || {
+        window_start: '',
+        window_end: '',
+        is_active: false,
+        match_count: 0,
+        next_kickoff: null
+      };
+      
       return {
-        isActive: window?.is_active || false,
-        matchCount: window?.match_count || 0,
-        windowStart: window?.window_start ? new Date(window.window_start) : null,
-        windowEnd: window?.window_end ? new Date(window.window_end) : null,
-        nextKickoff: window?.next_kickoff ? new Date(window.next_kickoff) : null
+        isActive: state.is_active,
+        matchCount: state.match_count,
+        windowStart: state.window_start ? new Date(state.window_start) : null,
+        windowEnd: state.window_end ? new Date(state.window_end) : null,
+        nextKickoff: state.next_kickoff ? new Date(state.next_kickoff) : null
       };
     },
     refetchInterval: 60000

@@ -13,6 +13,8 @@ import { EdgeFunctionSection } from "./components/scheduler/EdgeFunctionSection"
 import { ScheduleTestSuite } from "@/components/dashboard/testing/ScheduleTestSuite";
 import { AlertingSystem } from "@/components/dashboard/monitoring/AlertingSystem";
 import { MonitoringDashboard } from "@/components/dashboard/monitoring/MonitoringDashboard";
+import { MatchWindowMonitor } from "@/components/dashboard/monitoring/MatchWindowMonitor";
+import { MatchWindowTests } from "@/components/dashboard/monitoring/tests/MatchWindowTests";
 import { cn } from "@/lib/utils";
 import { SidebarProvider } from "@/components/ui/sidebar";
 
