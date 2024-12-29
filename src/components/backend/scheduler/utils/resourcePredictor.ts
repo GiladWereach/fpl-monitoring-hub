@@ -3,7 +3,7 @@ interface UsagePattern {
   usage: number;
 }
 
-interface PredictionResult {
+export interface PredictionResult {
   predictedUsage: number;
   confidence: number;
   anomalyScore: number;

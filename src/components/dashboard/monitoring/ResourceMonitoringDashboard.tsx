@@ -4,6 +4,15 @@ import { ResourceManager } from "@/components/backend/scheduler/utils/resourceMa
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Activity, Server, Clock, AlertTriangle } from "lucide-react";
 import { MetricCard } from "./components/MetricCard";
+import { PredictionResult } from "@/components/backend/scheduler/utils/resourcePredictor";
+
+interface ResourceMetric {
+  name: string;
+  activeTasks: number;
+  requestRate: number;
+  poolStatus?: { available: number; total: number };
+  predictedUsage: PredictionResult;
+}
 
 export function ResourceMonitoringDashboard() {
   const { data: metrics } = useQuery({
@@ -16,7 +25,7 @@ export function ResourceMonitoringDashboard() {
       return functions.map(fn => ({
         name: fn,
         ...resourceManager.getResourceMetrics(fn)
-      }));
+      })) as ResourceMetric[];
     },
     refetchInterval: 5000
   });
