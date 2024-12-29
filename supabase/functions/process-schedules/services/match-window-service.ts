@@ -1,48 +1,77 @@
 import { SupabaseClient } from '@supabase/supabase-js';
-import { MatchWindow } from './types/processor-types';
-import { logDebug, logError } from '../../../shared/logging-service';
+import { logDebug, logError } from '../../shared/logging-service.ts';
+
+export type MatchWindowState = 'pre_match' | 'live' | 'post_match' | 'idle';
+
+export interface MatchWindow {
+  type: MatchWindowState;
+  hasActiveMatches: boolean;
+  nextMatchTime?: Date;
+  timezone?: string;
+}
 
 export async function detectMatchWindow(
-  client: SupabaseClient
+  supabaseClient: SupabaseClient
 ): Promise<MatchWindow> {
   logDebug('match-window-service', 'Detecting match window...');
   
   try {
-    const { data: activeMatches, error: activeError } = await client
+    // Get active matches
+    const { data: activeMatches, error: activeError } = await supabaseClient
       .from('fixtures')
       .select('*')
       .eq('started', true)
-      .eq('finished', false);
+      .eq('finished', false)
+      .order('kickoff_time', { ascending: true });
 
-    if (activeError) throw activeError;
+    if (activeError) {
+      logError('match-window-service', 'Error fetching active matches:', activeError);
+      throw activeError;
+    }
 
     if (activeMatches && activeMatches.length > 0) {
       logDebug('match-window-service', `Found ${activeMatches.length} active matches`);
       return {
+        type: 'live',
         hasActiveMatches: true,
-        isMatchDay: true
+        timezone: 'UTC'
       };
     }
 
-    // Check for upcoming matches in next 2 hours
-    const twoHoursFromNow = new Date();
-    twoHoursFromNow.setHours(twoHoursFromNow.getHours() + 2);
+    // Check for upcoming matches in the next hour
+    const oneHourFromNow = new Date();
+    oneHourFromNow.setHours(oneHourFromNow.getHours() + 1);
 
-    const { data: upcomingMatches, error: upcomingError } = await client
+    const { data: upcomingMatches, error: upcomingError } = await supabaseClient
       .from('fixtures')
       .select('*')
       .eq('started', false)
-      .lte('kickoff_time', twoHoursFromNow.toISOString());
+      .lte('kickoff_time', oneHourFromNow.toISOString())
+      .order('kickoff_time');
 
-    if (upcomingError) throw upcomingError;
+    if (upcomingError) {
+      logError('match-window-service', 'Error fetching upcoming matches:', upcomingError);
+      throw upcomingError;
+    }
 
+    if (upcomingMatches?.length) {
+      const nextKickoff = new Date(upcomingMatches[0].kickoff_time);
+      return {
+        type: 'pre',
+        hasActiveMatches: false,
+        nextMatchTime: nextKickoff,
+        timezone: 'UTC'
+      };
+    }
+
+    // Default to idle state
     return {
+      type: 'idle',
       hasActiveMatches: false,
-      isMatchDay: upcomingMatches && upcomingMatches.length > 0,
-      nextMatchTime: upcomingMatches?.[0]?.kickoff_time ? new Date(upcomingMatches[0].kickoff_time) : undefined
+      timezone: 'UTC'
     };
   } catch (error) {
-    logError('match-window-service', 'Error detecting match window:', error);
+    logError('match-window-service', 'Error in detectMatchWindow:', error);
     throw error;
   }
 }

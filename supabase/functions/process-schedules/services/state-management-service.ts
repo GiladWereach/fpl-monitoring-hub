@@ -1,4 +1,4 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { SupabaseClient } from '@supabase/supabase-js';
 import { logDebug, logError } from '../../shared/logging-service.ts';
 
 export type ScheduleState = 'idle' | 'scheduled' | 'pending' | 'executing' | 'completed' | 'failed' | 'retry' | 'max_retries';
@@ -11,7 +11,7 @@ interface StateTransition {
 }
 
 export async function transitionState(
-  client: ReturnType<typeof createClient>,
+  client: SupabaseClient,
   transition: StateTransition
 ): Promise<boolean> {
   const { schedule_id, from_state, to_state, metadata = {} } = transition;
@@ -56,7 +56,7 @@ export async function transitionState(
 }
 
 export async function getCurrentState(
-  client: ReturnType<typeof createClient>,
+  client: SupabaseClient,
   schedule_id: string
 ): Promise<ScheduleState> {
   try {
