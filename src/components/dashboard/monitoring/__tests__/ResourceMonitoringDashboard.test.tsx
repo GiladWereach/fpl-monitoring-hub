@@ -1,9 +1,25 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, act } from '@testing-library/react';
 import { renderHook } from '@testing-library/react-hooks';
-import { beforeEach, describe, expect, it } from 'vitest';
-import ResourceMonitoringDashboard from '../ResourceMonitoringDashboard';
+import { describe, beforeEach, expect, it, vi } from 'vitest';
+import { ResourceMonitoringDashboard } from '../ResourceMonitoringDashboard';
 import { supabase } from '@/integrations/supabase/client';
-import { vi } from 'vitest';
+import '@testing-library/jest-dom';
+import React from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: false,
+    },
+  },
+});
+
+const wrapper = ({ children }: { children: React.ReactNode }) => (
+  <QueryClientProvider client={queryClient}>
+    {children}
+  </QueryClientProvider>
+);
 
 describe('ResourceMonitoringDashboard', () => {
   beforeEach(() => {
@@ -33,17 +49,17 @@ describe('ResourceMonitoringDashboard', () => {
   });
 
   it('renders without crashing', () => {
-    render(<ResourceMonitoringDashboard />);
-    expect(screen.getByText(/Resource Monitoring/i)).toBeInTheDocument();
+    render(<ResourceMonitoringDashboard />, { wrapper });
+    expect(screen.getByText(/Resource Usage/i)).toBeInTheDocument();
   });
 
   it('displays loading state initially', () => {
-    render(<ResourceMonitoringDashboard />);
-    expect(screen.getByText(/Loading.../i)).toBeInTheDocument();
+    render(<ResourceMonitoringDashboard />, { wrapper });
+    expect(screen.getByText(/Loading metrics.../i)).toBeInTheDocument();
   });
 
   it('fetches and displays metrics data', async () => {
-    render(<ResourceMonitoringDashboard />);
+    render(<ResourceMonitoringDashboard />, { wrapper });
     
     // Wait for data to load
     await screen.findByText(/Collection Rate: 95%/i);
@@ -65,7 +81,7 @@ describe('ResourceMonitoringDashboard', () => {
       })
     }));
 
-    render(<ResourceMonitoringDashboard />);
+    render(<ResourceMonitoringDashboard />, { wrapper });
     
     // Wait for error message
     await screen.findByText(/Error loading metrics/i);
