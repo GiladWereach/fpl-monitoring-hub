@@ -1,3 +1,5 @@
+import { ResourceManager } from './resourceManager';
+
 export interface RetryConfig {
   maxRetries: number;
   baseDelay: number;
@@ -37,7 +39,53 @@ export const calculateBackoffDelay = (
   return delay;
 };
 
-export const sleep = (ms: number): Promise<void> => {
+export const sleep = async (ms: number): Promise<void> => {
   console.log(`Sleeping for ${ms}ms`);
   return new Promise(resolve => setTimeout(resolve, ms));
+};
+
+export const executeWithRetry = async <T>(
+  functionName: string,
+  operation: () => Promise<T>,
+  config: RetryConfig
+): Promise<T> => {
+  const resourceManager = ResourceManager.getInstance();
+  let attempt = 0;
+
+  while (attempt <= config.maxRetries) {
+    try {
+      // Check resource limits before executing
+      const canExecute = await resourceManager.canExecute(functionName);
+      if (!canExecute) {
+        console.log(`Resource limits reached for ${functionName}, waiting before retry`);
+        await sleep(calculateBackoffDelay(attempt, config));
+        continue;
+      }
+
+      // Track execution
+      await resourceManager.trackExecution(functionName);
+      
+      // Execute operation
+      const result = await operation();
+      
+      // Release resources
+      await resourceManager.releaseExecution(functionName);
+      
+      return result;
+    } catch (error) {
+      console.error(`Attempt ${attempt + 1} failed for ${functionName}:`, error);
+      
+      // Release resources on error
+      await resourceManager.releaseExecution(functionName);
+      
+      if (attempt === config.maxRetries) {
+        throw error;
+      }
+      
+      attempt++;
+      await sleep(calculateBackoffDelay(attempt, config));
+    }
+  }
+
+  throw new Error(`All retry attempts failed for ${functionName}`);
 };
