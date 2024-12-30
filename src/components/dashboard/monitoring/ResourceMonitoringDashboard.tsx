@@ -5,100 +5,46 @@ import { AlertTriangle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/hooks/use-toast";
-import { persistMetrics } from "./utils/metricsPersistence";
-import { performanceTracker } from "./utils/performanceTracker";
-import { useEffect, useRef, useState } from "react";
+import { AdvancedChartOptions } from "./components/AdvancedChartOptions";
+import { MetricAggregation } from "./components/MetricAggregation";
+import { AlertConfiguration } from "./components/AlertConfiguration";
 import { ResourceUsageChart } from "./components/ResourceUsageChart";
 import { PredictionAccuracyChart } from "./components/PredictionAccuracyChart";
-import { MetricsOverview } from "./components/MetricsOverview";
-import { MetricsData } from "./types/monitoring-types";
-import { VisualizationControls } from "./components/VisualizationControls";
-import { AlertThresholdConfig } from "./components/AlertThresholdConfig";
+import { useState } from "react";
 
 export function ResourceMonitoringDashboard() {
-  const startTimeRef = useRef<number>(0);
   const [chartType, setChartType] = useState('line');
+  const [timeRange, setTimeRange] = useState({ from: new Date(Date.now() - 24 * 60 * 60 * 1000), to: new Date() });
   const [showComparison, setShowComparison] = useState(false);
+  const [aggregationType, setAggregationType] = useState('avg');
 
-  useEffect(() => {
-    startTimeRef.current = performanceTracker.startTracking();
-    return () => {
-      const metrics = performanceTracker.endTracking(startTimeRef.current);
-      console.log('Component performance metrics:', metrics);
-    };
-  }, []);
+  console.log('Rendering ResourceMonitoringDashboard with:', {
+    chartType,
+    timeRange,
+    showComparison,
+    aggregationType
+  });
 
   const { data: metrics, isLoading, error } = useQuery({
-    queryKey: ['resource-metrics'],
+    queryKey: ['resource-metrics', timeRange],
     queryFn: async () => {
       console.log('Fetching resource metrics');
       try {
         const { data, error } = await supabase
-          .rpc('get_aggregated_metrics', { hours_lookback: 24 });
-
-        if (error) {
-          console.error('Error fetching metrics:', error);
-          toast({
-            title: "Error Fetching Metrics",
-            description: error.message || "Failed to fetch resource metrics",
-            variant: "destructive",
+          .rpc('get_aggregated_metrics', { 
+            hours_lookback: Math.ceil((timeRange.to.getTime() - timeRange.from.getTime()) / (1000 * 60 * 60)) 
           });
-          throw error;
-        }
 
-        if (!data) {
-          throw new Error('No metrics data received');
-        }
-
+        if (error) throw error;
         console.log('Fetched metrics:', data);
-        return data as MetricsData[];
+        return data;
       } catch (err) {
         console.error('Error in queryFn:', err);
         throw err;
       }
     },
-    refetchInterval: 5000,
-    retry: 3,
+    refetchInterval: 30000
   });
-
-  const handleExportData = async () => {
-    try {
-      const csvContent = [
-        ["Endpoint", "Success Rate", "Error Rate", "Avg Response Time", "Health Status"],
-        ...(metrics || []).map(m => [
-          m.endpoint,
-          `${m.success_rate}%`,
-          `${100 - m.success_rate}%`,
-          `${m.avg_response_time}ms`,
-          m.health_status
-        ])
-      ].map(row => row.join(",")).join("\n");
-
-      const blob = new Blob([csvContent], { type: 'text/csv' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `resource-metrics-${new Date().toISOString()}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-
-      toast({
-        title: "Export Successful",
-        description: "Metrics data has been exported to CSV",
-      });
-    } catch (error) {
-      console.error('Error exporting data:', error);
-      toast({
-        title: "Export Failed",
-        description: "Failed to export metrics data",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const hasAnomalies = metrics?.some(m => m.predictedUsage?.anomalyScore > 2.0);
 
   if (error) {
     return (
@@ -112,20 +58,19 @@ export function ResourceMonitoringDashboard() {
   }
 
   if (isLoading) {
-    return (
-      <Card className="p-6 space-y-6">
-        <div className="flex justify-between items-center">
-          <Skeleton className="h-8 w-48" />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {[...Array(4)].map((_, i) => (
-            <Skeleton key={i} className="h-32" />
-          ))}
-        </div>
-        <Skeleton className="h-[300px]" />
-      </Card>
-    );
+    return <Skeleton className="w-full h-[400px]" />;
   }
+
+  const handleAggregationChange = (config: any) => {
+    console.log('Aggregation config changed:', config);
+    // Apply aggregation logic here
+    toast({
+      title: "Aggregation Updated",
+      description: `Applied ${config.type} aggregation with ${config.window}h window`,
+    });
+  };
+
+  const hasAnomalies = metrics?.some((m: any) => m.health_status === 'error');
 
   return (
     <Card className="p-6 space-y-6">
@@ -139,13 +84,12 @@ export function ResourceMonitoringDashboard() {
         )}
       </div>
 
-      <VisualizationControls
+      <AdvancedChartOptions
         onChartTypeChange={setChartType}
-        onExportData={handleExportData}
+        onTimeRangeChange={setTimeRange}
         onComparisonToggle={setShowComparison}
+        onAggregationChange={setAggregationType}
       />
-
-      <MetricsOverview metrics={metrics || []} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <ResourceUsageChart 
@@ -156,7 +100,22 @@ export function ResourceMonitoringDashboard() {
         <PredictionAccuracyChart data={metrics || []} />
       </div>
 
-      <AlertThresholdConfig />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <MetricAggregation 
+          metrics={metrics || []}
+          onAggregationChange={handleAggregationChange}
+        />
+        <AlertConfiguration 
+          metricName="resource_usage"
+          currentConfig={{
+            warning: 80,
+            critical: 90,
+            enabled: true,
+            timeWindow: 15,
+            notifyOnRecovery: true
+          }}
+        />
+      </div>
     </Card>
   );
 }
