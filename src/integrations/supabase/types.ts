@@ -951,9 +951,11 @@ export type Database = {
           created_at: string | null
           end_time: string | null
           id: string
+          last_check: string | null
           metadata: Json | null
           start_time: string
           state: Database["public"]["Enums"]["match_window_state"]
+          transition_type: string | null
           updated_at: string | null
         }
         Insert: {
@@ -961,9 +963,11 @@ export type Database = {
           created_at?: string | null
           end_time?: string | null
           id?: string
+          last_check?: string | null
           metadata?: Json | null
           start_time: string
           state: Database["public"]["Enums"]["match_window_state"]
+          transition_type?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -971,9 +975,11 @@ export type Database = {
           created_at?: string | null
           end_time?: string | null
           id?: string
+          last_check?: string | null
           metadata?: Json | null
           start_time?: string
           state?: Database["public"]["Enums"]["match_window_state"]
+          transition_type?: string | null
           updated_at?: string | null
         }
         Relationships: []
