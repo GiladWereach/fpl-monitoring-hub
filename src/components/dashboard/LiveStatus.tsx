@@ -27,7 +27,20 @@ export const LiveStatus = ({
 }: LiveStatusProps) => {
   const { data: matchWindow, isLoading: windowLoading } = useQuery({
     queryKey: ['match-window'],
-    queryFn: () => detectMatchWindow(),
+    queryFn: async () => {
+      console.log('Detecting match window...');
+      const { data, error } = await supabase
+        .rpc('get_current_match_window')
+        .maybeSingle();
+      
+      if (error) {
+        console.error('Error detecting match window:', error);
+        throw error;
+      }
+
+      console.log('Match window response:', data);
+      return data;
+    },
     refetchInterval: 30000
   });
 
@@ -57,7 +70,11 @@ export const LiveStatus = ({
       return "warning";
     }
 
-    switch (matchWindow?.type) {
+    if (!matchWindow) {
+      return "secondary";
+    }
+
+    switch (matchWindow.type) {
       case 'live':
         return "success";
       case 'pre_match':
@@ -74,7 +91,11 @@ export const LiveStatus = ({
       return "Gameweek Transition";
     }
 
-    switch (matchWindow?.type) {
+    if (!matchWindow) {
+      return "No Active Matches";
+    }
+
+    switch (matchWindow.type) {
       case 'live':
         return `Live (${matchWindow.match_count} matches)`;
       case 'pre_match':
@@ -82,14 +103,14 @@ export const LiveStatus = ({
       case 'post_match':
         return "Post-match";
       default:
-        if (matchWindow?.next_kickoff) {
+        if (matchWindow.next_kickoff) {
           const timeUntil = Math.floor(
-            (matchWindow.next_kickoff.getTime() - Date.now()) / (1000 * 60)
+            (new Date(matchWindow.next_kickoff).getTime() - Date.now()) / (1000 * 60)
           );
           if (timeUntil < 60) return `Next match in ${timeUntil}m`;
           return `Next match in ${Math.floor(timeUntil / 60)}h`;
         }
-        return "Idle";
+        return "No Upcoming Matches";
     }
   };
 
