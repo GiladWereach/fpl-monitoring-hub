@@ -1,11 +1,13 @@
-import { SupabaseClient } from '@supabase/supabase-js';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { PlayerDetails, ProcessedFixture, ProcessedHistory } from './types.ts';
 
 export async function processPlayerData(
-  supabaseClient: SupabaseClient,
+  supabaseClient: ReturnType<typeof createClient>,
   playerId: number,
   data: PlayerDetails
 ): Promise<void> {
+  console.log('Processing data for player:', playerId);
+  
   if (data.fixtures?.length) {
     const processedFixtures: ProcessedFixture[] = data.fixtures.map(f => ({
       player_id: playerId,
@@ -16,11 +18,15 @@ export async function processPlayerData(
       last_updated: new Date().toISOString()
     }));
 
+    console.log(`Upserting ${processedFixtures.length} fixtures for player ${playerId}`);
     const { error: fixturesError } = await supabaseClient
       .from('player_fixtures')
       .upsert(processedFixtures);
 
-    if (fixturesError) throw fixturesError;
+    if (fixturesError) {
+      console.error('Error upserting fixtures:', fixturesError);
+      throw fixturesError;
+    }
   }
 
   if (data.history?.length) {
@@ -64,15 +70,19 @@ export async function processPlayerData(
       last_updated: new Date().toISOString()
     }));
 
+    console.log(`Upserting ${processedHistory.length} history records for player ${playerId}`);
     const { error: historyError } = await supabaseClient
       .from('player_history')
       .upsert(processedHistory);
 
-    if (historyError) throw historyError;
+    if (historyError) {
+      console.error('Error upserting history:', historyError);
+      throw historyError;
+    }
   }
 
-  // Process history_past if exists
   if (data.history_past?.length) {
+    console.log(`Processing ${data.history_past.length} past history records for player ${playerId}`);
     const { error: historyPastError } = await supabaseClient
       .from('player_history_past')
       .upsert(
@@ -109,6 +119,11 @@ export async function processPlayerData(
         }))
       );
 
-    if (historyPastError) throw historyPastError;
+    if (historyPastError) {
+      console.error('Error upserting past history:', historyPastError);
+      throw historyPastError;
+    }
   }
+  
+  console.log(`Completed processing data for player ${playerId}`);
 }
