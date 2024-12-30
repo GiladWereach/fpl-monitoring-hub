@@ -91,6 +91,35 @@ export function ScheduleFormFields({ form }: ScheduleFormFieldsProps) {
 
         <FormField
           control={form.control}
+          name="priority"
+          rules={{
+            required: "Priority is required",
+            min: { value: 0, message: "Priority must be 0 or greater" },
+            max: { value: 100, message: "Priority cannot exceed 100" }
+          }}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Priority</FormLabel>
+              <FormControl>
+                <Input 
+                  type="number"
+                  {...field}
+                  onChange={(e) => field.onChange(parseInt(e.target.value))}
+                  min={0}
+                  max={100}
+                  className="h-10"
+                />
+              </FormControl>
+              <FormDescription className="text-xs">
+                Higher priority (0-100) schedules are executed first
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
           name="timezone"
           rules={{
             required: "Timezone is required",

@@ -8,11 +8,15 @@ import { useMatchWindow } from "./hooks/useMatchWindow";
 import { useFunctionExecution } from "./hooks/useFunctionExecution";
 
 export function EdgeFunctionManager() {
+  console.log("Rendering EdgeFunctionManager");
   const { data: schedules, refetch: refetchSchedules } = useSchedules();
   const { data: matchWindow } = useMatchWindow(schedules, refetchSchedules);
   const { loading, handleExecute, refreshAll } = useFunctionExecution(refetchSchedules);
 
   const categories: ScheduleCategory[] = ['core_data', 'match_dependent', 'system', 'analytics'];
+
+  // Sort schedules by priority (higher priority first)
+  const sortedSchedules = schedules?.sort((a, b) => (b.priority || 0) - (a.priority || 0)) || [];
 
   // Convert Date objects to ISO strings for the matchWindow and ensure boolean type for is_active
   const formattedMatchWindow = matchWindow ? {
@@ -33,7 +37,10 @@ export function EdgeFunctionManager() {
       <ScrollArea className="h-[calc(100vh-200px)]">
         <div className="min-w-[600px] pr-4 space-y-8">
           {categories.map(category => {
-            const categoryFunctions = functions.filter(f => f.scheduleConfig.category === category);
+            const categoryFunctions = functions
+              .filter(f => f.scheduleConfig.category === category)
+              .sort((a, b) => (b.priority || 0) - (a.priority || 0));
+
             if (categoryFunctions.length === 0) return null;
 
             return (
@@ -44,7 +51,7 @@ export function EdgeFunctionManager() {
                 functions={categoryFunctions}
                 loading={Boolean(loading)}
                 onExecute={handleExecute}
-                schedules={schedules || []}
+                schedules={sortedSchedules}
                 matchWindow={formattedMatchWindow}
               />
             );

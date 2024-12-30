@@ -2067,6 +2067,7 @@ export type Database = {
           id: string
           last_execution_at: string | null
           next_execution_at: string | null
+          priority: number | null
           schedule_type: Database["public"]["Enums"]["schedule_type"]
           time_config: Json | null
           timezone: string | null
@@ -2083,6 +2084,7 @@ export type Database = {
           id?: string
           last_execution_at?: string | null
           next_execution_at?: string | null
+          priority?: number | null
           schedule_type: Database["public"]["Enums"]["schedule_type"]
           time_config?: Json | null
           timezone?: string | null
@@ -2099,6 +2101,7 @@ export type Database = {
           id?: string
           last_execution_at?: string | null
           next_execution_at?: string | null
+          priority?: number | null
           schedule_type?: Database["public"]["Enums"]["schedule_type"]
           time_config?: Json | null
           timezone?: string | null

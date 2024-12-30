@@ -79,6 +79,7 @@ export interface AdvancedScheduleFormValues {
   enabled: boolean;
   schedule_type: 'time_based' | 'event_based';
   timezone: string;
+  priority: number;
   time_config: TimeConfig;
   event_config: {
     triggerType: string;
