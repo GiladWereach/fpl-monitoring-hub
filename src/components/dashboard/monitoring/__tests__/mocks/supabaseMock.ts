@@ -17,7 +17,7 @@ export const mockMetricsData: MetricsData[] = [{
 // Create mock response builder
 export const createMockSupabaseResponse = (data: any = null, error: any = null) => {
   class MockPostgrestBuilder extends PostgrestBuilder<any> {
-    protected method = 'GET';
+    protected method: 'GET' | 'HEAD' | 'POST' | 'PATCH' | 'DELETE' = 'GET';
     protected shouldThrowOnError = false;
     protected isMaybeSingle = false;
     protected headers: { [key: string]: string } = {};
@@ -71,5 +71,5 @@ export const createMockSupabaseResponse = (data: any = null, error: any = null) 
     body: data,
   });
 
-  return mockBuilder as unknown as PostgrestFilterBuilder<any>;
+  return mockBuilder as unknown as PostgrestFilterBuilder<any, any, any>;
 };
