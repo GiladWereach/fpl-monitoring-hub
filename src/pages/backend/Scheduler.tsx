@@ -13,6 +13,7 @@ import { ScheduleAdjustmentMonitor } from "@/components/dashboard/monitoring/Sch
 import { EdgeFunctionSection } from "./components/scheduler/EdgeFunctionSection";
 import { cn } from "@/lib/utils";
 import { SidebarProvider } from "@/components/ui/sidebar";
+import { Card } from "@/components/ui/card";
 
 export default function Scheduler() {
   console.log("Rendering Scheduler page");
@@ -61,21 +62,23 @@ export default function Scheduler() {
               <SchedulerHeader lastUpdated={lastUpdated} onRefresh={() => refetch()} />
               
               {/* Primary Monitoring Dashboard */}
-              <MonitoringDashboard />
+              <Card className="p-6 bg-card/50 shadow-sm">
+                <MonitoringDashboard />
+              </Card>
               
               {/* Match Window and Schedule Adjustment Section */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold mb-2">Match Window Status</h3>
-                  <div className="p-4 bg-background/50 rounded-lg shadow-sm">
+                  <Card className="p-6 bg-card/50 shadow-sm">
                     <MatchWindowMonitor />
-                  </div>
+                  </Card>
                 </div>
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold mb-2">Schedule Adjustments</h3>
-                  <div className="p-4 bg-background/50 rounded-lg shadow-sm">
+                  <Card className="p-6 bg-card/50 shadow-sm">
                     <ScheduleAdjustmentMonitor />
-                  </div>
+                  </Card>
                 </div>
               </div>
               
