@@ -6,12 +6,12 @@ describe('Schedule Validation Tests', () => {
   let mockScheduleData: AdvancedScheduleFormValues;
 
   beforeEach(() => {
-    // Reset mock data before each test
     mockScheduleData = {
-      function_name: 'test-function', // Added the required function_name property
+      function_name: 'test-function',
       enabled: true,
       schedule_type: 'time_based',
       timezone: 'UTC',
+      priority: 0,
       time_config: {
         type: 'daily',
         hour: 3,

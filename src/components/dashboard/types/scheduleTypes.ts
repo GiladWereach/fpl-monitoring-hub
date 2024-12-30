@@ -15,5 +15,6 @@ export interface FunctionDefinition {
   name: string;
   function: string;
   group: string;
+  priority?: number;
   scheduleConfig: ScheduleConfig;
 }

@@ -40,6 +40,7 @@ describe('Schedule System End-to-End Tests', () => {
       enabled: true,
       schedule_type: 'time_based',
       timezone: 'UTC',
+      priority: 0,
       time_config: {
         type: 'daily',
         hour: 3,
