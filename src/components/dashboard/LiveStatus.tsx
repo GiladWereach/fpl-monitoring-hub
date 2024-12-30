@@ -1,7 +1,6 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Badge } from '@/components/ui/badge';
-import { detectMatchWindow } from '@/services/matchWindowService';
 import { format } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
 import { 
@@ -18,6 +17,16 @@ interface LiveStatusProps {
   showLabel?: boolean;
   showWindow?: boolean;
   timezone?: string;
+}
+
+type WindowType = 'live' | 'pre_match' | 'post_match' | 'idle';
+
+interface MatchWindow {
+  window_start: string;
+  window_end: string;
+  is_active: boolean;
+  match_count: number;
+  next_kickoff: string | null;
 }
 
 export const LiveStatus = ({ 
@@ -39,7 +48,7 @@ export const LiveStatus = ({
       }
 
       console.log('Match window response:', data);
-      return data;
+      return data as MatchWindow | null;
     },
     refetchInterval: 30000
   });
@@ -65,6 +74,14 @@ export const LiveStatus = ({
     return <Badge variant="secondary" className="h-2 w-2 rounded-full p-0 animate-pulse" />;
   }
 
+  const determineWindowType = (window: MatchWindow | null): WindowType => {
+    if (!window) return 'idle';
+    if (window.is_active && window.match_count > 0) return 'live';
+    if (window.next_kickoff && new Date(window.next_kickoff) > new Date()) return 'pre_match';
+    if (window.window_end && new Date() <= new Date(window.window_end)) return 'post_match';
+    return 'idle';
+  };
+
   const getStatusVariant = () => {
     if (currentGameweek?.transition_status === 'in_progress') {
       return "warning";
@@ -74,7 +91,8 @@ export const LiveStatus = ({
       return "secondary";
     }
 
-    switch (matchWindow.type) {
+    const windowType = determineWindowType(matchWindow);
+    switch (windowType) {
       case 'live':
         return "success";
       case 'pre_match':
@@ -95,7 +113,8 @@ export const LiveStatus = ({
       return "No Active Matches";
     }
 
-    switch (matchWindow.type) {
+    const windowType = determineWindowType(matchWindow);
+    switch (windowType) {
       case 'live':
         return `Live (${matchWindow.match_count} matches)`;
       case 'pre_match':
