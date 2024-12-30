@@ -27,9 +27,6 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { matchWindow, stateChange } = await req.json();
-    logDebug('adjust-schedule-intervals', 'Processing state change:', { matchWindow, stateChange });
-
     // Get affected schedules
     const { data: schedules, error: schedulesError } = await supabase
       .from('schedules')
@@ -42,25 +39,30 @@ Deno.serve(async (req) => {
       throw schedulesError;
     }
 
+    logDebug('adjust-schedule-intervals', `Found ${schedules?.length || 0} match dependent schedules`);
+
     const updates = [];
-    for (const schedule of schedules) {
+    for (const schedule of (schedules || [])) {
+      if (!schedule.time_config) continue;
+
+      const { data: matchWindow, error: matchWindowError } = await supabase
+        .rpc('get_current_match_window')
+        .single();
+
+      if (matchWindowError) {
+        logError('adjust-schedule-intervals', 'Error getting match window:', matchWindowError);
+        continue;
+      }
+
       let newInterval: number;
+      const timeConfig = schedule.time_config as { matchDayIntervalMinutes?: number; nonMatchIntervalMinutes?: number };
       
-      if (matchWindow.is_active) {
-        newInterval = schedule.time_config.matchDayIntervalMinutes || 2;
+      if (matchWindow?.is_active) {
+        newInterval = timeConfig.matchDayIntervalMinutes || 2;
         logDebug('adjust-schedule-intervals', `Setting match day interval for ${schedule.function_name}: ${newInterval}min`);
-      } else if (matchWindow.next_kickoff) {
-        const timeToKickoff = Math.floor((new Date(matchWindow.next_kickoff).getTime() - Date.now()) / (1000 * 60));
-        if (timeToKickoff <= 60) {
-          newInterval = 15; // Check every 15 minutes approaching kickoff
-          logDebug('adjust-schedule-intervals', `Setting pre-match interval for ${schedule.function_name}: ${newInterval}min`);
-        } else {
-          newInterval = schedule.time_config.nonMatchIntervalMinutes || 30;
-          logDebug('adjust-schedule-intervals', `Setting non-match interval for ${schedule.function_name}: ${newInterval}min`);
-        }
       } else {
-        newInterval = schedule.time_config.nonMatchIntervalMinutes || 30;
-        logDebug('adjust-schedule-intervals', `Setting default interval for ${schedule.function_name}: ${newInterval}min`);
+        newInterval = timeConfig.nonMatchIntervalMinutes || 30;
+        logDebug('adjust-schedule-intervals', `Setting non-match interval for ${schedule.function_name}: ${newInterval}min`);
       }
 
       const nextExecution = new Date();
@@ -75,6 +77,8 @@ Deno.serve(async (req) => {
           })
           .eq('id', schedule.id)
       );
+
+      logDebug('adjust-schedule-intervals', `Scheduled next execution for ${schedule.function_name} at ${nextExecution.toISOString()}`);
     }
 
     // Execute all updates
@@ -89,8 +93,8 @@ Deno.serve(async (req) => {
         error_count: 0,
         avg_response_time: 0,
         error_pattern: {
-          state_change: stateChange,
-          schedules_updated: updates.length
+          schedules_updated: updates.length,
+          timestamp: new Date().toISOString()
         }
       });
 
