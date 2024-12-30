@@ -1,5 +1,6 @@
 import { vi } from 'vitest';
 import type { MetricsData } from '../../types/monitoring-types';
+import { PostgrestBuilder, PostgrestFilterBuilder } from '@supabase/postgrest-js';
 
 // Mock data
 export const mockMetricsData: MetricsData[] = [{
@@ -14,85 +15,34 @@ export const mockMetricsData: MetricsData[] = [{
 }];
 
 // Create mock response builder
-export const createMockSupabaseResponse = (data: any = null, error: any = null) => ({
-  data,
-  error,
-  count: null,
-  status: error ? 500 : 200,
-  statusText: error ? "Error" : "OK",
-  method: 'GET',
-  url: new URL('https://mock-url.com'),
-  headers: {},
-  shouldThrowOnError: false,
-  throwOnError: vi.fn(),
-  fetch: vi.fn(),
-  isMaybeSingle: false,
-  setHeader: vi.fn(),
-  eq: vi.fn(),
-  neq: vi.fn(),
-  gt: vi.fn(),
-  gte: vi.fn(),
-  lt: vi.fn(),
-  lte: vi.fn(),
-  like: vi.fn(),
-  ilike: vi.fn(),
-  is: vi.fn(),
-  in: vi.fn(),
-  contains: vi.fn(),
-  containedBy: vi.fn(),
-  rangeLt: vi.fn(),
-  rangeGt: vi.fn(),
-  rangeGte: vi.fn(),
-  rangeLte: vi.fn(),
-  rangeAdjacent: vi.fn(),
-  overlaps: vi.fn(),
-  match: vi.fn(),
-  imatch: vi.fn(),
-  not: vi.fn(),
-  or: vi.fn(),
-  filter: vi.fn(),
-  order: vi.fn(),
-  limit: vi.fn(),
-  range: vi.fn(),
-  abortSignal: vi.fn(),
-  single: vi.fn(),
-  maybeSingle: vi.fn(),
-  csv: vi.fn(),
-  then: vi.fn(),
-  select: vi.fn(),
-  likeAllOf: vi.fn(),
-  likeAnyOf: vi.fn(),
-  ilikeAllOf: vi.fn(),
-  ilikeAnyOf: vi.fn(),
-  textSearch: vi.fn(),
-  textSearchAllOf: vi.fn(),
-  textSearchAnyOf: vi.fn(),
-  withTextSearch: vi.fn(),
-  withTextSearchAllOf: vi.fn(),
-  withTextSearchAnyOf: vi.fn(),
-  fts: vi.fn(),
-  plfts: vi.fn(),
-  phfts: vi.fn(),
-  wfts: vi.fn(),
-  cs: vi.fn(),
-  cd: vi.fn(),
-  ova: vi.fn(),
-  ovr: vi.fn(),
-  sl: vi.fn(),
-  sr: vi.fn(),
-  nxl: vi.fn(),
-  nxr: vi.fn(),
-  adj: vi.fn(),
-  geojson: vi.fn(),
-  explain: vi.fn(),
-  rollback: vi.fn(),
-  returns: vi.fn(),
-  execute: vi.fn(),
-  schema: vi.fn(),
-  snapshot: vi.fn(),
-  alter: vi.fn(),
-  upsert: vi.fn(),
-  delete: vi.fn(),
-  insert: vi.fn(),
-  update: vi.fn()
-});
+export const createMockSupabaseResponse = (data: any = null, error: any = null) => {
+  class MockPostgrestBuilder extends PostgrestBuilder<any> {
+    constructor() {
+      super({
+        url: new URL('https://mock-url.com'),
+        headers: {},
+        schema: 'public',
+        fetch: vi.fn() as any,
+      });
+    }
+
+    // Override necessary methods
+    throwOnError() {
+      return this;
+    }
+  }
+
+  const mockBuilder = new MockPostgrestBuilder();
+
+  // Add response data
+  Object.assign(mockBuilder, {
+    data,
+    error,
+    count: null,
+    status: error ? 500 : 200,
+    statusText: error ? "Error" : "OK",
+    body: data,
+  });
+
+  return mockBuilder;
+};
