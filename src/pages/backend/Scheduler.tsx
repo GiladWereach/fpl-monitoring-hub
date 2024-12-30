@@ -65,12 +65,21 @@ export default function Scheduler() {
               
               {/* Match Window and Schedule Adjustment Section */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <MatchWindowMonitor />
-                <ScheduleAdjustmentMonitor />
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Match Window Status</h3>
+                  <MatchWindowMonitor />
+                </div>
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Schedule Adjustments</h3>
+                  <ScheduleAdjustmentMonitor />
+                </div>
               </div>
               
               {/* Edge Functions Management */}
-              <EdgeFunctionSection onNewFunction={() => setNewFunctionOpen(true)} />
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Edge Functions</h3>
+                <EdgeFunctionSection onNewFunction={() => setNewFunctionOpen(true)} />
+              </div>
 
               <FunctionDialogHandler 
                 newFunctionOpen={newFunctionOpen}
