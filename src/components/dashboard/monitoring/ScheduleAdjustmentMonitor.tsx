@@ -5,6 +5,25 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, CheckCircle2, Clock } from "lucide-react";
 import { format } from "date-fns";
 
+interface StateChange {
+  from: string;
+  to: string;
+}
+
+interface ErrorPattern {
+  schedules_updated?: number;
+  state_change?: StateChange;
+}
+
+interface AdjustmentMetric {
+  id: number;
+  endpoint: string;
+  success_count: number;
+  error_count: number;
+  created_at: string;
+  error_pattern: ErrorPattern;
+}
+
 export function ScheduleAdjustmentMonitor() {
   console.log("Rendering ScheduleAdjustmentMonitor");
 
@@ -25,7 +44,7 @@ export function ScheduleAdjustmentMonitor() {
       }
 
       console.log('Fetched adjustment metrics:', data);
-      return data;
+      return data as AdjustmentMetric[];
     },
     refetchInterval: 30000
   });
