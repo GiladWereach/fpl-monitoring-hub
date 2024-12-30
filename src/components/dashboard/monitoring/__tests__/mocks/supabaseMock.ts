@@ -17,14 +17,41 @@ export const mockMetricsData: MetricsData[] = [{
 // Create mock response builder
 export const createMockSupabaseResponse = (data: any = null, error: any = null) => {
   class MockPostgrestBuilder extends PostgrestBuilder<any> {
+    protected method = 'GET';
+    protected shouldThrowOnError = false;
+    protected isMaybeSingle = false;
+    protected headers: { [key: string]: string } = {};
+
     constructor() {
-      super({
-        url: new URL('https://mock-url.com'),
-        headers: {},
-        schema: 'public',
-        fetch: vi.fn() as any,
-      });
+      super({} as any);
+      this.url = new URL('https://mock-url.com');
+      this.schema = 'public';
+      this.fetch = vi.fn() as any;
     }
+
+    // Required filter methods
+    eq = vi.fn().mockReturnThis();
+    neq = vi.fn().mockReturnThis();
+    gt = vi.fn().mockReturnThis();
+    gte = vi.fn().mockReturnThis();
+    lt = vi.fn().mockReturnThis();
+    lte = vi.fn().mockReturnThis();
+    like = vi.fn().mockReturnThis();
+    ilike = vi.fn().mockReturnThis();
+    is = vi.fn().mockReturnThis();
+    in = vi.fn().mockReturnThis();
+    contains = vi.fn().mockReturnThis();
+    containedBy = vi.fn().mockReturnThis();
+    rangeLt = vi.fn().mockReturnThis();
+    rangeGt = vi.fn().mockReturnThis();
+    rangeGte = vi.fn().mockReturnThis();
+    rangeLte = vi.fn().mockReturnThis();
+    rangeAdjacent = vi.fn().mockReturnThis();
+    overlaps = vi.fn().mockReturnThis();
+    match = vi.fn().mockReturnThis();
+    not = vi.fn().mockReturnThis();
+    or = vi.fn().mockReturnThis();
+    filter = vi.fn().mockReturnThis();
 
     // Override necessary methods
     throwOnError() {
@@ -44,5 +71,5 @@ export const createMockSupabaseResponse = (data: any = null, error: any = null) 
     body: data,
   });
 
-  return mockBuilder;
+  return mockBuilder as unknown as PostgrestFilterBuilder<any>;
 };
