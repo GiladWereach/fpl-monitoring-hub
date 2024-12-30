@@ -16,6 +16,7 @@ import { MonitoringDashboard } from "@/components/dashboard/monitoring/Monitorin
 import { MatchWindowMonitor } from "@/components/dashboard/monitoring/MatchWindowMonitor";
 import { MatchWindowTests } from "@/components/dashboard/monitoring/tests/MatchWindowTests";
 import { ResourceMonitoringDashboard } from "@/components/dashboard/monitoring/ResourceMonitoringDashboard";
+import { ScheduleAdjustmentMonitor } from "@/components/dashboard/monitoring/ScheduleAdjustmentMonitor";
 import { cn } from "@/lib/utils";
 import { SidebarProvider } from "@/components/ui/sidebar";
 
@@ -70,6 +71,8 @@ export default function Scheduler() {
               <MonitoringDashboard />
               
               <MatchWindowMonitor />
+              
+              <ScheduleAdjustmentMonitor />
               
               <MatchWindowTests />
               
