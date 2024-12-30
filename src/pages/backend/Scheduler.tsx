@@ -53,7 +53,7 @@ export default function Scheduler() {
       <SidebarProvider>
         <BackendSidebarMenu onExpandedChange={setIsExpanded} />
         <main className={cn(
-          "flex-1 transition-all duration-300 ease-in-out p-6",
+          "flex-1 transition-all duration-300 ease-in-out p-8",
           isExpanded ? "ml-[240px]" : "ml-[60px]"
         )}>
           <SchedulerErrorBoundary>
@@ -64,14 +64,18 @@ export default function Scheduler() {
               <MonitoringDashboard />
               
               {/* Match Window and Schedule Adjustment Section */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Match Window Status</h3>
-                  <MatchWindowMonitor />
+                  <h3 className="text-lg font-semibold mb-2">Match Window Status</h3>
+                  <div className="p-4 bg-background/50 rounded-lg shadow-sm">
+                    <MatchWindowMonitor />
+                  </div>
                 </div>
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Schedule Adjustments</h3>
-                  <ScheduleAdjustmentMonitor />
+                  <h3 className="text-lg font-semibold mb-2">Schedule Adjustments</h3>
+                  <div className="p-4 bg-background/50 rounded-lg shadow-sm">
+                    <ScheduleAdjustmentMonitor />
+                  </div>
                 </div>
               </div>
               
