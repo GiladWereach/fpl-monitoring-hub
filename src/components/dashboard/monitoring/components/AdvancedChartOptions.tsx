@@ -2,9 +2,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-import { DateRangePicker } from "@/components/ui/date-range-picker";
+import { DatePickerWithRange } from "@/components/ui/date-range-picker";
 import { Button } from "@/components/ui/button";
 import { BarChart, LineChart, AreaChart, Activity } from "lucide-react";
+import { DateRange } from "react-day-picker";
+import { useState } from "react";
 
 interface AdvancedChartOptionsProps {
   onChartTypeChange: (type: string) => void;
@@ -19,6 +21,18 @@ export function AdvancedChartOptions({
   onComparisonToggle,
   onAggregationChange
 }: AdvancedChartOptionsProps) {
+  const [date, setDate] = useState<DateRange | undefined>({
+    from: new Date(Date.now() - 24 * 60 * 60 * 1000),
+    to: new Date()
+  });
+
+  const handleDateRangeChange = (range: DateRange | undefined) => {
+    setDate(range);
+    if (range?.from && range?.to) {
+      onTimeRangeChange({ from: range.from, to: range.to });
+    }
+  };
+
   return (
     <Card className="p-4 space-y-4">
       <div className="flex items-center justify-between">
@@ -59,7 +73,10 @@ export function AdvancedChartOptions({
 
         <div className="space-y-2">
           <Label>Time Range</Label>
-          <DateRangePicker onUpdate={onTimeRangeChange} />
+          <DatePickerWithRange
+            date={date}
+            onDateChange={handleDateRangeChange}
+          />
         </div>
 
         <div className="space-y-2">
