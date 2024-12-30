@@ -7,14 +7,18 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/hooks/use-toast";
 import { persistMetrics } from "./utils/metricsPersistence";
 import { performanceTracker } from "./utils/performanceTracker";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ResourceUsageChart } from "./components/ResourceUsageChart";
 import { PredictionAccuracyChart } from "./components/PredictionAccuracyChart";
 import { MetricsOverview } from "./components/MetricsOverview";
 import { MetricsData } from "./types/monitoring-types";
+import { VisualizationControls } from "./components/VisualizationControls";
+import { AlertThresholdConfig } from "./components/AlertThresholdConfig";
 
 export function ResourceMonitoringDashboard() {
   const startTimeRef = useRef<number>(0);
+  const [chartType, setChartType] = useState('line');
+  const [showComparison, setShowComparison] = useState(false);
 
   useEffect(() => {
     startTimeRef.current = performanceTracker.startTracking();
@@ -57,6 +61,43 @@ export function ResourceMonitoringDashboard() {
     retry: 3,
   });
 
+  const handleExportData = async () => {
+    try {
+      const csvContent = [
+        ["Endpoint", "Success Rate", "Error Rate", "Avg Response Time", "Health Status"],
+        ...(metrics || []).map(m => [
+          m.endpoint,
+          `${m.success_rate}%`,
+          `${100 - m.success_rate}%`,
+          `${m.avg_response_time}ms`,
+          m.health_status
+        ])
+      ].map(row => row.join(",")).join("\n");
+
+      const blob = new Blob([csvContent], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `resource-metrics-${new Date().toISOString()}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+
+      toast({
+        title: "Export Successful",
+        description: "Metrics data has been exported to CSV",
+      });
+    } catch (error) {
+      console.error('Error exporting data:', error);
+      toast({
+        title: "Export Failed",
+        description: "Failed to export metrics data",
+        variant: "destructive",
+      });
+    }
+  };
+
   const hasAnomalies = metrics?.some(m => m.predictedUsage?.anomalyScore > 2.0);
 
   if (error) {
@@ -98,12 +139,24 @@ export function ResourceMonitoringDashboard() {
         )}
       </div>
 
+      <VisualizationControls
+        onChartTypeChange={setChartType}
+        onExportData={handleExportData}
+        onComparisonToggle={setShowComparison}
+      />
+
       <MetricsOverview metrics={metrics || []} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <ResourceUsageChart data={metrics || []} />
+        <ResourceUsageChart 
+          data={metrics || []} 
+          chartType={chartType}
+          showComparison={showComparison}
+        />
         <PredictionAccuracyChart data={metrics || []} />
       </div>
+
+      <AlertThresholdConfig />
     </Card>
   );
 }
