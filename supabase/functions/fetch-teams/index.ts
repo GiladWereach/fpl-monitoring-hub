@@ -1,30 +1,33 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { fplHeaders } from '../_shared/fpl-headers.ts';
+import { corsHeaders } from '../_shared/cors.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    console.log('Starting teams data fetch...')
+    console.log('Starting teams data fetch...');
     
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
+    );
 
-    const response = await fetch('https://fantasy.premierleague.com/api/bootstrap-static/')
+    const response = await fetch('https://fantasy.premierleague.com/api/bootstrap-static/', {
+      headers: fplHeaders
+    });
+
     if (!response.ok) {
-      throw new Error(`FPL API error: ${response.status}`)
+      console.error(`FPL API error: ${response.status}`);
+      const errorText = await response.text();
+      console.error('Error response:', errorText);
+      throw new Error(`FPL API error: ${response.status}`);
     }
 
-    const data = await response.json()
-    console.log('Teams data fetched successfully')
+    const data = await response.json();
+    console.log('Teams data fetched successfully');
 
     const mappedTeams = data.teams.map(team => ({
       id: team.id,
@@ -48,15 +51,15 @@ Deno.serve(async (req) => {
       pulse_id: team.pulse_id,
       team_division: team.team_division,
       last_updated: new Date().toISOString()
-    }))
+    }));
 
     const { error: teamsError } = await supabaseClient
       .from('teams')
-      .upsert(mappedTeams)
+      .upsert(mappedTeams);
 
-    if (teamsError) throw teamsError
+    if (teamsError) throw teamsError;
 
-    console.log('Teams data processed successfully')
+    console.log('Teams data processed successfully');
 
     return new Response(
       JSON.stringify({ success: true, message: 'Teams data ingestion completed successfully' }),
@@ -64,16 +67,16 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
       }
-    )
+    );
 
   } catch (error) {
-    console.error('Error:', error)
+    console.error('Error:', error);
     return new Response(
       JSON.stringify({ success: false, error: error.message }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500,
       }
-    )
+    );
   }
-})
+});
