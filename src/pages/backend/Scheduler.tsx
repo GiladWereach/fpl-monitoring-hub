@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -7,16 +7,10 @@ import { FunctionDialogHandler } from "@/components/backend/scheduler/FunctionDi
 import { SchedulerErrorBoundary } from "@/components/backend/scheduler/SchedulerErrorBoundary";
 import { useToast } from "@/hooks/use-toast";
 import { SchedulerHeader } from "./components/scheduler/SchedulerHeader";
-import { SystemMetricsOverview } from "./components/scheduler/SystemMetricsOverview";
-import { ScheduleExecutionMonitor } from "./components/scheduler/ScheduleExecutionMonitor";
-import { EdgeFunctionSection } from "./components/scheduler/EdgeFunctionSection";
-import { ScheduleTestSuite } from "@/components/dashboard/testing/ScheduleTestSuite";
-import { AlertingSystem } from "@/components/dashboard/monitoring/AlertingSystem";
 import { MonitoringDashboard } from "@/components/dashboard/monitoring/MonitoringDashboard";
 import { MatchWindowMonitor } from "@/components/dashboard/monitoring/MatchWindowMonitor";
-import { MatchWindowTests } from "@/components/dashboard/monitoring/tests/MatchWindowTests";
-import { ResourceMonitoringDashboard } from "@/components/dashboard/monitoring/ResourceMonitoringDashboard";
 import { ScheduleAdjustmentMonitor } from "@/components/dashboard/monitoring/ScheduleAdjustmentMonitor";
+import { EdgeFunctionSection } from "./components/scheduler/EdgeFunctionSection";
 import { cn } from "@/lib/utils";
 import { SidebarProvider } from "@/components/ui/sidebar";
 
@@ -66,28 +60,16 @@ export default function Scheduler() {
             <div className="space-y-8 max-w-7xl">
               <SchedulerHeader lastUpdated={lastUpdated} onRefresh={() => refetch()} />
               
-              <ResourceMonitoringDashboard />
-              
+              {/* Primary Monitoring Dashboard */}
               <MonitoringDashboard />
               
-              <MatchWindowMonitor />
+              {/* Match Window and Schedule Adjustment Section */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <MatchWindowMonitor />
+                <ScheduleAdjustmentMonitor />
+              </div>
               
-              <ScheduleAdjustmentMonitor />
-              
-              <MatchWindowTests />
-              
-              <AlertingSystem />
-              
-              <ScheduleTestSuite />
-              
-              <SystemMetricsOverview 
-                metrics={metrics} 
-                isLoading={isLoading} 
-                error={error} 
-              />
-              
-              <ScheduleExecutionMonitor />
-              
+              {/* Edge Functions Management */}
               <EdgeFunctionSection onNewFunction={() => setNewFunctionOpen(true)} />
 
               <FunctionDialogHandler 
