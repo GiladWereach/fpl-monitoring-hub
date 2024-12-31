@@ -18,10 +18,10 @@ export function EdgeFunctionManager() {
   // Sort schedules by priority (higher priority first)
   const sortedSchedules = schedules?.sort((a, b) => (b.priority || 0) - (a.priority || 0)) || [];
 
-  // Convert Date objects to ISO strings for the matchWindow and ensure boolean type for is_active
+  // Ensure dates are properly handled for the match window
   const formattedMatchWindow = matchWindow ? {
-    window_start: matchWindow.window_start.toISOString(),
-    window_end: matchWindow.window_end.toISOString(),
+    window_start: new Date(matchWindow.window_start).toISOString(),
+    window_end: new Date(matchWindow.window_end).toISOString(),
     is_active: Boolean(matchWindow.is_active),
     match_count: matchWindow.match_count
   } : null;
