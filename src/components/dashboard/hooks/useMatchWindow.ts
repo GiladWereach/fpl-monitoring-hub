@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { detectMatchWindow } from "@/services/matchWindowService";
 import { supabase } from "@/integrations/supabase/client";
 import { isTimeConfig } from "../types/scheduling";
 import { toast } from "@/hooks/use-toast";
@@ -10,11 +9,24 @@ export function useMatchWindow(schedules: any[] | undefined, refetchSchedules: (
     queryFn: async () => {
       console.log('Detecting match window...');
       try {
-        const window = await detectMatchWindow();
-        console.log('Match window detected:', window);
+        const { data: response, error: windowError } = await supabase
+          .rpc('get_current_match_window')
+          .single();
+
+        if (windowError) {
+          console.error('Error in match window detection:', windowError);
+          throw windowError;
+        }
+
+        if (!response) {
+          console.log('No active match window found');
+          return null;
+        }
+
+        console.log('Match window detected:', response);
         
-        if (window && schedules) {
-          console.log('Adjusting schedules based on match window:', window);
+        if (schedules) {
+          console.log('Adjusting schedules based on match window:', response);
           const matchDependentSchedules = schedules.filter(s => 
             s.schedule_type === 'time_based' && 
             isTimeConfig(s.time_config) &&
@@ -24,7 +36,7 @@ export function useMatchWindow(schedules: any[] | undefined, refetchSchedules: (
           for (const schedule of matchDependentSchedules) {
             if (!isTimeConfig(schedule.time_config)) continue;
 
-            const intervalMinutes = window.is_active ? 
+            const intervalMinutes = response.is_active ? 
               schedule.time_config.matchDayIntervalMinutes : 
               schedule.time_config.nonMatchIntervalMinutes;
 
@@ -49,7 +61,7 @@ export function useMatchWindow(schedules: any[] | undefined, refetchSchedules: (
                     error_count: 0,
                     avg_response_time: 0,
                     error_pattern: {
-                      match_window: window.is_active ? 'active' : 'inactive',
+                      match_window: response.is_active ? 'active' : 'inactive',
                       interval: intervalMinutes
                     }
                   });
@@ -64,7 +76,7 @@ export function useMatchWindow(schedules: any[] | undefined, refetchSchedules: (
                     avg_response_time: 0,
                     error_pattern: {
                       error: error.message,
-                      match_window: window.is_active ? 'active' : 'inactive'
+                      match_window: response.is_active ? 'active' : 'inactive'
                     }
                   });
               }
@@ -72,7 +84,7 @@ export function useMatchWindow(schedules: any[] | undefined, refetchSchedules: (
           }
         }
         
-        return window;
+        return response;
       } catch (error) {
         console.error('Error in match window detection:', error);
         toast({
@@ -83,6 +95,8 @@ export function useMatchWindow(schedules: any[] | undefined, refetchSchedules: (
         throw error;
       }
     },
-    refetchInterval: 60000
+    refetchInterval: 60000,
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000)
   });
 }

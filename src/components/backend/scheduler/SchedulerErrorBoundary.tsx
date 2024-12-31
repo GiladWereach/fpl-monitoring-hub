@@ -40,6 +40,13 @@ export class SchedulerErrorBoundary extends Component<Props, State> {
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('Scheduler error details:', error, errorInfo);
     
+    // Enhanced error handling for stream-related errors
+    if (error.message.includes('body stream already read')) {
+      console.log('Detected stream consumption error, handling specially');
+      this.handleStreamError(error);
+      return;
+    }
+    
     if (error instanceof SchedulerError) {
       handleSchedulerError(error, {
         functionName: 'SchedulerErrorBoundary',
@@ -61,6 +68,18 @@ export class SchedulerErrorBoundary extends Component<Props, State> {
 
     this.setState({ errorInfo });
   }
+
+  private handleStreamError = async (error: Error) => {
+    console.log('Handling stream error, will attempt recovery');
+    toast({
+      title: "Stream Error Detected",
+      description: "Attempting to recover...",
+      variant: "warning",
+    });
+
+    // Force a clean reload of the data
+    await this.handleRetry();
+  };
 
   private handleRetry = async () => {
     console.log(`Attempting retry ${this.state.retryCount + 1} of ${this.retryConfig.maxRetries}`);
