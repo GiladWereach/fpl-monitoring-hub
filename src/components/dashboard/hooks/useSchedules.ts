@@ -9,7 +9,17 @@ export function useSchedules() {
       console.log('Fetching function schedules');
       const { data, error } = await supabase
         .from('schedules')
-        .select('*')
+        .select(`
+          *,
+          schedule_execution_logs (
+            id,
+            status,
+            started_at,
+            completed_at,
+            error_details,
+            execution_duration_ms
+          )
+        `)
         .order('function_name');
       
       if (error) {
@@ -18,6 +28,7 @@ export function useSchedules() {
       }
       
       console.log('Fetched schedules:', data);
+      // Use the convertScheduleData helper to ensure proper type conversion
       return data.map(schedule => convertScheduleData(schedule)) as Schedule[];
     },
     refetchInterval: 10000

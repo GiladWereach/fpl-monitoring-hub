@@ -2,8 +2,7 @@ import {
   AdvancedScheduleFormValues, 
   ScheduleOverride, 
   ResolvedSchedule, 
-  ScheduleResolution,
-  Schedule 
+  ScheduleResolution 
 } from '../components/dashboard/types/scheduling';
 import { detectMatchWindow } from './matchWindowService';
 
@@ -17,8 +16,8 @@ export async function resolveSchedule(
   const activeOverride = overrides.find(override => {
     const now = new Date();
     return override.enabled && 
-           now >= override.start_time && 
-           now <= override.end_time;
+           now >= override.startTime && 
+           now <= override.endTime;
   });
 
   if (activeOverride) {
@@ -35,17 +34,17 @@ async function resolveWithOverride(
   override: ScheduleOverride
 ): Promise<ResolvedSchedule> {
   const resolution: ScheduleResolution = {
+    priority: 'override',
     source: 'override',
     resolvedInterval: override.interval || getDefaultInterval(schedule),
     nextExecutionTime: calculateNextExecution(override.interval || getDefaultInterval(schedule))
   };
 
   return {
-    ...schedule,
-    id: '', // Temporary ID for type satisfaction
+    baseSchedule: schedule,
     override,
     resolution
-  } as ResolvedSchedule;
+  };
 }
 
 async function resolveDefault(
@@ -55,16 +54,16 @@ async function resolveDefault(
   console.log(`Calculated interval for ${schedule.function_name}:`, interval);
   
   const resolution: ScheduleResolution = {
+    priority: 'default',
     source: 'system',
     resolvedInterval: interval,
     nextExecutionTime: calculateNextExecution(interval)
   };
 
   return {
-    ...schedule,
-    id: '', // Temporary ID for type satisfaction
+    baseSchedule: schedule,
     resolution
-  } as ResolvedSchedule;
+  };
 }
 
 async function calculateDynamicInterval(

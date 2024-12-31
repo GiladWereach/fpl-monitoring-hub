@@ -4,29 +4,44 @@ import { validateTimeZone, validateScheduleConflicts, validateExecutionWindow } 
 
 export function useScheduleValidation() {
   const validateForm = useCallback(async (
-    values: AdvancedScheduleFormValues
+    values: AdvancedScheduleFormValues,
+    scheduleId?: string
   ): Promise<ScheduleValidationResult> => {
     console.log("Validating schedule form:", values);
     
-    const errors: string[] = [];
+    const errors: { field: string; message: string }[] = [];
 
     // Validate timezone
     if (!validateTimeZone(values.timezone)) {
-      errors.push("Invalid timezone format");
+      errors.push({
+        field: "timezone",
+        message: "Invalid timezone format"
+      });
     }
 
     // Validate execution window if present
     if (values.execution_window) {
-      const windowValidation = validateExecutionWindow(values.execution_window);
-      if (!windowValidation.isValid) {
-        errors.push(windowValidation.error || "Invalid execution window");
+      const windowValidation = validateExecutionWindow(
+        values.execution_window.start_time,
+        values.execution_window.end_time,
+        values.execution_window.days_of_week
+      );
+
+      if (windowValidation !== true) {
+        errors.push({
+          field: "execution_window",
+          message: windowValidation
+        });
       }
     }
 
     // Check for schedule conflicts
-    const conflictValidation = await validateScheduleConflicts(values);
-    if (!conflictValidation.isValid) {
-      errors.push(conflictValidation.error || "Schedule conflicts detected");
+    const conflictValidation = await validateScheduleConflicts(values, scheduleId);
+    if (conflictValidation !== true) {
+      errors.push({
+        field: "schedule",
+        message: conflictValidation
+      });
     }
 
     return {
