@@ -26,10 +26,27 @@ Deno.serve(async (req) => {
     // Get current match window state
     const { data: currentWindow, error: windowError } = await supabase
       .rpc('get_current_match_window')
-      .single();
+      .maybeSingle();
 
     if (windowError) {
       throw windowError;
+    }
+
+    // Handle no active window case
+    if (!currentWindow) {
+      logDebug('monitor-match-windows', 'No active match window found');
+      return new Response(
+        JSON.stringify({
+          success: true,
+          stateChanged: false,
+          currentWindow: null,
+          status: 'no_active_matches'
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        }
+      );
     }
 
     // Get latest state from match_window_states
@@ -38,7 +55,7 @@ Deno.serve(async (req) => {
       .select('*')
       .order('created_at', { ascending: false })
       .limit(1)
-      .single();
+      .maybeSingle();
 
     if (stateError && stateError.code !== 'PGRST116') { // Ignore "no rows returned" error
       throw stateError;
