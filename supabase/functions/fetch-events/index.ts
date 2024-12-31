@@ -1,82 +1,68 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { corsHeaders, getFplRequestInit } from "../_shared/fpl-headers.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { logDebug, logError } from "../_shared/logging-service.ts"
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-Deno.serve(async (req) => {
+serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
 
   try {
-    console.log('Starting events data fetch...')
-    
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
+    logDebug('fetch-events', 'Starting events fetch');
+    const response = await fetch(
+      'https://fantasy.premierleague.com/api/bootstrap-static/',
+      getFplRequestInit()
+    );
 
-    const response = await fetch('https://fantasy.premierleague.com/api/bootstrap-static/')
     if (!response.ok) {
-      throw new Error(`FPL API error: ${response.status}`)
+      const error = `FPL API error: ${response.status}`;
+      logError('fetch-events', error);
+      throw new Error(error);
     }
 
-    const data = await response.json()
-    console.log('Events data fetched successfully')
+    const data = await response.json();
+    const events = data.events;
 
-    // Transform the data to match our schema exactly
-    const transformedEvents = data.events.map(event => ({
-      id: event.id,
-      name: event.name,
-      deadline_time: event.deadline_time,
-      average_entry_score: event.average_entry_score,
-      finished: event.finished,
-      data_checked: event.data_checked,
-      highest_score: event.highest_score,
-      is_previous: event.is_previous,
-      is_current: event.is_current,
-      is_next: event.is_next,
-      chip_plays: event.chip_plays,
-      most_selected: event.most_selected,
-      most_transferred_in: event.most_transferred_in,
-      top_element: event.top_element,
-      transfers_made: event.transfers_made,
-      most_captained: event.most_captained,
-      most_vice_captained: event.most_vice_captained,
-      last_updated: new Date().toISOString()
-    }))
-
-    console.log('Transformed events data:', transformedEvents)
-
-    const { error: eventsError } = await supabaseClient
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    
+    // Upsert events data
+    const { error: upsertError } = await supabase
       .from('events')
-      .upsert(transformedEvents)
+      .upsert(
+        events.map((event: any) => ({
+          ...event,
+          last_updated: new Date().toISOString()
+        })),
+        { onConflict: 'id' }
+      );
 
-    if (eventsError) {
-      console.error('Supabase error:', eventsError)
-      throw eventsError
+    if (upsertError) {
+      logError('fetch-events', 'Error upserting events:', upsertError);
+      throw upsertError;
     }
 
-    console.log('Events data processed successfully')
+    logDebug('fetch-events', `Successfully updated ${events.length} events`);
 
     return new Response(
-      JSON.stringify({ success: true, message: 'Events data ingestion completed successfully' }),
-      {
+      JSON.stringify({ success: true, count: events.length }),
+      { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
+        status: 200 
       }
-    )
+    );
 
   } catch (error) {
-    console.error('Error:', error)
+    logError('fetch-events', 'Error in fetch-events:', error);
     return new Response(
-      JSON.stringify({ success: false, error: error.message }),
-      {
+      JSON.stringify({ error: error.message }),
+      { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500,
+        status: 500
       }
-    )
+    );
   }
-})
+});
