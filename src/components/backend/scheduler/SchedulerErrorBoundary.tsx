@@ -74,7 +74,7 @@ export class SchedulerErrorBoundary extends Component<Props, State> {
     toast({
       title: "Stream Error Detected",
       description: "Attempting to recover...",
-      variant: "default", // Changed from "warning" to "default"
+      variant: "default",
     });
 
     // Force a clean reload of the data
@@ -110,6 +110,7 @@ export class SchedulerErrorBoundary extends Component<Props, State> {
       toast({
         title: "Retrying",
         description: "Attempting to recover from error...",
+        variant: "default"
       });
     } catch (retryError) {
       console.error('Error during retry:', retryError);

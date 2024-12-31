@@ -11,7 +11,7 @@ export function useMatchWindow(schedules: any[] | undefined, refetchSchedules: (
       try {
         const { data: response, error: windowError } = await supabase
           .rpc('get_current_match_window')
-          .single();
+          .maybeSingle();
 
         if (windowError) {
           console.error('Error in match window detection:', windowError);
