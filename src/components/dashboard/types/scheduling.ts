@@ -3,11 +3,9 @@ import { Json } from "@/integrations/supabase/types";
 export type RetryBackoffStrategy = 'linear' | 'exponential' | 'fixed';
 
 export type TimeConfig = {
-  type: 'daily' | 'match_dependent' | 'interval';
-  hour?: number;
   matchDayIntervalMinutes?: number;
   nonMatchIntervalMinutes?: number;
-  intervalMinutes?: number;
+  hour?: number;
 };
 
 export interface ExecutionWindow {
@@ -32,7 +30,7 @@ export interface ExecutionConfig {
 export interface Schedule {
   id: string;
   function_name: string;
-  schedule_type: 'time_based' | 'event_based';
+  schedule_type: 'time_based' | 'event_based' | 'match_dependent';
   enabled: boolean;
   time_config: TimeConfig;
   event_config: any;
@@ -48,10 +46,6 @@ export interface Schedule {
   frequency_type: string;
   description?: string;
   priority?: number;
-  schedule_execution_logs?: ExecutionLog[];
-}
-
-export interface ScheduleData extends Schedule {
   schedule_execution_logs?: ExecutionLog[];
 }
 
@@ -77,7 +71,7 @@ export interface EventCondition {
 export interface AdvancedScheduleFormValues {
   function_name: string;
   enabled: boolean;
-  schedule_type: 'time_based' | 'event_based';
+  schedule_type: 'time_based' | 'event_based' | 'match_dependent';
   timezone: string;
   priority: number;
   time_config: TimeConfig;

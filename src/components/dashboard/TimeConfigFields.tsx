@@ -19,20 +19,20 @@ interface TimeConfigFieldsProps {
 }
 
 export function TimeConfigFields({ form }: TimeConfigFieldsProps) {
-  console.log("Rendering TimeConfigFields with values:", form.watch("time_config"));
+  console.log("Rendering TimeConfigFields with values:", form.watch());
 
   return (
     <>
       <FormField
         control={form.control}
-        name="time_config.type"
+        name="schedule_type"
         rules={{
           required: "Schedule type is required"
         }}
         render={({ field }) => (
           <FormItem>
             <div className="flex items-center gap-2">
-              <FormLabel>Time Schedule Type</FormLabel>
+              <FormLabel>Schedule Type</FormLabel>
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger>
@@ -47,11 +47,12 @@ export function TimeConfigFields({ form }: TimeConfigFieldsProps) {
             <Select onValueChange={field.onChange} value={field.value}>
               <FormControl>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select time schedule type" />
+                  <SelectValue placeholder="Select schedule type" />
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
-                <SelectItem value="daily">Daily</SelectItem>
+                <SelectItem value="time_based">Time Based</SelectItem>
+                <SelectItem value="event_based">Event Based</SelectItem>
                 <SelectItem value="match_dependent">Match Dependent</SelectItem>
               </SelectContent>
             </Select>
@@ -60,7 +61,7 @@ export function TimeConfigFields({ form }: TimeConfigFieldsProps) {
         )}
       />
 
-      {form.watch("time_config.type") === "daily" && (
+      {form.watch("schedule_type") === "time_based" && (
         <FormField
           control={form.control}
           name="time_config.hour"
@@ -100,7 +101,7 @@ export function TimeConfigFields({ form }: TimeConfigFieldsProps) {
         />
       )}
 
-      {form.watch("time_config.type") === "match_dependent" && (
+      {form.watch("schedule_type") === "match_dependent" && (
         <>
           <FormField
             control={form.control}
