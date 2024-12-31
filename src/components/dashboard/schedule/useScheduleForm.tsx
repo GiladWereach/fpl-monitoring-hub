@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { AdvancedScheduleFormValues, ScheduleData, convertScheduleData } from "../types/scheduling";
+import { AdvancedScheduleFormValues, Schedule } from "../types/scheduling";
 import { logAPIError, updateAPIHealthMetrics } from "@/utils/api/errorHandling";
 import { Json } from "@/integrations/supabase/types";
 
@@ -21,7 +21,6 @@ export function useScheduleForm({ functionName, onSuccess }: UseScheduleFormProp
       schedule_type: "time_based",
       timezone: "UTC",
       time_config: {
-        type: "daily",
         hour: 3,
         matchDayIntervalMinutes: 2,
         nonMatchIntervalMinutes: 30
@@ -68,7 +67,7 @@ export function useScheduleForm({ functionName, onSuccess }: UseScheduleFormProp
         const endTime = Date.now();
         await updateAPIHealthMetrics("fetch_schedule", true, endTime - startTime);
 
-        return scheduleData ? convertScheduleData(scheduleData) : null;
+        return scheduleData ? scheduleData : null;
       } catch (error) {
         console.error("Error in schedule fetch:", error);
         
@@ -112,7 +111,6 @@ export function useScheduleForm({ functionName, onSuccess }: UseScheduleFormProp
         schedule_type: schedule.schedule_type,
         timezone: schedule.timezone ?? "UTC",
         time_config: schedule.time_config ?? {
-          type: "daily",
           hour: 3,
           matchDayIntervalMinutes: 2,
           nonMatchIntervalMinutes: 30
@@ -148,11 +146,11 @@ export function useScheduleForm({ functionName, onSuccess }: UseScheduleFormProp
         schedule_type: values.schedule_type,
         enabled: values.enabled,
         timezone: values.timezone,
-        time_config: JSON.parse(JSON.stringify(values.time_config)) as Json,
-        event_config: JSON.parse(JSON.stringify(values.event_config)) as Json,
-        event_conditions: JSON.parse(JSON.stringify(values.event_conditions)) as Json,
-        execution_config: JSON.parse(JSON.stringify(values.execution_config)) as Json,
-        execution_window: JSON.parse(JSON.stringify(values.execution_window)) as Json
+        time_config: values.time_config,
+        event_config: values.event_config,
+        event_conditions: values.event_conditions,
+        execution_config: values.execution_config,
+        execution_window: values.execution_window
       };
 
       const { error } = await supabase

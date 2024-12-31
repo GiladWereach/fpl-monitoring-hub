@@ -1,81 +1,113 @@
-import { AdvancedScheduleFormValues, TimeConfig } from "@/components/dashboard/types/scheduling";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
+import { AdvancedScheduleFormValues } from "@/components/dashboard/types/scheduling";
 
-export const validateTimeZone = (timezone: string): boolean => {
-  try {
-    Intl.DateTimeFormat(undefined, { timeZone: timezone });
-    return true;
-  } catch (e) {
-    return false;
-  }
-};
+export interface ValidationResult {
+  isValid: boolean;
+  errors: string[];
+  warnings: string[];
+}
 
-export const validateScheduleConflicts = async (
-  values: AdvancedScheduleFormValues,
-  currentScheduleId?: string
-): Promise<string | true> => {
-  console.log("Validating schedule conflicts:", values);
+export async function validateSchedule(schedule: AdvancedScheduleFormValues): Promise<ValidationResult> {
+  console.log('Validating schedule:', schedule);
   
-  // Check for conflicts with existing schedules
-  const { data: existingSchedules, error } = await supabase
-    .from('schedules')
-    .select('*')
-    .neq('id', currentScheduleId)
-    .eq('enabled', true);
+  const errors: string[] = [];
+  const warnings: string[] = [];
 
-  if (error) {
-    console.error("Error checking schedule conflicts:", error);
-    return "Failed to validate schedule conflicts";
+  // Check for schedule conflicts
+  const conflicts = await checkScheduleConflicts(schedule);
+  if (conflicts.length > 0) {
+    errors.push(`Schedule conflicts with: ${conflicts.join(', ')}`);
   }
 
-  // For time-based schedules
-  if (values.schedule_type === 'time_based') {
-    const conflictingSchedule = existingSchedules?.find(schedule => {
-      // Safely type assert the time_config
-      const timeConfig = schedule.time_config as TimeConfig | null;
-      
-      return schedule.schedule_type === 'time_based' &&
-             timeConfig?.type === values.time_config.type &&
-             timeConfig?.hour === values.time_config.hour;
-    });
-
-    if (conflictingSchedule) {
-      return `Schedule conflict with ${conflictingSchedule.function_name}`;
+  // Validate execution windows
+  if (schedule.execution_window) {
+    const windowValid = validateExecutionWindow(schedule.execution_window);
+    if (!windowValid) {
+      errors.push('Invalid execution window configuration');
     }
   }
 
-  return true;
-};
-
-export const validateExecutionWindow = (
-  startTime: string,
-  endTime: string,
-  daysOfWeek: number[]
-): string | true => {
-  console.log("Validating execution window:", { startTime, endTime, daysOfWeek });
-
-  // Validate time format
-  const timeRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
-  if (!timeRegex.test(startTime) || !timeRegex.test(endTime)) {
-    return "Invalid time format. Use HH:MM (24-hour format)";
+  // Validate event conditions
+  if (schedule.event_conditions?.length > 0) {
+    const conditionsValid = validateEventConditions(schedule.event_conditions);
+    if (!conditionsValid) {
+      errors.push('Invalid event conditions configuration');
+    }
   }
 
-  // Validate days of week
-  const validDays = daysOfWeek.every(day => day >= 0 && day <= 6);
-  if (!validDays) {
-    return "Invalid days of week. Use 0-6 (Sunday-Saturday)";
+  // Check execution config
+  const execConfigValid = validateExecutionConfig(schedule.execution_config);
+  if (!execConfigValid) {
+    errors.push('Invalid execution configuration');
   }
 
-  // Compare start and end times
-  const [startHour, startMinute] = startTime.split(':').map(Number);
-  const [endHour, endMinute] = endTime.split(':').map(Number);
+  return {
+    isValid: errors.length === 0,
+    errors,
+    warnings
+  };
+}
+
+async function checkScheduleConflicts(schedule: AdvancedScheduleFormValues): Promise<string[]> {
+  console.log('Checking for schedule conflicts');
   
-  const startMinutes = startHour * 60 + startMinute;
-  const endMinutes = endHour * 60 + endMinute;
-  
-  if (startMinutes >= endMinutes) {
-    return "End time must be after start time";
+  const { data: existingSchedules, error } = await supabase
+    .from('schedules')
+    .select('*')
+    .eq('function_name', schedule.function_name);
+
+  if (error) {
+    console.error('Error checking schedule conflicts:', error);
+    throw error;
   }
 
-  return true;
-};
+  return existingSchedules
+    .filter(existing => hasTimeOverlap(schedule, existing))
+    .map(s => s.function_name);
+}
+
+function hasTimeOverlap(schedule1: AdvancedScheduleFormValues, schedule2: any): boolean {
+  // Implementation depends on your scheduling logic
+  // This is a basic example
+  if (schedule1.schedule_type !== schedule2.schedule_type) {
+    return false;
+  }
+
+  // Check for daily schedule overlaps
+  if (schedule1.schedule_type === 'time_based' && schedule1.time_config?.type === 'daily') {
+    const hour1 = schedule1.time_config.hour;
+    const hour2 = schedule2.time_config?.hour;
+    return Math.abs(hour1 - hour2) < 1; // Consider 1 hour buffer
+  }
+
+  return false;
+}
+
+function validateExecutionWindow(window: any): boolean {
+  if (!window.start_time || !window.end_time) {
+    return false;
+  }
+
+  const start = new Date(`1970-01-01T${window.start_time}`);
+  const end = new Date(`1970-01-01T${window.end_time}`);
+
+  return start < end;
+}
+
+function validateEventConditions(conditions: any[]): boolean {
+  return conditions.every(condition => 
+    condition.field && 
+    condition.operator && 
+    condition.value !== undefined
+  );
+}
+
+function validateExecutionConfig(config: any): boolean {
+  return (
+    config &&
+    typeof config.retry_count === 'number' &&
+    typeof config.timeout_seconds === 'number' &&
+    typeof config.retry_delay_seconds === 'number'
+  );
+}

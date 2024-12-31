@@ -20,13 +20,16 @@ export function ScheduleFormFields({ form }: ScheduleFormFieldsProps) {
 
   const handleScheduleTypeChange = async (value: string) => {
     await measurePerformance("ScheduleFormFields", "scheduleTypeChange", async () => {
-      form.setValue("schedule_type", value as "time_based" | "event_based");
+      form.setValue("schedule_type", value as "time_based" | "event_based" | "match_dependent");
       
       // Reset relevant fields based on schedule type
       if (value === "time_based") {
         form.setValue("event_conditions", []);
-      } else {
-        form.setValue("time_config", { type: "daily", hour: 3 });
+      } else if (value === "match_dependent") {
+        form.setValue("time_config", {
+          matchDayIntervalMinutes: 2,
+          nonMatchIntervalMinutes: 30
+        });
       }
 
       toast({
