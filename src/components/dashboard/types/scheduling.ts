@@ -68,7 +68,7 @@ export interface ExecutionLog {
   error_details?: string;
   execution_duration_ms?: number;
   execution_context?: Json;
-  schedules?: Partial<Schedule>;
+  schedules: Schedule;
   display_name?: string;
 }
 

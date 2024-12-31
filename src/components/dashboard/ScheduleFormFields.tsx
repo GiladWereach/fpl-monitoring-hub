@@ -27,6 +27,7 @@ export function ScheduleFormFields({ form }: ScheduleFormFieldsProps) {
         form.setValue("event_conditions", []);
       } else if (value === "match_dependent") {
         form.setValue("time_config", {
+          type: "match_dependent",
           matchDayIntervalMinutes: 2,
           nonMatchIntervalMinutes: 30
         });
