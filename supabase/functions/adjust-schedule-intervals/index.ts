@@ -1,116 +1,121 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { corsHeaders } from '../_shared/cors.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { corsHeaders } from '../_shared/cors.ts';
+import { logDebug, logError } from '../shared/logging-service.ts';
 
-serve(async (req) => {
+interface MatchWindow {
+  type: 'live' | 'pre_match' | 'post_match' | 'idle';
+  is_active: boolean;
+  window_start: Date;
+  window_end: Date;
+  match_count: number;
+  next_kickoff: Date | null;
+}
+
+interface StateChange {
+  from: string;
+  to: string;
+}
+
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    console.log('Starting schedule interval adjustment...')
-    const supabaseClient = createClient(
+    const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
+    );
 
-    // Get match-dependent schedules (both from enum and json config)
-    const { data: schedules, error: schedulesError } = await supabaseClient
+    // Get affected schedules
+    const { data: schedules, error: schedulesError } = await supabase
       .from('schedules')
       .select('*')
       .eq('enabled', true)
-      .or(`schedule_type.eq.match_dependent,and(schedule_type.eq.time_based,time_config->type.eq.match_dependent)`)
+      .eq('schedule_type', 'time_based')
+      .filter('time_config->type', 'eq', 'match_dependent');
 
     if (schedulesError) {
-      console.error('Error fetching schedules:', schedulesError)
-      throw schedulesError
+      throw schedulesError;
     }
 
-    console.log(`Found ${schedules?.length || 0} match-dependent schedules`)
+    logDebug('adjust-schedule-intervals', `Found ${schedules?.length || 0} match dependent schedules`);
 
-    // Get current match window status
-    const { data: matchWindow, error: matchWindowError } = await supabaseClient
-      .rpc('get_current_match_window')
-      .single()
-
-    if (matchWindowError) {
-      console.error('Error getting match window:', matchWindowError)
-      throw matchWindowError
-    }
-
-    console.log('Current match window:', matchWindow)
-
-    const updates = []
+    const updates = [];
     for (const schedule of (schedules || [])) {
-      const timeConfig = schedule.time_config || {}
-      const intervalMinutes = matchWindow?.is_active
-        ? timeConfig.matchDayIntervalMinutes || 2  // Default to 2 minutes during matches
-        : timeConfig.nonMatchIntervalMinutes || 30 // Default to 30 minutes otherwise
+      if (!schedule.time_config) continue;
 
-      const nextExecution = new Date(Date.now() + intervalMinutes * 60 * 1000)
+      const { data: matchWindow, error: matchWindowError } = await supabase
+        .rpc('get_current_match_window')
+        .single();
 
-      console.log(`Adjusting schedule ${schedule.function_name} to ${intervalMinutes} minute interval`)
+      if (matchWindowError) {
+        logError('adjust-schedule-intervals', 'Error getting match window:', matchWindowError);
+        continue;
+      }
+
+      let newInterval: number;
+      const timeConfig = schedule.time_config as { matchDayIntervalMinutes?: number; nonMatchIntervalMinutes?: number };
       
+      if (matchWindow?.is_active) {
+        newInterval = timeConfig.matchDayIntervalMinutes || 2;
+        logDebug('adjust-schedule-intervals', `Setting match day interval for ${schedule.function_name}: ${newInterval}min`);
+      } else {
+        newInterval = timeConfig.nonMatchIntervalMinutes || 30;
+        logDebug('adjust-schedule-intervals', `Setting non-match interval for ${schedule.function_name}: ${newInterval}min`);
+      }
+
+      const nextExecution = new Date();
+      nextExecution.setMinutes(nextExecution.getMinutes() + newInterval);
+
       updates.push(
-        supabaseClient
+        supabase
           .from('schedules')
-          .update({ 
+          .update({
             next_execution_at: nextExecution.toISOString(),
             updated_at: new Date().toISOString()
           })
           .eq('id', schedule.id)
-      )
+      );
 
-      // Log the adjustment for monitoring
-      updates.push(
-        supabaseClient
-          .from('api_health_metrics')
-          .insert({
-            endpoint: `schedule_adjustment_${schedule.function_name}`,
-            success_count: 1,
-            error_count: 0,
-            avg_response_time: 0,
-            error_pattern: {
-              match_window: matchWindow?.is_active ? 'active' : 'inactive',
-              interval: intervalMinutes
-            }
-          })
-      )
+      logDebug('adjust-schedule-intervals', `Scheduled next execution for ${schedule.function_name} at ${nextExecution.toISOString()}`);
     }
 
-    // Execute all updates in parallel
-    const results = await Promise.allSettled(updates)
-    const errors = results.filter(r => r.status === 'rejected')
-    
-    if (errors.length > 0) {
-      console.error('Some updates failed:', errors)
-      throw new Error(`${errors.length} updates failed`)
-    }
+    // Execute all updates
+    await Promise.all(updates);
 
-    console.log('Successfully adjusted all schedule intervals')
+    // Log the adjustment
+    await supabase
+      .from('api_health_metrics')
+      .insert({
+        endpoint: 'adjust_schedule_intervals',
+        success_count: updates.length,
+        error_count: 0,
+        avg_response_time: 0,
+        error_pattern: {
+          schedules_updated: updates.length,
+          timestamp: new Date().toISOString()
+        }
+      });
+
     return new Response(
       JSON.stringify({
         success: true,
-        schedules_updated: schedules?.length || 0,
-        match_window: matchWindow
-      }),
-      {
+        schedules_updated: updates.length
+      }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
-      },
-    )
+      });
 
   } catch (error) {
-    console.error('Error adjusting schedules:', error)
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: error.message
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500,
-      },
-    )
+    logError('adjust-schedule-intervals', 'Error adjusting schedules:', error);
+    
+    return new Response(JSON.stringify({
+      success: false,
+      error: error.message
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 500,
+    });
   }
-})
+});
