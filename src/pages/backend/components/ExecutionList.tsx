@@ -7,6 +7,7 @@ import { ExecutionLogFilters } from "./execution/ExecutionLogFilters";
 import { ExecutionLogSearch } from "./execution/ExecutionLogSearch";
 import { ExecutionLogTable } from "./execution/ExecutionLogTable";
 import { functions } from "@/components/dashboard/utils/functionConfigs";
+import { ExecutionLog } from "@/components/dashboard/types/scheduling";
 
 export function ExecutionList() {
   const { toast } = useToast();
@@ -59,8 +60,8 @@ export function ExecutionList() {
         return {
           ...execution,
           display_name: functionConfig?.name || execution.schedules?.function_name || 'Unknown Function'
-        };
-      });
+        } as ExecutionLog;
+      }) || [];
     },
     refetchInterval: 30000
   });

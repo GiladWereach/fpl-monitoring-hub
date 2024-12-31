@@ -2,13 +2,13 @@ import { Json } from "@/integrations/supabase/types";
 
 export type RetryBackoffStrategy = 'linear' | 'exponential' | 'fixed';
 
-export interface TimeConfig {
-  type?: 'daily' | 'match_dependent' | 'interval';
+export type TimeConfig = {
+  type: 'daily' | 'match_dependent' | 'interval';
   hour?: number;
   matchDayIntervalMinutes?: number;
   nonMatchIntervalMinutes?: number;
   intervalMinutes?: number;
-}
+};
 
 export function isTimeConfig(value: any): value is TimeConfig {
   return value && typeof value === 'object' && 'type' in value;
@@ -68,7 +68,7 @@ export interface ExecutionLog {
   error_details?: string;
   execution_duration_ms?: number;
   execution_context?: Json;
-  schedules?: Schedule;
+  schedules?: Partial<Schedule>;
   display_name?: string;
 }
 
