@@ -38,17 +38,27 @@ export const LiveStatus = ({
     queryKey: ['match-window'],
     queryFn: async () => {
       console.log('Detecting match window...');
-      const { data, error } = await supabase
-        .rpc('get_current_match_window')
-        .maybeSingle();
+      const { data: response, error } = await supabase
+        .rpc('get_current_match_window');
       
       if (error) {
         console.error('Error detecting match window:', error);
+        // If it's a "no rows" error, return null instead of throwing
+        if (error.message.includes('contains 0 rows')) {
+          console.log('No active match window found');
+          return null;
+        }
         throw error;
       }
 
-      console.log('Match window response:', data);
-      return data as MatchWindow | null;
+      // Handle case where response is an empty array
+      if (!response || !Array.isArray(response) || response.length === 0) {
+        console.log('No active match window found');
+        return null;
+      }
+
+      console.log('Match window response:', response[0]);
+      return response[0] as MatchWindow;
     },
     refetchInterval: 30000
   });
