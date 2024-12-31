@@ -11,17 +11,18 @@ import { useState } from "react";
 import { ScheduleForm } from "./ScheduleForm";
 import { ExecutionHistory } from "../ExecutionHistory";
 import { useScheduleForm } from "./useScheduleForm";
+import { Schedule } from "../types/scheduling";
 
 interface ScheduleDialogProps {
-  functionName: string;
+  function_name: string;
   functionDisplayName: string;
-  currentSchedule?: any;
+  currentSchedule?: Schedule;
   isCoreDataFunction?: boolean;
   isMatchDependentFunction?: boolean;
 }
 
 export function ScheduleDialog({ 
-  functionName, 
+  function_name, 
   functionDisplayName,
   currentSchedule,
   isCoreDataFunction,
@@ -29,7 +30,7 @@ export function ScheduleDialog({
 }: ScheduleDialogProps) {
   const [open, setOpen] = useState(false);
   const { form, onSubmit } = useScheduleForm({
-    functionName,
+    initialData: currentSchedule,
     onSuccess: () => setOpen(false),
   });
 
@@ -64,7 +65,7 @@ export function ScheduleDialog({
             isDataCollectionFunction={isMatchDependentFunction}
             isCoreDataFunction={isCoreDataFunction}
           />
-          <ExecutionHistory functionName={functionName} />
+          <ExecutionHistory functionName={function_name} />
         </div>
       </DialogContent>
     </Dialog>

@@ -58,7 +58,7 @@ export interface Schedule {
 
 export type ScheduleData = Schedule;
 
-export interface AdvancedScheduleFormValues extends Omit<Schedule, 'id' | 'created_at' | 'updated_at' | 'last_execution_at' | 'next_execution_at'> {}
+export type AdvancedScheduleFormValues = Omit<Schedule, 'id' | 'created_at' | 'updated_at' | 'last_execution_at' | 'next_execution_at'>;
 
 export interface ExecutionLog {
   id: string;
@@ -94,8 +94,8 @@ export interface TestSuite {
 
 export interface ScheduleOverride {
   enabled?: boolean;
-  startTime: Date;
-  endTime: Date;
+  start_time: Date;
+  end_time: Date;
   interval?: number;
   time_config?: Partial<TimeConfig>;
   execution_config?: Partial<ExecutionConfig>;
@@ -108,10 +108,10 @@ export interface ResolvedSchedule extends Schedule {
 }
 
 export interface ScheduleResolution {
-  priority?: 'override' | 'default';
   source: string;
   resolvedInterval: number;
   nextExecutionTime: Date;
+  priority?: 'override' | 'default';
 }
 
 export interface ScheduleValidationResult {

@@ -1,36 +1,27 @@
 import { useForm } from "react-hook-form";
 import { supabase } from "@/integrations/supabase/client";
-import { Schedule, TimeConfig, ExecutionConfig, EventCondition, ExecutionWindow } from "../types/scheduling";
+import { Schedule, AdvancedScheduleFormValues, toJson } from "../types/scheduling";
 import { toast } from "@/hooks/use-toast";
 import { Json } from "@/integrations/supabase/types";
 
-export interface AdvancedScheduleFormValues {
-  function_name: string;
-  schedule_type: 'time_based' | 'event_based' | 'match_dependent';
-  enabled: boolean;
-  timezone: string;
-  time_config: TimeConfig;
-  event_config: {
-    triggerType: string;
-    offsetMinutes: number;
-  };
-  event_conditions: EventCondition[];
-  execution_config: ExecutionConfig;
-  execution_window: ExecutionWindow;
+interface UseScheduleFormProps {
+  initialData?: Schedule;
+  onSuccess?: () => void;
 }
 
-export function useScheduleForm(initialData?: Schedule) {
+export function useScheduleForm({ initialData, onSuccess }: UseScheduleFormProps = {}) {
   const form = useForm<AdvancedScheduleFormValues>({
     defaultValues: initialData ? {
       function_name: initialData.function_name,
       schedule_type: initialData.schedule_type,
       enabled: initialData.enabled,
       timezone: initialData.timezone,
-      time_config: initialData.time_config as TimeConfig,
-      event_config: initialData.event_config as { triggerType: string; offsetMinutes: number },
-      event_conditions: initialData.event_conditions as EventCondition[],
-      execution_config: initialData.execution_config as ExecutionConfig,
-      execution_window: initialData.execution_window as ExecutionWindow,
+      time_config: initialData.time_config,
+      event_config: initialData.event_config,
+      event_conditions: initialData.event_conditions,
+      execution_config: initialData.execution_config,
+      execution_window: initialData.execution_window,
+      priority: initialData.priority,
     } : {
       function_name: '',
       schedule_type: 'time_based',
@@ -107,8 +98,4 @@ export function useScheduleForm(initialData?: Schedule) {
     form,
     onSubmit
   };
-}
-
-function toJson<T>(value: T): Json {
-  return value as unknown as Json;
 }
