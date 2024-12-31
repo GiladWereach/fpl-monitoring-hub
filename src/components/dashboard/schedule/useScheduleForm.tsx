@@ -73,28 +73,25 @@ export function useScheduleForm(initialData?: Schedule) {
         schedule_type: data.schedule_type,
         enabled: data.enabled,
         timezone: data.timezone,
-        time_config: data.time_config as Json,
-        event_config: data.event_config as Json,
-        execution_config: data.execution_config as Json,
-        event_conditions: data.event_conditions as Json,
-        execution_window: data.execution_window as Json
+        time_config: toJson(data.time_config),
+        event_config: toJson(data.event_config),
+        execution_config: toJson(data.execution_config),
+        event_conditions: toJson(data.event_conditions),
+        execution_window: toJson(data.execution_window)
       };
 
-      const { error } = initialData 
-        ? await supabase
-            .from('schedules')
-            .update(scheduleData)
-            .eq('id', initialData.id)
-        : await supabase
-            .from('schedules')
-            .insert([scheduleData]);
+      const { error } = await supabase
+        .from('schedules')
+        .insert([scheduleData]);
 
       if (error) throw error;
 
       toast({
-        title: `Schedule ${initialData ? 'updated' : 'created'} successfully`,
-        description: `The schedule for ${data.function_name} has been ${initialData ? 'updated' : 'created'}.`,
+        title: "Schedule created successfully",
+        description: `The schedule for ${data.function_name} has been created.`,
       });
+
+      onSuccess?.();
 
     } catch (error) {
       console.error('Error saving schedule:', error);
@@ -108,6 +105,10 @@ export function useScheduleForm(initialData?: Schedule) {
 
   return {
     form,
-    onSubmit: form.handleSubmit(onSubmit)
+    onSubmit
   };
+}
+
+function toJson<T>(value: T): Json {
+  return value as unknown as Json;
 }

@@ -58,21 +58,7 @@ export interface Schedule {
 
 export type ScheduleData = Schedule;
 
-export interface AdvancedScheduleFormValues {
-  function_name: string;
-  schedule_type: 'time_based' | 'event_based' | 'match_dependent';
-  enabled: boolean;
-  timezone: string;
-  time_config: TimeConfig;
-  event_config: {
-    triggerType: string;
-    offsetMinutes: number;
-  };
-  event_conditions: EventCondition[];
-  execution_config: ExecutionConfig;
-  execution_window: ExecutionWindow;
-  priority?: number;
-}
+export interface AdvancedScheduleFormValues extends Omit<Schedule, 'id' | 'created_at' | 'updated_at' | 'last_execution_at' | 'next_execution_at'> {}
 
 export interface ExecutionLog {
   id: string;
@@ -82,7 +68,7 @@ export interface ExecutionLog {
   status: string;
   error_details?: string;
   execution_duration_ms?: number;
-  schedules?: Schedule;
+  schedules?: Partial<Schedule>;
 }
 
 export interface TestResult {
@@ -99,6 +85,7 @@ export interface TestResult {
 export interface TestSuite {
   name: string;
   functionName?: string;
+  scheduleTypes?: string[];
   tests: Array<{
     name: string;
     run: () => Promise<TestResult>;
@@ -117,6 +104,7 @@ export interface ScheduleOverride {
 export interface ResolvedSchedule extends Schedule {
   baseSchedule?: Schedule;
   override?: ScheduleOverride;
+  resolution?: ScheduleResolution;
 }
 
 export interface ScheduleResolution {
@@ -161,4 +149,8 @@ export function convertScheduleData(data: any): Schedule {
     next_execution_at: data.next_execution_at,
     priority: data.priority
   };
+}
+
+export function toJson<T>(value: T): Json {
+  return value as unknown as Json;
 }
