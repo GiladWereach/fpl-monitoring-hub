@@ -109,15 +109,10 @@ export interface ScheduleResolution {
   nextExecutionTime: Date;
 }
 
-export function isTimeConfig(config: unknown): config is TimeConfig {
-  if (!config || typeof config !== 'object') return false;
-  const timeConfig = config as TimeConfig;
-  return (
-    typeof timeConfig.matchDayIntervalMinutes === 'number' ||
-    typeof timeConfig.nonMatchIntervalMinutes === 'number' ||
-    typeof timeConfig.hour === 'number' ||
-    typeof timeConfig.type === 'string'
-  );
+export interface ScheduleValidationResult {
+  isValid: boolean;
+  errors: string[];
+  warnings?: string[];
 }
 
 export function toJson<T>(value: T): Json {
