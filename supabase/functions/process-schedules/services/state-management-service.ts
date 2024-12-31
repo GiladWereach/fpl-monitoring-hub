@@ -1,5 +1,5 @@
 import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { logDebug, logError } from '../shared/logging-service.ts';
+import { logDebug, logError } from '../../shared/logging-service.ts';
 
 export type ScheduleState = 'idle' | 'scheduled' | 'pending' | 'executing' | 'completed' | 'failed' | 'retry' | 'max_retries';
 
