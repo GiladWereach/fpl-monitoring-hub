@@ -1,8 +1,8 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { corsHeaders } from '../_shared/cors.ts';
-import { logDebug, logError } from '../_shared/logging-service.ts';
-import { transitionState, getCurrentState } from './services/state-management-service.ts';
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { corsHeaders } from "../_shared/cors.ts";
+import { logDebug, logError } from "../_shared/logging-service.ts";
+import { transitionState, getCurrentState } from "./services/state-management-service.ts";
 
 serve(async (req) => {
   // Handle CORS preflight requests
