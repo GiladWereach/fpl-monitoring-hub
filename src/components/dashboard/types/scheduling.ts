@@ -10,6 +10,10 @@ export interface TimeConfig {
   intervalMinutes?: number;
 }
 
+export function isTimeConfig(value: any): value is TimeConfig {
+  return value && typeof value === 'object' && 'type' in value;
+}
+
 export interface EventCondition {
   field: string;
   operator: 'eq' | 'neq' | 'gt' | 'lt' | 'gte' | 'lte';
