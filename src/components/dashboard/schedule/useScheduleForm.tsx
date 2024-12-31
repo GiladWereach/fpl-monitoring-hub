@@ -1,181 +1,113 @@
-import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Schedule, TimeConfig, ExecutionConfig, EventCondition, ExecutionWindow } from "../types/scheduling";
 import { toast } from "@/hooks/use-toast";
-import { AdvancedScheduleFormValues, Schedule } from "../types/scheduling";
-import { logAPIError, updateAPIHealthMetrics } from "@/utils/api/errorHandling";
 import { Json } from "@/integrations/supabase/types";
 
-interface UseScheduleFormProps {
-  functionName: string;
-  onSuccess?: () => void;
+export interface AdvancedScheduleFormValues {
+  function_name: string;
+  schedule_type: 'time_based' | 'event_based' | 'match_dependent';
+  enabled: boolean;
+  timezone: string;
+  time_config: TimeConfig;
+  event_config: {
+    triggerType: string;
+    offsetMinutes: number;
+  };
+  event_conditions: EventCondition[];
+  execution_config: ExecutionConfig;
+  execution_window: ExecutionWindow;
 }
 
-export function useScheduleForm({ functionName, onSuccess }: UseScheduleFormProps) {
-  const [isRetrying, setIsRetrying] = useState(false);
-
+export function useScheduleForm(initialData?: Schedule) {
   const form = useForm<AdvancedScheduleFormValues>({
-    defaultValues: {
-      enabled: false,
-      schedule_type: "time_based",
-      timezone: "UTC",
+    defaultValues: initialData ? {
+      function_name: initialData.function_name,
+      schedule_type: initialData.schedule_type,
+      enabled: initialData.enabled,
+      timezone: initialData.timezone,
+      time_config: initialData.time_config as TimeConfig,
+      event_config: initialData.event_config as { triggerType: string; offsetMinutes: number },
+      event_conditions: initialData.event_conditions as EventCondition[],
+      execution_config: initialData.execution_config as ExecutionConfig,
+      execution_window: initialData.execution_window as ExecutionWindow,
+    } : {
+      function_name: '',
+      schedule_type: 'time_based',
+      enabled: true,
+      timezone: 'UTC',
       time_config: {
-        hour: 3,
         matchDayIntervalMinutes: 2,
-        nonMatchIntervalMinutes: 30
+        nonMatchIntervalMinutes: 30,
+        hour: 0
       },
       event_config: {
-        triggerType: "deadline",
+        triggerType: '',
         offsetMinutes: 0
       },
+      event_conditions: [],
       execution_config: {
         retry_count: 3,
         timeout_seconds: 30,
         retry_delay_seconds: 60,
         concurrent_execution: false,
-        retry_backoff: "linear",
-        max_retry_delay: 3600
+        retry_backoff: 'linear',
+        max_retry_delay: 3600,
+        alert_on_failure: true,
+        alert_on_recovery: true,
+        failure_threshold: 3,
+        auto_disable_after_failures: true
       },
-      event_conditions: [],
       execution_window: {
         start_time: '00:00',
         end_time: '23:59',
-        days_of_week: [1, 2, 3, 4, 5]
+        days_of_week: [0,1,2,3,4,5,6]
       }
-    },
-  });
-
-  const { data: schedule } = useQuery({
-    queryKey: ["schedule", functionName],
-    queryFn: async () => {
-      console.log(`Fetching schedule for function: ${functionName}`);
-      const startTime = Date.now();
-      
-      try {
-        const { data: scheduleData, error: scheduleError } = await supabase
-          .from("schedules")
-          .select("*")
-          .eq("function_name", functionName)
-          .maybeSingle();
-
-        if (scheduleError) {
-          console.error("Error fetching schedule:", scheduleError);
-          throw scheduleError;
-        }
-
-        const endTime = Date.now();
-        await updateAPIHealthMetrics("fetch_schedule", true, endTime - startTime);
-
-        return scheduleData ? scheduleData : null;
-      } catch (error) {
-        console.error("Error in schedule fetch:", error);
-        
-        await logAPIError({
-          type: "SERVER_ERROR",
-          message: error.message,
-          endpoint: "fetch_schedule",
-          statusCode: error.status || 500,
-          retryCount: isRetrying ? 1 : 0,
-          requestParams: { functionName }
-        });
-
-        await updateAPIHealthMetrics("fetch_schedule", false);
-
-        if (!isRetrying) {
-          setIsRetrying(true);
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          return useScheduleForm({ functionName, onSuccess }).form.getValues();
-        }
-
-        toast({
-          title: "Error fetching schedule",
-          description: "Failed to load schedule data. Please try again later.",
-          variant: "destructive",
-        });
-
-        throw error;
-      } finally {
-        setIsRetrying(false);
-      }
-    },
-    retry: 1,
-    retryDelay: 1000
-  });
-
-  useEffect(() => {
-    if (schedule) {
-      console.log(`Setting form values for ${functionName}:`, schedule);
-      form.reset({
-        enabled: schedule.enabled ?? false,
-        schedule_type: schedule.schedule_type,
-        timezone: schedule.timezone ?? "UTC",
-        time_config: schedule.time_config ?? {
-          hour: 3,
-          matchDayIntervalMinutes: 2,
-          nonMatchIntervalMinutes: 30
-        },
-        event_config: schedule.event_config ?? {
-          triggerType: "deadline",
-          offsetMinutes: 0
-        },
-        execution_config: schedule.execution_config ?? {
-          retry_count: 3,
-          timeout_seconds: 30,
-          retry_delay_seconds: 60,
-          concurrent_execution: false,
-          retry_backoff: "linear",
-          max_retry_delay: 3600
-        },
-        event_conditions: schedule.event_conditions ?? [],
-        execution_window: schedule.execution_window ?? {
-          start_time: '00:00',
-          end_time: '23:59',
-          days_of_week: [1, 2, 3, 4, 5]
-        }
-      });
     }
-  }, [schedule, form, functionName]);
+  });
 
-  const onSubmit = async (values: AdvancedScheduleFormValues) => {
-    console.log("Submitting schedule form:", values);
-    
+  const onSubmit = async (data: AdvancedScheduleFormValues) => {
     try {
       const scheduleData = {
-        function_name: functionName,
-        schedule_type: values.schedule_type,
-        enabled: values.enabled,
-        timezone: values.timezone,
-        time_config: values.time_config,
-        event_config: values.event_config,
-        event_conditions: values.event_conditions,
-        execution_config: values.execution_config,
-        execution_window: values.execution_window
+        function_name: data.function_name,
+        schedule_type: data.schedule_type,
+        enabled: data.enabled,
+        timezone: data.timezone,
+        time_config: data.time_config as Json,
+        event_config: data.event_config as Json,
+        execution_config: data.execution_config as Json,
+        event_conditions: data.event_conditions as Json,
+        execution_window: data.execution_window as Json
       };
 
-      const { error } = await supabase
-        .from('schedules')
-        .upsert([scheduleData], {
-          onConflict: 'function_name'
-        });
+      const { error } = initialData 
+        ? await supabase
+            .from('schedules')
+            .update(scheduleData)
+            .eq('id', initialData.id)
+        : await supabase
+            .from('schedules')
+            .insert([scheduleData]);
 
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Schedule updated successfully",
+        title: `Schedule ${initialData ? 'updated' : 'created'} successfully`,
+        description: `The schedule for ${data.function_name} has been ${initialData ? 'updated' : 'created'}.`,
       });
-      onSuccess?.();
+
     } catch (error) {
-      console.error("Error saving schedule:", error);
-      
+      console.error('Error saving schedule:', error);
       toast({
-        title: "Error",
-        description: "Failed to update schedule. Please try again.",
+        title: "Error saving schedule",
+        description: error instanceof Error ? error.message : "An unknown error occurred",
         variant: "destructive",
       });
     }
   };
 
-  return { form, onSubmit };
+  return {
+    form,
+    onSubmit: form.handleSubmit(onSubmit)
+  };
 }
