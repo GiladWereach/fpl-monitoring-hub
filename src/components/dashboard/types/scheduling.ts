@@ -42,10 +42,7 @@ export interface Schedule {
   enabled: boolean;
   timezone: string;
   time_config: TimeConfig;
-  event_config: {
-    triggerType: string;
-    offsetMinutes: number;
-  };
+  event_config: any;
   event_conditions: EventCondition[];
   execution_config: ExecutionConfig;
   execution_window: ExecutionWindow;
@@ -68,12 +65,13 @@ export interface ExecutionLog {
   execution_duration_ms?: number;
   execution_context?: Json;
   schedules?: Schedule;
+  display_name?: string;
 }
 
 export interface TestResult {
+  success: boolean;
   passed: boolean;
   message: string;
-  success?: boolean;
   executionTime?: number;
   retryCount?: number;
   functionName?: string;
@@ -109,13 +107,6 @@ export interface ScheduleResolution {
   source: string;
   resolvedInterval: number;
   nextExecutionTime: Date;
-  priority?: 'override' | 'default';
-}
-
-export interface ScheduleValidationResult {
-  isValid: boolean;
-  errors: string[];
-  warnings?: string[];
 }
 
 export function isTimeConfig(config: unknown): config is TimeConfig {
