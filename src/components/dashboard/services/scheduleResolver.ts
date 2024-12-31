@@ -16,8 +16,8 @@ export async function resolveSchedule(
   const activeOverride = overrides.find(override => {
     const now = new Date();
     return override.enabled && 
-           now >= override.startTime && 
-           now <= override.endTime;
+           now >= override.start_time && 
+           now <= override.end_time;
   });
 
   if (activeOverride) {
@@ -34,17 +34,17 @@ async function resolveWithOverride(
   override: ScheduleOverride
 ): Promise<ResolvedSchedule> {
   const resolution: ScheduleResolution = {
-    priority: 'override',
     source: 'override',
     resolvedInterval: override.interval || getDefaultInterval(schedule),
     nextExecutionTime: calculateNextExecution(override.interval || getDefaultInterval(schedule))
   };
 
   return {
-    baseSchedule: schedule,
+    ...schedule,
+    id: '', // Temporary ID for type satisfaction
     override,
     resolution
-  };
+  } as ResolvedSchedule;
 }
 
 async function resolveDefault(
@@ -54,16 +54,16 @@ async function resolveDefault(
   console.log(`Calculated interval for ${schedule.function_name}:`, interval);
   
   const resolution: ScheduleResolution = {
-    priority: 'default',
     source: 'system',
     resolvedInterval: interval,
     nextExecutionTime: calculateNextExecution(interval)
   };
 
   return {
-    baseSchedule: schedule,
+    ...schedule,
+    id: '', // Temporary ID for type satisfaction
     resolution
-  };
+  } as ResolvedSchedule;
 }
 
 async function calculateDynamicInterval(
@@ -87,12 +87,12 @@ async function getMatchDependentInterval(
   const matchStatus = await determineMatchStatus();
   console.log('Match status:', matchStatus);
   
-  if (matchStatus.hasActiveMatches) {
+  if (matchStatus?.hasActiveMatches) {
     console.log('Active matches found, using match day interval');
     return schedule.time_config.matchDayIntervalMinutes || 2;
   }
   
-  if (matchStatus.isMatchDay) {
+  if (matchStatus?.isMatchDay) {
     console.log('Match day but no active matches, using non-match interval');
     return schedule.time_config.nonMatchIntervalMinutes || 30;
   }

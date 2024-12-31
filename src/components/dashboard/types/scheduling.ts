@@ -3,10 +3,10 @@ import { Json } from "@/integrations/supabase/types";
 export type RetryBackoffStrategy = 'linear' | 'exponential' | 'fixed';
 
 export interface TimeConfig {
+  type?: 'daily' | 'match_dependent' | 'interval';
+  hour?: number;
   matchDayIntervalMinutes?: number;
   nonMatchIntervalMinutes?: number;
-  hour?: number;
-  type?: 'daily' | 'match_dependent' | 'interval';
   intervalMinutes?: number;
 }
 
@@ -55,8 +55,6 @@ export interface Schedule {
   next_execution_at?: string | null;
   priority?: number;
 }
-
-export type ScheduleData = Schedule;
 
 export type AdvancedScheduleFormValues = Omit<Schedule, 'id' | 'created_at' | 'updated_at' | 'last_execution_at' | 'next_execution_at'>;
 
@@ -133,4 +131,24 @@ export function isTimeConfig(config: unknown): config is TimeConfig {
 
 export function toJson<T>(value: T): Json {
   return value as unknown as Json;
+}
+
+export function convertScheduleData(data: any): Schedule {
+  return {
+    id: data.id,
+    function_name: data.function_name,
+    schedule_type: data.schedule_type,
+    enabled: data.enabled,
+    timezone: data.timezone,
+    time_config: data.time_config,
+    event_config: data.event_config,
+    event_conditions: data.event_conditions || [],
+    execution_config: data.execution_config,
+    execution_window: data.execution_window,
+    created_at: data.created_at,
+    updated_at: data.updated_at,
+    last_execution_at: data.last_execution_at,
+    next_execution_at: data.next_execution_at,
+    priority: data.priority
+  };
 }
