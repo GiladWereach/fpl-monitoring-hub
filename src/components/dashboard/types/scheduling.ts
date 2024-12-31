@@ -68,7 +68,8 @@ export interface ExecutionLog {
   status: string;
   error_details?: string;
   execution_duration_ms?: number;
-  schedules?: Partial<Schedule>;
+  execution_context?: Json;
+  schedules?: Schedule;
 }
 
 export interface TestResult {
@@ -84,12 +85,12 @@ export interface TestResult {
 
 export interface TestSuite {
   name: string;
-  functionName?: string;
-  scheduleTypes?: string[];
   tests: Array<{
     name: string;
     run: () => Promise<TestResult>;
   }>;
+  functionName?: string;
+  scheduleTypes?: string[];
 }
 
 export interface ScheduleOverride {
@@ -102,7 +103,6 @@ export interface ScheduleOverride {
 }
 
 export interface ResolvedSchedule extends Schedule {
-  baseSchedule?: Schedule;
   override?: ScheduleOverride;
   resolution?: ScheduleResolution;
 }
@@ -129,26 +129,6 @@ export function isTimeConfig(config: unknown): config is TimeConfig {
     typeof timeConfig.hour === 'number' ||
     typeof timeConfig.type === 'string'
   );
-}
-
-export function convertScheduleData(data: any): Schedule {
-  return {
-    id: data.id,
-    function_name: data.function_name,
-    schedule_type: data.schedule_type,
-    enabled: data.enabled,
-    timezone: data.timezone,
-    time_config: data.time_config as TimeConfig,
-    event_config: data.event_config as { triggerType: string; offsetMinutes: number },
-    event_conditions: data.event_conditions as EventCondition[],
-    execution_config: data.execution_config as ExecutionConfig,
-    execution_window: data.execution_window as ExecutionWindow,
-    created_at: data.created_at,
-    updated_at: data.updated_at,
-    last_execution_at: data.last_execution_at,
-    next_execution_at: data.next_execution_at,
-    priority: data.priority
-  };
 }
 
 export function toJson<T>(value: T): Json {
