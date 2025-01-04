@@ -38,7 +38,6 @@ export function PitchView({ teamSelection, players, liveData }: PitchViewProps) 
       isCaptain: pick.is_captain,
       isViceCaptain: pick.is_vice_captain,
       liveData: playerLiveData,
-      bonus: playerLiveData?.bonus || 0,
       fixture_id: fixture
     };
   };

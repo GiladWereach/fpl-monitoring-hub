@@ -11,11 +11,23 @@ interface PlayerStatusProps {
 }
 
 export function PlayerStatus({ player, liveData, fixture_id }: PlayerStatusProps) {
+  console.log(`PlayerStatus component for ${player?.web_name}:`, {
+    player_id: player?.id,
+    live_data: liveData ? {
+      minutes: liveData.minutes,
+      points: liveData.total_points,
+      fixture_id: liveData.fixture_id
+    } : 'No live data',
+    passed_fixture_id: fixture_id
+  });
+
   // Query fixture status when we have live data
   const { data: fixtureStatus } = useQuery({
     queryKey: ['fixture-status', fixture_id],
     enabled: !!fixture_id,
     queryFn: async () => {
+      console.log(`Fetching fixture status for player ${player?.web_name} (fixture ${fixture_id})`);
+      
       const { data, error } = await supabase
         .from('fixtures')
         .select('started, finished, finished_provisional')
@@ -30,10 +42,10 @@ export function PlayerStatus({ player, liveData, fixture_id }: PlayerStatusProps
       console.log(`Fixture status for ${player?.web_name}:`, {
         fixture_id,
         status: data,
-        live_data: {
-          minutes: liveData?.minutes,
-          points: liveData?.total_points,
-        },
+        live_data: liveData ? {
+          minutes: liveData.minutes,
+          points: liveData.total_points,
+        } : 'No live data',
         player_status: {
           chance_of_playing: player?.chance_of_playing_this_round,
           status: player?.status

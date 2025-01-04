@@ -22,6 +22,16 @@ interface PlayerCardProps {
 export function PlayerCard({ player, isCaptain, isViceCaptain, liveData, fixture_id }: PlayerCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   
+  console.log(`PlayerCard render for ${player?.web_name}:`, {
+    player_id: player?.id,
+    live_data: liveData ? {
+      minutes: liveData.minutes,
+      points: liveData.total_points,
+      fixture_id: liveData.fixture_id
+    } : 'No live data',
+    passed_fixture_id: fixture_id
+  });
+
   // Query points calculation data
   const { data: pointsCalculation } = useQuery({
     queryKey: ['points-calculation', player?.id, fixture_id],
