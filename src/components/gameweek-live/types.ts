@@ -13,14 +13,13 @@ export interface PlayerPerformanceData {
   red_cards: number;
   saves: number;
   minutes: number;
+  points?: PointsData[];  // Added this line to include the points data
   player: {
     id: number;
     first_name: string;
     second_name: string;
     web_name: string;
     element_type: number;
-    chance_of_playing_this_round: number | null;
-    status: string;
     team: {
       short_name: string;
     };
@@ -28,10 +27,9 @@ export interface PlayerPerformanceData {
 }
 
 export interface PointsData {
-  player_id: number;
   minutes_points: number;
   goals_scored_points: number;
-  assists_points: number;
+  assist_points: number;
   clean_sheet_points: number;
   goals_conceded_points: number;
   own_goal_points: number;
@@ -39,6 +37,5 @@ export interface PointsData {
   penalty_miss_points: number;
   saves_points: number;
   bonus_points: number;
-  card_points: number;
   final_total_points: number;
 }
