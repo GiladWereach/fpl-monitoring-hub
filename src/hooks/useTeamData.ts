@@ -47,7 +47,7 @@ export const useTeamData = (teamId: string | null) => {
         `)
         .eq('fpl_team_id', teamId)
         .eq('event', existingTeam.event)
-        .single();
+        .maybeSingle();
 
       if (selectionError) {
         console.error('Error fetching team selection:', selectionError);
@@ -67,7 +67,7 @@ export const useTeamData = (teamId: string | null) => {
         `)
         .eq('fpl_team_id', teamId)
         .eq('event', existingTeam.event)
-        .single();
+        .maybeSingle();
 
       if (performanceError) {
         console.error('Error fetching team performance:', performanceError);
@@ -87,7 +87,7 @@ export const useTeamData = (teamId: string | null) => {
               event: existingTeam.event,
               last_updated: existingTeam.last_fetch
             },
-            picks: selectionData.picks,
+            ...selectionData,
             stats: performanceData || {},
             formation: {
               formation: selectionData.formation,
