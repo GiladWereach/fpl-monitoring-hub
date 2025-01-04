@@ -80,7 +80,7 @@ export default function Gameweek() {
           final_total_points,
           minutes_points,
           goals_scored_points,
-          assists_points,
+          assist_points,
           clean_sheet_points,
           bonus_points
         `)
@@ -95,7 +95,7 @@ export default function Gameweek() {
         minutes: d.minutes_points > 0 ? 60 : 0, // Approximate minutes based on points
         total_points: d.final_total_points,
         goals_scored: d.goals_scored_points > 0 ? 1 : 0,
-        assists: d.assists_points > 0 ? 1 : 0,
+        assists: d.assist_points > 0 ? 1 : 0,
         clean_sheets: d.clean_sheet_points > 0 ? 1 : 0,
         bonus: d.bonus_points
       }));
