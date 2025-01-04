@@ -96,8 +96,9 @@ export function PlayerStatus({ player, liveData, fixture_id }: PlayerStatusProps
   });
 
   const getPlayerStatus = () => {
-    // Check player availability first
+    // ALWAYS check player availability first, regardless of match status
     if (player?.chance_of_playing_this_round === 0) {
+      console.log(`${player?.web_name} has 0% chance of playing`);
       return {
         icon: XOctagon,
         color: '#EF4444', // Red
@@ -107,6 +108,7 @@ export function PlayerStatus({ player, liveData, fixture_id }: PlayerStatusProps
     }
 
     if (player?.chance_of_playing_this_round !== null && player?.chance_of_playing_this_round < 100) {
+      console.log(`${player?.web_name} has ${player.chance_of_playing_this_round}% chance of playing`);
       return {
         icon: AlertCircle,
         color: '#FCD34D', // Yellow
@@ -115,10 +117,19 @@ export function PlayerStatus({ player, liveData, fixture_id }: PlayerStatusProps
       };
     }
 
-    // Then check match and performance status
+    // Only check match status if player is available
     if (fixtureStatus) {
       const kickoffTime = new Date(fixtureStatus.kickoff_time);
       const now = new Date();
+
+      console.log(`${player?.web_name} fixture status:`, {
+        kickoff_time: kickoffTime,
+        current_time: now,
+        started: fixtureStatus.started,
+        finished: fixtureStatus.finished,
+        finished_provisional: fixtureStatus.finished_provisional,
+        minutes_played: liveData?.minutes
+      });
 
       // Future match
       if (kickoffTime > now && !fixtureStatus.started) {
