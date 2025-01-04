@@ -23,15 +23,6 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Get scoring rules
-    const { data: rules, error: rulesError } = await supabaseClient
-      .from('scoring_rules')
-      .select('*')
-      .limit(1)
-      .single();
-
-    if (rulesError) throw rulesError;
-
     // Get performances that need points calculated
     const { data: performances, error: perfError } = await supabaseClient
       .from('gameweek_live_performance')
@@ -48,20 +39,21 @@ Deno.serve(async (req) => {
     logDebug('calculate-points', `Processing ${performances?.length || 0} performances`);
 
     const pointsCalculations = performances?.map(perf => {
-      // Get all BPS data for this fixture for bonus calculation
-      const fixtureBPSData = performances
-        .filter(p => p.fixture_id === perf.fixture_id)
-        .map(p => ({
-          player_id: p.player_id,
-          bps: p.bps,
-          fixture_id: p.fixture_id
-        }));
-
-      const playerBPSData = [{
-        player_id: perf.player_id,
-        bps: perf.bps,
-        fixture_id: perf.fixture_id
-      }];
+      // Only calculate bonus points if player has played minutes
+      const bonusPoints = perf.minutes > 0 ? calculateBonusPoints(
+        [{
+          player_id: perf.player_id,
+          bps: perf.bps,
+          fixture_id: perf.fixture_id
+        }],
+        performances
+          .filter(p => p.fixture_id === perf.fixture_id)
+          .map(p => ({
+            player_id: p.player_id,
+            bps: p.bps,
+            fixture_id: p.fixture_id
+          }))
+      ) : 0;
 
       // Calculate minutes points - this is the key change
       const minutesPoints = calculateMinutesPoints(perf.minutes, rules);
@@ -71,10 +63,9 @@ Deno.serve(async (req) => {
       const goalsConcededPoints = calculateGoalsConcededPoints(perf.goals_conceded, perf.player.element_type, rules);
       const assistPoints = perf.assists * rules.assists;
       const penaltySavePoints = perf.penalties_saved * rules.penalties_saved;
-      const penaltyMissPoints = perf.penalties_missed * rules.penalties_missed;
+      const penaltyMissPoints = perf.penalties_missed * rules.penalties.missed;
       const ownGoalPoints = perf.own_goals * rules.own_goals;
       const cardPoints = calculateCardPoints(perf.yellow_cards, perf.red_cards, rules);
-      const bonusPoints = calculateBonusPoints(playerBPSData, fixtureBPSData);
 
       const rawTotal = 
         minutesPoints +
@@ -87,7 +78,7 @@ Deno.serve(async (req) => {
         ownGoalPoints +
         cardPoints;
 
-      // Important: Add bonus points to final total
+      // Add bonus points to final total only if player has played
       const finalTotal = rawTotal + bonusPoints;
 
       logDebug('calculate-points', `Points breakdown for player ${perf.player_id}:`, {
