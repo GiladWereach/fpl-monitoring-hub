@@ -18,17 +18,12 @@ export function PitchView({ teamSelection, players, liveData }: PitchViewProps) 
     const player = players.find(p => p.id === pick.element);
     const playerLiveData = liveData?.find(d => d.player_id === pick.element);
     
-    // Find the fixture for this player from the live data
-    const fixture = playerLiveData?.fixture_id;
-    
     console.log('Player Live Data:', {
       player_id: player?.id,
       web_name: player?.web_name,
-      fixture_id: fixture,
       live_data: playerLiveData ? {
         minutes: playerLiveData.minutes,
         total_points: playerLiveData.total_points,
-        bonus: playerLiveData.bonus,
         fixture_id: playerLiveData.fixture_id,
         points_breakdown: playerLiveData.points_breakdown
       } : 'No live data'
@@ -38,11 +33,8 @@ export function PitchView({ teamSelection, players, liveData }: PitchViewProps) 
       ...player,
       isCaptain: pick.is_captain,
       isViceCaptain: pick.is_vice_captain,
-      liveData: playerLiveData ? {
-        ...playerLiveData,
-        fixture_id: fixture // Ensure fixture_id is included
-      } : null,
-      fixture_id: fixture
+      liveData: playerLiveData,
+      fixture_id: playerLiveData?.fixture_id // Correctly extract fixture_id from live data
     };
   };
 
