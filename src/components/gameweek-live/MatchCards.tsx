@@ -15,13 +15,14 @@ const MatchCards = ({ gameweek, onMatchSelect, selectedMatchId }: MatchCardsProp
   const { data: matchStatus } = useQuery({
     queryKey: ['match-status'],
     queryFn: determineMatchStatus,
-    refetchInterval: 30000
+    refetchInterval: 15000 // Reduced from 30000 to 15000
   });
 
   // Fetch matches for the gameweek
   const { data: matches, isLoading } = useQuery({
     queryKey: ['gameweek-matches', gameweek],
     queryFn: async () => {
+      console.log('Fetching matches for gameweek:', gameweek);
       const { data, error } = await supabase
         .from('fixtures')
         .select(`
@@ -36,7 +37,7 @@ const MatchCards = ({ gameweek, onMatchSelect, selectedMatchId }: MatchCardsProp
       console.log('Fetched matches:', data);
       return data;
     },
-    refetchInterval: 30000
+    refetchInterval: matchStatus?.hasActiveMatches ? 15000 : 30000 // Dynamic interval based on match status
   });
 
   if (isLoading) {

@@ -52,11 +52,11 @@ export async function determineScheduleWindow(
     const matchStatus = await getMatchStatus();
     
     if (matchStatus.hasActiveMatches) {
-      logDebug(functionName, 'Active matches found, using 2-minute interval');
+      logDebug(functionName, 'Active matches found, using 1-minute interval');
       return {
-        intervalMinutes: 2,
+        intervalMinutes: 1, // Reduced from 2 to 1 minute
         reason: 'Active matches in progress',
-        nextCheck: addMinutes(now, 2),
+        nextCheck: addMinutes(now, 1),
         matchStatus: {
           hasActiveMatches: true,
           isPostMatch: false
