@@ -97,7 +97,7 @@ export default function Gameweek() {
         goals_scored: d.goals_scored_points > 0 ? 1 : 0,
         assists: d.assist_points > 0 ? 1 : 0,
         clean_sheets: d.clean_sheet_points > 0 ? 1 : 0,
-        bonus: d.bonus_points
+        bonus: d.bonus_points || 0  // Add null check for bonus points
       }));
       
       console.log('Points calculation data:', mappedData);
