@@ -84,14 +84,16 @@ export function PlayerStatus({ player, liveData, fixture_id }: PlayerStatusProps
   });
 
   const isPlayerUnavailable = () => {
-    // Only check for chance_of_playing_this_round being explicitly 0
-    const hasZeroChance = player?.chance_of_playing_this_round === 0;
+    // Explicitly check if the value is 0 (number) or "0" (string)
+    const chanceOfPlaying = player?.chance_of_playing_this_round;
+    const hasZeroChance = chanceOfPlaying === 0 || chanceOfPlaying === "0";
     
     console.log(`Availability check for ${player?.web_name}:`, {
-      chance_of_playing_this_round: player?.chance_of_playing_this_round,
+      chance_of_playing_this_round: chanceOfPlaying,
       hasZeroChance,
-      typeof_chance: typeof player?.chance_of_playing_this_round,
-      raw_player_data: player
+      typeof_chance: typeof chanceOfPlaying,
+      raw_player_data: player,
+      raw_chance: chanceOfPlaying
     });
 
     return hasZeroChance;
