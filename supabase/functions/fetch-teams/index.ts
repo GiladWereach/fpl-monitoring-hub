@@ -1,73 +1,55 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { corsHeaders, getFplRequestInit } from "../_shared/fpl-headers.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { logDebug, logError } from "../_shared/logging-service.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { logDebug, logError } from '../shared/logging-service.ts';
 
-const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
 
-const MAX_RETRIES = 3;
-const INITIAL_RETRY_DELAY = 1000;
+const fplHeaders = {
+  'User-Agent': 'Mozilla/5.0',
+  'Accept': 'application/json',
+  'Accept-Language': 'en-US,en;q=0.9',
+};
 
-async function fetchWithRetry(url: string, init: RequestInit, retryCount = 0): Promise<Response> {
-  try {
-    logDebug('fetch-teams', `Attempt ${retryCount + 1}: Fetching from ${url}`);
-    const response = await fetch(url, init);
-    
-    if (!response.ok) {
-      const responseText = await response.text();
-      logError('fetch-teams', `HTTP Error: ${response.status} - ${responseText}`);
-      
-      if (response.status === 403 && retryCount < MAX_RETRIES) {
-        const delay = INITIAL_RETRY_DELAY * Math.pow(2, retryCount);
-        logDebug('fetch-teams', `Received 403, retrying in ${delay}ms (attempt ${retryCount + 1}/${MAX_RETRIES})`);
-        await new Promise(resolve => setTimeout(resolve, delay));
-        return fetchWithRetry(url, init, retryCount + 1);
-      }
-      
-      throw new Error(`FPL API error: ${response.status} - ${responseText}`);
-    }
-    
-    return response;
-  } catch (error) {
-    logError('fetch-teams', `Network error in fetchWithRetry:`, error);
-    if (retryCount < MAX_RETRIES) {
-      const delay = INITIAL_RETRY_DELAY * Math.pow(2, retryCount);
-      logDebug('fetch-teams', `Network error, retrying in ${delay}ms (attempt ${retryCount + 1}/${MAX_RETRIES})`);
-      await new Promise(resolve => setTimeout(resolve, delay));
-      return fetchWithRetry(url, init, retryCount + 1);
-    }
-    throw error;
-  }
-}
-
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders });
   }
 
+  const functionName = 'fetch-teams';
+  const startTime = Date.now();
+
   try {
-    logDebug('fetch-teams', 'Starting teams fetch');
+    logDebug(functionName, 'Starting teams data fetch...');
     
-    // Initialize Supabase client
-    const supabase = createClient(supabaseUrl, supabaseKey);
-    
-    // Fetch teams data from FPL API
-    const response = await fetchWithRetry(
-      'https://fantasy.premierleague.com/api/bootstrap-static/',
-      getFplRequestInit()
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
+
+    // Fetch teams data from FPL API
+    const response = await fetch('https://fantasy.premierleague.com/api/bootstrap-static/', {
+      headers: fplHeaders
+    });
+
+    if (!response.ok) {
+      const errorBody = await response.text();
+      logError(functionName, 'FPL API error:', {
+        status: response.status,
+        body: errorBody
+      });
+      throw new Error(`FPL API error: ${response.status} - ${errorBody}`);
+    }
 
     const data = await response.json();
     
-    if (!data || !Array.isArray(data.teams)) {
-      const error = 'Invalid data structure received from FPL API';
-      logError('fetch-teams', error, data);
-      throw new Error(error);
+    if (!data?.teams) {
+      throw new Error('Invalid response format from FPL API');
     }
 
-    logDebug('fetch-teams', `Successfully fetched ${data.teams.length} teams from FPL API`);
-    
+    logDebug(functionName, `Processing ${data.teams.length} teams`);
+
     // Upsert teams data
     const { error: upsertError } = await supabase
       .from('teams')
@@ -80,35 +62,64 @@ serve(async (req) => {
       );
 
     if (upsertError) {
-      logError('fetch-teams', 'Error upserting teams:', upsertError);
+      logError(functionName, 'Error upserting teams:', upsertError);
       throw upsertError;
     }
 
-    logDebug('fetch-teams', `Successfully updated ${data.teams.length} teams in database`);
+    // Log success metrics
+    const executionTime = Date.now() - startTime;
+    await supabase
+      .from('api_health_metrics')
+      .insert({
+        endpoint: functionName,
+        success_count: 1,
+        error_count: 0,
+        avg_response_time: executionTime,
+        last_success_time: new Date().toISOString()
+      });
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
+      JSON.stringify({
+        success: true,
+        message: 'Teams data updated successfully',
         count: data.teams.length,
-        message: `Successfully updated ${data.teams.length} teams`
+        executionTime,
+        timestamp: new Date().toISOString()
       }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200 
-      }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
-    logError('fetch-teams', 'Error in fetch-teams:', error);
+    const executionTime = Date.now() - startTime;
+    logError(functionName, 'Error in fetch-teams:', error);
     
-    // Return a more detailed error response
+    try {
+      const supabase = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      );
+
+      await supabase
+        .from('api_health_metrics')
+        .insert({
+          endpoint: functionName,
+          success_count: 0,
+          error_count: 1,
+          avg_response_time: executionTime,
+          last_error_time: new Date().toISOString(),
+          error_pattern: { error: error.message }
+        });
+    } catch (metricsError) {
+      logError(functionName, 'Error logging metrics:', metricsError);
+    }
+
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
+        success: false,
         error: error.message,
-        retryable: error.message.includes('403'),
-        details: error.stack
+        timestamp: new Date().toISOString()
       }),
-      { 
+      {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500
       }
