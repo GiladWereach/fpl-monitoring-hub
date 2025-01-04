@@ -122,12 +122,12 @@ export function PlayerStatus({ player, liveData, fixture_id }: PlayerStatusProps
     // 2. Their status is 'n' (not available) regardless of chance_of_playing value
     // 3. Their status is undefined/null but chance_of_playing is 0
     const hasZeroChance = player?.chance_of_playing_this_round === 0;
-    const isNotAvailable = player?.status === 'n';
+//    const isNotAvailable = player?.status === 'n';
     
     if (player?.id === 54) {
       console.log(`Detailed availability check for Rogers:`, {
         hasZeroChance,
-        isNotAvailable,
+     //   isNotAvailable,
         raw_chance_of_playing: player?.chance_of_playing_this_round,
         parsed_chance: parseInt(player?.chance_of_playing_this_round),
         status: player?.status,
