@@ -23,13 +23,12 @@ export function PlayerCard({ player, isCaptain, isViceCaptain, liveData }: Playe
   
   // Query points calculation data
   const { data: pointsCalculation } = useQuery({
-    queryKey: ['points-calculation', player?.id, liveData?.fixture_id, liveData?.event_id],
-    enabled: !!player?.id && !!liveData?.fixture_id && !!liveData?.event_id,
+    queryKey: ['points-calculation', player?.id, liveData?.fixture_id],
+    enabled: !!player?.id && !!liveData?.fixture_id,
     queryFn: async () => {
       console.log('Fetching points calculation for:', {
         player_id: player.id,
-        fixture_id: liveData.fixture_id,
-        event_id: liveData.event_id
+        fixture_id: liveData.fixture_id
       });
 
       const { data, error } = await supabase
@@ -37,12 +36,11 @@ export function PlayerCard({ player, isCaptain, isViceCaptain, liveData }: Playe
         .select('*')
         .eq('player_id', player.id)
         .eq('fixture_id', liveData.fixture_id)
-        .eq('event_id', liveData.event_id)
         .maybeSingle();
       
       if (error) {
         console.error('Error fetching points calculation:', error);
-        throw error;
+        return null;
       }
       
       console.log('Points calculation data for', player?.web_name, data);
@@ -52,28 +50,22 @@ export function PlayerCard({ player, isCaptain, isViceCaptain, liveData }: Playe
 
   // Calculate total points from raw_total_points and bonus
   const calculateTotalPoints = () => {
-    // If we have live data but no points calculation, use live data
-    if (liveData && !pointsCalculation) {
-      const points = liveData.total_points || 0;
-      console.log(`${player?.web_name} - Using live data points:`, points);
-      return isCaptain ? points * 2 : points;
-    }
-
-    // If we have points calculation, use that
-    if (pointsCalculation) {
-      const rawPoints = pointsCalculation.raw_total_points ?? 0;
-      console.log(`${player?.web_name} - Raw points:`, rawPoints);
+    // If we have live data, use it as base
+    if (liveData) {
+      const basePoints = liveData.total_points || 0;
+      const bonusPoints = liveData.bonus || 0;
+      const totalPoints = basePoints + bonusPoints;
       
-      const bonusPoints = liveData?.bonus ?? 0;
-      console.log(`${player?.web_name} - Bonus points:`, bonusPoints);
-      
-      const totalPoints = (rawPoints + bonusPoints);
-      console.log(`${player?.web_name} - Total before captain:`, totalPoints);
+      console.log(`${player?.web_name} - Points calculation:`, {
+        basePoints,
+        bonusPoints,
+        totalPoints,
+        isCaptain
+      });
       
       return isCaptain ? totalPoints * 2 : totalPoints;
     }
 
-    // Default to 0 if no data available
     return 0;
   };
 

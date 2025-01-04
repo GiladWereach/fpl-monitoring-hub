@@ -21,7 +21,11 @@ export function PlayerStatus({ player, liveData }: PlayerStatusProps) {
         .eq('id', liveData.fixture_id)
         .maybeSingle();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching fixture status:', error);
+        return null;
+      }
+
       console.log('Fixture status for fixture', liveData.fixture_id, ':', data);
       return data;
     }
@@ -33,14 +37,14 @@ export function PlayerStatus({ player, liveData }: PlayerStatusProps) {
     chance_of_playing: player?.chance_of_playing_this_round,
     status: player?.status,
     fixture_status: fixtureStatus,
-    liveData: liveData ? {
+    live_data: liveData ? {
       minutes: liveData.minutes,
       fixture_id: liveData.fixture_id
     } : 'No live data'
   });
 
   const getPlayerStatus = () => {
-    // Check player availability from players table
+    // Check player availability first
     if (player?.chance_of_playing_this_round === 0) {
       console.log(`Player ${player.web_name} is not available (0% chance)`);
       return {
@@ -53,19 +57,19 @@ export function PlayerStatus({ player, liveData }: PlayerStatusProps) {
 
     // Then check match and performance status
     if (liveData && fixtureStatus) {
-      // Player is in an active match
-      if (fixtureStatus.started && !fixtureStatus.finished) {
+      // Match is in progress
+      if (fixtureStatus.started && !fixtureStatus.finished && !fixtureStatus.finished_provisional) {
         console.log(`Player ${player.web_name} is in play`);
         return {
           icon: Play,
-          color: '#3DFF9A',
+          color: '#3DFF9A', // green
           animate: true,
           label: 'In Play'
         };
       }
 
       // Match is finished and player participated
-      if (fixtureStatus.finished || fixtureStatus.finished_provisional) {
+      if ((fixtureStatus.finished || fixtureStatus.finished_provisional) && liveData.minutes > 0) {
         console.log(`Player ${player.web_name} has finished playing`);
         return {
           icon: Check,
@@ -76,7 +80,7 @@ export function PlayerStatus({ player, liveData }: PlayerStatusProps) {
       }
     }
 
-    // Default: Yet to play or no fixture
+    // Default: no status icon needed
     return null;
   };
 
