@@ -42,12 +42,6 @@ export function PlayerStatus({ player, liveData, fixture_id }: PlayerStatusProps
         return null;
       }
 
-      console.log('Live performance data:', {
-        player_id: player.id,
-        event_id: currentEvent.id,
-        data
-      });
-
       return data;
     }
   });
@@ -57,8 +51,6 @@ export function PlayerStatus({ player, liveData, fixture_id }: PlayerStatusProps
     queryKey: ['fixture-status', livePerformance?.fixture_id],
     enabled: !!livePerformance?.fixture_id,
     queryFn: async () => {
-      console.log(`Fetching fixture status for fixture ${livePerformance.fixture_id}`);
-      
       const { data, error } = await supabase
         .from('fixtures')
         .select('started, finished, finished_provisional, kickoff_time')
@@ -69,15 +61,6 @@ export function PlayerStatus({ player, liveData, fixture_id }: PlayerStatusProps
         console.error('Error fetching fixture status:', error);
         return null;
       }
-
-      console.log(`Fixture status:`, {
-        fixture_id: livePerformance.fixture_id,
-        status: data,
-        live_data: liveData ? {
-          minutes: liveData.minutes,
-          points: liveData.total_points,
-        } : 'No live data'
-      });
 
       return data;
     }
@@ -93,12 +76,13 @@ export function PlayerStatus({ player, liveData, fixture_id }: PlayerStatusProps
       raw_data: {
         id: player?.id,
         chance: chanceOfPlaying,
-        type: typeof chanceOfPlaying
+        type: typeof chanceOfPlaying,
+        raw_player: player
       }
     });
 
     // Check if player is unavailable (explicitly 0 or "0")
-    if (chanceOfPlaying === 0 || chanceOfPlaying === "0") {
+    if (chanceOfPlaying === 0 || chanceOfPlaying === "0" || chanceOfPlaying === null) {
       console.log(`${player?.web_name} is unavailable due to 0% chance of playing`);
       return true;
     }

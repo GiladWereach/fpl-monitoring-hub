@@ -48,7 +48,7 @@ export default function Gameweek() {
   // Get team data using our hook
   const { teamData, teamLoading, existingTeam } = useTeamData(teamId);
 
-  // Query for players data - Now including chance_of_playing_this_round
+  // Query for players data - Now including chance_of_playing_this_round and status
   const { data: players, isLoading: playersLoading } = useQuery({
     queryKey: ['players', teamData?.data?.picks],
     enabled: !!teamData?.data?.picks,
@@ -68,7 +68,16 @@ export default function Gameweek() {
         .in('id', playerIds);
       
       if (error) throw error;
-      console.log('Players data with availability:', data);
+      
+      // Log each player's availability data
+      data?.forEach(player => {
+        console.log(`Player ${player.web_name} availability:`, {
+          id: player.id,
+          chance_of_playing: player.chance_of_playing_this_round,
+          status: player.status
+        });
+      });
+      
       return data;
     }
   });
