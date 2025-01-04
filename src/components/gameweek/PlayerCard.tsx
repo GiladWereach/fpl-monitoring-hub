@@ -26,12 +26,6 @@ export function PlayerCard({ player, isCaptain, isViceCaptain, liveData }: Playe
     queryKey: ['points-calculation', player?.id, liveData?.fixture_id],
     enabled: !!player?.id && !!liveData?.fixture_id,
     queryFn: async () => {
-      console.log('Fetching points calculation for:', {
-        player_id: player.id,
-        fixture_id: liveData.fixture_id,
-        event_id: liveData.event_id
-      });
-
       const { data, error } = await supabase
         .from('player_points_calculation')
         .select('*')
@@ -53,7 +47,11 @@ export function PlayerCard({ player, isCaptain, isViceCaptain, liveData }: Playe
   const calculateTotalPoints = () => {
     if (!liveData) return 0;
 
-    const basePoints = liveData.total_points || 0;
+    // Use points from live data
+    const basePoints = liveData.points_breakdown ? (
+      Object.values(liveData.points_breakdown).reduce((sum: number, val: number) => sum + val, 0)
+    ) : 0;
+    
     const bonusPoints = liveData.bonus || 0;
     const totalPoints = basePoints + bonusPoints;
     
@@ -62,7 +60,7 @@ export function PlayerCard({ player, isCaptain, isViceCaptain, liveData }: Playe
       bonusPoints,
       totalPoints,
       isCaptain,
-      liveData
+      points_breakdown: liveData.points_breakdown
     });
     
     return isCaptain ? totalPoints * 2 : totalPoints;
