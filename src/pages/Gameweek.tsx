@@ -2,22 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { GameweekHeader } from '@/components/gameweek/GameweekHeader';
-import { ViewToggle } from '@/components/gameweek/ViewToggle';
-import { LivePerformance } from '@/components/gameweek/LivePerformance';
-import { PitchView } from '@/components/gameweek/PitchView';
-import { ListView } from '@/components/gameweek/ListView';
-import { BenchPlayers } from '@/components/gameweek/BenchPlayers';
-import { calculateTotalPoints, calculateBenchPoints } from '@/components/gameweek/utils/points-calculator';
-import { TeamSelection, Pick, Player } from '@/components/gameweek/types';
-import { Loader2 } from 'lucide-react';
+import { TeamView } from '@/components/gameweek/TeamView';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import { useTeamData } from '@/hooks/useTeamData';
 
 export default function Gameweek() {
   const [viewMode, setViewMode] = useState<'pitch' | 'list'>('pitch');
   const navigate = useNavigate();
   const { toast } = useToast();
-
+  
   // Get team ID from localStorage
   const teamId = localStorage.getItem('lastTeamId');
 
@@ -33,6 +27,7 @@ export default function Gameweek() {
     }
   }, [teamId, navigate, toast]);
 
+  // Get current gameweek
   const { data: currentGameweek, isLoading: gameweekLoading } = useQuery({
     queryKey: ['current-gameweek'],
     queryFn: async () => {
@@ -50,50 +45,15 @@ export default function Gameweek() {
     }
   });
 
-  const { data: teamSelection, isLoading: teamLoading } = useQuery({
-    queryKey: ['team-selection', currentGameweek?.id, teamId],
-    enabled: !!currentGameweek?.id && !!teamId,
-    queryFn: async () => {
-      console.log('Fetching team selection for team:', teamId, 'gameweek:', currentGameweek.id);
-      const { data, error } = await supabase
-        .from('team_selections')
-        .select('*')
-        .eq('event', currentGameweek.id)
-        .eq('fpl_team_id', teamId)
-        .maybeSingle();
-      
-      if (error) throw error;
-      if (!data) throw new Error('No team selection found');
-      
-      console.log('Team selection:', data);
-      
-      // Transform the data to match our TeamSelection type
-      const transformedData: TeamSelection = {
-        id: data.id,
-        fpl_team_id: data.fpl_team_id,
-        event: data.event,
-        formation: data.formation,
-        captain_id: data.captain_id,
-        vice_captain_id: data.vice_captain_id,
-        picks: (data.picks as any[]).map(pick => ({
-          element: pick.element,
-          position: pick.position,
-          multiplier: pick.multiplier,
-          is_captain: pick.is_captain,
-          is_vice_captain: pick.is_vice_captain
-        })),
-        auto_subs: Array.isArray(data.auto_subs) ? data.auto_subs : []
-      };
-      
-      return transformedData;
-    }
-  });
+  // Get team data using our new hook
+  const { teamData, teamLoading, existingTeam } = useTeamData(teamId);
 
+  // Query for players data
   const { data: players, isLoading: playersLoading } = useQuery({
-    queryKey: ['players', teamSelection?.picks],
-    enabled: !!teamSelection,
+    queryKey: ['players', teamData?.data?.picks],
+    enabled: !!teamData?.data?.picks,
     queryFn: async () => {
-      const playerIds = teamSelection.picks.map(pick => pick.element);
+      const playerIds = teamData.data.picks.map(pick => pick.element);
       console.log('Fetching players:', playerIds);
       const { data, error } = await supabase
         .from('players')
@@ -106,11 +66,12 @@ export default function Gameweek() {
     }
   });
 
+  // Query for live performance data
   const { data: liveData, isLoading: liveDataLoading } = useQuery({
-    queryKey: ['live-performance', currentGameweek?.id, teamSelection?.picks],
-    enabled: !!currentGameweek?.id && !!teamSelection?.picks,
+    queryKey: ['live-performance', currentGameweek?.id, teamData?.data?.picks],
+    enabled: !!currentGameweek?.id && !!teamData?.data?.picks,
     queryFn: async () => {
-      const playerIds = teamSelection.picks.map(p => p.element);
+      const playerIds = teamData.data.picks.map(p => p.element);
       console.log('Fetching live data for players:', playerIds);
       const { data, error } = await supabase
         .from('gameweek_live_performance')
@@ -126,49 +87,8 @@ export default function Gameweek() {
 
   const isLoading = gameweekLoading || teamLoading || playersLoading || liveDataLoading;
 
-  const getPlayerData = (pick: any) => {
-    if (!teamSelection || !players) return null;
-    const player = players.find(p => p.id === pick.element);
-    const playerLiveData = liveData?.find(d => d.player_id === pick.element);
-    const points = playerLiveData?.total_points || 0;
-    
-    return {
-      ...player,
-      points: pick.is_captain ? points * 2 : points,
-      liveData: playerLiveData
-    };
-  };
-
-  const totalPoints = calculateTotalPoints(teamSelection?.picks || [], getPlayerData);
-  const benchPoints = calculateBenchPoints(teamSelection?.picks || [], getPlayerData);
-  
-  const playersPlaying = teamSelection?.picks
-    .filter((pick: any) => pick.position <= 11)
-    .filter((pick: any) => {
-      const playerData = getPlayerData(pick);
-      return playerData?.liveData?.minutes > 0;
-    }).length || 0;
-
-  if (isLoading) {
-    return (
-      <div className="flex h-[50vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-[#3DFF9A]" />
-      </div>
-    );
-  }
-
-  if (!teamSelection) {
-    return (
-      <div className="flex h-[50vh] items-center justify-center flex-col gap-4">
-        <p className="text-lg">No team data found for gameweek {currentGameweek?.id}</p>
-        <button 
-          onClick={() => navigate('/')}
-          className="px-4 py-2 bg-[#3DFF9A] text-black rounded-lg hover:bg-[#3DFF9A]/90"
-        >
-          Go back home
-        </button>
-      </div>
-    );
+  if (!teamId) {
+    return null; // useEffect will handle the redirect
   }
 
   return (
@@ -176,40 +96,20 @@ export default function Gameweek() {
       <div className="container mx-auto p-4 space-y-4 animate-fade-in">
         <GameweekHeader 
           currentGameweek={currentGameweek}
-          totalPoints={totalPoints}
-          playersPlaying={playersPlaying}
+          totalPoints={teamData?.data?.stats?.points || 0}
+          playersPlaying={teamData?.data?.picks?.filter(p => 
+            liveData?.find(d => d.player_id === p.element)?.minutes > 0
+          )?.length || 0}
         />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 relative">
-            {viewMode === 'pitch' ? (
-              <PitchView 
-                teamSelection={teamSelection}
-                players={players}
-                liveData={liveData}
-              />
-            ) : (
-              <ListView
-                teamSelection={teamSelection}
-                players={players}
-                liveData={liveData}
-              />
-            )}
-            <ViewToggle viewMode={viewMode} setViewMode={setViewMode} />
-          </div>
-
-          <div className="space-y-4">
-            <LivePerformance 
-              totalPoints={totalPoints}
-              benchPoints={benchPoints}
-              liveData={liveData}
-            />
-            <BenchPlayers 
-              benchPlayers={[12, 13, 14, 15]}
-              getPlayerData={getPlayerData}
-            />
-          </div>
-        </div>
+        <TeamView 
+          teamData={teamData}
+          teamLoading={isLoading}
+          viewMode={viewMode}
+          setViewMode={setViewMode}
+          players={players}
+          liveData={liveData}
+        />
       </div>
     </div>
   );
