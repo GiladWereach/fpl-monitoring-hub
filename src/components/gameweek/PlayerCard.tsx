@@ -26,80 +26,15 @@ export function PlayerCard({ player, isCaptain, isViceCaptain, liveData, fixture
     player_id: player?.id,
     live_data: liveData ? {
       minutes: liveData.minutes,
-      points: liveData.total_points,
+      total_points: liveData.total_points,
       bonus: liveData.bonus,
       bps: liveData.bps,
-      fixture_id: liveData.fixture_id,
-      points_breakdown: liveData.points_breakdown
-    } : 'No live data',
-    passed_fixture_id: fixture_id
+      fixture_id: liveData.fixture_id
+    } : 'No live data'
   });
 
-  // Query points calculation data
-  const { data: pointsCalculation } = useQuery({
-    queryKey: ['points-calculation', player?.id, fixture_id],
-    enabled: !!player?.id && !!fixture_id,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('player_points_calculation')
-        .select('*')
-        .eq('player_id', player.id)
-        .eq('fixture_id', fixture_id)
-        .maybeSingle();
-      
-      if (error) {
-        console.error('Error fetching points calculation:', error);
-        return null;
-      }
-      
-      console.log('Points calculation data for', player?.web_name, data);
-      return data;
-    }
-  });
-
-  // Calculate total points including bonus
-  const calculateTotalPoints = () => {
-    if (!liveData && !pointsCalculation) return 0;
-
-    let basePoints = 0;
-    let bonusPoints = 0;
-
-    if (pointsCalculation) {
-      // Use points calculation data if available
-      basePoints = pointsCalculation.raw_total_points || 0;
-      bonusPoints = pointsCalculation.bonus_points || 0;
-      
-      console.log(`${player?.web_name} - Points from calculation:`, {
-        basePoints,
-        bonusPoints,
-        total: basePoints + bonusPoints,
-        breakdown: pointsCalculation
-      });
-    } else if (liveData) {
-      // Calculate base points from breakdown
-      basePoints = liveData.points_breakdown ? (
-        Object.entries(liveData.points_breakdown)
-          .filter(([key]) => key !== 'bonus') // Exclude bonus from base points
-          .reduce((sum: number, [_, val]: [string, number]) => sum + val, 0)
-      ) : 0;
-      
-      // Get bonus points separately
-      bonusPoints = liveData.bonus || 0;
-      
-      console.log(`${player?.web_name} - Live points calculation:`, {
-        basePoints,
-        bonusPoints,
-        total: basePoints + bonusPoints,
-        points_breakdown: liveData.points_breakdown,
-        bps: liveData.bps
-      });
-    }
-    
-    const totalPoints = basePoints + bonusPoints;
-    return isCaptain ? totalPoints * 2 : totalPoints;
-  };
-
-  const points = calculateTotalPoints();
+  // Calculate total points from live data
+  const points = liveData ? (isCaptain ? liveData.total_points * 2 : liveData.total_points) : 0;
 
   return (
     <HoverCard>
@@ -136,7 +71,6 @@ export function PlayerCard({ player, isCaptain, isViceCaptain, liveData, fixture
       <HoverCardContent className="w-40 bg-secondary/95 backdrop-blur-sm border-accent/20">
         <PointsBreakdown 
           liveData={liveData}
-          pointsCalculation={pointsCalculation}
           isCaptain={isCaptain}
           isViceCaptain={isViceCaptain}
         />
