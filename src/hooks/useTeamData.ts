@@ -33,25 +33,27 @@ export const useTeamData = (teamId: string | null) => {
       console.log('Fetching team data for ID:', teamId);
       
       // First try to get data from our database
-      const { data: localData, error: localError } = await supabase
+      const { data: selectionData, error: selectionError } = await supabase
         .from('team_selections')
-        .select(`
-          *,
-          team_performances (
-            points,
-            total_points,
-            current_rank,
-            overall_rank,
-            team_value,
-            bank
-          )
-        `)
+        .select('*')
         .eq('fpl_team_id', teamId)
         .eq('event', existingTeam.event)
         .maybeSingle();
 
-      if (localData) {
-        console.log('Found local team data:', localData);
+      if (selectionError) throw selectionError;
+
+      // Get performance data separately
+      const { data: performanceData, error: performanceError } = await supabase
+        .from('team_performances')
+        .select('*')
+        .eq('fpl_team_id', teamId)
+        .eq('event', existingTeam.event)
+        .maybeSingle();
+
+      if (performanceError) throw performanceError;
+
+      if (selectionData) {
+        console.log('Found local team data:', selectionData);
         return {
           success: true,
           data: {
@@ -60,11 +62,11 @@ export const useTeamData = (teamId: string | null) => {
               event: existingTeam.event,
               last_updated: existingTeam.last_fetch
             },
-            picks: localData.picks,
-            stats: localData.team_performances?.[0] || {},
+            picks: selectionData.picks,
+            stats: performanceData || {},
             formation: {
-              formation: localData.formation,
-              positions: getFormationPositions(localData.formation)
+              formation: selectionData.formation,
+              positions: getFormationPositions(selectionData.formation)
             }
           }
         };
@@ -72,7 +74,7 @@ export const useTeamData = (teamId: string | null) => {
 
       // If no local data or it's stale, fetch from FPL API
       console.log('No local data found, fetching from API');
-      const response = await fetch(`${window.location.origin}/functions/v1/fetch-team-data`, {
+      const response = await fetch(`${window.location.origin}/api/fetch-team-data`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ teamId: parseInt(teamId) })
