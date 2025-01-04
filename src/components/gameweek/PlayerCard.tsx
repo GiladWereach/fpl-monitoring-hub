@@ -27,6 +27,7 @@ export function PlayerCard({ player, isCaptain, isViceCaptain, liveData, fixture
     live_data: liveData ? {
       minutes: liveData.minutes,
       points: liveData.total_points,
+      bonus: liveData.bonus,
       fixture_id: liveData.fixture_id,
       points_breakdown: liveData.points_breakdown
     } : 'No live data',
@@ -57,23 +58,34 @@ export function PlayerCard({ player, isCaptain, isViceCaptain, liveData, fixture
 
   // Calculate total points including bonus
   const calculateTotalPoints = () => {
-    if (!liveData) return 0;
+    if (!liveData && !pointsCalculation) return 0;
 
-    // Use points from live data
-    const basePoints = liveData.points_breakdown ? (
-      Object.values(liveData.points_breakdown).reduce((sum: number, val: number) => sum + val, 0)
-    ) : 0;
-    
-    const bonusPoints = liveData.bonus || 0;
-    const totalPoints = basePoints + bonusPoints;
-    
-    console.log(`${player?.web_name} - Points calculation:`, {
-      basePoints,
-      bonusPoints,
-      totalPoints,
-      isCaptain,
-      points_breakdown: liveData.points_breakdown
-    });
+    let totalPoints = 0;
+
+    if (pointsCalculation) {
+      // Use points calculation data if available
+      totalPoints = pointsCalculation.final_total_points;
+      console.log(`${player?.web_name} - Points from calculation:`, {
+        total: totalPoints,
+        breakdown: pointsCalculation
+      });
+    } else if (liveData) {
+      // Use points from live data
+      const basePoints = liveData.points_breakdown ? (
+        Object.values(liveData.points_breakdown).reduce((sum: number, val: number) => sum + val, 0)
+      ) : 0;
+      
+      const bonusPoints = liveData.bonus || 0;
+      totalPoints = basePoints + bonusPoints;
+      
+      console.log(`${player?.web_name} - Points calculation:`, {
+        basePoints,
+        bonusPoints,
+        totalPoints,
+        isCaptain,
+        points_breakdown: liveData.points_breakdown
+      });
+    }
     
     return isCaptain ? totalPoints * 2 : totalPoints;
   };
