@@ -1,17 +1,17 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ScheduleCategory } from "./types/scheduleTypes";
 import { functions, getCategoryDescription } from "./utils/functionConfigs";
-import { FunctionExecutionStatus } from "./components/FunctionExecutionStatus";
 import { CategorySection } from "./components/CategorySection";
 import { useSchedules } from "./hooks/useSchedules";
 import { useMatchWindow } from "./hooks/useMatchWindow";
 import { useFunctionExecution } from "./hooks/useFunctionExecution";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Calendar, AlertCircle } from "lucide-react";
+import { Clock, Calendar } from "lucide-react";
 import { format } from "date-fns";
 import { LiveStatus } from "./LiveStatus";
 import { UTCClock } from "./components/UTCClock";
+import { GameweekTransition } from "@/components/gameweek-live/GameweekTransition";
 
 export function EdgeFunctionManager() {
   console.log("Rendering EdgeFunctionManager");
@@ -40,13 +40,16 @@ export function EdgeFunctionManager() {
 
   return (
     <div className="space-y-6">
+      {/* Gameweek Transition Status */}
+      <GameweekTransition />
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Game Week Status */}
         <Card className="p-4 bg-card/50">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4 text-muted-foreground" />
-              <span className="font-medium">Game Week Status</span>
+              <span className="font-medium">Match Window Status</span>
             </div>
             <LiveStatus showLabel showWindow />
           </div>
@@ -68,14 +71,6 @@ export function EdgeFunctionManager() {
         {/* UTC Clock */}
         <UTCClock />
       </div>
-
-      <Card className="p-6">
-        <FunctionExecutionStatus 
-          loading={Boolean(loading)} 
-          onRefreshAll={refreshAll}
-          matchWindow={formattedMatchWindow}
-        />
-      </Card>
 
       <ScrollArea className="h-[calc(100vh-300px)]">
         <div className="min-w-[600px] pr-4 space-y-8">
