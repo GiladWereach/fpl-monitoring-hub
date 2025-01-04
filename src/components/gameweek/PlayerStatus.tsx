@@ -26,6 +26,7 @@ export function PlayerStatus({ player, liveData }: PlayerStatusProps) {
         return null;
       }
 
+      console.log('Fixture status for player', player?.web_name, ':', data);
       return data;
     }
   });
