@@ -23,17 +23,22 @@ export function PlayerCard({ player, isCaptain, isViceCaptain, liveData }: Playe
   
   // Query points calculation data
   const { data: pointsCalculation } = useQuery({
-    queryKey: ['points-calculation', player?.id, liveData?.fixture_id],
-    enabled: !!player?.id && !!liveData?.fixture_id,
+    queryKey: ['points-calculation', player?.id, liveData?.fixture_id, liveData?.event_id],
+    enabled: !!player?.id && !!liveData?.fixture_id && !!liveData?.event_id,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('player_points_calculation')
         .select('*')
         .eq('player_id', player.id)
         .eq('fixture_id', liveData.fixture_id)
+        .eq('event_id', liveData.event_id)
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching points calculation:', error);
+        return null;
+      }
+      
       console.log('Points calculation data for', player?.web_name, data);
       return data;
     }
