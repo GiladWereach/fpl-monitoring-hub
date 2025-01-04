@@ -48,7 +48,7 @@ export default function Gameweek() {
   // Get team data using our hook
   const { teamData, teamLoading, existingTeam } = useTeamData(teamId);
 
-  // Query for players data
+  // Query for players data - Now including chance_of_playing_this_round
   const { data: players, isLoading: playersLoading } = useQuery({
     queryKey: ['players', teamData?.data?.picks],
     enabled: !!teamData?.data?.picks,
@@ -57,16 +57,22 @@ export default function Gameweek() {
       console.log('Fetching players:', playerIds);
       const { data, error } = await supabase
         .from('players')
-        .select('id, web_name, team, element_type')
+        .select(`
+          id, 
+          web_name, 
+          team, 
+          element_type,
+          chance_of_playing_this_round,
+          status
+        `)
         .in('id', playerIds);
       
       if (error) throw error;
-      console.log('Players data:', data);
+      console.log('Players data with availability:', data);
       return data;
     }
   });
 
-  // Query for points calculation data including bonus points
   const { data: liveData, isLoading: liveDataLoading } = useQuery({
     queryKey: ['points-calculation', currentGameweek?.id, teamData?.data?.picks],
     enabled: !!currentGameweek?.id && !!teamData?.data?.picks,

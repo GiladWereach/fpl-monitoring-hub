@@ -84,25 +84,37 @@ export function PlayerStatus({ player, liveData, fixture_id }: PlayerStatusProps
   });
 
   const isPlayerUnavailable = () => {
-    // Explicitly check if the value is 0 (number) or "0" (string)
     const chanceOfPlaying = player?.chance_of_playing_this_round;
-    const hasZeroChance = chanceOfPlaying === 0 || chanceOfPlaying === "0";
     
+    // Log raw data for debugging
     console.log(`Availability check for ${player?.web_name}:`, {
       chance_of_playing_this_round: chanceOfPlaying,
-      hasZeroChance,
-      typeof_chance: typeof chanceOfPlaying,
-      raw_player_data: player,
-      raw_chance: chanceOfPlaying
+      status: player?.status,
+      raw_data: {
+        id: player?.id,
+        chance: chanceOfPlaying,
+        type: typeof chanceOfPlaying
+      }
     });
 
-    return hasZeroChance;
+    // Check if player is unavailable (explicitly 0 or "0")
+    if (chanceOfPlaying === 0 || chanceOfPlaying === "0") {
+      console.log(`${player?.web_name} is unavailable due to 0% chance of playing`);
+      return true;
+    }
+
+    // Check if player status indicates unavailability
+    if (player?.status === 'u' || player?.status === 'n') {
+      console.log(`${player?.web_name} is unavailable due to status: ${player?.status}`);
+      return true;
+    }
+
+    return false;
   };
 
   const getPlayerStatus = () => {
     // ALWAYS check unavailability first - this overrides ALL other statuses
     if (isPlayerUnavailable()) {
-      console.log(`${player?.web_name} is unavailable due to 0% chance of playing`);
       return getUnavailableStatus(player?.web_name);
     }
 
