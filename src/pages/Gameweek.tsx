@@ -77,12 +77,12 @@ export default function Gameweek() {
         .from('player_points_calculation')
         .select(`
           player_id,
-          final_total_points,
           minutes_points,
           goals_scored_points,
           assist_points,
           clean_sheet_points,
-          bonus_points
+          bonus_points,
+          final_total_points
         `)
         .eq('event_id', currentGameweek.id)
         .in('player_id', playerIds);
@@ -92,12 +92,20 @@ export default function Gameweek() {
       // Map the data to match the expected format
       const mappedData = data.map(d => ({
         player_id: d.player_id,
-        minutes: d.minutes_points > 0 ? 60 : 0, // Approximate minutes based on points
-        total_points: d.final_total_points,
+        minutes: d.minutes_points > 0 ? 60 : 0,
+        total_points: d.final_total_points || 0,
         goals_scored: d.goals_scored_points > 0 ? 1 : 0,
         assists: d.assist_points > 0 ? 1 : 0,
         clean_sheets: d.clean_sheet_points > 0 ? 1 : 0,
-        bonus: d.bonus_points || 0  // Add null check for bonus points
+        bonus: d.bonus_points || 0,
+        // Add individual point contributions for the card
+        points_breakdown: {
+          minutes: d.minutes_points || 0,
+          goals: d.goals_scored_points || 0,
+          assists: d.assist_points || 0,
+          clean_sheets: d.clean_sheet_points || 0,
+          bonus: d.bonus_points || 0
+        }
       }));
       
       console.log('Points calculation data:', mappedData);

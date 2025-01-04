@@ -30,9 +30,8 @@ export function PlayerCard({ player, isCaptain, isViceCaptain, liveData }: Playe
     chance_of_playing: player?.chance_of_playing_this_round,
     live_data: liveData ? {
       minutes: liveData.minutes,
-      finished: liveData.finished,
       total_points: liveData.total_points,
-      bonus: liveData.bonus
+      points_breakdown: liveData.points_breakdown
     } : 'No live data'
   });
 
@@ -76,45 +75,50 @@ export function PlayerCard({ player, isCaptain, isViceCaptain, liveData }: Playe
       </HoverCardTrigger>
       <HoverCardContent className="w-40 bg-secondary/95 backdrop-blur-sm border-accent/20">
         <div className="space-y-2">
-          <div className="flex justify-between items-center">
-            <span className="text-xs text-foreground/80">Minutes</span>
-            <span className="text-xs font-medium text-foreground">{liveData?.minutes || 0}'</span>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-xs text-foreground/80">Goals</span>
-            <span className="text-xs font-medium text-foreground">{liveData?.goals_scored || 0}</span>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-xs text-foreground/80">Assists</span>
-            <span className="text-xs font-medium text-foreground">{liveData?.assists || 0}</span>
-          </div>
-          {(isGoalkeeper || isDefender || isMidfielder) && liveData?.clean_sheets > 0 && (
-            <div className="flex justify-between items-center">
-              <span className="text-xs text-foreground/80">Clean Sheet</span>
-              <span className="text-xs font-medium text-foreground">✓</span>
-            </div>
-          )}
-          {isGoalkeeper && (
-            <div className="flex justify-between items-center">
-              <span className="text-xs text-foreground/80">Saves</span>
-              <span className="text-xs font-medium text-foreground">{liveData?.saves || 0}</span>
-            </div>
-          )}
-          {(liveData?.yellow_cards > 0 || liveData?.red_cards > 0) && (
-            <div className="flex justify-between items-center">
-              <span className="text-xs text-foreground/80">Cards</span>
-              <span className="text-xs font-medium text-foreground">
-                {liveData?.yellow_cards > 0 && <span className="text-yellow-400">■ </span>}
-                {liveData?.red_cards > 0 && <span className="text-red-500">■</span>}
-              </span>
-            </div>
-          )}
-          {/* Add bonus points display */}
-          {liveData?.bonus > 0 && (
-            <div className="flex justify-between items-center">
-              <span className="text-xs text-foreground/80">Bonus</span>
-              <span className="text-xs font-medium text-foreground">{liveData.bonus}</span>
-            </div>
+          {/* Points Breakdown Section */}
+          {liveData?.points_breakdown && (
+            <>
+              {liveData.points_breakdown.minutes > 0 && (
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-foreground/80">Minutes</span>
+                  <span className="text-xs font-medium text-foreground">
+                    {liveData.minutes}' (+{liveData.points_breakdown.minutes})
+                  </span>
+                </div>
+              )}
+              {liveData.points_breakdown.goals > 0 && (
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-foreground/80">Goals</span>
+                  <span className="text-xs font-medium text-foreground">
+                    {liveData.goals_scored} (+{liveData.points_breakdown.goals})
+                  </span>
+                </div>
+              )}
+              {liveData.points_breakdown.assists > 0 && (
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-foreground/80">Assists</span>
+                  <span className="text-xs font-medium text-foreground">
+                    {liveData.assists} (+{liveData.points_breakdown.assists})
+                  </span>
+                </div>
+              )}
+              {(isGoalkeeper || isDefender || isMidfielder) && liveData.points_breakdown.clean_sheets > 0 && (
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-foreground/80">Clean Sheet</span>
+                  <span className="text-xs font-medium text-foreground">
+                    ✓ (+{liveData.points_breakdown.clean_sheets})
+                  </span>
+                </div>
+              )}
+              {liveData.points_breakdown.bonus > 0 && (
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-foreground/80">Bonus</span>
+                  <span className="text-xs font-medium text-foreground">
+                    +{liveData.points_breakdown.bonus}
+                  </span>
+                </div>
+              )}
+            </>
           )}
           {(isCaptain || isViceCaptain) && (
             <div className="mt-2 pt-2 border-t border-accent/20">
