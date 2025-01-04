@@ -23,10 +23,13 @@ Deno.serve(async (req) => {
       .or('next_execution_at.is.null,next_execution_at.lte.now()');
 
     if (schedulesError) {
+      console.error('Error fetching schedules:', schedulesError);
       throw schedulesError;
     }
 
-    console.log(`Found ${schedules?.length || 0} schedules to process`);
+    console.log(`Found ${schedules?.length || 0} schedules to process:`, schedules);
+
+    const processedSchedules = [];
 
     for (const schedule of (schedules || [])) {
       try {
@@ -38,6 +41,7 @@ Deno.serve(async (req) => {
         });
 
         if (invokeError) {
+          console.error(`Error executing ${schedule.function_name}:`, invokeError);
           throw invokeError;
         }
 
@@ -51,13 +55,24 @@ Deno.serve(async (req) => {
         }
 
         // Update schedule with execution results
-        await supabase
+        const { error: updateError } = await supabase
           .from('schedules')
           .update({
             last_execution_at: new Date().toISOString(),
             next_execution_at: nextExecutionTime.toISOString()
           })
           .eq('id', schedule.id);
+
+        if (updateError) {
+          console.error(`Error updating schedule ${schedule.id}:`, updateError);
+          throw updateError;
+        }
+
+        processedSchedules.push({
+          id: schedule.id,
+          function: schedule.function_name,
+          nextExecution: nextExecutionTime
+        });
 
         console.log(`Successfully processed ${schedule.function_name}`);
 
@@ -75,7 +90,11 @@ Deno.serve(async (req) => {
       }
     }
 
-    return new Response(JSON.stringify({ success: true }), {
+    return new Response(JSON.stringify({ 
+      success: true,
+      processed: processedSchedules.length,
+      schedules: processedSchedules 
+    }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     });
