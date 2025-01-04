@@ -22,7 +22,8 @@ export function PitchView({ teamSelection, players, liveData }: PitchViewProps) 
       ...player,
       isCaptain: pick.is_captain,
       isViceCaptain: pick.is_vice_captain,
-      liveData: playerLiveData
+      liveData: playerLiveData,
+      bonus: playerLiveData?.bonus || 0 // Add bonus points
     };
   };
 

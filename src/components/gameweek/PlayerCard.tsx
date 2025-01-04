@@ -31,7 +31,8 @@ export function PlayerCard({ player, isCaptain, isViceCaptain, liveData }: Playe
     live_data: liveData ? {
       minutes: liveData.minutes,
       finished: liveData.finished,
-      total_points: liveData.total_points
+      total_points: liveData.total_points,
+      bonus: liveData.bonus
     } : 'No live data'
   });
 
@@ -108,6 +109,7 @@ export function PlayerCard({ player, isCaptain, isViceCaptain, liveData }: Playe
               </span>
             </div>
           )}
+          {/* Add bonus points display */}
           {liveData?.bonus > 0 && (
             <div className="flex justify-between items-center">
               <span className="text-xs text-foreground/80">Bonus</span>
