@@ -13,6 +13,8 @@ interface PlayerStatusProps {
 export function PlayerStatus({ player, liveData, fixture_id }: PlayerStatusProps) {
   console.log(`PlayerStatus component for ${player?.web_name}:`, {
     player_id: player?.id,
+    chance_of_playing: player?.chance_of_playing_this_round,
+    status: player?.status,
     live_data: liveData ? {
       minutes: liveData.minutes,
       points: liveData.total_points,
@@ -143,7 +145,7 @@ export function PlayerStatus({ player, liveData, fixture_id }: PlayerStatusProps
       }
     }
 
-    // Default: no status icon needed
+    // Default: yet to play (no status icon needed)
     return null;
   };
 

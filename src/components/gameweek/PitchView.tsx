@@ -21,6 +21,8 @@ export function PitchView({ teamSelection, players, liveData }: PitchViewProps) 
     console.log('Player Live Data:', {
       player_id: player?.id,
       web_name: player?.web_name,
+      chance_of_playing: player?.chance_of_playing_this_round,
+      status: player?.status,
       live_data: playerLiveData ? {
         minutes: playerLiveData.minutes,
         total_points: playerLiveData.total_points,
@@ -34,7 +36,7 @@ export function PitchView({ teamSelection, players, liveData }: PitchViewProps) 
       isCaptain: pick.is_captain,
       isViceCaptain: pick.is_vice_captain,
       liveData: playerLiveData,
-      fixture_id: playerLiveData?.fixture_id // Correctly extract fixture_id from live data
+      fixture_id: playerLiveData?.fixture_id
     };
   };
 

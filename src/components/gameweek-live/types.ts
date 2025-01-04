@@ -19,6 +19,8 @@ export interface PlayerPerformanceData {
     second_name: string;
     web_name: string;
     element_type: number;
+    chance_of_playing_this_round: number | null;
+    status: string;
     team: {
       short_name: string;
     };
