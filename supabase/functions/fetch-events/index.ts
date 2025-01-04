@@ -35,7 +35,7 @@ async function fetchWithRetry(url: string, init: RequestInit, retryCount = 0): P
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
@@ -61,16 +61,32 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Map only the fields that exist in our schema
+    const eventsToUpsert = data.events.map((event: any) => ({
+      id: event.id,
+      name: event.name,
+      deadline_time: event.deadline_time,
+      average_entry_score: event.average_entry_score,
+      finished: event.finished,
+      data_checked: event.data_checked,
+      highest_score: event.highest_score,
+      is_previous: event.is_previous,
+      is_current: event.is_current,
+      is_next: event.is_next,
+      chip_plays: event.chip_plays,
+      most_selected: event.most_selected,
+      most_transferred_in: event.most_transferred_in,
+      top_element: event.top_element,
+      transfers_made: event.transfers_made,
+      most_captained: event.most_captained,
+      most_vice_captained: event.most_vice_captained,
+      last_updated: new Date().toISOString()
+    }));
+
     // Upsert events data
     const { error: upsertError } = await supabase
       .from('events')
-      .upsert(
-        data.events.map((event: any) => ({
-          ...event,
-          last_updated: new Date().toISOString()
-        })),
-        { onConflict: 'id' }
-      );
+      .upsert(eventsToUpsert, { onConflict: 'id' });
 
     if (upsertError) {
       logError('fetch-events', 'Error upserting events:', upsertError);
