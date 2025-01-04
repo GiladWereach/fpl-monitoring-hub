@@ -40,17 +40,26 @@ export const useTeamData = (teamId: string | null) => {
         .eq('event', existingTeam.event)
         .maybeSingle();
 
-      if (selectionError) throw selectionError;
+      if (selectionError) {
+        console.error('Error fetching team selection:', selectionError);
+        throw selectionError;
+      }
 
       // Get performance data separately
       const { data: performanceData, error: performanceError } = await supabase
         .from('team_performances')
-        .select('*')
+        .select('points, total_points, current_rank, overall_rank, team_value, bank')
         .eq('fpl_team_id', teamId)
         .eq('event', existingTeam.event)
         .maybeSingle();
 
-      if (performanceError) throw performanceError;
+      if (performanceError) {
+        console.error('Error fetching team performance:', performanceError);
+        throw performanceError;
+      }
+
+      console.log('Team selection data:', selectionData);
+      console.log('Team performance data:', performanceData);
 
       if (selectionData) {
         console.log('Found local team data:', selectionData);
@@ -87,7 +96,6 @@ export const useTeamData = (teamId: string | null) => {
 
       return await response.json();
     },
-    retry: 1,
     meta: {
       onError: (error: Error) => {
         console.error('Error fetching team data:', error);
