@@ -18,12 +18,22 @@ export function PitchView({ teamSelection, players, liveData }: PitchViewProps) 
     const player = players.find(p => p.id === pick.element);
     const playerLiveData = liveData?.find(d => d.player_id === pick.element);
     
+    console.log('Player Live Data:', {
+      player_id: player?.id,
+      web_name: player?.web_name,
+      live_data: playerLiveData ? {
+        minutes: playerLiveData.minutes,
+        total_points: playerLiveData.total_points,
+        bonus: playerLiveData.bonus
+      } : 'No live data'
+    });
+
     return {
       ...player,
       isCaptain: pick.is_captain,
       isViceCaptain: pick.is_vice_captain,
       liveData: playerLiveData,
-      bonus: playerLiveData?.bonus || 0 // Add bonus points
+      bonus: playerLiveData?.bonus || 0
     };
   };
 
@@ -136,7 +146,7 @@ export function PitchView({ teamSelection, players, liveData }: PitchViewProps) 
         </div>
       </Card>
 
-      {/* Bench Section - Now below the pitch */}
+      {/* Bench Section */}
       <BenchPlayers 
         benchPlayers={[12, 13, 14, 15]}
         getPlayerData={getPlayerData}
