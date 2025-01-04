@@ -18,15 +18,21 @@ interface PlayerCardProps {
 export function PlayerCard({ player, isCaptain, isViceCaptain, liveData }: PlayerCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   
-  // Calculate total points from breakdown
+  // Calculate total points from raw points and bonus
   const calculateTotalPoints = () => {
-    if (!liveData?.points_breakdown) return 0;
+    if (!liveData) return 0;
     
-    const breakdown = liveData.points_breakdown;
-    const basePoints = Object.values(breakdown).reduce((sum: number, points: number) => sum + points, 0);
+    // Get raw points from points calculation
+    const rawPoints = liveData.points_breakdown ? 
+      Object.values(liveData.points_breakdown).reduce((sum: number, points: number) => sum + points, 0) 
+      : 0;
+    
+    // Add bonus points if available
+    const bonusPoints = liveData.bonus || 0;
+    const totalPoints = rawPoints + bonusPoints;
     
     // Apply captain multiplier if applicable
-    return isCaptain ? basePoints * 2 : basePoints;
+    return isCaptain ? totalPoints * 2 : totalPoints;
   };
 
   const points = calculateTotalPoints();
@@ -42,7 +48,9 @@ export function PlayerCard({ player, isCaptain, isViceCaptain, liveData }: Playe
     live_data: liveData ? {
       minutes: liveData.minutes,
       total_points: points,
-      points_breakdown: liveData.points_breakdown
+      points_breakdown: liveData.points_breakdown,
+      bonus: liveData.bonus,
+      bps: liveData.bps
     } : 'No live data'
   });
 
@@ -79,7 +87,7 @@ export function PlayerCard({ player, isCaptain, isViceCaptain, liveData }: Playe
           {/* Points Breakdown Section */}
           {liveData?.points_breakdown && (
             <>
-              {liveData.points_breakdown.minutes > 0 && (
+              {liveData.minutes > 0 && (
                 <div className="flex justify-between items-center">
                   <span className="text-xs text-foreground/80">Minutes</span>
                   <span className="text-xs font-medium text-foreground">
@@ -87,15 +95,15 @@ export function PlayerCard({ player, isCaptain, isViceCaptain, liveData }: Playe
                   </span>
                 </div>
               )}
-              {liveData.points_breakdown.goals > 0 && (
+              {liveData.goals_scored > 0 && (
                 <div className="flex justify-between items-center">
                   <span className="text-xs text-foreground/80">Goals</span>
                   <span className="text-xs font-medium text-foreground">
-                    {liveData.goals_scored} (+{liveData.points_breakdown.goals})
+                    {liveData.goals_scored} (+{liveData.points_breakdown.goals_scored})
                   </span>
                 </div>
               )}
-              {liveData.points_breakdown.assists > 0 && (
+              {liveData.assists > 0 && (
                 <div className="flex justify-between items-center">
                   <span className="text-xs text-foreground/80">Assists</span>
                   <span className="text-xs font-medium text-foreground">
@@ -103,7 +111,7 @@ export function PlayerCard({ player, isCaptain, isViceCaptain, liveData }: Playe
                   </span>
                 </div>
               )}
-              {(isGoalkeeper || isDefender || isMidfielder) && liveData.points_breakdown.clean_sheets > 0 && (
+              {(isGoalkeeper || isDefender || isMidfielder) && liveData.clean_sheets > 0 && (
                 <div className="flex justify-between items-center">
                   <span className="text-xs text-foreground/80">Clean Sheet</span>
                   <span className="text-xs font-medium text-foreground">
@@ -111,11 +119,67 @@ export function PlayerCard({ player, isCaptain, isViceCaptain, liveData }: Playe
                   </span>
                 </div>
               )}
-              {liveData.points_breakdown.bonus > 0 && (
+              {liveData.saves > 0 && (
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-foreground/80">Saves</span>
+                  <span className="text-xs font-medium text-foreground">
+                    {liveData.saves} (+{liveData.points_breakdown.saves})
+                  </span>
+                </div>
+              )}
+              {liveData.penalties_saved > 0 && (
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-foreground/80">Penalties Saved</span>
+                  <span className="text-xs font-medium text-foreground">
+                    {liveData.penalties_saved} (+{liveData.points_breakdown.penalties_saved})
+                  </span>
+                </div>
+              )}
+              {liveData.penalties_missed > 0 && (
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-foreground/80">Penalties Missed</span>
+                  <span className="text-xs font-medium text-foreground">
+                    {liveData.penalties_missed} ({liveData.points_breakdown.penalties_missed})
+                  </span>
+                </div>
+              )}
+              {liveData.own_goals > 0 && (
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-foreground/80">Own Goals</span>
+                  <span className="text-xs font-medium text-foreground">
+                    {liveData.own_goals} ({liveData.points_breakdown.own_goals})
+                  </span>
+                </div>
+              )}
+              {liveData.yellow_cards > 0 && (
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-foreground/80">Yellow Cards</span>
+                  <span className="text-xs font-medium text-foreground">
+                    {liveData.yellow_cards} ({liveData.points_breakdown.yellow_cards})
+                  </span>
+                </div>
+              )}
+              {liveData.red_cards > 0 && (
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-foreground/80">Red Cards</span>
+                  <span className="text-xs font-medium text-foreground">
+                    {liveData.red_cards} ({liveData.points_breakdown.red_cards})
+                  </span>
+                </div>
+              )}
+              {liveData.bonus > 0 && (
                 <div className="flex justify-between items-center">
                   <span className="text-xs text-foreground/80">Bonus</span>
                   <span className="text-xs font-medium text-foreground">
-                    +{liveData.points_breakdown.bonus}
+                    +{liveData.bonus}
+                  </span>
+                </div>
+              )}
+              {liveData.bps > 0 && (
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-foreground/80">BPS</span>
+                  <span className="text-xs font-medium text-foreground">
+                    {liveData.bps}
                   </span>
                 </div>
               )}
