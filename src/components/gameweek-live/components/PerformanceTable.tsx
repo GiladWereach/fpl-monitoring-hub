@@ -27,6 +27,7 @@ export const PerformanceTable: React.FC<PerformanceTableProps> = ({
     if (!perf.points?.[0]) return 0;
     
     const points = perf.points[0];
+    // Use the bonus points from the main performance data as it's more reliable
     return (
       (points.minutes_points || 0) +
       (points.goals_scored_points || 0) +
@@ -37,7 +38,8 @@ export const PerformanceTable: React.FC<PerformanceTableProps> = ({
       (points.penalty_save_points || 0) +
       (points.penalty_miss_points || 0) +
       (points.saves_points || 0) +
-      (points.bonus_points || 0)
+      // Use bonus points from the main performance data
+      (perf.bonus || 0)
     );
   };
 
