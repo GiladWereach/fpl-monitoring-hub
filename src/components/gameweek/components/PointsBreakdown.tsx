@@ -26,103 +26,74 @@ export function PointsBreakdown({ liveData, pointsCalculation, isCaptain, isVice
     bps: liveData?.bps || 0
   };
 
+  const renderBreakdownItem = (label: string, value: number, points: number) => {
+    if (value === 0 && points === 0) return null;
+    return (
+      <div className="flex justify-between items-center">
+        <span className="text-xs text-foreground/80">{label}</span>
+        <span className="text-xs font-medium text-foreground">
+          {value !== points ? `${value} (+${points})` : `+${points}`}
+        </span>
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-2">
-      {/* Points Breakdown Section */}
-      {liveData?.minutes > 0 && (
-        <div className="flex justify-between items-center">
-          <span className="text-xs text-foreground/80">Minutes</span>
-          <span className="text-xs font-medium text-foreground">
-            {liveData.minutes}' (+{breakdown.minutes})
-          </span>
-        </div>
-      )}
-      {breakdown.goals > 0 && (
-        <div className="flex justify-between items-center">
-          <span className="text-xs text-foreground/80">Goals</span>
-          <span className="text-xs font-medium text-foreground">
-            {pointsCalculation?.goals_scored || liveData?.goals_scored || 0} (+{breakdown.goals})
-          </span>
-        </div>
-      )}
-      {breakdown.assists > 0 && (
-        <div className="flex justify-between items-center">
-          <span className="text-xs text-foreground/80">Assists</span>
-          <span className="text-xs font-medium text-foreground">
-            {pointsCalculation?.assists || liveData?.assists || 0} (+{breakdown.assists})
-          </span>
-        </div>
-      )}
-      {breakdown.cleanSheets > 0 && (
-        <div className="flex justify-between items-center">
-          <span className="text-xs text-foreground/80">Clean Sheet</span>
-          <span className="text-xs font-medium text-foreground">
-            ✓ (+{breakdown.cleanSheets})
-          </span>
-        </div>
-      )}
-      {breakdown.saves > 0 && (
-        <div className="flex justify-between items-center">
-          <span className="text-xs text-foreground/80">Saves</span>
-          <span className="text-xs font-medium text-foreground">
-            {pointsCalculation?.saves || liveData?.saves || 0} (+{breakdown.saves})
-          </span>
-        </div>
-      )}
-      {breakdown.penalties_saved > 0 && (
-        <div className="flex justify-between items-center">
-          <span className="text-xs text-foreground/80">Penalties Saved</span>
-          <span className="text-xs font-medium text-foreground">
-            {pointsCalculation?.penalties_saved || liveData?.penalties_saved || 0} (+{breakdown.penalties_saved})
-          </span>
-        </div>
-      )}
-      {breakdown.penalties_missed < 0 && (
-        <div className="flex justify-between items-center">
-          <span className="text-xs text-foreground/80">Penalties Missed</span>
-          <span className="text-xs font-medium text-foreground">
-            {pointsCalculation?.penalties_missed || liveData?.penalties_missed || 0} ({breakdown.penalties_missed})
-          </span>
-        </div>
-      )}
-      {breakdown.yellow_cards < 0 && (
-        <div className="flex justify-between items-center">
-          <span className="text-xs text-foreground/80">Yellow Cards</span>
-          <span className="text-xs font-medium text-foreground">
-            {pointsCalculation?.yellow_cards || liveData?.yellow_cards || 0} ({breakdown.yellow_cards})
-          </span>
-        </div>
-      )}
-      {breakdown.red_cards < 0 && (
-        <div className="flex justify-between items-center">
-          <span className="text-xs text-foreground/80">Red Cards</span>
-          <span className="text-xs font-medium text-foreground">
-            {pointsCalculation?.red_cards || liveData?.red_cards || 0} ({breakdown.red_cards})
-          </span>
-        </div>
-      )}
-      {breakdown.own_goals < 0 && (
-        <div className="flex justify-between items-center">
-          <span className="text-xs text-foreground/80">Own Goals</span>
-          <span className="text-xs font-medium text-foreground">
-            {pointsCalculation?.own_goals || liveData?.own_goals || 0} ({breakdown.own_goals})
-          </span>
-        </div>
-      )}
-      {breakdown.bonus > 0 && (
-        <div className="flex justify-between items-center">
-          <span className="text-xs text-foreground/80">Bonus</span>
-          <span className="text-xs font-medium text-foreground">
-            +{breakdown.bonus}
-          </span>
-        </div>
-      )}
+      {/* Minutes */}
+      {liveData?.minutes > 0 && renderBreakdownItem('Minutes', liveData.minutes, breakdown.minutes)}
+      
+      {/* Goals */}
+      {breakdown.goals > 0 && renderBreakdownItem('Goals', 
+        pointsCalculation?.goals_scored || liveData?.goals_scored || 0, 
+        breakdown.goals)}
+      
+      {/* Assists */}
+      {breakdown.assists > 0 && renderBreakdownItem('Assists', 
+        pointsCalculation?.assists || liveData?.assists || 0, 
+        breakdown.assists)}
+      
+      {/* Clean Sheets */}
+      {breakdown.cleanSheets > 0 && renderBreakdownItem('Clean Sheet', 1, breakdown.cleanSheets)}
+      
+      {/* Saves */}
+      {breakdown.saves > 0 && renderBreakdownItem('Saves', 
+        pointsCalculation?.saves || liveData?.saves || 0, 
+        breakdown.saves)}
+      
+      {/* Penalties Saved */}
+      {breakdown.penalties_saved > 0 && renderBreakdownItem('Penalties Saved', 
+        pointsCalculation?.penalties_saved || liveData?.penalties_saved || 0, 
+        breakdown.penalties_saved)}
+      
+      {/* Penalties Missed */}
+      {breakdown.penalties_missed < 0 && renderBreakdownItem('Penalties Missed', 
+        pointsCalculation?.penalties_missed || liveData?.penalties_missed || 0, 
+        breakdown.penalties_missed)}
+      
+      {/* Yellow Cards */}
+      {breakdown.yellow_cards < 0 && renderBreakdownItem('Yellow Cards', 
+        pointsCalculation?.yellow_cards || liveData?.yellow_cards || 0, 
+        breakdown.yellow_cards)}
+      
+      {/* Red Cards */}
+      {breakdown.red_cards < 0 && renderBreakdownItem('Red Cards', 
+        pointsCalculation?.red_cards || liveData?.red_cards || 0, 
+        breakdown.red_cards)}
+      
+      {/* Own Goals */}
+      {breakdown.own_goals < 0 && renderBreakdownItem('Own Goals', 
+        pointsCalculation?.own_goals || liveData?.own_goals || 0, 
+        breakdown.own_goals)}
+      
+      {/* Bonus */}
+      {breakdown.bonus > 0 && renderBreakdownItem('Bonus', breakdown.bonus, breakdown.bonus)}
+      
+      {/* BPS */}
       {breakdown.bps > 0 && (
         <div className="flex justify-between items-center">
           <span className="text-xs text-foreground/80">BPS</span>
-          <span className="text-xs font-medium text-foreground">
-            {breakdown.bps}
-          </span>
+          <span className="text-xs font-medium text-foreground">{breakdown.bps}</span>
         </div>
       )}
       

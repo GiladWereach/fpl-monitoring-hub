@@ -1,5 +1,5 @@
 import React from 'react';
-import { Check, Play, XOctagon } from 'lucide-react';
+import { Check, Play, XOctagon, AlertCircle } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -16,12 +16,12 @@ export function PlayerStatus({ player, liveData, fixture_id }: PlayerStatusProps
     live_data: liveData ? {
       minutes: liveData.minutes,
       points: liveData.total_points,
-      fixture_id: liveData.fixture_id
+      fixture_id: fixture_id
     } : 'No live data',
-    passed_fixture_id: fixture_id
+    fixture_id: fixture_id
   });
 
-  // Query fixture status when we have live data
+  // Query fixture status when we have a fixture_id
   const { data: fixtureStatus } = useQuery({
     queryKey: ['fixture-status', fixture_id],
     enabled: !!fixture_id,
@@ -58,8 +58,7 @@ export function PlayerStatus({ player, liveData, fixture_id }: PlayerStatusProps
 
   const getPlayerStatus = () => {
     // Check player availability first
-    if (player?.chance_of_playing_this_round === 0) {
-      console.log(`${player?.web_name} is not available to play`);
+    if (player?.chance_of_playing_this_round === 0 || player?.status === 'i') {
       return {
         icon: XOctagon,
         color: '#EF4444',
@@ -68,13 +67,22 @@ export function PlayerStatus({ player, liveData, fixture_id }: PlayerStatusProps
       };
     }
 
+    if (player?.chance_of_playing_this_round !== null && player?.chance_of_playing_this_round < 100) {
+      return {
+        icon: AlertCircle,
+        color: '#FCD34D',
+        animate: false,
+        label: `${player.chance_of_playing_this_round}% Chance`
+      };
+    }
+
     // Then check match and performance status
-    if (liveData && fixtureStatus) {
+    if (fixture_id && fixtureStatus) {
       console.log(`${player?.web_name} match status:`, {
         started: fixtureStatus.started,
         finished: fixtureStatus.finished,
         finished_provisional: fixtureStatus.finished_provisional,
-        minutes_played: liveData.minutes
+        minutes_played: liveData?.minutes
       });
 
       // Match is in progress
@@ -88,7 +96,7 @@ export function PlayerStatus({ player, liveData, fixture_id }: PlayerStatusProps
       }
 
       // Match is finished and player participated
-      if ((fixtureStatus.finished || fixtureStatus.finished_provisional) && liveData.minutes > 0) {
+      if ((fixtureStatus.finished || fixtureStatus.finished_provisional) && liveData?.minutes > 0) {
         return {
           icon: Check,
           color: '#9CA3AF',
