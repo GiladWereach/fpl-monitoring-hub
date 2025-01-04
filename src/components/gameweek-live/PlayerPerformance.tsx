@@ -13,12 +13,14 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { PlayerPerformanceData, PointsData } from './types';
 import { getRowClassName } from './utils/table-utils';
+import { useToast } from '@/hooks/use-toast';
 
 const PlayerPerformance = ({ gameweek, matchId }: { gameweek: number; matchId?: number | null }) => {
   const [search, setSearch] = useState('');
+  const { toast } = useToast();
 
   // Query for player performances with points calculation
-  const { data: performances, isLoading: performancesLoading } = useQuery({
+  const { data: performances, isLoading: performancesLoading, error } = useQuery({
     queryKey: ['player-performances', gameweek, matchId],
     queryFn: async () => {
       console.log('Fetching performances for gameweek:', gameweek, 'match:', matchId);
@@ -50,26 +52,39 @@ const PlayerPerformance = ({ gameweek, matchId }: { gameweek: number; matchId?: 
             )
           )
         `)
-        .eq('event_id', gameweek)
-        .gt('minutes', 0);
+        .eq('event_id', gameweek);
 
       if (matchId) {
         query.eq('fixture_id', matchId);
       }
       
       const { data, error } = await query.order('total_points', { ascending: false });
-      if (error) throw error;
+      
+      if (error) {
+        console.error('Error fetching performances:', error);
+        throw error;
+      }
+      
       console.log('Fetched performances with points:', data);
       return data as unknown as PlayerPerformanceData[];
     },
-    refetchInterval: 60000
+    refetchInterval: 60000,
+    onError: (err) => {
+      console.error('Query error:', err);
+      toast({
+        title: "Error loading player performances",
+        description: "Please try refreshing the page",
+        variant: "destructive",
+      });
+    }
   });
 
   // Query for match details when matchId is provided
-  const { data: matchDetails } = useQuery({
+  const { data: matchDetails, error: matchError } = useQuery({
     queryKey: ['match-details', matchId],
     enabled: !!matchId,
     queryFn: async () => {
+      console.log('Fetching match details for ID:', matchId);
       const { data, error } = await supabase
         .from('fixtures')
         .select(`
@@ -79,16 +94,37 @@ const PlayerPerformance = ({ gameweek, matchId }: { gameweek: number; matchId?: 
         .eq('id', matchId)
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching match details:', error);
+        throw error;
+      }
+      
+      console.log('Fetched match details:', data);
       return {
         homeTeam: data.team_h.short_name,
         awayTeam: data.team_a.short_name
       };
+    },
+    onError: (err) => {
+      console.error('Match details query error:', err);
+      toast({
+        title: "Error loading match details",
+        description: "Please try refreshing the page",
+        variant: "destructive",
+      });
     }
   });
 
   if (performancesLoading) {
     return <div>Loading performances...</div>;
+  }
+
+  if (error || matchError) {
+    return (
+      <div className="p-4 text-red-500">
+        Error loading data. Please try refreshing the page.
+      </div>
+    );
   }
 
   const filteredPerformances = performances?.filter(p => 
