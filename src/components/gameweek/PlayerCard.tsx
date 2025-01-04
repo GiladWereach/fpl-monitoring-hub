@@ -28,6 +28,7 @@ export function PlayerCard({ player, isCaptain, isViceCaptain, liveData, fixture
       minutes: liveData.minutes,
       points: liveData.total_points,
       bonus: liveData.bonus,
+      bps: liveData.bps,
       fixture_id: liveData.fixture_id,
       points_breakdown: liveData.points_breakdown
     } : 'No live data',
@@ -60,33 +61,41 @@ export function PlayerCard({ player, isCaptain, isViceCaptain, liveData, fixture
   const calculateTotalPoints = () => {
     if (!liveData && !pointsCalculation) return 0;
 
-    let totalPoints = 0;
+    let basePoints = 0;
+    let bonusPoints = 0;
 
     if (pointsCalculation) {
       // Use points calculation data if available
-      totalPoints = pointsCalculation.final_total_points;
+      basePoints = pointsCalculation.raw_total_points || 0;
+      bonusPoints = pointsCalculation.bonus_points || 0;
+      
       console.log(`${player?.web_name} - Points from calculation:`, {
-        total: totalPoints,
+        basePoints,
+        bonusPoints,
+        total: basePoints + bonusPoints,
         breakdown: pointsCalculation
       });
     } else if (liveData) {
-      // Use points from live data
-      const basePoints = liveData.points_breakdown ? (
-        Object.values(liveData.points_breakdown).reduce((sum: number, val: number) => sum + val, 0)
+      // Calculate base points from breakdown
+      basePoints = liveData.points_breakdown ? (
+        Object.entries(liveData.points_breakdown)
+          .filter(([key]) => key !== 'bonus') // Exclude bonus from base points
+          .reduce((sum: number, [_, val]: [string, number]) => sum + val, 0)
       ) : 0;
       
-      const bonusPoints = liveData.bonus || 0;
-      totalPoints = basePoints + bonusPoints;
+      // Get bonus points separately
+      bonusPoints = liveData.bonus || 0;
       
-      console.log(`${player?.web_name} - Points calculation:`, {
+      console.log(`${player?.web_name} - Live points calculation:`, {
         basePoints,
         bonusPoints,
-        totalPoints,
-        isCaptain,
-        points_breakdown: liveData.points_breakdown
+        total: basePoints + bonusPoints,
+        points_breakdown: liveData.points_breakdown,
+        bps: liveData.bps
       });
     }
     
+    const totalPoints = basePoints + bonusPoints;
     return isCaptain ? totalPoints * 2 : totalPoints;
   };
 

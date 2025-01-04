@@ -22,9 +22,18 @@ export function PointsBreakdown({ liveData, pointsCalculation, isCaptain, isVice
     yellow_cards: pointsCalculation?.card_points || liveData?.points_breakdown?.yellow_cards || 0,
     red_cards: pointsCalculation?.card_points || liveData?.points_breakdown?.red_cards || 0,
     own_goals: pointsCalculation?.own_goal_points || liveData?.points_breakdown?.own_goals || 0,
-    bonus: liveData?.bonus || 0,
+    bonus: pointsCalculation?.bonus_points || liveData?.bonus || 0,
     bps: liveData?.bps || 0
   };
+
+  console.log('Points breakdown:', {
+    source: pointsCalculation ? 'calculation' : 'live',
+    breakdown,
+    raw_data: {
+      calculation: pointsCalculation,
+      live: liveData
+    }
+  });
 
   const renderBreakdownItem = (label: string, value: number, points: number) => {
     if (value === 0 && points === 0) return null;
