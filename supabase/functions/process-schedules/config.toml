@@ -1,4 +1,1 @@
 project_id = "qlkhlcoyrifbvzbqkshu"
-name = "process-schedules"
-entrypoint = "/index.ts"
-verify_jwt = false
