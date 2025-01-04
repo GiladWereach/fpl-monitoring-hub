@@ -26,13 +26,19 @@ export function PlayerCard({ player, isCaptain, isViceCaptain, liveData }: Playe
     queryKey: ['points-calculation', player?.id, liveData?.fixture_id, liveData?.event_id],
     enabled: !!player?.id && !!liveData?.fixture_id && !!liveData?.event_id,
     queryFn: async () => {
+      console.log('Fetching points calculation for:', {
+        player_id: player.id,
+        fixture_id: liveData.fixture_id,
+        event_id: liveData.event_id
+      });
+
       const { data, error } = await supabase
         .from('player_points_calculation')
         .select('*')
         .eq('player_id', player.id)
         .eq('fixture_id', liveData.fixture_id)
         .eq('event_id', liveData.event_id)
-        .single();
+        .maybeSingle();
       
       if (error) {
         console.error('Error fetching points calculation:', error);
@@ -47,15 +53,15 @@ export function PlayerCard({ player, isCaptain, isViceCaptain, liveData }: Playe
   // Calculate total points from raw_total_points and bonus
   const calculateTotalPoints = () => {
     // Step 1: Get raw points from calculation
-    const rawPoints = pointsCalculation?.raw_total_points || 0;
+    const rawPoints = pointsCalculation?.raw_total_points ?? 0;
     console.log(`${player?.web_name} - Raw points:`, rawPoints);
     
     // Step 2: Add bonus points if available
-    const bonusPoints = liveData?.bonus || 0;
+    const bonusPoints = liveData?.bonus ?? 0;
     console.log(`${player?.web_name} - Bonus points:`, bonusPoints);
     
     // Step 3: Calculate total before captain multiplier
-    const totalPoints = rawPoints + bonusPoints;
+    const totalPoints = (rawPoints + bonusPoints);
     console.log(`${player?.web_name} - Total before captain:`, totalPoints);
     
     // Step 4: Apply captain multiplier if applicable
