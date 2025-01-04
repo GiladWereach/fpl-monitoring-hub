@@ -13,6 +13,13 @@ export default function Scheduler() {
   console.log("Rendering Scheduler page");
   const [newFunctionOpen, setNewFunctionOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState(new Date());
+
+  const handleRefresh = () => {
+    console.log("Refreshing scheduler data");
+    setLastUpdated(new Date());
+    // Add any additional refresh logic here
+  };
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -24,7 +31,10 @@ export default function Scheduler() {
         )}>
           <SchedulerErrorBoundary>
             <div className="space-y-8 max-w-7xl">
-              <SchedulerHeader />
+              <SchedulerHeader 
+                lastUpdated={lastUpdated}
+                onRefresh={handleRefresh}
+              />
               
               {/* Edge Functions Management */}
               <Card className="p-6">
