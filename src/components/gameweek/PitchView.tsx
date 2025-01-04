@@ -27,8 +27,21 @@ export function PitchView({ teamSelection, players, liveData }: PitchViewProps) 
   };
 
   const getFormationPlayers = () => {
-    const formation = teamSelection?.formation || '4-4-2';
-    const [def, mid, fwd] = formation.split('-').map(Number);
+    // Ensure formation is a string and has a valid format, default to '4-4-2' if not
+    const formationString = typeof teamSelection?.formation === 'string' ? 
+      teamSelection.formation : '4-4-2';
+    
+    // Validate formation format
+    if (!/^\d-\d-\d$/.test(formationString)) {
+      console.warn('Invalid formation format, defaulting to 4-4-2');
+      return {
+        defenders: [2, 3, 4, 5],
+        midfielders: [6, 7, 8, 9],
+        forwards: [10, 11]
+      };
+    }
+
+    const [def, mid, fwd] = formationString.split('-').map(Number);
     
     return {
       defenders: Array.from({ length: def }, (_, i) => i + 2),
