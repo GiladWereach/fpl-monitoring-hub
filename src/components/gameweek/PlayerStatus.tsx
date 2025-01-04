@@ -17,15 +17,21 @@ interface PlayerStatusProps {
 }
 
 export function PlayerStatus({ player, liveData, fixture_id }: PlayerStatusProps) {
-  // Add detailed logging for the incoming player data
-  console.log(`PlayerStatus - Raw player data for ${player?.web_name}:`, {
-    player_id: player?.id,
-    raw_chance_of_playing: player?.chance_of_playing_this_round,
-    typeof_chance: typeof player?.chance_of_playing_this_round,
-    raw_status: player?.status,
-    typeof_status: typeof player?.status,
-    team_id: player?.team,
-  });
+  // Add detailed logging for Rogers specifically
+  if (player?.id === 54) {
+    console.log(`Detailed data for Rogers:`, {
+      id: player?.id,
+      web_name: player?.web_name,
+      raw_chance_of_playing: player?.chance_of_playing_this_round,
+      typeof_chance: typeof player?.chance_of_playing_this_round,
+      raw_status: player?.status,
+      typeof_status: typeof player?.status,
+      team_id: player?.team,
+      parsed_chance: parseInt(player?.chance_of_playing_this_round),
+      is_null: player?.chance_of_playing_this_round === null,
+      is_undefined: player?.chance_of_playing_this_round === undefined,
+    });
+  }
 
   // Query live performance data to get fixture_id
   const { data: livePerformance } = useQuery({
@@ -52,11 +58,13 @@ export function PlayerStatus({ player, liveData, fixture_id }: PlayerStatusProps
         return null;
       }
 
-      console.log('Live performance data for player:', {
-        player_id: player.id,
-        event_id: currentEvent.id,
-        data
-      });
+      if (player?.id === 54) {
+        console.log('Live performance data for Rogers:', {
+          player_id: player.id,
+          event_id: currentEvent.id,
+          data
+        });
+      }
 
       return data;
     }
@@ -67,7 +75,9 @@ export function PlayerStatus({ player, liveData, fixture_id }: PlayerStatusProps
     queryKey: ['fixture-status', livePerformance?.fixture_id],
     enabled: !!livePerformance?.fixture_id,
     queryFn: async () => {
-      console.log(`Fetching fixture status for player ${player?.web_name} (fixture ${livePerformance.fixture_id})`);
+      if (player?.id === 54) {
+        console.log(`Fetching fixture status for Rogers (fixture ${livePerformance.fixture_id})`);
+      }
       
       const { data, error } = await supabase
         .from('fixtures')
@@ -80,18 +90,20 @@ export function PlayerStatus({ player, liveData, fixture_id }: PlayerStatusProps
         return null;
       }
 
-      console.log(`Fixture status for ${player?.web_name}:`, {
-        fixture_id: livePerformance.fixture_id,
-        status: data,
-        live_data: liveData ? {
-          minutes: liveData.minutes,
-          points: liveData.total_points,
-        } : 'No live data',
-        player_status: {
-          chance_of_playing: player?.chance_of_playing_this_round,
-          status: player?.status
-        }
-      });
+      if (player?.id === 54) {
+        console.log(`Fixture status for Rogers:`, {
+          fixture_id: livePerformance.fixture_id,
+          status: data,
+          live_data: liveData ? {
+            minutes: liveData.minutes,
+            points: liveData.total_points,
+          } : 'No live data',
+          player_status: {
+            chance_of_playing: player?.chance_of_playing_this_round,
+            status: player?.status
+          }
+        });
+      }
 
       return data;
     }
@@ -105,15 +117,17 @@ export function PlayerStatus({ player, liveData, fixture_id }: PlayerStatusProps
     const hasZeroChance = player?.chance_of_playing_this_round === 0;
     const isNotAvailable = player?.status === 'n';
     
-    console.log(`Detailed availability check for ${player?.web_name}:`, {
-      hasZeroChance,
-      isNotAvailable,
-      raw_chance_of_playing: player?.chance_of_playing_this_round,
-      parsed_chance: parseInt(player?.chance_of_playing_this_round),
-      status: player?.status,
-      status_type: typeof player?.status,
-      chance_type: typeof player?.chance_of_playing_this_round
-    });
+    if (player?.id === 54) {
+      console.log(`Detailed availability check for Rogers:`, {
+        hasZeroChance,
+        isNotAvailable,
+        raw_chance_of_playing: player?.chance_of_playing_this_round,
+        parsed_chance: parseInt(player?.chance_of_playing_this_round),
+        status: player?.status,
+        status_type: typeof player?.status,
+        chance_type: typeof player?.chance_of_playing_this_round
+      });
+    }
 
     return hasZeroChance || isNotAvailable;
   };
@@ -129,15 +143,17 @@ export function PlayerStatus({ player, liveData, fixture_id }: PlayerStatusProps
       const kickoffTime = new Date(fixtureStatus.kickoff_time);
       const now = new Date();
 
-      console.log(`${player?.web_name} fixture status:`, {
-        kickoff_time: kickoffTime,
-        current_time: now,
-        started: fixtureStatus.started,
-        finished: fixtureStatus.finished,
-        finished_provisional: fixtureStatus.finished_provisional,
-        minutes_played: liveData?.minutes,
-        chance_of_playing: player?.chance_of_playing_this_round
-      });
+      if (player?.id === 54) {
+        console.log(`Rogers fixture status:`, {
+          kickoff_time: kickoffTime,
+          current_time: now,
+          started: fixtureStatus.started,
+          finished: fixtureStatus.finished,
+          finished_provisional: fixtureStatus.finished_provisional,
+          minutes_played: liveData?.minutes,
+          chance_of_playing: player?.chance_of_playing_this_round
+        });
+      }
 
       // Match is finished
       if (fixtureStatus.finished_provisional) {
