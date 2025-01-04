@@ -137,7 +137,7 @@ export function PlayerStatus({ player, liveData, fixture_id }: PlayerStatusProps
       });
     }
 
-    return hasZeroChance || isNotAvailable;
+    return hasZeroChance; // || isNotAvailable;
   };
 
   const getPlayerStatus = () => {
