@@ -42,7 +42,7 @@ export function PlayerCard({ player, isCaptain, isViceCaptain, liveData }: Playe
       
       if (error) {
         console.error('Error fetching points calculation:', error);
-        return null;
+        throw error;
       }
       
       console.log('Points calculation data for', player?.web_name, data);
@@ -52,23 +52,29 @@ export function PlayerCard({ player, isCaptain, isViceCaptain, liveData }: Playe
 
   // Calculate total points from raw_total_points and bonus
   const calculateTotalPoints = () => {
-    // Step 1: Get raw points from calculation
-    const rawPoints = pointsCalculation?.raw_total_points ?? 0;
-    console.log(`${player?.web_name} - Raw points:`, rawPoints);
-    
-    // Step 2: Add bonus points if available
-    const bonusPoints = liveData?.bonus ?? 0;
-    console.log(`${player?.web_name} - Bonus points:`, bonusPoints);
-    
-    // Step 3: Calculate total before captain multiplier
-    const totalPoints = (rawPoints + bonusPoints);
-    console.log(`${player?.web_name} - Total before captain:`, totalPoints);
-    
-    // Step 4: Apply captain multiplier if applicable
-    const finalPoints = isCaptain ? totalPoints * 2 : totalPoints;
-    console.log(`${player?.web_name} - Final points (after captain multiplier):`, finalPoints);
+    // If we have live data but no points calculation, use live data
+    if (liveData && !pointsCalculation) {
+      const points = liveData.total_points || 0;
+      console.log(`${player?.web_name} - Using live data points:`, points);
+      return isCaptain ? points * 2 : points;
+    }
 
-    return finalPoints;
+    // If we have points calculation, use that
+    if (pointsCalculation) {
+      const rawPoints = pointsCalculation.raw_total_points ?? 0;
+      console.log(`${player?.web_name} - Raw points:`, rawPoints);
+      
+      const bonusPoints = liveData?.bonus ?? 0;
+      console.log(`${player?.web_name} - Bonus points:`, bonusPoints);
+      
+      const totalPoints = (rawPoints + bonusPoints);
+      console.log(`${player?.web_name} - Total before captain:`, totalPoints);
+      
+      return isCaptain ? totalPoints * 2 : totalPoints;
+    }
+
+    // Default to 0 if no data available
+    return 0;
   };
 
   const points = calculateTotalPoints();
