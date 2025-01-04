@@ -99,16 +99,31 @@ export function PlayerStatus({ player, liveData, fixture_id }: PlayerStatusProps
     }
   });
 
+  const isPlayerUnavailable = () => {
+    // Player is unavailable if:
+    // 1. They have 0% chance of playing OR
+    // 2. Their status is 'n' (not available) regardless of chance_of_playing value
+    // 3. Their status is undefined/null but chance_of_playing is 0
+    const hasZeroChance = player?.chance_of_playing_this_round === 0;
+    const isNotAvailable = player?.status === 'n';
+    
+    console.log(`Checking availability for ${player?.web_name}:`, {
+      hasZeroChance,
+      isNotAvailable,
+      status: player?.status,
+      chance_of_playing: player?.chance_of_playing_this_round
+    });
+
+    return hasZeroChance || isNotAvailable;
+  };
+
   const getPlayerStatus = () => {
-    // Check for completely unavailable players (0% chance) first
-    // This is the ONLY status that overrides match status
-    // Also check for null/undefined values when status is 'n' (not available)
-    if (player?.chance_of_playing_this_round === 0 || 
-        (player?.status === 'n' && player?.chance_of_playing_this_round == null)) {
+    // ALWAYS check unavailability first - this overrides ALL other statuses
+    if (isPlayerUnavailable()) {
       return getUnavailableStatus(player?.web_name);
     }
 
-    // For all other cases, check match status first
+    // For all other cases, check match status
     if (fixtureStatus) {
       const kickoffTime = new Date(fixtureStatus.kickoff_time);
       const now = new Date();
