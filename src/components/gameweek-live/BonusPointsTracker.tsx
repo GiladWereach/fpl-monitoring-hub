@@ -16,7 +16,10 @@ interface BonusPointsTrackerProps {
   matchId?: number | null;
 }
 
-const calculateBonusPoints = (bps: number, allBpsInFixture: number[]): number => {
+const calculateBonusPoints = (bps: number, minutes: number, allBpsInFixture: number[]): number => {
+  // If player hasn't played any minutes, they can't get bonus points
+  if (minutes === 0) return 0;
+  
   // Sort BPS in descending order and get unique values
   const uniqueBps = [...new Set(allBpsInFixture)].sort((a, b) => b - a);
   
@@ -77,6 +80,7 @@ const BonusPointsTracker = ({ gameweek, matchId }: BonusPointsTrackerProps) => {
           id,
           bps,
           bonus,
+          minutes,
           player:players(
             web_name,
             element_type,
@@ -143,7 +147,7 @@ const BonusPointsTracker = ({ gameweek, matchId }: BonusPointsTrackerProps) => {
               </TableHeader>
               <TableBody>
                 {bpsByMatch?.[match.id]?.map((bps: any) => {
-                  const calculatedBonus = calculateBonusPoints(bps.bps, matchBpsValues);
+                  const calculatedBonus = calculateBonusPoints(bps.bps, bps.minutes, matchBpsValues);
                   return (
                     <TableRow 
                       key={bps.id}
