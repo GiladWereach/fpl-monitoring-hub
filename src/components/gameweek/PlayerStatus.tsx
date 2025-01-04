@@ -1,8 +1,14 @@
 import React from 'react';
-import { Check, Play, XOctagon, AlertCircle, Clock } from 'lucide-react';
-import { cn } from "@/lib/utils";
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { StatusIcon } from './components/StatusIcon';
+import {
+  getUnavailableStatus,
+  getDoubtfulStatus,
+  getFinishedStatus,
+  getUpcomingStatus,
+  getInPlayStatus,
+} from './utils/playerStatusUtils';
 
 interface PlayerStatusProps {
   player: any;
@@ -28,7 +34,6 @@ export function PlayerStatus({ player, liveData, fixture_id }: PlayerStatusProps
     queryKey: ['live-performance', player?.id],
     enabled: !!player?.id,
     queryFn: async () => {
-      // Get current event first
       const { data: currentEvent } = await supabase
         .from('events')
         .select('id')
@@ -37,7 +42,6 @@ export function PlayerStatus({ player, liveData, fixture_id }: PlayerStatusProps
 
       if (!currentEvent) return null;
 
-      // Then get live performance data
       const { data, error } = await supabase
         .from('gameweek_live_performance')
         .select('*')
@@ -99,13 +103,7 @@ export function PlayerStatus({ player, liveData, fixture_id }: PlayerStatusProps
     // Check for completely unavailable players (0% chance) first
     // This is the ONLY status that overrides match status
     if (player?.chance_of_playing_this_round === 0) {
-      console.log(`${player?.web_name} has 0% chance of playing - showing red octagon regardless of match status`);
-      return {
-        icon: XOctagon,
-        color: '#EF4444', // Red
-        animate: false,
-        label: 'Not Available'
-      };
+      return getUnavailableStatus(player?.web_name);
     }
 
     // For all other cases, check match status first
@@ -125,44 +123,22 @@ export function PlayerStatus({ player, liveData, fixture_id }: PlayerStatusProps
 
       // Match is finished
       if (fixtureStatus.finished_provisional) {
-        return {
-          icon: Check,
-          color: '#9CA3AF', // Gray
-          animate: false,
-          label: 'Finished'
-        };
+        return getFinishedStatus();
       }
 
       // Future match
       if (kickoffTime > now && !fixtureStatus.started) {
         // Check for doubtful status for upcoming matches
         if (player?.chance_of_playing_this_round !== null && player?.chance_of_playing_this_round < 100) {
-          console.log(`${player?.web_name} has ${player.chance_of_playing_this_round}% chance of playing in upcoming match`);
-          return {
-            icon: AlertCircle,
-            color: '#FCD34D', // Yellow
-            animate: false,
-            label: `${player.chance_of_playing_this_round}% Chance`
-          };
+          return getDoubtfulStatus(player?.web_name, player.chance_of_playing_this_round);
         }
-
-        return {
-          icon: Clock,
-          color: '#3B82F6', // Blue
-          animate: false,
-          label: 'Upcoming'
-        };
+        return getUpcomingStatus();
       }
 
       // Match is in progress
       if (fixtureStatus.started && !fixtureStatus.finished && !fixtureStatus.finished_provisional) {
         if (liveData?.minutes > 0) {
-          return {
-            icon: Play,
-            color: '#3DFF9A', // Green
-            animate: true,
-            label: 'In Play'
-          };
+          return getInPlayStatus();
         }
       }
     }
@@ -174,18 +150,5 @@ export function PlayerStatus({ player, liveData, fixture_id }: PlayerStatusProps
   const status = getPlayerStatus();
   if (!status) return null;
 
-  const Icon = status.icon;
-
-  return (
-    <div className="absolute bottom-1 left-1">
-      <Icon 
-        className={cn(
-          "h-4 w-4",
-          status.animate && "animate-pulse"
-        )}
-        color={status.color}
-        aria-label={status.label}
-      />
-    </div>
-  );
+  return <StatusIcon status={status} />;
 }
