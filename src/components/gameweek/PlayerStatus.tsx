@@ -17,16 +17,14 @@ interface PlayerStatusProps {
 }
 
 export function PlayerStatus({ player, liveData, fixture_id }: PlayerStatusProps) {
-  console.log(`PlayerStatus component for ${player?.web_name}:`, {
+  // Add detailed logging for the incoming player data
+  console.log(`PlayerStatus - Raw player data for ${player?.web_name}:`, {
     player_id: player?.id,
-    chance_of_playing: player?.chance_of_playing_this_round,
-    status: player?.status,
-    live_data: liveData ? {
-      minutes: liveData.minutes,
-      points: liveData.total_points,
-      fixture_id: fixture_id
-    } : 'No live data',
-    fixture_id: fixture_id
+    raw_chance_of_playing: player?.chance_of_playing_this_round,
+    typeof_chance: typeof player?.chance_of_playing_this_round,
+    raw_status: player?.status,
+    typeof_status: typeof player?.status,
+    team_id: player?.team,
   });
 
   // Query live performance data to get fixture_id
@@ -107,11 +105,14 @@ export function PlayerStatus({ player, liveData, fixture_id }: PlayerStatusProps
     const hasZeroChance = player?.chance_of_playing_this_round === 0;
     const isNotAvailable = player?.status === 'n';
     
-    console.log(`Checking availability for ${player?.web_name}:`, {
+    console.log(`Detailed availability check for ${player?.web_name}:`, {
       hasZeroChance,
       isNotAvailable,
+      raw_chance_of_playing: player?.chance_of_playing_this_round,
+      parsed_chance: parseInt(player?.chance_of_playing_this_round),
       status: player?.status,
-      chance_of_playing: player?.chance_of_playing_this_round
+      status_type: typeof player?.status,
+      chance_type: typeof player?.chance_of_playing_this_round
     });
 
     return hasZeroChance || isNotAvailable;
