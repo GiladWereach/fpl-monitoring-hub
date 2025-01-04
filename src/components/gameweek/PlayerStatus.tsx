@@ -81,8 +81,8 @@ export function PlayerStatus({ player, liveData, fixture_id }: PlayerStatusProps
       }
     });
 
-    // Check if player is unavailable (explicitly 0 or "0")
-    if (chanceOfPlaying === 0 || chanceOfPlaying === "0" || chanceOfPlaying === null) {
+    // Check if player is unavailable (explicitly 0)
+    if (chanceOfPlaying === 0 || chanceOfPlaying === "0") {
       console.log(`${player?.web_name} is unavailable due to 0% chance of playing`);
       return true;
     }
@@ -120,6 +120,7 @@ export function PlayerStatus({ player, liveData, fixture_id }: PlayerStatusProps
       // Future match
       if (kickoffTime > now && !fixtureStatus.started) {
         // Check for doubtful status for upcoming matches
+        // Only show doubtful if chance is not null and less than 100
         if (player?.chance_of_playing_this_round !== null && 
             player?.chance_of_playing_this_round < 100) {
           return getDoubtfulStatus(player?.web_name, player.chance_of_playing_this_round);
