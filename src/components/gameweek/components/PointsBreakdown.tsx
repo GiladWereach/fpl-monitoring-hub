@@ -16,12 +16,12 @@ export function PointsBreakdown({ liveData, pointsCalculation, isCaptain, isVice
     goals: pointsCalculation?.goals_scored_points || liveData?.points_breakdown?.goals || 0,
     assists: pointsCalculation?.assist_points || liveData?.points_breakdown?.assists || 0,
     cleanSheets: pointsCalculation?.clean_sheet_points || liveData?.points_breakdown?.clean_sheets || 0,
-    saves: pointsCalculation?.saves_points || 0,
-    penalties_saved: pointsCalculation?.penalty_save_points || 0,
-    penalties_missed: pointsCalculation?.penalty_miss_points || 0,
-    yellow_cards: pointsCalculation?.card_points || 0,
-    red_cards: pointsCalculation?.card_points || 0,
-    own_goals: pointsCalculation?.own_goal_points || 0,
+    saves: pointsCalculation?.saves_points || liveData?.points_breakdown?.saves || 0,
+    penalties_saved: pointsCalculation?.penalty_save_points || liveData?.points_breakdown?.penalties_saved || 0,
+    penalties_missed: pointsCalculation?.penalty_miss_points || liveData?.points_breakdown?.penalties_missed || 0,
+    yellow_cards: pointsCalculation?.card_points || liveData?.points_breakdown?.yellow_cards || 0,
+    red_cards: pointsCalculation?.card_points || liveData?.points_breakdown?.red_cards || 0,
+    own_goals: pointsCalculation?.own_goal_points || liveData?.points_breakdown?.own_goals || 0,
     bonus: liveData?.bonus || 0,
     bps: liveData?.bps || 0
   };

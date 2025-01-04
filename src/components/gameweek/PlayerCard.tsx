@@ -27,7 +27,8 @@ export function PlayerCard({ player, isCaptain, isViceCaptain, liveData, fixture
     live_data: liveData ? {
       minutes: liveData.minutes,
       points: liveData.total_points,
-      fixture_id: liveData.fixture_id
+      fixture_id: liveData.fixture_id,
+      points_breakdown: liveData.points_breakdown
     } : 'No live data',
     passed_fixture_id: fixture_id
   });
