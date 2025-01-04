@@ -2620,10 +2620,10 @@ export type Database = {
       event_trigger_type: "deadline" | "kickoff" | "match_status"
       frequency_unit: "minutes" | "hours" | "days"
       match_window_state:
-        | "non_match_day"
+        | "active_window"
         | "pre_match"
-        | "active_matches"
         | "post_match"
+        | "inactive"
       schedule_frequency:
         | "fixed_interval"
         | "match_dependent"

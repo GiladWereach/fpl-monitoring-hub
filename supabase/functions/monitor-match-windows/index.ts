@@ -51,7 +51,7 @@ Deno.serve(async (req) => {
       logDebug('monitor-match-windows', 'No active match window found');
 
       // If we had an active state before, record the transition to inactive
-      if (latestState?.state === 'active') {
+      if (latestState?.state === 'active_window') {
         const { error: insertError } = await supabase
           .from('match_window_states')
           .insert({
@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
             active_fixtures: 0,
             transition_type: 'window_closed',
             metadata: {
-              previous_state: 'active',
+              previous_state: 'active_window',
               reason: 'no_active_matches'
             }
           });
@@ -74,7 +74,7 @@ Deno.serve(async (req) => {
       return new Response(
         JSON.stringify({
           success: true,
-          stateChanged: latestState?.state === 'active',
+          stateChanged: latestState?.state === 'active_window',
           currentWindow: null,
           status: 'no_active_matches'
         }),
@@ -85,9 +85,14 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Determine window state based on match status
+    const newState = currentWindow.is_active ? 'active_window' : 
+                    currentWindow.next_kickoff ? 'pre_match' : 
+                    'post_match';
+
     // Determine if state has changed
     const hasStateChanged = !latestState || 
-      latestState.state !== (currentWindow.is_active ? 'active' : 'inactive') ||
+      latestState.state !== newState ||
       latestState.active_fixtures !== currentWindow.match_count;
 
     if (hasStateChanged) {
@@ -100,12 +105,12 @@ Deno.serve(async (req) => {
       const { error: insertError } = await supabase
         .from('match_window_states')
         .insert({
-          state: currentWindow.is_active ? 'active' : 'inactive',
+          state: newState,
           start_time: currentWindow.window_start,
           end_time: currentWindow.window_end,
           active_fixtures: currentWindow.match_count,
           transition_type: !latestState ? 'initial' : 
-                         currentWindow.is_active ? 'window_opened' : 'window_closed',
+                         newState === 'active_window' ? 'window_opened' : 'window_closed',
           metadata: {
             next_kickoff: currentWindow.next_kickoff,
             previous_state: latestState?.state || null,
@@ -119,14 +124,14 @@ Deno.serve(async (req) => {
       }
 
       // Trigger schedule interval updates if needed
-      if (currentWindow.is_active !== (latestState?.state === 'active')) {
+      if (newState !== latestState?.state) {
         try {
           const { error: scheduleError } = await supabase.functions.invoke('adjust-schedule-intervals', {
             body: { 
               matchWindow: currentWindow,
               stateChange: {
                 from: latestState?.state || 'inactive',
-                to: currentWindow.is_active ? 'active' : 'inactive'
+                to: newState
               }
             }
           });
