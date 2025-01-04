@@ -7,6 +7,11 @@ import { useSchedules } from "./hooks/useSchedules";
 import { useMatchWindow } from "./hooks/useMatchWindow";
 import { useFunctionExecution } from "./hooks/useFunctionExecution";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Clock, Calendar, AlertCircle } from "lucide-react";
+import { format } from "date-fns";
+import { LiveStatus } from "./LiveStatus";
+import { UTCClock } from "./components/UTCClock";
 
 export function EdgeFunctionManager() {
   console.log("Rendering EdgeFunctionManager");
@@ -27,8 +32,43 @@ export function EdgeFunctionManager() {
     match_count: matchWindow.match_count
   } : null;
 
+  const getIntervalStatus = () => {
+    if (!formattedMatchWindow) return "30 minutes (default)";
+    if (formattedMatchWindow.is_active) return "2 minutes (match active)";
+    return "30 minutes (no active matches)";
+  };
+
   return (
     <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Game Week Status */}
+        <Card className="p-4 bg-card/50">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <span className="font-medium">Game Week Status</span>
+            </div>
+            <LiveStatus showLabel showWindow />
+          </div>
+        </Card>
+
+        {/* Current Interval */}
+        <Card className="p-4 bg-card/50">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4 text-muted-foreground" />
+              <span className="font-medium">Current Interval</span>
+            </div>
+            <Badge variant={formattedMatchWindow?.is_active ? "success" : "secondary"}>
+              {getIntervalStatus()}
+            </Badge>
+          </div>
+        </Card>
+
+        {/* UTC Clock */}
+        <UTCClock />
+      </div>
+
       <Card className="p-6">
         <FunctionExecutionStatus 
           loading={Boolean(loading)} 
