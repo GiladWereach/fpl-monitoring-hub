@@ -89,43 +89,59 @@ export function EdgeFunctionManager() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {/* Game Week Status */}
         <Card className="p-4 bg-card/50">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 pb-2 border-b">
               <Calendar className="h-4 w-4 text-muted-foreground" />
               <span className="font-medium">Match Window</span>
             </div>
-            <LiveStatus showLabel showWindow />
+            <div className="pt-1">
+              <LiveStatus showLabel showWindow />
+            </div>
           </div>
         </Card>
 
         {/* Current Interval */}
         <Card className="p-4 bg-card/50">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 pb-2 border-b">
               <Clock className="h-4 w-4 text-muted-foreground" />
               <span className="font-medium">Current Interval</span>
             </div>
-            <Badge variant={formattedMatchWindow?.is_active ? "success" : "secondary"}>
-              {getIntervalStatus()}
-            </Badge>
+            <div className="pt-1">
+              <Badge variant={formattedMatchWindow?.is_active ? "success" : "secondary"}>
+                {getIntervalStatus()}
+              </Badge>
+            </div>
           </div>
         </Card>
 
         {/* Next Transition */}
         <Card className="p-4 bg-card/50">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 pb-2 border-b">
               <Timer className="h-4 w-4 text-muted-foreground" />
               <span className="font-medium">Next Transition</span>
             </div>
-            <Badge variant="outline">
-              {getNextTransitionTime()}
-            </Badge>
+            <div className="pt-1">
+              <Badge variant="outline">
+                {getNextTransitionTime()}
+              </Badge>
+            </div>
           </div>
         </Card>
 
         {/* UTC Clock */}
-        <UTCClock />
+        <Card className="p-4 bg-card/50">
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 pb-2 border-b">
+              <Clock className="h-4 w-4 text-muted-foreground" />
+              <span className="font-medium">UTC Time</span>
+            </div>
+            <div className="pt-1">
+              <UTCClock />
+            </div>
+          </div>
+        </Card>
       </div>
 
       <ScrollArea className="h-[calc(100vh-300px)]">
