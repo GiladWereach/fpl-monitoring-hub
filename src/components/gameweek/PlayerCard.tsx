@@ -16,21 +16,22 @@ interface PlayerCardProps {
   isCaptain: boolean;
   isViceCaptain: boolean;
   liveData?: any;
+  fixture_id?: number;
 }
 
-export function PlayerCard({ player, isCaptain, isViceCaptain, liveData }: PlayerCardProps) {
+export function PlayerCard({ player, isCaptain, isViceCaptain, liveData, fixture_id }: PlayerCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   
   // Query points calculation data
   const { data: pointsCalculation } = useQuery({
-    queryKey: ['points-calculation', player?.id, liveData?.fixture_id],
-    enabled: !!player?.id && !!liveData?.fixture_id,
+    queryKey: ['points-calculation', player?.id, fixture_id],
+    enabled: !!player?.id && !!fixture_id,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('player_points_calculation')
         .select('*')
         .eq('player_id', player.id)
-        .eq('fixture_id', liveData.fixture_id)
+        .eq('fixture_id', fixture_id)
         .maybeSingle();
       
       if (error) {
@@ -87,7 +88,11 @@ export function PlayerCard({ player, isCaptain, isViceCaptain, liveData }: Playe
             </div>
           )}
           
-          <PlayerStatus player={player} liveData={liveData} />
+          <PlayerStatus 
+            player={player} 
+            liveData={liveData}
+            fixture_id={fixture_id}
+          />
           
           <div className="relative">
             <p className="player-name truncate">{player?.web_name}</p>

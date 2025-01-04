@@ -7,18 +7,19 @@ import { supabase } from '@/integrations/supabase/client';
 interface PlayerStatusProps {
   player: any;
   liveData?: any;
+  fixture_id?: number;
 }
 
-export function PlayerStatus({ player, liveData }: PlayerStatusProps) {
+export function PlayerStatus({ player, liveData, fixture_id }: PlayerStatusProps) {
   // Query fixture status when we have live data
   const { data: fixtureStatus } = useQuery({
-    queryKey: ['fixture-status', liveData?.fixture_id],
-    enabled: !!liveData?.fixture_id,
+    queryKey: ['fixture-status', fixture_id],
+    enabled: !!fixture_id,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('fixtures')
         .select('started, finished, finished_provisional')
-        .eq('id', liveData.fixture_id)
+        .eq('id', fixture_id)
         .maybeSingle();
       
       if (error) {
@@ -27,12 +28,11 @@ export function PlayerStatus({ player, liveData }: PlayerStatusProps) {
       }
 
       console.log(`Fixture status for ${player?.web_name}:`, {
-        fixture_id: liveData?.fixture_id,
+        fixture_id,
         status: data,
         live_data: {
           minutes: liveData?.minutes,
           points: liveData?.total_points,
-          fixture_id: liveData?.fixture_id
         },
         player_status: {
           chance_of_playing: player?.chance_of_playing_this_round,

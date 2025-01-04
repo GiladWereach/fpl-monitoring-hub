@@ -18,13 +18,18 @@ export function PitchView({ teamSelection, players, liveData }: PitchViewProps) 
     const player = players.find(p => p.id === pick.element);
     const playerLiveData = liveData?.find(d => d.player_id === pick.element);
     
+    // Find the fixture for this player
+    const fixture = playerLiveData?.fixture_id;
+    
     console.log('Player Live Data:', {
       player_id: player?.id,
       web_name: player?.web_name,
+      fixture_id: fixture,
       live_data: playerLiveData ? {
         minutes: playerLiveData.minutes,
         total_points: playerLiveData.total_points,
-        bonus: playerLiveData.bonus
+        bonus: playerLiveData.bonus,
+        fixture_id: playerLiveData.fixture_id
       } : 'No live data'
     });
 
@@ -33,7 +38,8 @@ export function PitchView({ teamSelection, players, liveData }: PitchViewProps) 
       isCaptain: pick.is_captain,
       isViceCaptain: pick.is_vice_captain,
       liveData: playerLiveData,
-      bonus: playerLiveData?.bonus || 0
+      bonus: playerLiveData?.bonus || 0,
+      fixture_id: fixture
     };
   };
 
@@ -87,6 +93,7 @@ export function PitchView({ teamSelection, players, liveData }: PitchViewProps) 
                     isCaptain={player.isCaptain}
                     isViceCaptain={player.isViceCaptain}
                     liveData={player.liveData}
+                    fixture_id={player.fixture_id}
                   />
                 );
               })}
@@ -104,6 +111,7 @@ export function PitchView({ teamSelection, players, liveData }: PitchViewProps) 
                     isCaptain={player.isCaptain}
                     isViceCaptain={player.isViceCaptain}
                     liveData={player.liveData}
+                    fixture_id={player.fixture_id}
                   />
                 );
               })}
@@ -121,6 +129,7 @@ export function PitchView({ teamSelection, players, liveData }: PitchViewProps) 
                     isCaptain={player.isCaptain}
                     isViceCaptain={player.isViceCaptain}
                     liveData={player.liveData}
+                    fixture_id={player.fixture_id}
                   />
                 );
               })}
@@ -138,6 +147,7 @@ export function PitchView({ teamSelection, players, liveData }: PitchViewProps) 
                     isCaptain={player.isCaptain}
                     isViceCaptain={player.isViceCaptain}
                     liveData={player.liveData}
+                    fixture_id={player.fixture_id}
                   />
                 );
               })}
