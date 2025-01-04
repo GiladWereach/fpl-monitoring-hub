@@ -34,51 +34,33 @@ export function PlayerCard({ player, isCaptain, isViceCaptain, liveData }: Playe
         .single();
       
       if (error) throw error;
+      console.log('Points calculation data for', player?.web_name, data);
       return data;
     }
   });
 
   // Calculate total points from raw_total_points and bonus
   const calculateTotalPoints = () => {
-    // Get raw points from calculation if available
+    // Step 1: Get raw points from calculation
     const rawPoints = pointsCalculation?.raw_total_points || 0;
+    console.log(`${player?.web_name} - Raw points:`, rawPoints);
     
-    // Add bonus points if available
+    // Step 2: Add bonus points if available
     const bonusPoints = liveData?.bonus || 0;
-    const totalPoints = rawPoints + bonusPoints;
+    console.log(`${player?.web_name} - Bonus points:`, bonusPoints);
     
-    // Apply captain multiplier if applicable
+    // Step 3: Calculate total before captain multiplier
+    const totalPoints = rawPoints + bonusPoints;
+    console.log(`${player?.web_name} - Total before captain:`, totalPoints);
+    
+    // Step 4: Apply captain multiplier if applicable
     const finalPoints = isCaptain ? totalPoints * 2 : totalPoints;
-
-    console.log('Points calculation for', player?.web_name, {
-      raw_points: rawPoints,
-      bonus_points: bonusPoints,
-      total_points: totalPoints,
-      final_points: finalPoints,
-      is_captain: isCaptain
-    });
+    console.log(`${player?.web_name} - Final points (after captain multiplier):`, finalPoints);
 
     return finalPoints;
   };
 
   const points = calculateTotalPoints();
-  const isGoalkeeper = player?.element_type === 1;
-  const isDefender = player?.element_type === 2;
-  const isMidfielder = player?.element_type === 3;
-
-  console.log('PlayerCard Data:', {
-    player_id: player?.id,
-    web_name: player?.web_name,
-    status: player?.status,
-    chance_of_playing: player?.chance_of_playing_this_round,
-    points_calculation: pointsCalculation,
-    live_data: liveData ? {
-      minutes: liveData.minutes,
-      total_points: points,
-      bonus: liveData.bonus,
-      bps: liveData.bps
-    } : 'No live data'
-  });
 
   return (
     <HoverCard>
