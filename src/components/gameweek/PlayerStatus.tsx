@@ -49,7 +49,7 @@ export function PlayerStatus({ player, liveData }: PlayerStatusProps) {
       console.log(`Player ${player.web_name} is not available (0% chance)`);
       return {
         icon: XOctagon,
-        color: '#EF4444', // red-500
+        color: '#EF4444',
         animate: false,
         label: 'Not Available'
       };
@@ -62,7 +62,7 @@ export function PlayerStatus({ player, liveData }: PlayerStatusProps) {
         console.log(`Player ${player.web_name} is in play`);
         return {
           icon: Play,
-          color: '#3DFF9A', // green
+          color: '#3DFF9A',
           animate: true,
           label: 'In Play'
         };
@@ -73,7 +73,7 @@ export function PlayerStatus({ player, liveData }: PlayerStatusProps) {
         console.log(`Player ${player.web_name} has finished playing`);
         return {
           icon: Check,
-          color: '#9CA3AF', // gray-400
+          color: '#9CA3AF',
           animate: false,
           label: 'Finished'
         };
