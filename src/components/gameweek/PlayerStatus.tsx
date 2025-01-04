@@ -102,7 +102,9 @@ export function PlayerStatus({ player, liveData, fixture_id }: PlayerStatusProps
   const getPlayerStatus = () => {
     // Check for completely unavailable players (0% chance) first
     // This is the ONLY status that overrides match status
-    if (player?.chance_of_playing_this_round === 0) {
+    // Also check for null/undefined values when status is 'n' (not available)
+    if (player?.chance_of_playing_this_round === 0 || 
+        (player?.status === 'n' && player?.chance_of_playing_this_round == null)) {
       return getUnavailableStatus(player?.web_name);
     }
 
@@ -129,7 +131,8 @@ export function PlayerStatus({ player, liveData, fixture_id }: PlayerStatusProps
       // Future match
       if (kickoffTime > now && !fixtureStatus.started) {
         // Check for doubtful status for upcoming matches
-        if (player?.chance_of_playing_this_round !== null && player?.chance_of_playing_this_round < 100) {
+        if (player?.chance_of_playing_this_round !== null && 
+            player?.chance_of_playing_this_round < 100) {
           return getDoubtfulStatus(player?.web_name, player.chance_of_playing_this_round);
         }
         return getUpcomingStatus();

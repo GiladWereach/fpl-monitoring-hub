@@ -8,7 +8,7 @@ export interface PlayerStatusConfig {
 }
 
 export const getUnavailableStatus = (playerName: string): PlayerStatusConfig => {
-  console.log(`${playerName} has 0% chance of playing - showing red octagon regardless of match status`);
+  console.log(`${playerName} is unavailable - showing red octagon regardless of match status`);
   return {
     icon: OctagonX,
     color: '#EF4444', // Red
