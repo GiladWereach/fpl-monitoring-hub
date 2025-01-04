@@ -35,10 +35,19 @@ export const useTeamData = (teamId: string | null) => {
       // First try to get data from our database
       const { data: selectionData, error: selectionError } = await supabase
         .from('team_selections')
-        .select('*')
+        .select(`
+          id,
+          fpl_team_id,
+          event,
+          formation,
+          captain_id,
+          vice_captain_id,
+          picks,
+          auto_subs
+        `)
         .eq('fpl_team_id', teamId)
         .eq('event', existingTeam.event)
-        .maybeSingle();
+        .single();
 
       if (selectionError) {
         console.error('Error fetching team selection:', selectionError);
@@ -48,10 +57,17 @@ export const useTeamData = (teamId: string | null) => {
       // Get performance data separately
       const { data: performanceData, error: performanceError } = await supabase
         .from('team_performances')
-        .select('points, total_points, current_rank, overall_rank, team_value, bank')
+        .select(`
+          points,
+          total_points,
+          current_rank,
+          overall_rank,
+          team_value,
+          bank
+        `)
         .eq('fpl_team_id', teamId)
         .eq('event', existingTeam.event)
-        .maybeSingle();
+        .single();
 
       if (performanceError) {
         console.error('Error fetching team performance:', performanceError);
@@ -83,7 +99,7 @@ export const useTeamData = (teamId: string | null) => {
 
       // If no local data or it's stale, fetch from FPL API
       console.log('No local data found, fetching from API');
-      const response = await fetch(`${window.location.origin}/api/fetch-team-data`, {
+      const response = await fetch(`/api/fetch-team-data`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ teamId: parseInt(teamId) })
