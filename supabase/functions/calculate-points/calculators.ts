@@ -54,8 +54,5 @@ export function calculatePenaltyPoints(
   return (penaltiesSaved * rules.penalties_saved) + (penaltiesMissed * rules.penalties_missed);
 }
 
-export function calculateBonusPoints(bonus: number): number {
-  // Return the actual bonus points value (3, 2, or 1)
-  // This value comes directly from the FPL API and represents the correct bonus points
-  return bonus;
-}
+// Remove the duplicate bonus points calculator and export the one from bonusCalculator.ts
+export { calculateBonusPoints } from './calculators/bonusCalculator.ts';
