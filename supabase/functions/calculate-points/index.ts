@@ -23,6 +23,21 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
+    // First get the scoring rules
+    const { data: rules, error: rulesError } = await supabaseClient
+      .from('scoring_rules')
+      .select('*')
+      .limit(1)
+      .single();
+
+    if (rulesError) {
+      throw new Error(`Failed to fetch scoring rules: ${rulesError.message}`);
+    }
+
+    if (!rules) {
+      throw new Error('No scoring rules found');
+    }
+
     // Get performances that need points calculated
     const { data: performances, error: perfError } = await supabaseClient
       .from('gameweek_live_performance')
@@ -44,18 +59,20 @@ Deno.serve(async (req) => {
         [{
           player_id: perf.player_id,
           bps: perf.bps,
-          fixture_id: perf.fixture_id
+          fixture_id: perf.fixture_id,
+          minutes: perf.minutes
         }],
         performances
           .filter(p => p.fixture_id === perf.fixture_id)
           .map(p => ({
             player_id: p.player_id,
             bps: p.bps,
-            fixture_id: p.fixture_id
+            fixture_id: p.fixture_id,
+            minutes: p.minutes
           }))
       ) : 0;
 
-      // Calculate minutes points - this is the key change
+      // Calculate minutes points
       const minutesPoints = calculateMinutesPoints(perf.minutes, rules);
       
       const goalsPoints = calculateGoalPoints(perf.goals_scored, perf.player.element_type, rules);
@@ -63,7 +80,7 @@ Deno.serve(async (req) => {
       const goalsConcededPoints = calculateGoalsConcededPoints(perf.goals_conceded, perf.player.element_type, rules);
       const assistPoints = perf.assists * rules.assists;
       const penaltySavePoints = perf.penalties_saved * rules.penalties_saved;
-      const penaltyMissPoints = perf.penalties_missed * rules.penalties.missed;
+      const penaltyMissPoints = perf.penalties_missed * rules.penalties_missed;
       const ownGoalPoints = perf.own_goals * rules.own_goals;
       const cardPoints = calculateCardPoints(perf.yellow_cards, perf.red_cards, rules);
 
@@ -100,7 +117,7 @@ Deno.serve(async (req) => {
         event_id: perf.event_id,
         player_id: perf.player_id,
         fixture_id: perf.fixture_id,
-        minutes_points: minutesPoints,  // Make sure this is included
+        minutes_points: minutesPoints,
         goals_scored_points: goalsPoints,
         clean_sheet_points: cleanSheetPoints,
         goals_conceded_points: goalsConcededPoints,
