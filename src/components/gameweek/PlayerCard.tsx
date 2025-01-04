@@ -17,8 +17,19 @@ interface PlayerCardProps {
 
 export function PlayerCard({ player, isCaptain, isViceCaptain, liveData }: PlayerCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const points = liveData?.total_points || 0;
-  const finalPoints = isCaptain ? points * 2 : points;
+  
+  // Calculate total points from breakdown
+  const calculateTotalPoints = () => {
+    if (!liveData?.points_breakdown) return 0;
+    
+    const breakdown = liveData.points_breakdown;
+    const basePoints = Object.values(breakdown).reduce((sum: number, points: number) => sum + points, 0);
+    
+    // Apply captain multiplier if applicable
+    return isCaptain ? basePoints * 2 : basePoints;
+  };
+
+  const points = calculateTotalPoints();
   const isGoalkeeper = player?.element_type === 1;
   const isDefender = player?.element_type === 2;
   const isMidfielder = player?.element_type === 3;
@@ -30,20 +41,10 @@ export function PlayerCard({ player, isCaptain, isViceCaptain, liveData }: Playe
     chance_of_playing: player?.chance_of_playing_this_round,
     live_data: liveData ? {
       minutes: liveData.minutes,
-      total_points: liveData.total_points,
+      total_points: points,
       points_breakdown: liveData.points_breakdown
     } : 'No live data'
   });
-
-  const getPositionText = (elementType: number) => {
-    switch (elementType) {
-      case 1: return 'GK';
-      case 2: return 'DEF';
-      case 3: return 'MID';
-      case 4: return 'FWD';
-      default: return '';
-    }
-  };
 
   return (
     <HoverCard>
@@ -68,7 +69,7 @@ export function PlayerCard({ player, isCaptain, isViceCaptain, liveData }: Playe
           
           <div className="relative">
             <p className="player-name truncate">{player?.web_name}</p>
-            <div className="points-text">{finalPoints}</div>
+            <div className="points-text">{points}</div>
             <div className="player-position">{getPositionText(player?.element_type)}</div>
           </div>
         </div>
@@ -131,4 +132,14 @@ export function PlayerCard({ player, isCaptain, isViceCaptain, liveData }: Playe
       </HoverCardContent>
     </HoverCard>
   );
+}
+
+function getPositionText(elementType: number) {
+  switch (elementType) {
+    case 1: return 'GK';
+    case 2: return 'DEF';
+    case 3: return 'MID';
+    case 4: return 'FWD';
+    default: return '';
+  }
 }
