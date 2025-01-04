@@ -1,8 +1,8 @@
-import { corsHeaders } from '../_shared/cors.ts';
-import { createClient } from '@supabase/supabase-js';
-import { TeamResponse } from './types';
-import { storeTeamData } from './database';
-import { calculateFormation, getFormationPositions } from './utils';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { corsHeaders } from '../_shared/cors.ts'
+import { storeTeamData } from './database.ts'
+import { calculateFormation, getFormationPositions } from './utils.ts'
+import { TeamResponse } from './types.ts'
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
