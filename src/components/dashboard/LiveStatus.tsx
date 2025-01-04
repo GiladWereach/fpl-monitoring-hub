@@ -60,7 +60,7 @@ export const LiveStatus = ({
       console.log('Match window response:', response[0]);
       return response[0] as MatchWindow;
     },
-    refetchInterval: 30000
+    refetchInterval: 30000 // Refresh every 30 seconds
   });
 
   const { data: currentGameweek, isLoading: gameweekLoading } = useQuery({
@@ -86,9 +86,33 @@ export const LiveStatus = ({
 
   const determineWindowType = (window: MatchWindow | null): WindowType => {
     if (!window) return 'idle';
-    if (window.is_active && window.match_count > 0) return 'live';
-    if (window.next_kickoff && new Date(window.next_kickoff) > new Date()) return 'pre_match';
-    if (window.window_end && new Date() <= new Date(window.window_end)) return 'post_match';
+    
+    // Log window state for debugging
+    console.log('Window state:', {
+      is_active: window.is_active,
+      match_count: window.match_count,
+      next_kickoff: window.next_kickoff,
+      window_start: window.window_start,
+      window_end: window.window_end,
+      current_time: new Date().toISOString()
+    });
+
+    if (window.is_active && window.match_count > 0) {
+      console.log('Live window detected with active matches:', window.match_count);
+      return 'live';
+    }
+    
+    if (window.next_kickoff && new Date(window.next_kickoff) > new Date()) {
+      console.log('Pre-match window detected, next kickoff:', window.next_kickoff);
+      return 'pre_match';
+    }
+    
+    if (window.window_end && new Date() <= new Date(window.window_end)) {
+      console.log('Post-match window detected, ends at:', window.window_end);
+      return 'post_match';
+    }
+
+    console.log('No active window detected, returning idle state');
     return 'idle';
   };
 
