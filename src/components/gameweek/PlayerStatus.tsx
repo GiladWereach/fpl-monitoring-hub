@@ -26,7 +26,20 @@ export function PlayerStatus({ player, liveData }: PlayerStatusProps) {
         return null;
       }
 
-      console.log('Fixture status for player', player?.web_name, ':', data);
+      console.log(`Fixture status for ${player?.web_name}:`, {
+        fixture_id: liveData?.fixture_id,
+        status: data,
+        live_data: {
+          minutes: liveData?.minutes,
+          points: liveData?.total_points,
+          fixture_id: liveData?.fixture_id
+        },
+        player_status: {
+          chance_of_playing: player?.chance_of_playing_this_round,
+          status: player?.status
+        }
+      });
+
       return data;
     }
   });
@@ -34,6 +47,7 @@ export function PlayerStatus({ player, liveData }: PlayerStatusProps) {
   const getPlayerStatus = () => {
     // Check player availability first
     if (player?.chance_of_playing_this_round === 0) {
+      console.log(`${player?.web_name} is not available to play`);
       return {
         icon: XOctagon,
         color: '#EF4444',
@@ -44,6 +58,13 @@ export function PlayerStatus({ player, liveData }: PlayerStatusProps) {
 
     // Then check match and performance status
     if (liveData && fixtureStatus) {
+      console.log(`${player?.web_name} match status:`, {
+        started: fixtureStatus.started,
+        finished: fixtureStatus.finished,
+        finished_provisional: fixtureStatus.finished_provisional,
+        minutes_played: liveData.minutes
+      });
+
       // Match is in progress
       if (fixtureStatus.started && !fixtureStatus.finished && !fixtureStatus.finished_provisional) {
         return {
