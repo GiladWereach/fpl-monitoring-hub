@@ -6,6 +6,7 @@ import { CategorySection } from "./components/CategorySection";
 import { useSchedules } from "./hooks/useSchedules";
 import { useMatchWindow } from "./hooks/useMatchWindow";
 import { useFunctionExecution } from "./hooks/useFunctionExecution";
+import { Card } from "@/components/ui/card";
 
 export function EdgeFunctionManager() {
   console.log("Rendering EdgeFunctionManager");
@@ -28,13 +29,15 @@ export function EdgeFunctionManager() {
 
   return (
     <div className="space-y-6">
-      <FunctionExecutionStatus 
-        loading={Boolean(loading)} 
-        onRefreshAll={refreshAll}
-        matchWindow={formattedMatchWindow}
-      />
+      <Card className="p-6">
+        <FunctionExecutionStatus 
+          loading={Boolean(loading)} 
+          onRefreshAll={refreshAll}
+          matchWindow={formattedMatchWindow}
+        />
+      </Card>
 
-      <ScrollArea className="h-[calc(100vh-200px)]">
+      <ScrollArea className="h-[calc(100vh-300px)]">
         <div className="min-w-[600px] pr-4 space-y-8">
           {categories.map(category => {
             const categoryFunctions = functions
