@@ -21,17 +21,54 @@ export function PlayerStatus({ player, liveData, fixture_id }: PlayerStatusProps
     fixture_id: fixture_id
   });
 
+  // Query live performance data to get fixture_id
+  const { data: livePerformance } = useQuery({
+    queryKey: ['live-performance', player?.id],
+    enabled: !!player?.id,
+    queryFn: async () => {
+      // Get current event first
+      const { data: currentEvent } = await supabase
+        .from('events')
+        .select('id')
+        .eq('is_current', true)
+        .single();
+
+      if (!currentEvent) return null;
+
+      // Then get live performance data
+      const { data, error } = await supabase
+        .from('gameweek_live_performance')
+        .select('*')
+        .eq('event_id', currentEvent.id)
+        .eq('player_id', player.id)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error fetching live performance:', error);
+        return null;
+      }
+
+      console.log('Live performance data for player:', {
+        player_id: player.id,
+        event_id: currentEvent.id,
+        data
+      });
+
+      return data;
+    }
+  });
+
   // Query fixture status when we have a fixture_id
   const { data: fixtureStatus } = useQuery({
-    queryKey: ['fixture-status', fixture_id],
-    enabled: !!fixture_id,
+    queryKey: ['fixture-status', livePerformance?.fixture_id],
+    enabled: !!livePerformance?.fixture_id,
     queryFn: async () => {
-      console.log(`Fetching fixture status for player ${player?.web_name} (fixture ${fixture_id})`);
+      console.log(`Fetching fixture status for player ${player?.web_name} (fixture ${livePerformance.fixture_id})`);
       
       const { data, error } = await supabase
         .from('fixtures')
         .select('started, finished, finished_provisional')
-        .eq('id', fixture_id)
+        .eq('id', livePerformance.fixture_id)
         .maybeSingle();
       
       if (error) {
@@ -40,7 +77,7 @@ export function PlayerStatus({ player, liveData, fixture_id }: PlayerStatusProps
       }
 
       console.log(`Fixture status for ${player?.web_name}:`, {
-        fixture_id,
+        fixture_id: livePerformance.fixture_id,
         status: data,
         live_data: liveData ? {
           minutes: liveData.minutes,
@@ -77,7 +114,7 @@ export function PlayerStatus({ player, liveData, fixture_id }: PlayerStatusProps
     }
 
     // Then check match and performance status
-    if (fixture_id && fixtureStatus) {
+    if (livePerformance?.fixture_id && fixtureStatus) {
       console.log(`${player?.web_name} match status:`, {
         started: fixtureStatus.started,
         finished: fixtureStatus.finished,
@@ -116,7 +153,7 @@ export function PlayerStatus({ player, liveData, fixture_id }: PlayerStatusProps
   const Icon = status.icon;
 
   return (
-    <div className="absolute top-1 left-1">
+    <div className="absolute bottom-1 left-1">
       <Icon 
         className={cn(
           "h-4 w-4",

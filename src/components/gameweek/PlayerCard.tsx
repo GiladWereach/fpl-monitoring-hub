@@ -87,12 +87,6 @@ export function PlayerCard({ player, isCaptain, isViceCaptain, liveData, fixture
           className={cn("player-card relative", isExpanded && "player-card-expanded")}
           onClick={() => setIsExpanded(!isExpanded)}
         >
-          <PlayerStatus 
-            player={player} 
-            liveData={liveData}
-            fixture_id={fixture_id}
-          />
-          
           {(isCaptain || isViceCaptain) && (
             <div className="absolute top-1 right-1">
               <Copyright 
@@ -110,6 +104,12 @@ export function PlayerCard({ player, isCaptain, isViceCaptain, liveData, fixture
             <div className="points-text">{points}</div>
             <div className="player-position">{getPositionText(player?.element_type)}</div>
           </div>
+
+          <PlayerStatus 
+            player={player} 
+            liveData={liveData}
+            fixture_id={fixture_id}
+          />
         </div>
       </HoverCardTrigger>
       <HoverCardContent className="w-40 bg-secondary/95 backdrop-blur-sm border-accent/20">
