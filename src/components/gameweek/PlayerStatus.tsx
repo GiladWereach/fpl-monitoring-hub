@@ -19,6 +19,10 @@ interface PlayerStatusProps {
 export function PlayerStatus({ player, liveData, fixture_id }: PlayerStatusProps) {
   // Add detailed logging for Rogers specifically
   if (player?.id === 54) {
+    // First, log the raw player data
+    console.log('Raw player data for Rogers:', player);
+    
+    // Then log the specific fields we're interested in
     console.log(`Detailed data for Rogers:`, {
       id: player?.id,
       web_name: player?.web_name,
@@ -30,6 +34,7 @@ export function PlayerStatus({ player, liveData, fixture_id }: PlayerStatusProps
       parsed_chance: parseInt(player?.chance_of_playing_this_round),
       is_null: player?.chance_of_playing_this_round === null,
       is_undefined: player?.chance_of_playing_this_round === undefined,
+      full_player_object: player // Log the entire player object to see all available data
     });
   }
 
@@ -62,7 +67,8 @@ export function PlayerStatus({ player, liveData, fixture_id }: PlayerStatusProps
         console.log('Live performance data for Rogers:', {
           player_id: player.id,
           event_id: currentEvent.id,
-          data
+          data,
+          raw_player_data: player // Log the player data again here to compare
         });
       }
 
@@ -100,7 +106,8 @@ export function PlayerStatus({ player, liveData, fixture_id }: PlayerStatusProps
           } : 'No live data',
           player_status: {
             chance_of_playing: player?.chance_of_playing_this_round,
-            status: player?.status
+            status: player?.status,
+            raw_player: player // Log the raw player data again for comparison
           }
         });
       }
@@ -125,7 +132,8 @@ export function PlayerStatus({ player, liveData, fixture_id }: PlayerStatusProps
         parsed_chance: parseInt(player?.chance_of_playing_this_round),
         status: player?.status,
         status_type: typeof player?.status,
-        chance_type: typeof player?.chance_of_playing_this_round
+        chance_type: typeof player?.chance_of_playing_this_round,
+        full_player_data: player // Log the full player data one more time
       });
     }
 
