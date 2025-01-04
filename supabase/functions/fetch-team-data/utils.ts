@@ -1,4 +1,4 @@
-import { PlayerSelection } from './types';
+import { PlayerSelection } from './types.ts'
 
 export function calculateFormation(picks: PlayerSelection[]): string {
   const starters = picks.filter(p => p.position <= 11);
