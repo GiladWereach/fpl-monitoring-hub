@@ -11,10 +11,11 @@ export function PointsBreakdown({ liveData, isCaptain, isViceCaptain }: PointsBr
 
   const renderBreakdownItem = (label: string, value: number) => {
     if (value === 0) return null;
+    const pointsToShow = isCaptain ? value * 2 : value;
     return (
       <div className="flex justify-between items-center">
         <span className="text-xs text-foreground/80">{label}</span>
-        <span className="text-xs font-medium text-foreground">+{value}</span>
+        <span className="text-xs font-medium text-foreground">+{pointsToShow}</span>
       </div>
     );
   };

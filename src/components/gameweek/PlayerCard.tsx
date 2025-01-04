@@ -8,8 +8,6 @@ import {
 } from "@/components/ui/hover-card";
 import { PlayerStatus } from './PlayerStatus';
 import { PointsBreakdown } from './components/PointsBreakdown';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 
 interface PlayerCardProps {
   player: any;
@@ -24,16 +22,18 @@ export function PlayerCard({ player, isCaptain, isViceCaptain, liveData, fixture
   
   console.log(`PlayerCard render for ${player?.web_name}:`, {
     player_id: player?.id,
+    is_captain: isCaptain,
     live_data: liveData ? {
-      minutes: liveData.minutes,
       total_points: liveData.total_points,
+      minutes: liveData.minutes,
+      goals: liveData.goals_scored,
+      assists: liveData.assists,
       bonus: liveData.bonus,
-      bps: liveData.bps,
-      fixture_id: liveData.fixture_id
+      clean_sheets: liveData.clean_sheets,
     } : 'No live data'
   });
 
-  // Calculate total points from live data
+  // Calculate points from live data
   const points = liveData ? (isCaptain ? liveData.total_points * 2 : liveData.total_points) : 0;
 
   return (
