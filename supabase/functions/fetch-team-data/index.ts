@@ -56,123 +56,148 @@ Deno.serve(async (req) => {
     console.log(`Fetching data for team ID: ${teamId}`);
 
     // Get current gameweek
-    const currentEventResponse = await fetch('https://fantasy.premierleague.com/api/bootstrap-static/');
-    const bootstrapData = await currentEventResponse.json();
-    const currentEvent = bootstrapData.events.find((e: any) => e.is_current)?.id;
-
-    if (!currentEvent) {
-      throw new Error('Could not determine current gameweek');
-    }
-
-    // Fetch team data
-    const teamResponse = await fetch(`https://fantasy.premierleague.com/api/entry/${teamId}/event/${currentEvent}/picks/`);
-    
-    if (!teamResponse.ok) {
-      if (teamResponse.status === 404) {
-        return new Response(
-          JSON.stringify({
-            success: false,
-            error: 'Team not found',
-            code: 404
-          }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
-        );
+    try {
+      const bootstrapResponse = await fetch('https://fantasy.premierleague.com/api/bootstrap-static/');
+      if (!bootstrapResponse.ok) {
+        throw new Error(`Bootstrap API failed with status ${bootstrapResponse.status}`);
       }
-      throw new Error(`Failed to fetch team data: ${teamResponse.statusText}`);
-    }
 
-    const teamData = await teamResponse.json();
-    console.log('Successfully fetched team data');
+      const bootstrapText = await bootstrapResponse.text();
+      let bootstrapData;
+      try {
+        bootstrapData = JSON.parse(bootstrapText);
+      } catch (e) {
+        console.error('Failed to parse bootstrap data:', bootstrapText);
+        throw new Error('Invalid JSON response from bootstrap API');
+      }
 
-    // Initialize Supabase client
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
+      const currentEvent = bootstrapData.events.find((e: any) => e.is_current)?.id;
+      if (!currentEvent) {
+        throw new Error('Could not determine current gameweek');
+      }
 
-    // Store team data
-    const { error: insertError } = await supabaseClient
-      .from('fpl_teams')
-      .upsert({
-        fpl_team_id: teamId,
-        event: currentEvent,
-        last_fetch: new Date().toISOString(),
-      }, {
-        onConflict: 'fpl_team_id,event'
-      });
-
-    if (insertError) {
-      console.error('Error storing team data:', insertError);
-      throw insertError;
-    }
-
-    // Store team performance
-    const { error: performanceError } = await supabaseClient
-      .from('team_performances')
-      .upsert({
-        fpl_team_id: teamId,
-        event: currentEvent,
-        points: teamData.entry_history.points,
-        total_points: teamData.entry_history.total_points,
-        current_rank: teamData.entry_history.rank,
-        overall_rank: teamData.entry_history.overall_rank,
-        team_value: teamData.entry_history.value,
-        bank: teamData.entry_history.bank,
-        transfers_made: teamData.entry_history.event_transfers,
-        transfer_cost: teamData.entry_history.event_transfers_cost,
-        bench_points: teamData.entry_history.points_on_bench,
-        active_chip: teamData.active_chip
-      });
-
-    if (performanceError) {
-      console.error('Error storing performance data:', performanceError);
-      throw performanceError;
-    }
-
-    // Calculate formation
-    const formation = calculateFormation(teamData.picks);
-
-    // Store team selection
-    const { error: selectionError } = await supabaseClient
-      .from('team_selections')
-      .upsert({
-        fpl_team_id: teamId,
-        event: currentEvent,
-        formation: formation.formation,
-        captain_id: teamData.picks.find((p: any) => p.is_captain).element,
-        vice_captain_id: teamData.picks.find((p: any) => p.is_vice_captain).element,
-        picks: teamData.picks,
-        auto_subs: teamData.automatic_subs
-      });
-
-    if (selectionError) {
-      console.error('Error storing selection data:', selectionError);
-      throw selectionError;
-    }
-
-    return new Response(
-      JSON.stringify({
-        success: true,
-        data: {
-          team_info: {
-            fpl_team_id: teamId,
-            event: currentEvent,
-            last_updated: new Date().toISOString()
-          },
-          picks: teamData.picks,
-          stats: {
-            points: teamData.entry_history.points,
-            total_points: teamData.entry_history.total_points,
-            current_rank: teamData.entry_history.rank,
-            overall_rank: teamData.entry_history.overall_rank,
-            team_value: teamData.entry_history.value,
-            bank: teamData.entry_history.bank
-          },
-          formation
+      // Fetch team data
+      const teamResponse = await fetch(`https://fantasy.premierleague.com/api/entry/${teamId}/event/${currentEvent}/picks/`);
+      
+      if (!teamResponse.ok) {
+        if (teamResponse.status === 404) {
+          return new Response(
+            JSON.stringify({
+              success: false,
+              error: 'Team not found',
+              code: 404
+            }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
+          );
         }
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+        throw new Error(`Failed to fetch team data: ${teamResponse.statusText}`);
+      }
+
+      const teamResponseText = await teamResponse.text();
+      let teamData;
+      try {
+        teamData = JSON.parse(teamResponseText);
+      } catch (e) {
+        console.error('Failed to parse team data:', teamResponseText);
+        throw new Error('Invalid JSON response from team API');
+      }
+
+      console.log('Successfully fetched team data');
+
+      // Initialize Supabase client
+      const supabaseClient = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      );
+
+      // Store team data
+      const { error: insertError } = await supabaseClient
+        .from('fpl_teams')
+        .upsert({
+          fpl_team_id: teamId,
+          event: currentEvent,
+          last_fetch: new Date().toISOString(),
+        }, {
+          onConflict: 'fpl_team_id,event'
+        });
+
+      if (insertError) {
+        console.error('Error storing team data:', insertError);
+        throw insertError;
+      }
+
+      // Store team performance
+      const { error: performanceError } = await supabaseClient
+        .from('team_performances')
+        .upsert({
+          fpl_team_id: teamId,
+          event: currentEvent,
+          points: teamData.entry_history.points,
+          total_points: teamData.entry_history.total_points,
+          current_rank: teamData.entry_history.rank,
+          overall_rank: teamData.entry_history.overall_rank,
+          team_value: teamData.entry_history.value,
+          bank: teamData.entry_history.bank,
+          transfers_made: teamData.entry_history.event_transfers,
+          transfer_cost: teamData.entry_history.event_transfers_cost,
+          bench_points: teamData.entry_history.points_on_bench,
+          active_chip: teamData.active_chip
+        });
+
+      if (performanceError) {
+        console.error('Error storing performance data:', performanceError);
+        throw performanceError;
+      }
+
+      // Calculate formation
+      const formation = calculateFormation(teamData.picks);
+
+      // Store team selection
+      const { error: selectionError } = await supabaseClient
+        .from('team_selections')
+        .upsert({
+          fpl_team_id: teamId,
+          event: currentEvent,
+          formation: formation.formation,
+          captain_id: teamData.picks.find((p: any) => p.is_captain).element,
+          vice_captain_id: teamData.picks.find((p: any) => p.is_vice_captain).element,
+          picks: teamData.picks,
+          auto_subs: teamData.automatic_subs
+        });
+
+      if (selectionError) {
+        console.error('Error storing selection data:', selectionError);
+        throw selectionError;
+      }
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          data: {
+            team_info: {
+              fpl_team_id: teamId,
+              event: currentEvent,
+              last_updated: new Date().toISOString()
+            },
+            picks: teamData.picks,
+            stats: {
+              points: teamData.entry_history.points,
+              total_points: teamData.entry_history.total_points,
+              current_rank: teamData.entry_history.rank,
+              overall_rank: teamData.entry_history.overall_rank,
+              team_value: teamData.entry_history.value,
+              bank: teamData.entry_history.bank
+            },
+            formation
+          }
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+
+    } catch (error) {
+      console.error('Error in bootstrap API:', error);
+      throw error;
+    }
 
   } catch (error) {
     console.error('Error:', error);
