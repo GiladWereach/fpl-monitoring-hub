@@ -7,17 +7,33 @@ import { useMatchWindow } from "./hooks/useMatchWindow";
 import { useFunctionExecution } from "./hooks/useFunctionExecution";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Calendar } from "lucide-react";
+import { Clock, Calendar, Timer, ArrowRight } from "lucide-react";
 import { format } from "date-fns";
 import { LiveStatus } from "./LiveStatus";
 import { UTCClock } from "./components/UTCClock";
 import { GameweekTransition } from "@/components/gameweek-live/GameweekTransition";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 export function EdgeFunctionManager() {
   console.log("Rendering EdgeFunctionManager");
   const { data: schedules, refetch: refetchSchedules } = useSchedules();
   const { data: matchWindow } = useMatchWindow(schedules, refetchSchedules);
   const { loading, handleExecute, refreshAll } = useFunctionExecution(refetchSchedules);
+
+  const { data: currentEvent } = useQuery({
+    queryKey: ['current-event'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .eq('is_current', true)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    }
+  });
 
   const categories: ScheduleCategory[] = ['core_data', 'match_dependent', 'system', 'analytics'];
 
@@ -38,18 +54,45 @@ export function EdgeFunctionManager() {
     return "30 minutes (no active matches)";
   };
 
+  const getNextTransitionTime = () => {
+    if (!currentEvent?.deadline_time) return null;
+    const deadline = new Date(currentEvent.deadline_time);
+    const now = new Date();
+    
+    // If within 15 minutes before deadline
+    if (now < deadline && now > new Date(deadline.getTime() - 15 * 60 * 1000)) {
+      return "2 minutes at " + format(deadline, "HH:mm");
+    }
+    
+    // If match window is active, show when it ends
+    if (formattedMatchWindow?.is_active && formattedMatchWindow.window_end) {
+      return "30 minutes at " + format(new Date(formattedMatchWindow.window_end), "HH:mm");
+    }
+    
+    // If we have a next match
+    if (matchWindow?.next_kickoff) {
+      const nextMatch = new Date(matchWindow.next_kickoff);
+      const transitionTime = new Date(nextMatch.getTime() - 15 * 60 * 1000);
+      if (now < transitionTime) {
+        return "2 minutes at " + format(transitionTime, "HH:mm");
+      }
+    }
+    
+    return "No upcoming transitions";
+  };
+
   return (
     <div className="space-y-6">
       {/* Gameweek Transition Status */}
       <GameweekTransition />
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {/* Game Week Status */}
         <Card className="p-4 bg-card/50">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4 text-muted-foreground" />
-              <span className="font-medium">Match Window Status</span>
+              <span className="font-medium">Match Window</span>
             </div>
             <LiveStatus showLabel showWindow />
           </div>
@@ -64,6 +107,19 @@ export function EdgeFunctionManager() {
             </div>
             <Badge variant={formattedMatchWindow?.is_active ? "success" : "secondary"}>
               {getIntervalStatus()}
+            </Badge>
+          </div>
+        </Card>
+
+        {/* Next Transition */}
+        <Card className="p-4 bg-card/50">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Timer className="h-4 w-4 text-muted-foreground" />
+              <span className="font-medium">Next Transition</span>
+            </div>
+            <Badge variant="outline">
+              {getNextTransitionTime()}
             </Badge>
           </div>
         </Card>
