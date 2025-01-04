@@ -19,12 +19,14 @@ export function ExecutionHistory({ functionName }: ExecutionHistoryProps) {
         .from('schedules')
         .select('id')
         .eq('function_name', functionName)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error(`Error fetching schedule for ${functionName}:`, error);
         return null;
       }
+
+      console.log(`Schedule data for ${functionName}:`, data);
       return data;
     }
   });
@@ -33,7 +35,10 @@ export function ExecutionHistory({ functionName }: ExecutionHistoryProps) {
   const { data: executions } = useQuery({
     queryKey: ['execution-logs', schedule?.id],
     queryFn: async () => {
-      if (!schedule?.id) return [];
+      if (!schedule?.id) {
+        console.log(`No schedule found for ${functionName}, skipping execution logs fetch`);
+        return [];
+      }
       
       console.log(`Fetching execution logs for schedule ${schedule.id}`);
       const { data, error } = await supabase
@@ -48,10 +53,19 @@ export function ExecutionHistory({ functionName }: ExecutionHistoryProps) {
         throw error;
       }
 
+      console.log(`Found ${data?.length || 0} execution logs`);
       return data;
     },
     enabled: !!schedule?.id
   });
+
+  if (!schedule) {
+    return (
+      <Card className="mt-6 p-4">
+        <p className="text-sm text-muted-foreground">No schedule configured for {functionName}</p>
+      </Card>
+    );
+  }
 
   if (!executions?.length) {
     return (
