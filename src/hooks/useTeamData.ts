@@ -86,13 +86,15 @@ export const useTeamData = (teamId: string | null) => {
       return await response.json();
     },
     retry: 1,
-    onError: (error) => {
-      console.error('Error fetching team data:', error);
-      toast({
-        title: "Error fetching team data",
-        description: error.message,
-        variant: "destructive",
-      });
+    meta: {
+      onError: (error: Error) => {
+        console.error('Error fetching team data:', error);
+        toast({
+          title: "Error fetching team data",
+          description: error.message,
+          variant: "destructive",
+        });
+      }
     }
   });
 
