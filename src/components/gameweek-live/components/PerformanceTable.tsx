@@ -23,6 +23,24 @@ export const PerformanceTable: React.FC<PerformanceTableProps> = ({
   homeTeam,
   awayTeam,
 }) => {
+  const calculateTotalPoints = (perf: PlayerPerformanceData) => {
+    if (!perf.points?.[0]) return 0;
+    
+    const points = perf.points[0];
+    return (
+      (points.minutes_points || 0) +
+      (points.goals_scored_points || 0) +
+      (points.assist_points || 0) +
+      (points.clean_sheet_points || 0) +
+      (points.goals_conceded_points || 0) +
+      (points.own_goal_points || 0) +
+      (points.penalty_save_points || 0) +
+      (points.penalty_miss_points || 0) +
+      (points.saves_points || 0) +
+      (points.bonus_points || 0)
+    );
+  };
+
   return (
     <Table>
       <TableHeader>
@@ -68,7 +86,7 @@ export const PerformanceTable: React.FC<PerformanceTableProps> = ({
             <TableCell className="text-right">{perf.saves}</TableCell>
             <TableCell className="text-right">{perf.bps}</TableCell>
             <TableCell className="text-right font-bold">
-              {perf.points?.[0]?.final_total_points ?? 0}
+              {calculateTotalPoints(perf)}
             </TableCell>
           </TableRow>
         ))}

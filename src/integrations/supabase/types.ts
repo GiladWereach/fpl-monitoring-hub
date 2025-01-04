@@ -1397,6 +1397,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_player_points_gameweek_live"
+            columns: ["event_id", "player_id", "fixture_id"]
+            isOneToOne: true
+            referencedRelation: "gameweek_live_performance"
+            referencedColumns: ["event_id", "player_id", "fixture_id"]
+          },
+          {
             foreignKeyName: "player_points_calculation_event_id_fkey"
             columns: ["event_id"]
             isOneToOne: false
