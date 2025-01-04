@@ -96,8 +96,8 @@ export function PlayerStatus({ player, liveData, fixture_id }: PlayerStatusProps
   });
 
   const getPlayerStatus = () => {
-    // ALWAYS check player availability first, regardless of match status
-    // This takes precedence over everything else
+    // Check for completely unavailable players (0% chance) first
+    // This is the ONLY status that overrides match status
     if (player?.chance_of_playing_this_round === 0) {
       console.log(`${player?.web_name} has 0% chance of playing - showing red octagon regardless of match status`);
       return {
@@ -108,17 +108,7 @@ export function PlayerStatus({ player, liveData, fixture_id }: PlayerStatusProps
       };
     }
 
-    if (player?.chance_of_playing_this_round !== null && player?.chance_of_playing_this_round < 100) {
-      console.log(`${player?.web_name} has ${player.chance_of_playing_this_round}% chance of playing - showing yellow alert regardless of match status`);
-      return {
-        icon: AlertCircle,
-        color: '#FCD34D', // Yellow
-        animate: false,
-        label: `${player.chance_of_playing_this_round}% Chance`
-      };
-    }
-
-    // Only proceed with match status checks if player is fully available
+    // For all other cases, check match status first
     if (fixtureStatus) {
       const kickoffTime = new Date(fixtureStatus.kickoff_time);
       const now = new Date();
@@ -129,11 +119,33 @@ export function PlayerStatus({ player, liveData, fixture_id }: PlayerStatusProps
         started: fixtureStatus.started,
         finished: fixtureStatus.finished,
         finished_provisional: fixtureStatus.finished_provisional,
-        minutes_played: liveData?.minutes
+        minutes_played: liveData?.minutes,
+        chance_of_playing: player?.chance_of_playing_this_round
       });
+
+      // Match is finished
+      if (fixtureStatus.finished_provisional) {
+        return {
+          icon: Check,
+          color: '#9CA3AF', // Gray
+          animate: false,
+          label: 'Finished'
+        };
+      }
 
       // Future match
       if (kickoffTime > now && !fixtureStatus.started) {
+        // Check for doubtful status for upcoming matches
+        if (player?.chance_of_playing_this_round !== null && player?.chance_of_playing_this_round < 100) {
+          console.log(`${player?.web_name} has ${player.chance_of_playing_this_round}% chance of playing in upcoming match`);
+          return {
+            icon: AlertCircle,
+            color: '#FCD34D', // Yellow
+            animate: false,
+            label: `${player.chance_of_playing_this_round}% Chance`
+          };
+        }
+
         return {
           icon: Clock,
           color: '#3B82F6', // Blue
@@ -152,16 +164,6 @@ export function PlayerStatus({ player, liveData, fixture_id }: PlayerStatusProps
             label: 'In Play'
           };
         }
-      }
-
-      // Match is finished
-      if (fixtureStatus.finished_provisional) {
-        return {
-          icon: Check,
-          color: '#9CA3AF', // Gray
-          animate: false,
-          label: 'Finished'
-        };
       }
     }
 
