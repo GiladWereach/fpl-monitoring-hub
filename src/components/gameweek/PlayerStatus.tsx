@@ -119,11 +119,6 @@ export function PlayerStatus({ player, liveData, fixture_id }: PlayerStatusProps
         chance_of_playing: player?.chance_of_playing_this_round
       });
 
-      // Match is finished
-      if (fixtureStatus.finished_provisional) {
-        return getFinishedStatus();
-      }
-
       // Future match
       if (kickoffTime > now && !fixtureStatus.started) {
         // Check for doubtful status for upcoming matches
@@ -139,6 +134,11 @@ export function PlayerStatus({ player, liveData, fixture_id }: PlayerStatusProps
         if (liveData?.minutes > 0) {
           return getInPlayStatus();
         }
+      }
+
+      // Match is finished - only show if player is available
+      if (fixtureStatus.finished_provisional && !isPlayerUnavailable()) {
+        return getFinishedStatus();
       }
     }
 
