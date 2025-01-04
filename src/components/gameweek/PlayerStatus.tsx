@@ -97,8 +97,9 @@ export function PlayerStatus({ player, liveData, fixture_id }: PlayerStatusProps
 
   const getPlayerStatus = () => {
     // ALWAYS check player availability first, regardless of match status
+    // This takes precedence over everything else
     if (player?.chance_of_playing_this_round === 0) {
-      console.log(`${player?.web_name} has 0% chance of playing`);
+      console.log(`${player?.web_name} has 0% chance of playing - showing red octagon regardless of match status`);
       return {
         icon: XOctagon,
         color: '#EF4444', // Red
@@ -108,7 +109,7 @@ export function PlayerStatus({ player, liveData, fixture_id }: PlayerStatusProps
     }
 
     if (player?.chance_of_playing_this_round !== null && player?.chance_of_playing_this_round < 100) {
-      console.log(`${player?.web_name} has ${player.chance_of_playing_this_round}% chance of playing`);
+      console.log(`${player?.web_name} has ${player.chance_of_playing_this_round}% chance of playing - showing yellow alert regardless of match status`);
       return {
         icon: AlertCircle,
         color: '#FCD34D', // Yellow
@@ -117,7 +118,7 @@ export function PlayerStatus({ player, liveData, fixture_id }: PlayerStatusProps
       };
     }
 
-    // Only check match status if player is available
+    // Only proceed with match status checks if player is fully available
     if (fixtureStatus) {
       const kickoffTime = new Date(fixtureStatus.kickoff_time);
       const now = new Date();
