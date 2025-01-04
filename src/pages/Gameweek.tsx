@@ -45,7 +45,7 @@ export default function Gameweek() {
     }
   });
 
-  // Get team data using our new hook
+  // Get team data using our hook
   const { teamData, teamLoading, existingTeam } = useTeamData(teamId);
 
   // Query for players data
@@ -66,22 +66,42 @@ export default function Gameweek() {
     }
   });
 
-  // Query for live performance data
+  // Query for points calculation data including bonus points
   const { data: liveData, isLoading: liveDataLoading } = useQuery({
-    queryKey: ['live-performance', currentGameweek?.id, teamData?.data?.picks],
+    queryKey: ['points-calculation', currentGameweek?.id, teamData?.data?.picks],
     enabled: !!currentGameweek?.id && !!teamData?.data?.picks,
     queryFn: async () => {
       const playerIds = teamData.data.picks.map(p => p.element);
-      console.log('Fetching live data for players:', playerIds);
+      console.log('Fetching points calculation data for players:', playerIds);
       const { data, error } = await supabase
-        .from('gameweek_live_performance')
-        .select('*')
+        .from('player_points_calculation')
+        .select(`
+          player_id,
+          final_total_points,
+          minutes_points,
+          goals_scored_points,
+          assists_points,
+          clean_sheet_points,
+          bonus_points
+        `)
         .eq('event_id', currentGameweek.id)
         .in('player_id', playerIds);
       
       if (error) throw error;
-      console.log('Live performance data:', data);
-      return data;
+      
+      // Map the data to match the expected format
+      const mappedData = data.map(d => ({
+        player_id: d.player_id,
+        minutes: d.minutes_points > 0 ? 60 : 0, // Approximate minutes based on points
+        total_points: d.final_total_points,
+        goals_scored: d.goals_scored_points > 0 ? 1 : 0,
+        assists: d.assists_points > 0 ? 1 : 0,
+        clean_sheets: d.clean_sheet_points > 0 ? 1 : 0,
+        bonus: d.bonus_points
+      }));
+      
+      console.log('Points calculation data:', mappedData);
+      return mappedData;
     }
   });
 
