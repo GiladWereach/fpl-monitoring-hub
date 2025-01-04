@@ -24,7 +24,7 @@ export function PlayerCard({ player, isCaptain, isViceCaptain, liveData, fixture
     player_id: player?.id,
     is_captain: isCaptain,
     live_data: liveData ? {
-      total_points: liveData.total_points,
+      total_points: liveData.points?.[0]?.final_total_points,
       minutes: liveData.minutes,
       goals: liveData.goals_scored,
       assists: liveData.assists,
@@ -33,8 +33,10 @@ export function PlayerCard({ player, isCaptain, isViceCaptain, liveData, fixture
     } : 'No live data'
   });
 
-  // Calculate points from live data
-  const points = liveData ? (isCaptain ? liveData.total_points * 2 : liveData.total_points) : 0;
+  // Calculate points from live data, using final_total_points from the points array
+  const points = liveData?.points?.[0]?.final_total_points ? 
+    (isCaptain ? liveData.points[0].final_total_points * 2 : liveData.points[0].final_total_points) 
+    : 0;
 
   return (
     <HoverCard>
