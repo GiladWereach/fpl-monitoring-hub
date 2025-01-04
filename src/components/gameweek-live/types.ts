@@ -13,7 +13,8 @@ export interface PlayerPerformanceData {
   red_cards: number;
   saves: number;
   minutes: number;
-  points?: PointsData[];  // Added this line to include the points data
+  total_points: number;
+  points?: PointsData[];
   player: {
     id: number;
     first_name: string;
