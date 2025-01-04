@@ -16,12 +16,12 @@ Deno.serve(async (req) => {
   }
 
   try {
+    logDebug('monitor-match-windows', 'Starting match window monitoring cycle');
+    
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
-
-    logDebug('monitor-match-windows', 'Starting match window monitoring cycle');
 
     // Get current match window state
     const { data: currentWindow, error: windowError } = await supabase
@@ -29,6 +29,7 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (windowError) {
+      logError('monitor-match-windows', 'Error getting current match window:', windowError);
       throw windowError;
     }
 
@@ -41,6 +42,7 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (stateError && stateError.code !== 'PGRST116') { // Ignore "no rows returned" error
+      logError('monitor-match-windows', 'Error getting latest state:', stateError);
       throw stateError;
     }
 
@@ -64,6 +66,7 @@ Deno.serve(async (req) => {
           });
 
         if (insertError) {
+          logError('monitor-match-windows', 'Error inserting inactive state:', insertError);
           throw insertError;
         }
       }
@@ -111,23 +114,30 @@ Deno.serve(async (req) => {
         });
 
       if (insertError) {
+        logError('monitor-match-windows', 'Error inserting new state:', insertError);
         throw insertError;
       }
 
       // Trigger schedule interval updates if needed
       if (currentWindow.is_active !== (latestState?.state === 'active')) {
-        const { error: scheduleError } = await supabase.functions.invoke('adjust-schedule-intervals', {
-          body: { 
-            matchWindow: currentWindow,
-            stateChange: {
-              from: latestState?.state || 'inactive',
-              to: currentWindow.is_active ? 'active' : 'inactive'
+        try {
+          const { error: scheduleError } = await supabase.functions.invoke('adjust-schedule-intervals', {
+            body: { 
+              matchWindow: currentWindow,
+              stateChange: {
+                from: latestState?.state || 'inactive',
+                to: currentWindow.is_active ? 'active' : 'inactive'
+              }
             }
-          }
-        });
+          });
 
-        if (scheduleError) {
-          throw scheduleError;
+          if (scheduleError) {
+            logError('monitor-match-windows', 'Error adjusting schedules:', scheduleError);
+            throw scheduleError;
+          }
+        } catch (error) {
+          logError('monitor-match-windows', 'Error invoking adjust-schedule-intervals:', error);
+          // Don't throw here, we want to return the state change even if schedule adjustment fails
         }
       }
     }
@@ -147,7 +157,8 @@ Deno.serve(async (req) => {
     
     return new Response(JSON.stringify({
       success: false,
-      error: error.message
+      error: error.message,
+      timestamp: new Date().toISOString()
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500,
