@@ -116,7 +116,7 @@ export function PlayerStatus({ player, liveData, fixture_id }: PlayerStatusProps
   const Icon = status.icon;
 
   return (
-    <div className="absolute bottom-1 left-1">
+    <div className="absolute top-1 left-1">
       <Icon 
         className={cn(
           "h-4 w-4",

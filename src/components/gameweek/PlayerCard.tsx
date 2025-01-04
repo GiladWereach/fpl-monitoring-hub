@@ -87,6 +87,12 @@ export function PlayerCard({ player, isCaptain, isViceCaptain, liveData, fixture
           className={cn("player-card relative", isExpanded && "player-card-expanded")}
           onClick={() => setIsExpanded(!isExpanded)}
         >
+          <PlayerStatus 
+            player={player} 
+            liveData={liveData}
+            fixture_id={fixture_id}
+          />
+          
           {(isCaptain || isViceCaptain) && (
             <div className="absolute top-1 right-1">
               <Copyright 
@@ -98,12 +104,6 @@ export function PlayerCard({ player, isCaptain, isViceCaptain, liveData, fixture
               />
             </div>
           )}
-          
-          <PlayerStatus 
-            player={player} 
-            liveData={liveData}
-            fixture_id={fixture_id}
-          />
           
           <div className="relative">
             <p className="player-name truncate">{player?.web_name}</p>
