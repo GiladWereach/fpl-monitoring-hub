@@ -1,5 +1,5 @@
 import React from 'react';
-import { Check, Play, XOctagon, AlertCircle } from 'lucide-react';
+import { Check, Play, XOctagon, AlertCircle, Clock } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -69,7 +69,7 @@ export function PlayerStatus({ player, liveData, fixture_id }: PlayerStatusProps
       
       const { data, error } = await supabase
         .from('fixtures')
-        .select('started, finished, finished_provisional')
+        .select('started, finished, finished_provisional, kickoff_time')
         .eq('id', livePerformance.fixture_id)
         .maybeSingle();
       
@@ -97,10 +97,10 @@ export function PlayerStatus({ player, liveData, fixture_id }: PlayerStatusProps
 
   const getPlayerStatus = () => {
     // Check player availability first
-    if (player?.chance_of_playing_this_round === 0 || player?.status === 'i') {
+    if (player?.chance_of_playing_this_round === 0) {
       return {
         icon: XOctagon,
-        color: '#EF4444',
+        color: '#EF4444', // Red
         animate: false,
         label: 'Not Available'
       };
@@ -109,43 +109,51 @@ export function PlayerStatus({ player, liveData, fixture_id }: PlayerStatusProps
     if (player?.chance_of_playing_this_round !== null && player?.chance_of_playing_this_round < 100) {
       return {
         icon: AlertCircle,
-        color: '#FCD34D',
+        color: '#FCD34D', // Yellow
         animate: false,
         label: `${player.chance_of_playing_this_round}% Chance`
       };
     }
 
     // Then check match and performance status
-    if (livePerformance?.fixture_id && fixtureStatus) {
-      console.log(`${player?.web_name} match status:`, {
-        started: fixtureStatus.started,
-        finished: fixtureStatus.finished,
-        finished_provisional: fixtureStatus.finished_provisional,
-        minutes_played: liveData?.minutes
-      });
+    if (fixtureStatus) {
+      const kickoffTime = new Date(fixtureStatus.kickoff_time);
+      const now = new Date();
 
-      // Match is in progress
-      if (fixtureStatus.started && !fixtureStatus.finished && !fixtureStatus.finished_provisional) {
+      // Future match
+      if (kickoffTime > now && !fixtureStatus.started) {
         return {
-          icon: Play,
-          color: '#3DFF9A',
-          animate: true,
-          label: 'In Play'
+          icon: Clock,
+          color: '#3B82F6', // Blue
+          animate: false,
+          label: 'Upcoming'
         };
       }
 
-      // Match is finished and player participated
-      if ((fixtureStatus.finished || fixtureStatus.finished_provisional) && liveData?.minutes > 0) {
+      // Match is in progress
+      if (fixtureStatus.started && !fixtureStatus.finished && !fixtureStatus.finished_provisional) {
+        if (liveData?.minutes > 0) {
+          return {
+            icon: Play,
+            color: '#3DFF9A', // Green
+            animate: true,
+            label: 'In Play'
+          };
+        }
+      }
+
+      // Match is finished
+      if (fixtureStatus.finished_provisional) {
         return {
           icon: Check,
-          color: '#9CA3AF',
+          color: '#9CA3AF', // Gray
           animate: false,
           label: 'Finished'
         };
       }
     }
 
-    // Default: yet to play (no status icon needed)
+    // Default: no status icon needed
     return null;
   };
 
