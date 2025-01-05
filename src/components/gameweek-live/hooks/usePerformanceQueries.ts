@@ -14,7 +14,7 @@ export const usePerformanceQueries = (gameweek: number, matchId?: number | null)
         .from('gameweek_live_performance')
         .select(`
           *,
-          points_calculation:player_points_calculation!inner(
+          points_calculation:player_points_calculation(
             minutes_points,
             goals_scored_points,
             assist_points,
@@ -38,7 +38,8 @@ export const usePerformanceQueries = (gameweek: number, matchId?: number | null)
             )
           )
         `)
-        .eq('event_id', gameweek);
+        .eq('event_id', gameweek)
+        .eq('player_points_calculation.event_id', gameweek);
 
       if (matchId) {
         query.eq('fixture_id', matchId);
@@ -61,11 +62,11 @@ export const usePerformanceQueries = (gameweek: number, matchId?: number | null)
       if (data && data.length > 0) {
         console.log('Sample player performance:', {
           player: data[0].player.web_name,
-          total_points: data[0].points_calculation?.final_total_points,
+          total_points: data[0].points_calculation?.[0]?.final_total_points,
           minutes: data[0].minutes,
           goals: data[0].goals_scored,
           assists: data[0].assists,
-          points_calculation: data[0].points_calculation
+          points_calculation: data[0].points_calculation?.[0]
         });
       }
       

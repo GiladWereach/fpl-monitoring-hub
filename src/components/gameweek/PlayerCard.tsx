@@ -25,25 +25,25 @@ export function PlayerCard({ player, isCaptain, isViceCaptain, liveData, fixture
     player_id: player?.id,
     is_captain: isCaptain,
     live_data: liveData ? {
-      total_points: liveData.points_calculation?.final_total_points,
+      total_points: liveData.points_calculation?.[0]?.final_total_points,
       minutes: liveData.minutes,
       goals: liveData.goals_scored,
       assists: liveData.assists,
       bonus: liveData.bonus,
       clean_sheets: liveData.clean_sheets,
-      points_calculation: liveData.points_calculation
+      points_calculation: liveData.points_calculation?.[0]
     } : 'No live data'
   });
 
   // Calculate points using points_calculation
-  const basePoints = liveData?.points_calculation?.final_total_points ?? 0;
+  const basePoints = liveData?.points_calculation?.[0]?.final_total_points ?? 0;
   const points = isCaptain ? basePoints * 2 : basePoints;
 
   console.log(`Final points calculation for ${player?.web_name}:`, {
     basePoints,
     isCaptain,
     finalPoints: points,
-    pointsCalculation: liveData?.points_calculation
+    pointsCalculation: liveData?.points_calculation?.[0]
   });
 
   return (
