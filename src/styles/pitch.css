@@ -27,6 +27,11 @@
   transform: rotate(180deg);
 }
 
+/* Formation-based positioning classes */
+.formation-row {
+  @apply flex items-center justify-center gap-4 transition-all duration-300;
+}
+
 .gk-row {
   @apply mt-4;
   animation: fade-in 0.3s ease-out;
@@ -52,6 +57,12 @@
          border border-accent/20 rounded-lg;
   animation: fade-in 0.3s ease-out 0.4s backwards;
 }
+
+/* Formation-specific spacing adjustments */
+.formation-433 .def-row { gap: 6rem; }
+.formation-442 .def-row { gap: 4rem; }
+.formation-352 .def-row { gap: 3rem; }
+.formation-343 .def-row { gap: 4rem; }
 
 @keyframes fade-in {
   from {
