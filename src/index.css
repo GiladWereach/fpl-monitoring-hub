@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  --pitch-lines: rgba(61, 255, 154, 0.1);
+  --pitch-lines: rgba(61, 255, 154, 0.15);
   --pitch-background: #1A1F2C;
 }
 

@@ -9,18 +9,16 @@
 
 .pitch-markings {
   @apply absolute inset-0;
-  background: 
-    radial-gradient(circle at center, var(--pitch-lines) 0.5%, transparent 0.6%),
-    linear-gradient(to right, transparent 49%, var(--pitch-lines) 49%, var(--pitch-lines) 51%, transparent 51%),
-    linear-gradient(to bottom, transparent 49%, var(--pitch-lines) 49%, var(--pitch-lines) 51%, transparent 51%);
+  border: 2px solid var(--pitch-lines);
 }
 
 .goalkeeper-area {
-  @apply absolute h-[120px] w-[60px] border border-accent/20 rounded-md;
+  @apply absolute h-[120px] w-[60px] border-2 border-[var(--pitch-lines)] rounded-md;
 }
 
 .pitch-grid {
-  @apply absolute inset-0 grid grid-cols-[15%_28%_28%_29%] px-8;
+  @apply absolute inset-0 grid grid-cols-[15%_28%_28%_29%] px-8 py-4;
+  height: 100%;
 }
 
 .gk-column {
