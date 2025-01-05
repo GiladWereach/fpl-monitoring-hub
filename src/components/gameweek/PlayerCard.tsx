@@ -51,6 +51,7 @@ export function PlayerCard({
             "bg-secondary/90 backdrop-blur-sm border border-accent/20",
             "hover:bg-accent/10 hover:scale-105 cursor-pointer",
             "flex flex-col items-center justify-center gap-1.5",
+            "animate-fade-in",
             isExpanded && "bg-accent/10"
           )}
           onClick={() => setIsExpanded(!isExpanded)}
@@ -75,7 +76,10 @@ export function PlayerCard({
             {player?.web_name}
           </p>
           
-          <div className="text-lg font-bold text-[#3DFF9A]">
+          <div className={cn(
+            "text-lg font-bold transition-colors",
+            points > 0 ? "text-[#3DFF9A]" : "text-accent/80"
+          )}>
             {pointsLoading ? '...' : points}
           </div>
           
@@ -90,7 +94,10 @@ export function PlayerCard({
           />
         </div>
       </HoverCardTrigger>
-      <HoverCardContent className="w-80 bg-secondary/95 backdrop-blur-sm border-accent/20">
+      <HoverCardContent 
+        className="w-80 bg-secondary/95 backdrop-blur-sm border-accent/20 animate-fade-in"
+        side="right"
+      >
         <PointsBreakdown 
           pointsData={pointsData}
           isCaptain={isCaptain}
