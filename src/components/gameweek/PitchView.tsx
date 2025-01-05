@@ -76,49 +76,41 @@ export function PitchView({ teamSelection, players, liveData, eventId }: PitchVi
     <div className="space-y-8">
       <div className={`fpl-pitch-container ${formationClass}`}>
         <svg 
+          xmlns="http://www.w3.org/2000/svg" 
           className="absolute inset-0 w-full h-full"
-          viewBox="0 0 800 600" 
+          viewBox="0 0 74 111" 
           preserveAspectRatio="xMidYMid slice"
         >
-          <rect width="800" height="600" fill="#1A1F2C"/>
-          <path 
-            d="M 50 50 L 750 50 L 750 550 L 50 550 Z" 
-            fill="none" 
-            stroke="rgba(61, 255, 154, 0.15)" 
-            strokeWidth="2"
-          />
-          <path 
-            d="M 400 50 L 400 550" 
-            fill="none" 
-            stroke="rgba(61, 255, 154, 0.15)" 
-            strokeWidth="2"
-          />
-          <circle 
-            cx="400" 
-            cy="300" 
-            r="50" 
-            fill="none" 
-            stroke="rgba(61, 255, 154, 0.15)" 
-            strokeWidth="2"
-          />
-          <circle 
-            cx="400" 
-            cy="300" 
-            r="2" 
-            fill="rgba(61, 255, 154, 0.15)"
-          />
-          <path 
-            d="M 250 50 L 550 50 L 550 150 L 250 150 Z" 
-            fill="none" 
-            stroke="rgba(61, 255, 154, 0.15)" 
-            strokeWidth="2"
-          />
-          <path 
-            d="M 250 550 L 550 550 L 550 450 L 250 450 Z" 
-            fill="none" 
-            stroke="rgba(61, 255, 154, 0.15)" 
-            strokeWidth="2"
-          />
+          <rect width="74" height="111" fill="#0D1117"/>
+          <g fill="none" stroke="rgba(61, 255, 154, 0.35)" strokeWidth="0.25" transform="translate(3 3)">
+            {/* Main pitch border */}
+            <path d="M 0 0 h 68 v 105 h -68 Z"/>
+            
+            {/* Center line */}
+            <path d="M 0 52.5 h 68"/>
+            
+            {/* Center circle */}
+            <circle r="9.15" cx="34" cy="52.5"/>
+            <circle r="0.5" cx="34" cy="52.5" fill="rgba(61, 255, 154, 0.35)"/>
+            
+            {/* Top penalty area */}
+            <path d="M 13.84 0 v 16.5 h 40.32 v -16.5"/>
+            <path d="M 24.84 0 v 5.5 h 18.32 v -5.5"/>
+            <circle r="0.5" cx="34" cy="10.94" fill="rgba(61, 255, 154, 0.35)"/>
+            <path d="M 26.733027 16.5 a 9.15 9.15 0 0 0 14.533946 0"/>
+            
+            {/* Bottom penalty area (mirrored) */}
+            <path d="M 13.84 105 v -16.5 h 40.32 v 16.5"/>
+            <path d="M 24.84 105 v -5.5 h 18.32 v 5.5"/>
+            <circle r="0.5" cx="34" cy="94.06" fill="rgba(61, 255, 154, 0.35)"/>
+            <path d="M 26.733027 88.5 a 9.15 9.15 0 0 1 14.533946 0"/>
+            
+            {/* Corner arcs */}
+            <path d="M 0 2 a 2 2 0 0 0 2 -2"/>
+            <path d="M 66 0 a 2 2 0 0 0 2 2"/>
+            <path d="M 68 103 a 2 2 0 0 0 -2 2"/>
+            <path d="M 2 105 a 2 2 0 0 0 -2 -2"/>
+          </g>
         </svg>
 
         <div className="fpl-position-labels">
