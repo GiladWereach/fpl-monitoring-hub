@@ -4,6 +4,7 @@
 
 :root {
   --pitch-lines: rgba(61, 255, 154, 0.1);
+  --pitch-background: #1A1F2C;
 }
 
 @layer base {
