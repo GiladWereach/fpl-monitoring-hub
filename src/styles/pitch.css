@@ -1,21 +1,24 @@
 .pitch-container {
   @apply relative h-[600px] w-full rounded-lg border border-accent/20 overflow-hidden;
-  background-color: rgba(39, 174, 96, 0.15);
+  background-color: var(--pitch-background);
   background-image: 
-    radial-gradient(circle at center, rgba(255, 255, 255, 0.1) 0.5%, transparent 0.6%),
-    linear-gradient(to right, transparent 49%, rgba(255, 255, 255, 0.1) 49%, rgba(255, 255, 255, 0.1) 51%, transparent 51%),
-    linear-gradient(to bottom, transparent 49%, rgba(255, 255, 255, 0.1) 49%, rgba(255, 255, 255, 0.1) 51%, transparent 51%);
+    /* Center circle */
+    radial-gradient(circle at center, var(--pitch-lines) 0.5%, transparent 0.6%),
+    /* Vertical center line */
+    linear-gradient(to right, transparent 49%, var(--pitch-lines) 49%, var(--pitch-lines) 51%, transparent 51%),
+    /* Horizontal center line */
+    linear-gradient(to bottom, transparent 49%, var(--pitch-lines) 49%, var(--pitch-lines) 51%, transparent 51%);
 }
 
 .pitch-markings {
   @apply absolute inset-0;
-  border: 2px solid rgba(255, 255, 255, 0.1);
+  border: 2px solid var(--pitch-lines);
   border-radius: var(--radius);
 }
 
 .goalkeeper-area {
   @apply absolute h-[60px] w-[120px] border-2 rounded-md;
-  border-color: rgba(255, 255, 255, 0.1);
+  border-color: var(--pitch-lines);
 }
 
 .goalkeeper-area-top {
@@ -29,25 +32,41 @@
 
 .gk-row {
   @apply flex items-center justify-center;
+  animation: fade-in 0.3s ease-out;
 }
 
 .def-row {
   @apply flex items-center justify-evenly;
+  animation: fade-in 0.3s ease-out 0.1s backwards;
 }
 
 .mid-row {
   @apply flex items-center justify-evenly;
+  animation: fade-in 0.3s ease-out 0.2s backwards;
 }
 
 .fwd-row {
   @apply flex items-center justify-evenly;
+  animation: fade-in 0.3s ease-out 0.3s backwards;
 }
 
 .bench-section {
   @apply mt-4 p-4 bg-secondary/90 backdrop-blur-sm 
          border border-accent/20 rounded-lg;
+  animation: fade-in 0.3s ease-out 0.4s backwards;
 }
 
 .bench-grid {
   @apply grid grid-cols-4 gap-4;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
