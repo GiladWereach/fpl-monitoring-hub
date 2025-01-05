@@ -1,7 +1,6 @@
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { PlayerCard } from './PlayerCard';
-import { BenchPlayers } from './BenchPlayers';
 
 interface PitchViewProps {
   teamSelection?: any;
@@ -75,15 +74,11 @@ export function PitchView({ teamSelection, players, liveData, eventId }: PitchVi
       <Card className="glass-card p-2">
         <div className="pitch-container">
           <div className="pitch-markings" />
+          <div className="goalkeeper-area goalkeeper-area-top" />
           
-          {/* Goalkeeper Areas */}
-          <div className="goalkeeper-area goalkeeper-area-left" />
-          <div className="goalkeeper-area goalkeeper-area-right" />
-          
-          {/* Player Positions */}
           <div className="pitch-grid">
-            {/* GK Column */}
-            <div className="gk-column">
+            {/* GK Row */}
+            <div className="gk-row">
               {[1].map(position => {
                 const player = getPlayerData(position);
                 if (!player) return null;
@@ -101,8 +96,8 @@ export function PitchView({ teamSelection, players, liveData, eventId }: PitchVi
               })}
             </div>
             
-            {/* DEF Column */}
-            <div className="def-column">
+            {/* DEF Row */}
+            <div className="def-row">
               {defenders.map(position => {
                 const player = getPlayerData(position);
                 if (!player) return null;
@@ -120,8 +115,8 @@ export function PitchView({ teamSelection, players, liveData, eventId }: PitchVi
               })}
             </div>
             
-            {/* MID Column */}
-            <div className="mid-column">
+            {/* MID Row */}
+            <div className="mid-row">
               {midfielders.map(position => {
                 const player = getPlayerData(position);
                 if (!player) return null;
@@ -139,8 +134,8 @@ export function PitchView({ teamSelection, players, liveData, eventId }: PitchVi
               })}
             </div>
             
-            {/* FWD Column */}
-            <div className="fwd-column">
+            {/* FWD Row */}
+            <div className="fwd-row">
               {forwards.map(position => {
                 const player = getPlayerData(position);
                 if (!player) return null;
@@ -162,11 +157,26 @@ export function PitchView({ teamSelection, players, liveData, eventId }: PitchVi
       </Card>
 
       {/* Bench Section */}
-      <BenchPlayers 
-        benchPlayers={[12, 13, 14, 15]}
-        getPlayerData={getPlayerData}
-        eventId={eventId}
-      />
+      <div className="bench-section">
+        <h3 className="text-sm font-semibold mb-4">Bench Players</h3>
+        <div className="bench-grid">
+          {[12, 13, 14, 15].map((position) => {
+            const playerData = getPlayerData(position);
+            if (!playerData) return null;
+            
+            return (
+              <PlayerCard
+                key={position}
+                player={playerData}
+                isCaptain={playerData.isCaptain}
+                isViceCaptain={playerData.isViceCaptain}
+                liveData={playerData.liveData}
+                eventId={eventId}
+              />
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }

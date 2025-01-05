@@ -1,5 +1,5 @@
 .pitch-container {
-  @apply relative h-[450px] w-full rounded-lg border border-accent/20 overflow-hidden;
+  @apply relative h-[600px] w-full rounded-lg border border-accent/20 overflow-hidden;
   background-color: rgba(39, 174, 96, 0.15);
   background-image: 
     radial-gradient(circle at center, rgba(255, 255, 255, 0.1) 0.5%, transparent 0.6%),
@@ -14,35 +14,40 @@
 }
 
 .goalkeeper-area {
-  @apply absolute h-[120px] w-[60px] border-2 rounded-md;
+  @apply absolute h-[60px] w-[120px] border-2 rounded-md;
   border-color: rgba(255, 255, 255, 0.1);
 }
 
-.goalkeeper-area-left {
-  @apply absolute left-8 top-1/2 -translate-y-1/2;
-}
-
-.goalkeeper-area-right {
-  @apply absolute right-8 top-1/2 -translate-y-1/2;
+.goalkeeper-area-top {
+  @apply absolute top-8 left-1/2 -translate-x-1/2;
 }
 
 .pitch-grid {
-  @apply absolute inset-0 grid grid-cols-[15%_28%_28%_29%] px-8 py-4;
+  @apply absolute inset-0 grid grid-rows-4 py-4 px-8;
   height: 100%;
 }
 
-.gk-column {
-  @apply flex items-center justify-center h-full;
+.gk-row {
+  @apply flex items-center justify-center;
 }
 
-.def-column {
-  @apply flex flex-col items-center justify-evenly py-12 h-full;
+.def-row {
+  @apply flex items-center justify-evenly;
 }
 
-.mid-column {
-  @apply flex flex-col items-center justify-evenly py-8 h-full;
+.mid-row {
+  @apply flex items-center justify-evenly;
 }
 
-.fwd-column {
-  @apply flex flex-col items-center justify-evenly py-16 h-full;
+.fwd-row {
+  @apply flex items-center justify-evenly;
+}
+
+.bench-section {
+  @apply mt-4 p-4 bg-secondary/90 backdrop-blur-sm 
+         border border-accent/20 rounded-lg;
+}
+
+.bench-grid {
+  @apply grid grid-cols-4 gap-4;
 }
