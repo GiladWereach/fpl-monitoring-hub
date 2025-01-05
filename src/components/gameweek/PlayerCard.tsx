@@ -45,9 +45,9 @@ export function PlayerCard({
 
   return (
     <HoverCard>
-      <HoverCardTrigger>
+      <HoverCardTrigger asChild>
         <div 
-          className={cn("player-card relative", isExpanded && "player-card-expanded")}
+          className={cn("player-card", isExpanded && "player-card-expanded")}
           onClick={() => setIsExpanded(!isExpanded)}
         >
           {(isCaptain || isViceCaptain) && (

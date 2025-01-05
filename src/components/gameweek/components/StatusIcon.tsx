@@ -12,8 +12,9 @@ export const StatusIcon: React.FC<StatusIconProps> = ({ status }) => {
   return (
     <div className="absolute bottom-1 left-1">
       <Icon 
+        size={16}
         className={cn(
-          "h-4 w-4",
+          "transition-colors",
           status.animate && "animate-pulse"
         )}
         color={status.color}
