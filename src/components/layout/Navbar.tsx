@@ -9,7 +9,7 @@ const Navbar = () => {
   const navItems = [
     { label: 'Dashboard', href: '/' },
     { label: 'Players', href: '/players' },
-    { label: 'Live Gameweek', href: '/gameweek-live' },
+    { label: 'Gameweek', href: '/gameweek' },
     { label: 'Tools', href: '/tools' },
   ];
 
