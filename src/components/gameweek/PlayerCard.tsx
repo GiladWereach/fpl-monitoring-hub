@@ -49,6 +49,9 @@ export function PlayerCard({
         <div 
           className={cn("player-card", isExpanded && "player-card-expanded")}
           onClick={() => setIsExpanded(!isExpanded)}
+          role="button"
+          tabIndex={0}
+          aria-label={`${player?.web_name} - ${points} points`}
         >
           {(isCaptain || isViceCaptain) && (
             <div className="absolute top-1 right-1">
@@ -58,6 +61,7 @@ export function PlayerCard({
                   "transition-colors",
                   isCaptain ? "text-[#eaff80]" : "text-gray-400"
                 )}
+                aria-label={isCaptain ? "Captain" : "Vice Captain"}
               />
             </div>
           )}
