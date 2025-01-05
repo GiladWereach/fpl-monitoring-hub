@@ -26,7 +26,7 @@
 }
 
 .pitch-grid {
-  @apply absolute inset-0 grid grid-rows-4 py-4 px-8;
+  @apply absolute inset-0 flex flex-col justify-between py-4 px-8;
   height: 100%;
 }
 
