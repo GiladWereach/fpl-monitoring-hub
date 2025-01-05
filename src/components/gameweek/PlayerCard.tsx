@@ -46,10 +46,10 @@ export function PlayerCard({
       <HoverCardTrigger asChild>
         <div 
           className={cn(
-            "relative w-full max-w-[120px] p-3 rounded-lg transition-all duration-200",
+            "relative w-full max-w-[140px] p-4 rounded-lg transition-all duration-200",
             "bg-secondary/90 backdrop-blur-sm border border-accent/20",
             "hover:bg-accent/10 hover:scale-105 cursor-pointer",
-            "flex flex-col items-center justify-center gap-1",
+            "flex flex-col items-center justify-center gap-2",
             isExpanded && "bg-accent/10"
           )}
           onClick={() => setIsExpanded(!isExpanded)}
@@ -58,7 +58,7 @@ export function PlayerCard({
           aria-label={`${player?.web_name} - ${points} points`}
         >
           {(isCaptain || isViceCaptain) && (
-            <div className="absolute top-1 right-1">
+            <div className="absolute top-2 right-2">
               <Copyright 
                 size={16} 
                 className={cn(
@@ -70,7 +70,7 @@ export function PlayerCard({
             </div>
           )}
           
-          <p className="text-sm font-medium truncate text-center">
+          <p className="text-sm font-medium truncate text-center w-full">
             {player?.web_name}
           </p>
           
@@ -89,7 +89,7 @@ export function PlayerCard({
           />
         </div>
       </HoverCardTrigger>
-      <HoverCardContent className="w-40 bg-secondary/95 backdrop-blur-sm border-accent/20">
+      <HoverCardContent className="w-80 bg-secondary/95 backdrop-blur-sm border-accent/20">
         <PointsBreakdown 
           pointsData={pointsData}
           isCaptain={isCaptain}
