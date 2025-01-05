@@ -1,5 +1,6 @@
 import React from 'react';
 import { PlayerCard } from '../PlayerCard';
+import { cn } from "@/lib/utils";
 
 interface GoalkeeperRowProps {
   getPlayerData: (position: number) => any;
@@ -8,7 +9,7 @@ interface GoalkeeperRowProps {
 
 export function GoalkeeperRow({ getPlayerData, eventId }: GoalkeeperRowProps) {
   return (
-    <div className="gk-row">
+    <div className={cn("w-full flex items-center justify-center gap-4 gk-row")}>
       {[1].map(position => {
         const player = getPlayerData(position);
         if (!player) return null;
