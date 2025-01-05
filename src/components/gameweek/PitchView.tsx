@@ -73,12 +73,14 @@ export function PitchView({ teamSelection, players, liveData, eventId }: PitchVi
   return (
     <div className="space-y-8">
       <div className="pitch-container">
+        <div className="position-labels">
+          <span className="position-label">GK</span>
+          <span className="position-label">DEF</span>
+          <span className="position-label">MID</span>
+          <span className="position-label">FWD</span>
+        </div>
+        
         <div className="pitch-grid">
-          <span className="position-label gk-label">GK</span>
-          <span className="position-label def-label">DEF</span>
-          <span className="position-label mid-label">MID</span>
-          <span className="position-label fwd-label">FWD</span>
-          
           <GoalkeeperRow getPlayerData={getPlayerData} eventId={eventId} />
           <PlayerRow 
             positions={defenders} 
