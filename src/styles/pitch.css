@@ -19,6 +19,10 @@
   @apply absolute h-[120px] w-[60px] border border-accent/20 rounded-md;
 }
 
+.pitch-grid {
+  @apply absolute inset-0 grid grid-cols-[15%_28%_28%_29%] px-8;
+}
+
 .gk-column {
   @apply flex items-center justify-center h-full;
 }

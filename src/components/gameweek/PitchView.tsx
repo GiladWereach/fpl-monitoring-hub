@@ -81,7 +81,7 @@ export function PitchView({ teamSelection, players, liveData, eventId }: PitchVi
           <div className="goalkeeper-area right-4 top-1/2 -translate-y-1/2" />
           
           {/* Player Positions */}
-          <div className="absolute inset-0 grid grid-cols-4 px-8">
+          <div className="pitch-grid">
             {/* GK Column */}
             <div className="gk-column">
               {[1].map(position => {
