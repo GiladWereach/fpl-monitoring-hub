@@ -1,7 +1,10 @@
 .pitch-container {
-  @apply relative h-[450px] w-full bg-[#1A1F2C] rounded-lg border border-accent/20 overflow-hidden;
-  background-image: linear-gradient(to right, var(--pitch-lines) 1px, transparent 1px),
-                    linear-gradient(to bottom, var(--pitch-lines) 1px, transparent 1px);
+  @apply relative h-[450px] w-full rounded-lg border border-accent/20 overflow-hidden;
+  background-color: #1A1F2C;
+  --pitch-lines: rgba(255, 255, 255, 0.1);
+  background-image: 
+    linear-gradient(to right, var(--pitch-lines) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--pitch-lines) 1px, transparent 1px);
   background-size: 50px 50px;
 }
 
