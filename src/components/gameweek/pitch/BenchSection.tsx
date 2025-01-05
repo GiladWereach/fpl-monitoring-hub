@@ -10,8 +10,11 @@ interface BenchSectionProps {
 export function BenchSection({ getPlayerData, eventId }: BenchSectionProps) {
   return (
     <div className="bench-section">
-      <h3 className="text-sm font-semibold mb-4">Bench Players</h3>
-      <div className={cn("w-full flex items-center justify-center gap-4")}>
+      <h3 className="text-sm font-semibold mb-6 text-foreground/80">Substitutes</h3>
+      <div className={cn(
+        "w-full grid grid-cols-4 gap-6",
+        "md:flex md:items-center md:justify-center md:gap-8"
+      )}>
         {[12, 13, 14, 15].map((position) => {
           const playerData = getPlayerData(position);
           if (!playerData) return null;

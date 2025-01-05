@@ -11,58 +11,58 @@
 }
 
 .pitch-grid {
-  @apply absolute inset-0 flex flex-col justify-between py-12 px-8;
+  @apply absolute inset-0 flex flex-col justify-between py-16 px-12;
   height: 100%;
   z-index: 1;
 }
 
 .position-labels {
-  @apply absolute inset-y-0 left-0 flex flex-col justify-between py-12 px-4;
+  @apply absolute inset-y-0 left-2 flex flex-col justify-between py-16;
   z-index: 2;
 }
 
 .position-label {
-  @apply text-xs font-medium text-accent/60;
+  @apply text-xs font-semibold tracking-wider text-accent/80;
   writing-mode: vertical-lr;
   transform: rotate(180deg);
 }
 
 /* Formation-based positioning classes */
 .formation-row {
-  @apply flex items-center justify-center gap-4 transition-all duration-300;
+  @apply flex items-center justify-center gap-8 transition-all duration-300;
 }
 
 .gk-row {
-  @apply mt-4;
+  @apply mt-0;
   animation: fade-in 0.3s ease-out;
 }
 
 .def-row {
-  @apply mt-auto mb-32;
+  @apply mt-auto mb-36;
   animation: fade-in 0.3s ease-out 0.1s backwards;
 }
 
 .mid-row {
-  @apply mb-32;
+  @apply mb-36;
   animation: fade-in 0.3s ease-out 0.2s backwards;
 }
 
 .fwd-row {
-  @apply mb-20;
+  @apply mb-24;
   animation: fade-in 0.3s ease-out 0.3s backwards;
 }
 
 .bench-section {
-  @apply mt-8 p-4 bg-secondary/90 backdrop-blur-sm 
-         border border-accent/20 rounded-lg;
+  @apply mt-8 p-6 bg-secondary/90 backdrop-blur-sm 
+         border border-accent/20 rounded-lg shadow-lg;
   animation: fade-in 0.3s ease-out 0.4s backwards;
 }
 
 /* Formation-specific spacing adjustments */
 .formation-433 .def-row { gap: 6rem; }
-.formation-442 .def-row { gap: 4rem; }
-.formation-352 .def-row { gap: 3rem; }
-.formation-343 .def-row { gap: 4rem; }
+.formation-442 .def-row { gap: 5rem; }
+.formation-352 .def-row { gap: 4rem; }
+.formation-343 .def-row { gap: 5rem; }
 
 @keyframes fade-in {
   from {
@@ -91,19 +91,19 @@
   }
   
   .pitch-grid {
-    @apply py-8 px-4;
+    @apply py-8 px-6;
   }
   
   .def-row {
-    @apply mb-24;
+    @apply mb-28;
   }
   
   .mid-row {
-    @apply mb-24;
+    @apply mb-28;
   }
   
   .fwd-row {
-    @apply mb-16;
+    @apply mb-20;
   }
 }
 
@@ -113,14 +113,14 @@
   }
   
   .def-row {
-    @apply mb-16;
+    @apply mb-20;
   }
   
   .mid-row {
-    @apply mb-16;
+    @apply mb-20;
   }
   
   .fwd-row {
-    @apply mb-12;
+    @apply mb-16;
   }
 }

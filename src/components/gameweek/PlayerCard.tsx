@@ -47,10 +47,11 @@ export function PlayerCard({
         <div 
           className={cn(
             "relative w-full max-w-[120px]",
-            "p-3 rounded-lg transition-all duration-200",
-            "bg-secondary/90 backdrop-blur-sm border border-accent/20",
+            "p-4 rounded-lg transition-all duration-200",
+            "bg-secondary/95 backdrop-blur-sm border border-accent/20",
             "hover:bg-accent/10 hover:scale-105 cursor-pointer",
-            "flex flex-col items-center justify-center gap-1.5",
+            "flex flex-col items-center justify-center gap-2",
+            "shadow-lg hover:shadow-xl",
             "animate-fade-in",
             isExpanded && "bg-accent/10"
           )}
@@ -60,19 +61,19 @@ export function PlayerCard({
           aria-label={`${player?.web_name} - ${points} points`}
         >
           {(isCaptain || isViceCaptain) && (
-            <div className="absolute top-1.5 right-1.5">
+            <div className="absolute top-2 right-2">
               <Copyright 
-                size={14} 
+                size={16} 
                 className={cn(
                   "transition-colors",
-                  isCaptain ? "text-[#eaff80]" : "text-gray-400"
+                  isCaptain ? "text-[#eaff80] drop-shadow-glow" : "text-gray-400"
                 )}
                 aria-label={isCaptain ? "Captain" : "Vice Captain"}
               />
             </div>
           )}
           
-          <p className="text-sm font-medium truncate text-center w-full">
+          <p className="text-sm font-semibold truncate text-center w-full text-foreground/90">
             {player?.web_name}
           </p>
           
@@ -83,7 +84,7 @@ export function PlayerCard({
             {pointsLoading ? '...' : points}
           </div>
           
-          <div className="text-xs text-accent/80">
+          <div className="text-xs text-accent/80 font-medium">
             {getPositionText(player?.element_type)}
           </div>
 
