@@ -20,11 +20,13 @@ interface PlayerCardProps {
 export function PlayerCard({ player, isCaptain, isViceCaptain, liveData, fixture_id }: PlayerCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   
+  // Enhanced logging to track points calculation
   console.log(`PlayerCard render for ${player?.web_name}:`, {
     player_id: player?.id,
     is_captain: isCaptain,
     live_data: liveData ? {
-      total_points: liveData.points?.[0]?.final_total_points,
+      final_total_points: liveData.points?.[0]?.final_total_points,
+      raw_points: liveData.points,
       minutes: liveData.minutes,
       goals: liveData.goals_scored,
       assists: liveData.assists,
@@ -33,10 +35,15 @@ export function PlayerCard({ player, isCaptain, isViceCaptain, liveData, fixture
     } : 'No live data'
   });
 
-  // Calculate points from live data, using final_total_points from the points array
-  const points = liveData?.points?.[0]?.final_total_points ? 
-    (isCaptain ? liveData.points[0].final_total_points * 2 : liveData.points[0].final_total_points) 
-    : 0;
+  // Calculate points from live data, ensuring we use final_total_points
+  const basePoints = liveData?.points?.[0]?.final_total_points ?? 0;
+  const points = isCaptain ? basePoints * 2 : basePoints;
+
+  console.log(`Final points calculation for ${player?.web_name}:`, {
+    basePoints,
+    isCaptain,
+    finalPoints: points
+  });
 
   return (
     <HoverCard>
