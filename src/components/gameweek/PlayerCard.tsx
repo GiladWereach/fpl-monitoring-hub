@@ -29,7 +29,6 @@ export function PlayerCard({
 }: PlayerCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   
-  // Use the points query
   const { data: pointsData, isLoading: pointsLoading } = usePlayerPoints(player?.id, eventId);
   
   console.log(`PlayerCard render for ${player?.web_name}:`, {
@@ -39,7 +38,6 @@ export function PlayerCard({
     loading: pointsLoading
   });
 
-  // Calculate points using direct points data
   const basePoints = pointsData?.final_total_points ?? 0;
   const points = isCaptain ? basePoints * 2 : basePoints;
 
@@ -47,7 +45,13 @@ export function PlayerCard({
     <HoverCard>
       <HoverCardTrigger asChild>
         <div 
-          className={cn("player-card", isExpanded && "player-card-expanded")}
+          className={cn(
+            "relative w-full p-3 rounded-lg transition-all duration-200",
+            "bg-secondary/90 backdrop-blur-sm border border-accent/20",
+            "hover:bg-accent/10 hover:scale-105 cursor-pointer",
+            "flex flex-col items-center justify-center gap-1",
+            isExpanded && "bg-accent/10"
+          )}
           onClick={() => setIsExpanded(!isExpanded)}
           role="button"
           tabIndex={0}
@@ -66,12 +70,16 @@ export function PlayerCard({
             </div>
           )}
           
-          <div className="relative">
-            <p className="player-name truncate">{player?.web_name}</p>
-            <div className="points-text">
-              {pointsLoading ? '...' : points}
-            </div>
-            <div className="player-position">{getPositionText(player?.element_type)}</div>
+          <p className="text-sm font-medium truncate text-center">
+            {player?.web_name}
+          </p>
+          
+          <div className="text-xl font-bold text-accent">
+            {pointsLoading ? '...' : points}
+          </div>
+          
+          <div className="text-xs text-accent/80">
+            {getPositionText(player?.element_type)}
           </div>
 
           <PlayerStatus 
