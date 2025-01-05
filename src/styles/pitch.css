@@ -1,20 +1,21 @@
 .pitch-container {
   @apply relative h-[450px] w-full rounded-lg border border-accent/20 overflow-hidden;
-  background-color: var(--pitch-background);
+  background-color: rgba(39, 174, 96, 0.15);
   background-image: 
-    radial-gradient(circle at center, var(--pitch-lines) 0.5%, transparent 0.6%),
-    linear-gradient(to right, transparent 49%, var(--pitch-lines) 49%, var(--pitch-lines) 51%, transparent 51%),
-    linear-gradient(to bottom, transparent 49%, var(--pitch-lines) 49%, var(--pitch-lines) 51%, transparent 51%);
+    radial-gradient(circle at center, rgba(255, 255, 255, 0.1) 0.5%, transparent 0.6%),
+    linear-gradient(to right, transparent 49%, rgba(255, 255, 255, 0.1) 49%, rgba(255, 255, 255, 0.1) 51%, transparent 51%),
+    linear-gradient(to bottom, transparent 49%, rgba(255, 255, 255, 0.1) 49%, rgba(255, 255, 255, 0.1) 51%, transparent 51%);
 }
 
 .pitch-markings {
   @apply absolute inset-0;
-  border: 2px solid var(--pitch-lines);
+  border: 2px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--radius);
 }
 
 .goalkeeper-area {
-  @apply absolute h-[120px] w-[60px] border-2 border-[var(--pitch-lines)] rounded-md;
+  @apply absolute h-[120px] w-[60px] border-2 rounded-md;
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 .pitch-grid {
