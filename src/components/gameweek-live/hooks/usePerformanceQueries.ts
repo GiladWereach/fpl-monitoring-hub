@@ -14,6 +14,19 @@ export const usePerformanceQueries = (gameweek: number, matchId?: number | null)
         .from('gameweek_live_performance')
         .select(`
           *,
+          points_calculation:player_points_calculation!inner(
+            minutes_points,
+            goals_scored_points,
+            assist_points,
+            clean_sheet_points,
+            goals_conceded_points,
+            own_goal_points,
+            penalty_save_points,
+            penalty_miss_points,
+            saves_points,
+            bonus_points,
+            final_total_points
+          ),
           player:players(
             id,
             first_name,
@@ -48,10 +61,11 @@ export const usePerformanceQueries = (gameweek: number, matchId?: number | null)
       if (data && data.length > 0) {
         console.log('Sample player performance:', {
           player: data[0].player.web_name,
-          total_points: data[0].total_points,
+          total_points: data[0].points_calculation?.final_total_points,
           minutes: data[0].minutes,
           goals: data[0].goals_scored,
-          assists: data[0].assists
+          assists: data[0].assists,
+          points_calculation: data[0].points_calculation
         });
       }
       
