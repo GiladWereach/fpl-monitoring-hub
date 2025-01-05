@@ -78,11 +78,11 @@ export function PitchView({ teamSelection, players, liveData, eventId }: PitchVi
         <svg 
           xmlns="http://www.w3.org/2000/svg" 
           className="absolute inset-0 w-full h-full"
-          viewBox="0 0 74 111" 
+          viewBox="0 0 68 105" 
           preserveAspectRatio="xMidYMid slice"
         >
-          <rect width="74" height="111" fill="#0D1117"/>
-          <g fill="none" stroke="rgba(61, 255, 154, 0.35)" strokeWidth="0.25" transform="translate(3 3)">
+          <rect width="68" height="105" fill="#0D1117"/>
+          <g fill="none" stroke="rgba(61, 255, 154, 0.35)" strokeWidth="0.25">
             {/* Main pitch border */}
             <path d="M 0 0 h 68 v 105 h -68 Z"/>
             
