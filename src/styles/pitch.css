@@ -18,6 +18,14 @@
   border-color: rgba(255, 255, 255, 0.1);
 }
 
+.goalkeeper-area-left {
+  @apply absolute left-8 top-1/2 -translate-y-1/2;
+}
+
+.goalkeeper-area-right {
+  @apply absolute right-8 top-1/2 -translate-y-1/2;
+}
+
 .pitch-grid {
   @apply absolute inset-0 grid grid-cols-[15%_28%_28%_29%] px-8 py-4;
   height: 100%;

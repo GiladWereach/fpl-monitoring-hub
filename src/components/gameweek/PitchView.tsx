@@ -77,8 +77,8 @@ export function PitchView({ teamSelection, players, liveData, eventId }: PitchVi
           <div className="pitch-markings" />
           
           {/* Goalkeeper Areas */}
-          <div className="goalkeeper-area left-4 top-1/2 -translate-y-1/2" />
-          <div className="goalkeeper-area right-4 top-1/2 -translate-y-1/2" />
+          <div className="goalkeeper-area goalkeeper-area-left" />
+          <div className="goalkeeper-area goalkeeper-area-right" />
           
           {/* Player Positions */}
           <div className="pitch-grid">
