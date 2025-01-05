@@ -7,7 +7,6 @@
          border border-accent/20 rounded-xl p-2 transition-all 
          hover:bg-accent/10 cursor-pointer shadow-lg relative
          hover:scale-105 hover:z-10;
-  background-color: rgba(30, 41, 59, 0.9);
 }
 
 .player-card-expanded {
@@ -20,7 +19,6 @@
 
 .player-name {
   @apply text-sm font-medium text-foreground text-center mb-1;
-  color: rgba(255, 255, 255, 0.9);
 }
 
 .player-position {
