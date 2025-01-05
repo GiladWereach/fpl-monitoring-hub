@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/hover-card";
 import { PlayerStatus } from './PlayerStatus';
 import { PointsBreakdown } from './components/PointsBreakdown';
+import { usePlayerPoints } from '@/hooks/usePlayerPoints';
 
 interface PlayerCardProps {
   player: any;
@@ -15,36 +16,32 @@ interface PlayerCardProps {
   isViceCaptain: boolean;
   liveData?: any;
   fixture_id?: number;
+  eventId: number;
 }
 
-export function PlayerCard({ player, isCaptain, isViceCaptain, liveData, fixture_id }: PlayerCardProps) {
+export function PlayerCard({ 
+  player, 
+  isCaptain, 
+  isViceCaptain, 
+  liveData, 
+  fixture_id,
+  eventId 
+}: PlayerCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   
-  // Enhanced logging to track points calculation
+  // Use the new direct points query
+  const { data: pointsData, isLoading: pointsLoading } = usePlayerPoints(player?.id, eventId);
+  
   console.log(`PlayerCard render for ${player?.web_name}:`, {
     player_id: player?.id,
     is_captain: isCaptain,
-    live_data: liveData ? {
-      total_points: liveData.points_calculation?.final_total_points,
-      minutes: liveData.minutes,
-      goals: liveData.goals_scored,
-      assists: liveData.assists,
-      bonus: liveData.bonus,
-      clean_sheets: liveData.clean_sheets,
-      points_calculation: liveData.points_calculation
-    } : 'No live data'
+    points_data: pointsData,
+    loading: pointsLoading
   });
 
-  // Calculate points using points_calculation
-  const basePoints = liveData?.points_calculation?.final_total_points ?? 0;
+  // Calculate points using direct points data
+  const basePoints = pointsData?.final_total_points ?? 0;
   const points = isCaptain ? basePoints * 2 : basePoints;
-
-  console.log(`Final points calculation for ${player?.web_name}:`, {
-    basePoints,
-    isCaptain,
-    finalPoints: points,
-    pointsCalculation: liveData?.points_calculation
-  });
 
   return (
     <HoverCard>
@@ -67,7 +64,9 @@ export function PlayerCard({ player, isCaptain, isViceCaptain, liveData, fixture
           
           <div className="relative">
             <p className="player-name truncate">{player?.web_name}</p>
-            <div className="points-text">{points}</div>
+            <div className="points-text">
+              {pointsLoading ? '...' : points}
+            </div>
             <div className="player-position">{getPositionText(player?.element_type)}</div>
           </div>
 
@@ -80,7 +79,7 @@ export function PlayerCard({ player, isCaptain, isViceCaptain, liveData, fixture
       </HoverCardTrigger>
       <HoverCardContent className="w-40 bg-secondary/95 backdrop-blur-sm border-accent/20">
         <PointsBreakdown 
-          liveData={liveData}
+          pointsData={pointsData}
           isCaptain={isCaptain}
           isViceCaptain={isViceCaptain}
         />
