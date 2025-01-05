@@ -27,7 +27,6 @@ export default function Gameweek() {
     }
   }, [teamId, navigate, toast]);
 
-  // Get current gameweek
   const { data: currentGameweek, isLoading: gameweekLoading } = useQuery({
     queryKey: ['current-gameweek'],
     queryFn: async () => {
@@ -131,29 +130,27 @@ export default function Gameweek() {
   const isLoading = gameweekLoading || teamLoading || playersLoading || liveDataLoading;
 
   if (!teamId) {
-    return null; // useEffect will handle the redirect
+    return null;
   }
 
   return (
-    <div className="min-h-screen bg-[#0D1117] text-white">
-      <div className="container mx-auto p-4 space-y-4 animate-fade-in">
-        <GameweekHeader 
-          currentGameweek={currentGameweek}
-          totalPoints={teamData?.data?.stats?.points || 0}
-          playersPlaying={teamData?.data?.picks?.filter(p => 
-            liveData?.find(d => d.player_id === p.element)?.minutes > 0
-          )?.length || 0}
-        />
+    <div className="space-y-6 animate-fade-in">
+      <GameweekHeader 
+        currentGameweek={currentGameweek}
+        totalPoints={teamData?.data?.stats?.points || 0}
+        playersPlaying={teamData?.data?.picks?.filter(p => 
+          liveData?.find(d => d.player_id === p.element)?.minutes > 0
+        )?.length || 0}
+      />
 
-        <TeamView 
-          teamData={teamData}
-          teamLoading={isLoading}
-          viewMode={viewMode}
-          setViewMode={setViewMode}
-          players={players}
-          liveData={liveData}
-        />
-      </div>
+      <TeamView 
+        teamData={teamData}
+        teamLoading={isLoading}
+        viewMode={viewMode}
+        setViewMode={setViewMode}
+        players={players}
+        liveData={liveData}
+      />
     </div>
   );
 }
