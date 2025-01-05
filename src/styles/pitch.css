@@ -40,6 +40,18 @@
   animation: fade-in 0.3s ease-out 0.4s backwards;
 }
 
+/* Position Labels */
+.position-label {
+  @apply absolute left-2 text-xs font-medium text-accent/60;
+  writing-mode: vertical-lr;
+  transform: rotate(180deg);
+}
+
+.gk-label { top: 15%; }
+.def-label { top: 35%; }
+.mid-label { top: 55%; }
+.fwd-label { top: 75%; }
+
 @keyframes fade-in {
   from {
     opacity: 0;
