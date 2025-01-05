@@ -25,8 +25,7 @@ export function PlayerCard({ player, isCaptain, isViceCaptain, liveData, fixture
     player_id: player?.id,
     is_captain: isCaptain,
     live_data: liveData ? {
-      final_total_points: liveData.points?.[0]?.final_total_points,
-      raw_points: liveData.points,
+      total_points: liveData.total_points,
       minutes: liveData.minutes,
       goals: liveData.goals_scored,
       assists: liveData.assists,
@@ -35,8 +34,8 @@ export function PlayerCard({ player, isCaptain, isViceCaptain, liveData, fixture
     } : 'No live data'
   });
 
-  // Calculate points from live data, ensuring we use final_total_points
-  const basePoints = liveData?.points?.[0]?.final_total_points ?? 0;
+  // Calculate points directly from total_points
+  const basePoints = liveData?.total_points ?? 0;
   const points = isCaptain ? basePoints * 2 : basePoints;
 
   console.log(`Final points calculation for ${player?.web_name}:`, {
