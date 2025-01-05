@@ -1,5 +1,4 @@
 import React from 'react';
-import { Card } from '@/components/ui/card';
 import { GoalkeeperRow } from './pitch/GoalkeeperRow';
 import { PlayerRow } from './pitch/PlayerRow';
 import { BenchSection } from './pitch/BenchSection';
@@ -72,30 +71,28 @@ export function PitchView({ teamSelection, players, liveData, eventId }: PitchVi
   const { defenders, midfielders, forwards } = getFormationPlayers();
 
   return (
-    <div className="space-y-4">
-      <div className="glass-card p-4 sm:p-6 rounded-lg">
-        <div className="pitch-container">
-          <div className="pitch-grid">
-            <GoalkeeperRow getPlayerData={getPlayerData} eventId={eventId} />
-            <PlayerRow 
-              positions={defenders} 
-              getPlayerData={getPlayerData} 
-              eventId={eventId}
-              className="def-row"
-            />
-            <PlayerRow 
-              positions={midfielders} 
-              getPlayerData={getPlayerData} 
-              eventId={eventId}
-              className="mid-row"
-            />
-            <PlayerRow 
-              positions={forwards} 
-              getPlayerData={getPlayerData} 
-              eventId={eventId}
-              className="fwd-row"
-            />
-          </div>
+    <div className="space-y-8">
+      <div className="pitch-container">
+        <div className="pitch-grid">
+          <GoalkeeperRow getPlayerData={getPlayerData} eventId={eventId} />
+          <PlayerRow 
+            positions={defenders} 
+            getPlayerData={getPlayerData} 
+            eventId={eventId}
+            className="def-row"
+          />
+          <PlayerRow 
+            positions={midfielders} 
+            getPlayerData={getPlayerData} 
+            eventId={eventId}
+            className="mid-row"
+          />
+          <PlayerRow 
+            positions={forwards} 
+            getPlayerData={getPlayerData} 
+            eventId={eventId}
+            className="fwd-row"
+          />
         </div>
       </div>
 

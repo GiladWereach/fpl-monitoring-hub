@@ -1,55 +1,43 @@
 .pitch-container {
   @apply relative w-full rounded-lg border border-accent/20 overflow-hidden;
-  aspect-ratio: 74/111; /* Match SVG viewBox ratio */
+  aspect-ratio: 74/111;
   min-height: 600px;
-  background-color: #0D1117;
+  background-color: var(--pitch-background);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100%25' height='100%25' viewBox='0 0 74 111' preserveAspectRatio='xMidYMid slice'%3E%3Crect width='74' height='111' fill='%230D1117'/%3E%3Cg fill='none' stroke='rgba(61, 255, 154, 0.35)' stroke-width='0.25' transform='translate(3 3)'%3E%3Cpath d='M 0 0 h 68 v 105 h -68 Z'/%3E%3Cpath d='M 0 52.5 h 68'/%3E%3Ccircle r='9.15' cx='34' cy='52.5'/%3E%3Ccircle r='0.5' cx='34' cy='52.5' fill='rgba(61, 255, 154, 0.35)'/%3E%3Cpath d='M 13.84 0 v 16.5 h 40.32 v -16.5'/%3E%3Cpath d='M 24.84 0 v 5.5 h 18.32 v -5.5'/%3E%3Ccircle r='0.5' cx='34' cy='10.94' fill='rgba(61, 255, 154, 0.35)'/%3E%3Cpath d='M 26.733027 16.5 a 9.15 9.15 0 0 0 14.533946 0'/%3E%3Cpath d='M 13.84 105 v -16.5 h 40.32 v 16.5'/%3E%3Cpath d='M 24.84 105 v -5.5 h 18.32 v 5.5'/%3E%3Ccircle r='0.5' cx='34' cy='94.06' fill='rgba(61, 255, 154, 0.35)'/%3E%3Cpath d='M 26.733027 88.5 a 9.15 9.15 0 0 1 14.533946 0'/%3E%3Cpath d='M 0 2 a 2 2 0 0 0 2 -2'/%3E%3Cpath d='M 66 0 a 2 2 0 0 0 2 2'/%3E%3Cpath d='M 68 103 a 2 2 0 0 0 -2 2'/%3E%3Cpath d='M 2 105 a 2 2 0 0 0 -2 -2'/%3E%3C/g%3E%3C/svg%3E");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
 }
 
-.pitch-markings {
-  display: none; /* Remove old pitch markings since we now use SVG */
-}
-
-.goalkeeper-area {
-  display: none; /* Remove old goalkeeper area since it's in the SVG */
-}
-
 .pitch-grid {
-  @apply absolute inset-0 flex flex-col justify-between py-8 px-8;
+  @apply absolute inset-0 flex flex-col justify-between py-12 px-8;
   height: 100%;
 }
 
 .gk-row {
-  @apply mt-8;
+  @apply mt-4;
   animation: fade-in 0.3s ease-out;
 }
 
 .def-row {
-  @apply mt-auto mb-24;
+  @apply mt-auto mb-32;
   animation: fade-in 0.3s ease-out 0.1s backwards;
 }
 
 .mid-row {
-  @apply mb-24;
+  @apply mb-32;
   animation: fade-in 0.3s ease-out 0.2s backwards;
 }
 
 .fwd-row {
-  @apply mb-16;
+  @apply mb-20;
   animation: fade-in 0.3s ease-out 0.3s backwards;
 }
 
 .bench-section {
-  @apply mt-4 p-4 bg-secondary/90 backdrop-blur-sm 
+  @apply mt-8 p-4 bg-secondary/90 backdrop-blur-sm 
          border border-accent/20 rounded-lg;
   animation: fade-in 0.3s ease-out 0.4s backwards;
-}
-
-.bench-grid {
-  @apply grid grid-cols-4 gap-4;
 }
 
 @keyframes fade-in {
@@ -77,20 +65,40 @@
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .pitch-container {
-    height: 500px;
+    min-height: 500px;
   }
   
-  .goalkeeper-area {
-    @apply h-[50px] w-[100px];
+  .pitch-grid {
+    @apply py-8 px-4;
+  }
+  
+  .def-row {
+    @apply mb-24;
+  }
+  
+  .mid-row {
+    @apply mb-24;
+  }
+  
+  .fwd-row {
+    @apply mb-16;
   }
 }
 
 @media (max-width: 640px) {
   .pitch-container {
-    height: 400px;
+    min-height: 400px;
   }
   
-  .goalkeeper-area {
-    @apply h-[40px] w-[80px];
+  .def-row {
+    @apply mb-16;
+  }
+  
+  .mid-row {
+    @apply mb-16;
+  }
+  
+  .fwd-row {
+    @apply mb-12;
   }
 }
