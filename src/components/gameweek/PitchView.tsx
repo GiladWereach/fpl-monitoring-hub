@@ -1,6 +1,8 @@
 import React from 'react';
 import { Card } from '@/components/ui/card';
-import { PlayerCard } from './PlayerCard';
+import { GoalkeeperRow } from './pitch/GoalkeeperRow';
+import { PlayerRow } from './pitch/PlayerRow';
+import { BenchSection } from './pitch/BenchSection';
 
 interface PitchViewProps {
   teamSelection?: any;
@@ -77,106 +79,30 @@ export function PitchView({ teamSelection, players, liveData, eventId }: PitchVi
           <div className="goalkeeper-area goalkeeper-area-top" />
           
           <div className="pitch-grid">
-            {/* GK Row */}
-            <div className="gk-row">
-              {[1].map(position => {
-                const player = getPlayerData(position);
-                if (!player) return null;
-                return (
-                  <PlayerCard 
-                    key={position}
-                    player={player}
-                    isCaptain={player.isCaptain}
-                    isViceCaptain={player.isViceCaptain}
-                    liveData={player.liveData}
-                    fixture_id={player.fixture_id}
-                    eventId={eventId}
-                  />
-                );
-              })}
-            </div>
-            
-            {/* DEF Row */}
-            <div className="def-row">
-              {defenders.map(position => {
-                const player = getPlayerData(position);
-                if (!player) return null;
-                return (
-                  <PlayerCard 
-                    key={position}
-                    player={player}
-                    isCaptain={player.isCaptain}
-                    isViceCaptain={player.isViceCaptain}
-                    liveData={player.liveData}
-                    fixture_id={player.fixture_id}
-                    eventId={eventId}
-                  />
-                );
-              })}
-            </div>
-            
-            {/* MID Row */}
-            <div className="mid-row">
-              {midfielders.map(position => {
-                const player = getPlayerData(position);
-                if (!player) return null;
-                return (
-                  <PlayerCard 
-                    key={position}
-                    player={player}
-                    isCaptain={player.isCaptain}
-                    isViceCaptain={player.isViceCaptain}
-                    liveData={player.liveData}
-                    fixture_id={player.fixture_id}
-                    eventId={eventId}
-                  />
-                );
-              })}
-            </div>
-            
-            {/* FWD Row */}
-            <div className="fwd-row">
-              {forwards.map(position => {
-                const player = getPlayerData(position);
-                if (!player) return null;
-                return (
-                  <PlayerCard 
-                    key={position}
-                    player={player}
-                    isCaptain={player.isCaptain}
-                    isViceCaptain={player.isViceCaptain}
-                    liveData={player.liveData}
-                    fixture_id={player.fixture_id}
-                    eventId={eventId}
-                  />
-                );
-              })}
-            </div>
+            <GoalkeeperRow getPlayerData={getPlayerData} eventId={eventId} />
+            <PlayerRow 
+              positions={defenders} 
+              getPlayerData={getPlayerData} 
+              eventId={eventId}
+              className="def-row"
+            />
+            <PlayerRow 
+              positions={midfielders} 
+              getPlayerData={getPlayerData} 
+              eventId={eventId}
+              className="mid-row"
+            />
+            <PlayerRow 
+              positions={forwards} 
+              getPlayerData={getPlayerData} 
+              eventId={eventId}
+              className="fwd-row"
+            />
           </div>
         </div>
       </Card>
 
-      {/* Bench Section */}
-      <div className="bench-section">
-        <h3 className="text-sm font-semibold mb-4">Bench Players</h3>
-        <div className="bench-grid">
-          {[12, 13, 14, 15].map((position) => {
-            const playerData = getPlayerData(position);
-            if (!playerData) return null;
-            
-            return (
-              <PlayerCard
-                key={position}
-                player={playerData}
-                isCaptain={playerData.isCaptain}
-                isViceCaptain={playerData.isViceCaptain}
-                liveData={playerData.liveData}
-                eventId={eventId}
-              />
-            );
-          })}
-        </div>
-      </div>
+      <BenchSection getPlayerData={getPlayerData} eventId={eventId} />
     </div>
   );
 }
