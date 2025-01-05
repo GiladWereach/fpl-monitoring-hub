@@ -75,6 +75,52 @@ export function PitchView({ teamSelection, players, liveData, eventId }: PitchVi
   return (
     <div className="space-y-8">
       <div className={`fpl-pitch-container ${formationClass}`}>
+        <svg 
+          className="absolute inset-0 w-full h-full"
+          viewBox="0 0 800 600" 
+          preserveAspectRatio="xMidYMid slice"
+        >
+          <rect width="800" height="600" fill="#1A1F2C"/>
+          <path 
+            d="M 50 50 L 750 50 L 750 550 L 50 550 Z" 
+            fill="none" 
+            stroke="rgba(61, 255, 154, 0.15)" 
+            strokeWidth="2"
+          />
+          <path 
+            d="M 400 50 L 400 550" 
+            fill="none" 
+            stroke="rgba(61, 255, 154, 0.15)" 
+            strokeWidth="2"
+          />
+          <circle 
+            cx="400" 
+            cy="300" 
+            r="50" 
+            fill="none" 
+            stroke="rgba(61, 255, 154, 0.15)" 
+            strokeWidth="2"
+          />
+          <circle 
+            cx="400" 
+            cy="300" 
+            r="2" 
+            fill="rgba(61, 255, 154, 0.15)"
+          />
+          <path 
+            d="M 250 50 L 550 50 L 550 150 L 250 150 Z" 
+            fill="none" 
+            stroke="rgba(61, 255, 154, 0.15)" 
+            strokeWidth="2"
+          />
+          <path 
+            d="M 250 550 L 550 550 L 550 450 L 250 450 Z" 
+            fill="none" 
+            stroke="rgba(61, 255, 154, 0.15)" 
+            strokeWidth="2"
+          />
+        </svg>
+
         <div className="fpl-position-labels">
           <span className="fpl-position-label">GK</span>
           <span className="fpl-position-label">DEF</span>
