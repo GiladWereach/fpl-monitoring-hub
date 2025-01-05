@@ -31,22 +31,22 @@
 }
 
 .gk-row {
-  @apply flex items-center justify-center;
+  @apply flex items-center justify-center gap-4;
   animation: fade-in 0.3s ease-out;
 }
 
 .def-row {
-  @apply flex items-center justify-evenly;
+  @apply flex items-center justify-evenly gap-4;
   animation: fade-in 0.3s ease-out 0.1s backwards;
 }
 
 .mid-row {
-  @apply flex items-center justify-evenly;
+  @apply flex items-center justify-evenly gap-4;
   animation: fade-in 0.3s ease-out 0.2s backwards;
 }
 
 .fwd-row {
-  @apply flex items-center justify-evenly;
+  @apply flex items-center justify-evenly gap-4;
   animation: fade-in 0.3s ease-out 0.3s backwards;
 }
 

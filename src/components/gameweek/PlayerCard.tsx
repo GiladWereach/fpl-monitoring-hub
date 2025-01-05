@@ -46,7 +46,7 @@ export function PlayerCard({
       <HoverCardTrigger asChild>
         <div 
           className={cn(
-            "relative w-full p-3 rounded-lg transition-all duration-200",
+            "relative w-full max-w-[120px] p-3 rounded-lg transition-all duration-200",
             "bg-secondary/90 backdrop-blur-sm border border-accent/20",
             "hover:bg-accent/10 hover:scale-105 cursor-pointer",
             "flex flex-col items-center justify-center gap-1",
@@ -74,7 +74,7 @@ export function PlayerCard({
             {player?.web_name}
           </p>
           
-          <div className="text-xl font-bold text-accent">
+          <div className="text-xl font-bold text-[#3DFF9A]">
             {pointsLoading ? '...' : points}
           </div>
           
