@@ -39,6 +39,13 @@ export const TeamView: React.FC<TeamViewProps> = ({
   }
 
   const { points = 0, benchPoints = 0 } = teamData.data.stats || {};
+  const currentEvent = teamData.data.team_info?.event;
+
+  console.log('TeamView render:', {
+    event: currentEvent,
+    has_data: !!teamData?.data,
+    view_mode: viewMode
+  });
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -48,6 +55,7 @@ export const TeamView: React.FC<TeamViewProps> = ({
             teamSelection={teamData.data}
             players={players}
             liveData={liveData}
+            eventId={currentEvent}
           />
         ) : (
           <ListView
