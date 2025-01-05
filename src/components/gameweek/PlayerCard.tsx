@@ -89,7 +89,7 @@ export function PlayerCard({
         </div>
       </HoverCardTrigger>
       <HoverCardContent 
-        className="w-80 bg-secondary/95 backdrop-blur-sm border-accent/20 animate-fade-in"
+        className="w-[120px] bg-secondary/95 backdrop-blur-sm border-accent/20 animate-fade-in"
         side="right"
       >
         <PointsBreakdown 
@@ -100,14 +100,4 @@ export function PlayerCard({
       </HoverCardContent>
     </HoverCard>
   );
-}
-
-function getPositionText(elementType: number) {
-  switch (elementType) {
-    case 1: return 'GK';
-    case 2: return 'DEF';
-    case 3: return 'MID';
-    case 4: return 'FWD';
-    default: return '';
-  }
 }

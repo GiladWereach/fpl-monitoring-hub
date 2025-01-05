@@ -34,12 +34,12 @@
 }
 
 .fpl-def-row {
-  @apply mt-auto mb-24;
+  @apply mt-auto mb-16;
   animation: fade-in 0.3s ease-out 0.1s backwards;
 }
 
 .fpl-mid-row {
-  @apply mb-24;
+  @apply mb-16;
   animation: fade-in 0.3s ease-out 0.2s backwards;
 }
 
@@ -85,11 +85,11 @@
   }
   
   .fpl-def-row {
-    @apply mb-16;
+    @apply mb-12;
   }
   
   .fpl-mid-row {
-    @apply mb-16;
+    @apply mb-12;
   }
   
   .fpl-fwd-row {
