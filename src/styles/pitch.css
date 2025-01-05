@@ -70,3 +70,35 @@
     transform: translateY(0);
   }
 }
+
+/* Optimize animations for reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .gk-row,
+  .def-row,
+  .mid-row,
+  .fwd-row,
+  .bench-section {
+    animation: none;
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .pitch-container {
+    height: 500px;
+  }
+  
+  .goalkeeper-area {
+    @apply h-[50px] w-[100px];
+  }
+}
+
+@media (max-width: 640px) {
+  .pitch-container {
+    height: 400px;
+  }
+  
+  .goalkeeper-area {
+    @apply h-[40px] w-[80px];
+  }
+}
