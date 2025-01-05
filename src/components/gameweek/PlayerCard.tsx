@@ -77,15 +77,8 @@ export function PlayerCard({
             {player?.web_name}
           </p>
           
-          <div className={cn(
-            "text-xl font-bold transition-colors",
-            points > 0 ? "text-[#3DFF9A]" : "text-accent/80"
-          )}>
+          <div className="text-xl font-bold text-[#3DFF9A]">
             {pointsLoading ? '...' : points}
-          </div>
-          
-          <div className="text-xs text-accent/80 font-medium">
-            {getPositionText(player?.element_type)}
           </div>
 
           <PlayerStatus 
