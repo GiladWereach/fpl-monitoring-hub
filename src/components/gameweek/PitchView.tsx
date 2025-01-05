@@ -69,7 +69,8 @@ export function PitchView({ teamSelection, players, liveData, eventId }: PitchVi
   }
 
   const { defenders, midfielders, forwards } = getFormationPlayers();
-  const formationClass = `formation-${teamSelection?.formation?.replace('-', '')}`;
+  const formationClass = typeof teamSelection?.formation === 'string' ? 
+    `formation-${teamSelection.formation.replace(/-/g, '')}` : 'formation-442';
 
   return (
     <div className="space-y-8">
