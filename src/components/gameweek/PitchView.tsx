@@ -42,11 +42,9 @@ export function PitchView({ teamSelection, players, liveData, eventId }: PitchVi
   };
 
   const getFormationPlayers = () => {
-    // Ensure formation is a string and has a valid format, default to '4-4-2' if not
     const formationString = typeof teamSelection?.formation === 'string' ? 
       teamSelection.formation : '4-4-2';
     
-    // Validate formation format
     if (!/^\d-\d-\d$/.test(formationString)) {
       console.warn('Invalid formation format, defaulting to 4-4-2');
       return {
@@ -65,12 +63,12 @@ export function PitchView({ teamSelection, players, liveData, eventId }: PitchVi
     };
   };
 
-  const { defenders, midfielders, forwards } = getFormationPlayers();
-
   if (!eventId) {
     console.warn('No eventId provided to PitchView');
     return null;
   }
+
+  const { defenders, midfielders, forwards } = getFormationPlayers();
 
   return (
     <div className="space-y-4">

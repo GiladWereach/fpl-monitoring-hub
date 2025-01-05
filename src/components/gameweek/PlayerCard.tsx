@@ -29,7 +29,7 @@ export function PlayerCard({
 }: PlayerCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   
-  // Use the new direct points query
+  // Use the points query
   const { data: pointsData, isLoading: pointsLoading } = usePlayerPoints(player?.id, eventId);
   
   console.log(`PlayerCard render for ${player?.web_name}:`, {
