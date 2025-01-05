@@ -74,33 +74,33 @@ export function PitchView({ teamSelection, players, liveData, eventId }: PitchVi
 
   return (
     <div className="space-y-8">
-      <div className={`pitch-container ${formationClass}`}>
-        <div className="position-labels">
-          <span className="position-label">GK</span>
-          <span className="position-label">DEF</span>
-          <span className="position-label">MID</span>
-          <span className="position-label">FWD</span>
+      <div className={`fpl-pitch-container ${formationClass}`}>
+        <div className="fpl-position-labels">
+          <span className="fpl-position-label">GK</span>
+          <span className="fpl-position-label">DEF</span>
+          <span className="fpl-position-label">MID</span>
+          <span className="fpl-position-label">FWD</span>
         </div>
         
-        <div className="pitch-grid">
+        <div className="fpl-pitch-grid">
           <GoalkeeperRow getPlayerData={getPlayerData} eventId={eventId} />
           <PlayerRow 
             positions={defenders} 
             getPlayerData={getPlayerData} 
             eventId={eventId}
-            className="def-row"
+            className="fpl-def-row"
           />
           <PlayerRow 
             positions={midfielders} 
             getPlayerData={getPlayerData} 
             eventId={eventId}
-            className="mid-row"
+            className="fpl-mid-row"
           />
           <PlayerRow 
             positions={forwards} 
             getPlayerData={getPlayerData} 
             eventId={eventId}
-            className="fwd-row"
+            className="fpl-fwd-row"
           />
         </div>
       </div>

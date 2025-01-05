@@ -1,68 +1,67 @@
-.pitch-container {
+.fpl-pitch-container {
   @apply relative w-full rounded-lg border border-accent/20 overflow-hidden;
   aspect-ratio: 74/111;
   min-height: 600px;
-  background-color: var(--pitch-background);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100%25' height='100%25' viewBox='0 0 74 111' preserveAspectRatio='xMidYMid slice'%3E%3Crect width='74' height='111' fill='%231A1F2C'/%3E%3Cg fill='none' stroke='rgba(61, 255, 154, 0.15)' stroke-width='0.25' transform='translate(3 3)'%3E%3Cpath d='M 0 0 h 68 v 105 h -68 Z'/%3E%3Cpath d='M 0 52.5 h 68'/%3E%3Ccircle r='9.15' cx='34' cy='52.5'/%3E%3Ccircle r='0.5' cx='34' cy='52.5' fill='rgba(61, 255, 154, 0.15)'/%3E%3Cpath d='M 13.84 0 v 16.5 h 40.32 v -16.5'/%3E%3Cpath d='M 24.84 0 v 5.5 h 18.32 v -5.5'/%3E%3Ccircle r='0.5' cx='34' cy='10.94' fill='rgba(61, 255, 154, 0.15)'/%3E%3Cpath d='M 26.733027 16.5 a 9.15 9.15 0 0 0 14.533946 0'/%3E%3Cpath d='M 13.84 105 v -16.5 h 40.32 v 16.5'/%3E%3Cpath d='M 24.84 105 v -5.5 h 18.32 v 5.5'/%3E%3Ccircle r='0.5' cx='34' cy='94.06' fill='rgba(61, 255, 154, 0.15)'/%3E%3Cpath d='M 26.733027 88.5 a 9.15 9.15 0 0 1 14.533946 0'/%3E%3Cpath d='M 0 2 a 2 2 0 0 0 2 -2'/%3E%3Cpath d='M 66 0 a 2 2 0 0 0 2 2'/%3E%3Cpath d='M 68 103 a 2 2 0 0 0 -2 2'/%3E%3Cpath d='M 2 105 a 2 2 0 0 0 -2 -2'/%3E%3C/g%3E%3C/svg%3E");
+  background-color: #1A1F2C;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100%25' height='100%25' viewBox='0 0 74 111' preserveAspectRatio='xMidYMid slice'%3E%3Crect width='74' height='111' fill='%231A1F2C'/%3E%3Cg fill='none' stroke='rgba(61, 255, 154, 0.15)' stroke-width='0.25' transform='translate(3 3)'%3E%3Cpath d='M 0 0 h 68 v 105 h -68 Z'/%3E%3Cpath d='M 0 52.5 h 68'/%3E%3Ccircle r='9.15' cx='34' cy='52.5'/%3E%3Ccircle r='0.5' cx='34' cy='52.5' fill='rgba(61, 255, 154, 0.15)'/%3E%3Cpath d='M 13.84 0 v 16.5 h 40.32 v -16.5'/%3E%3Cpath d='M 24.84 0 v 5.5 h 18.32 v -5.5'/%3E%3Ccircle r='0.5' cx='34' cy='10.94' fill='rgba(61, 255, 154, 0.15)'/%3E%3Cpath d='M 26.733027 16.5 a 9.15 9.15 0 0 0 14.533946 0'/%3E%3Cpath d='M 13.84 105 v -16.5 h 40.32 v 16.5'/%3E%3Cpath d='M 24.84 105 v -5.5 h 18.32 v 5.5'/%3E%3Ccircle r='0.5' cx='34' cy='94.06' fill='rgba(61, 255, 154, 0.15)'/%3E%3Cpath d='M 26.733027 88.5 a 9.15 9.15 0 0 1 14.533946 0'/%3E%3C/g%3E%3C/svg%3E");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
   z-index: 0;
 }
 
-.pitch-grid {
+.fpl-pitch-grid {
   @apply absolute inset-0 flex flex-col justify-between py-16 px-12;
   height: 100%;
   z-index: 1;
 }
 
-.position-labels {
+.fpl-position-labels {
   @apply absolute inset-y-0 left-4 flex flex-col justify-between py-16;
   z-index: 2;
 }
 
-.position-label {
+.fpl-position-label {
   @apply text-xs font-semibold tracking-wider text-accent/80;
   writing-mode: vertical-lr;
   transform: rotate(180deg);
 }
 
-/* Formation-based positioning classes */
-.formation-row {
+.fpl-row {
   @apply flex items-center justify-center gap-8 transition-all duration-300;
 }
 
-.gk-row {
+.fpl-gk-row {
   @apply mt-0;
   animation: fade-in 0.3s ease-out;
 }
 
-.def-row {
+.fpl-def-row {
   @apply mt-auto mb-36;
   animation: fade-in 0.3s ease-out 0.1s backwards;
 }
 
-.mid-row {
+.fpl-mid-row {
   @apply mb-36;
   animation: fade-in 0.3s ease-out 0.2s backwards;
 }
 
-.fwd-row {
+.fpl-fwd-row {
   @apply mb-24;
   animation: fade-in 0.3s ease-out 0.3s backwards;
 }
 
-.bench-section {
+.fpl-bench-section {
   @apply mt-8 p-6 bg-secondary/90 backdrop-blur-sm 
          border border-accent/20 rounded-lg shadow-lg;
   animation: fade-in 0.3s ease-out 0.4s backwards;
 }
 
 /* Formation-specific spacing adjustments */
-.formation-433 .def-row { gap: 6rem; }
-.formation-442 .def-row { gap: 5rem; }
-.formation-352 .def-row { gap: 4rem; }
-.formation-343 .def-row { gap: 5rem; }
+.formation-433 .fpl-def-row { gap: 6rem; }
+.formation-442 .fpl-def-row { gap: 5rem; }
+.formation-352 .fpl-def-row { gap: 4rem; }
+.formation-343 .fpl-def-row { gap: 5rem; }
 
 @keyframes fade-in {
   from {
@@ -75,52 +74,24 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .gk-row,
-  .def-row,
-  .mid-row,
-  .fwd-row,
-  .bench-section {
-    animation: none;
-  }
-}
-
 @media (max-width: 768px) {
-  .pitch-container {
+  .fpl-pitch-container {
     min-height: 500px;
   }
   
-  .pitch-grid {
+  .fpl-pitch-grid {
     @apply py-8 px-6;
   }
   
-  .def-row {
+  .fpl-def-row {
     @apply mb-28;
   }
   
-  .mid-row {
+  .fpl-mid-row {
     @apply mb-28;
   }
   
-  .fwd-row {
+  .fpl-fwd-row {
     @apply mb-20;
-  }
-}
-
-@media (max-width: 640px) {
-  .pitch-container {
-    min-height: 400px;
-  }
-  
-  .def-row {
-    @apply mb-20;
-  }
-  
-  .mid-row {
-    @apply mb-20;
-  }
-  
-  .fwd-row {
-    @apply mb-16;
   }
 }

@@ -50,7 +50,7 @@ export function PlayerCard({
             "p-4 rounded-lg transition-all duration-200",
             "bg-secondary/95 backdrop-blur-sm border border-accent/20",
             "hover:bg-accent/10 hover:scale-105 cursor-pointer",
-            "flex flex-col items-center justify-center gap-2",
+            "flex flex-col items-center justify-center gap-3",
             "shadow-lg hover:shadow-xl",
             "animate-fade-in",
             isExpanded && "bg-accent/10"
@@ -78,7 +78,7 @@ export function PlayerCard({
           </p>
           
           <div className={cn(
-            "text-lg font-bold transition-colors",
+            "text-xl font-bold transition-colors",
             points > 0 ? "text-[#3DFF9A]" : "text-accent/80"
           )}>
             {pointsLoading ? '...' : points}
