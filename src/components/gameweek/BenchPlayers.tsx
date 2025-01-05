@@ -5,9 +5,10 @@ import { PlayerCard } from './PlayerCard';
 interface BenchPlayersProps {
   benchPlayers: number[];
   getPlayerData: (position: number) => any;
+  eventId: number;
 }
 
-export function BenchPlayers({ benchPlayers, getPlayerData }: BenchPlayersProps) {
+export function BenchPlayers({ benchPlayers, getPlayerData, eventId }: BenchPlayersProps) {
   return (
     <Card className="glass-card p-4">
       <h3 className="text-sm font-semibold mb-4">Bench Players</h3>
@@ -23,6 +24,7 @@ export function BenchPlayers({ benchPlayers, getPlayerData }: BenchPlayersProps)
               isCaptain={playerData.isCaptain}
               isViceCaptain={playerData.isViceCaptain}
               liveData={playerData.liveData}
+              eventId={eventId}
             />
           );
         })}

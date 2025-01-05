@@ -7,9 +7,10 @@ interface PitchViewProps {
   teamSelection?: any;
   players?: any[];
   liveData?: any[];
+  eventId?: number;
 }
 
-export function PitchView({ teamSelection, players, liveData }: PitchViewProps) {
+export function PitchView({ teamSelection, players, liveData, eventId }: PitchViewProps) {
   const getPlayerData = (position: number) => {
     if (!teamSelection || !players) return null;
     const pick = teamSelection.picks.find(p => p.position === position);
@@ -66,6 +67,11 @@ export function PitchView({ teamSelection, players, liveData }: PitchViewProps) 
 
   const { defenders, midfielders, forwards } = getFormationPlayers();
 
+  if (!eventId) {
+    console.warn('No eventId provided to PitchView');
+    return null;
+  }
+
   return (
     <div className="space-y-4">
       <Card className="glass-card p-2">
@@ -91,6 +97,7 @@ export function PitchView({ teamSelection, players, liveData }: PitchViewProps) 
                     isViceCaptain={player.isViceCaptain}
                     liveData={player.liveData}
                     fixture_id={player.fixture_id}
+                    eventId={eventId}
                   />
                 );
               })}
@@ -109,6 +116,7 @@ export function PitchView({ teamSelection, players, liveData }: PitchViewProps) 
                     isViceCaptain={player.isViceCaptain}
                     liveData={player.liveData}
                     fixture_id={player.fixture_id}
+                    eventId={eventId}
                   />
                 );
               })}
@@ -127,6 +135,7 @@ export function PitchView({ teamSelection, players, liveData }: PitchViewProps) 
                     isViceCaptain={player.isViceCaptain}
                     liveData={player.liveData}
                     fixture_id={player.fixture_id}
+                    eventId={eventId}
                   />
                 );
               })}
@@ -145,6 +154,7 @@ export function PitchView({ teamSelection, players, liveData }: PitchViewProps) 
                     isViceCaptain={player.isViceCaptain}
                     liveData={player.liveData}
                     fixture_id={player.fixture_id}
+                    eventId={eventId}
                   />
                 );
               })}
@@ -157,6 +167,7 @@ export function PitchView({ teamSelection, players, liveData }: PitchViewProps) 
       <BenchPlayers 
         benchPlayers={[12, 13, 14, 15]}
         getPlayerData={getPlayerData}
+        eventId={eventId}
       />
     </div>
   );
