@@ -80,6 +80,11 @@ export const createMockSupabaseResponse = (data: any = null, error: any = null) 
     options: vi.fn().mockReturnThis(),
     execute: vi.fn().mockReturnThis(),
     schema: vi.fn().mockReturnThis(),
+    // Request configuration
+    method: 'POST',
+    url: 'https://example.com/api',
+    headers: { 'Content-Type': 'application/json' },
+    shouldThrowOnError: false,
     // Response methods
     select: () => mockBuilder,
     then: (callback: (response: any) => any) => Promise.resolve(callback({ data, error })),
