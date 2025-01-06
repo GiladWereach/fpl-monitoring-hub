@@ -1,6 +1,7 @@
 import { vi } from 'vitest';
 import type { MetricsData } from '../../types/monitoring-types';
 import { PostgrestBuilder, PostgrestFilterBuilder } from '@supabase/postgrest-js';
+import type { Database } from '@/integrations/supabase/types';
 
 // Mock data
 export const mockMetricsData: MetricsData[] = [{
@@ -14,7 +15,10 @@ export const mockMetricsData: MetricsData[] = [{
   health_status: 'healthy'
 }];
 
-class MockPostgrestBuilder extends PostgrestBuilder {
+class MockPostgrestBuilder<T> extends PostgrestBuilder<T> {
+  private mockData: any;
+  private mockError: any;
+
   constructor(data: any = null, error: any = null) {
     super({
       fetch: vi.fn(),
@@ -25,22 +29,26 @@ class MockPostgrestBuilder extends PostgrestBuilder {
       method: 'GET',
     });
     
-    this.data = data;
-    this.error = error;
+    this.mockData = data;
+    this.mockError = error;
   }
 
-  then(callback: (response: any) => any) {
-    return Promise.resolve(callback({ data: this.data, error: this.error }));
+  then(callback: (response: any) => any): Promise<any> {
+    return Promise.resolve(callback({ data: this.mockData, error: this.mockError }));
   }
 
-  catch(callback: (error: any) => any) {
-    return Promise.resolve(callback(this.error));
+  catch(callback: (error: any) => any): Promise<any> {
+    return Promise.resolve(callback(this.mockError));
+  }
+
+  select(): this {
+    return this;
   }
 }
 
 // Create mock response builder
 export const createMockSupabaseResponse = (data: any = null, error: any = null) => {
-  const mockBuilder = new MockPostgrestBuilder(data, error);
+  const mockBuilder = new MockPostgrestBuilder<Database>(data, error);
 
   // Add all the required filter methods
   const filterMethods = [
@@ -55,7 +63,6 @@ export const createMockSupabaseResponse = (data: any = null, error: any = null) 
   });
 
   // Add additional required methods
-  mockBuilder.select = vi.fn().mockReturnThis();
   (mockBuilder as any).order = vi.fn().mockReturnThis();
   (mockBuilder as any).limit = vi.fn().mockReturnThis();
   (mockBuilder as any).range = vi.fn().mockReturnThis();
@@ -67,5 +74,5 @@ export const createMockSupabaseResponse = (data: any = null, error: any = null) 
   (mockBuilder as any).rollback = vi.fn().mockReturnThis();
   (mockBuilder as any).returns = vi.fn().mockReturnThis();
 
-  return mockBuilder as unknown as PostgrestFilterBuilder<any>;
+  return mockBuilder as unknown as PostgrestFilterBuilder<Database['public'], any, any>;
 };
