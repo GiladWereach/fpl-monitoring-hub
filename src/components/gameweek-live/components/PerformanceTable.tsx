@@ -23,6 +23,9 @@ export const PerformanceTable: React.FC<PerformanceTableProps> = ({
   homeTeam,
   awayTeam,
 }) => {
+  // Sort performances by total points in descending order
+  const sortedPerformances = [...performances].sort((a, b) => b.total_points - a.total_points);
+
   return (
     <Table>
       <TableHeader>
@@ -45,7 +48,7 @@ export const PerformanceTable: React.FC<PerformanceTableProps> = ({
         </TableRow>
       </TableHeader>
       <TableBody>
-        {performances?.map((perf) => (
+        {sortedPerformances?.map((perf) => (
           <TableRow 
             key={perf.id}
             className={getRowClassName(perf, matchId, homeTeam, awayTeam)}
