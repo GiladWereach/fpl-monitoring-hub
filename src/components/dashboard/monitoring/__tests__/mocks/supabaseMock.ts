@@ -1,6 +1,6 @@
 import { vi } from 'vitest';
 import type { MetricsData } from '../../types/monitoring-types';
-import { PostgrestBuilder, PostgrestFilterBuilder } from '@supabase/postgrest-js';
+import { PostgrestBuilder, PostgrestFilterBuilder, PostgrestResponse, PostgrestSingleResponse } from '@supabase/postgrest-js';
 import type { Database } from '@/integrations/supabase/types';
 
 // Mock data
@@ -16,12 +16,19 @@ export const mockMetricsData: MetricsData[] = [{
 }];
 
 class MockPostgrestBuilder<T> extends PostgrestBuilder<T> {
+  protected method: 'GET' = 'GET';
+  protected headers: { [key: string]: string } = {};
+  protected schema: string = 'public';
+  protected url: URL = new URL('http://mock.url');
+  protected body: unknown;
+  protected shouldThrowOnError: boolean = false;
+  protected signal?: AbortSignal;
   private mockData: T | null;
   private mockError: any;
 
   constructor(data: T | null = null, error: any = null) {
     super({
-      url: 'http://mock.url',
+      url: new URL('http://mock.url'),
       headers: {},
       schema: 'public',
       fetch: vi.fn(),
@@ -33,10 +40,10 @@ class MockPostgrestBuilder<T> extends PostgrestBuilder<T> {
     this.mockError = error;
   }
 
-  async then<TResult1 = PostgrestBuilder<T>>(
-    onfulfilled?: ((value: { data: T | null; error: any; status: number; statusText: string; count: number | null }) => TResult1 | PromiseLike<TResult1>)
+  async then<TResult1 = PostgrestSingleResponse<T>>(
+    onfulfilled?: ((value: PostgrestResponse<T>) => TResult1 | PromiseLike<TResult1>)
   ): Promise<TResult1> {
-    const result = {
+    const result: PostgrestResponse<T> = {
       data: this.mockData,
       error: this.mockError,
       status: 200,
@@ -67,6 +74,10 @@ class MockPostgrestBuilder<T> extends PostgrestBuilder<T> {
   }
 
   range(): this {
+    return this;
+  }
+
+  throwOnError(): this {
     return this;
   }
 }
