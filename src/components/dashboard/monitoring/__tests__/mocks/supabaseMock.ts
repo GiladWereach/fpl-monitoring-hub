@@ -1,6 +1,6 @@
 import { vi } from 'vitest';
 import type { MetricsData } from '../../types/monitoring-types';
-import { PostgrestBuilder, PostgrestFilterBuilder } from '@supabase/supabase-js';
+import { PostgrestBuilder, PostgrestFilterBuilder } from '@supabase/postgrest-js';
 import type { Database } from '@/integrations/supabase/types';
 
 // Mock data
