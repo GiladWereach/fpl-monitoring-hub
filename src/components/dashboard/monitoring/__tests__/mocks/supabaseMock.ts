@@ -1,5 +1,6 @@
 import { vi } from 'vitest';
 import type { MetricsData } from '../../types/monitoring-types';
+import { PostgrestBuilder, PostgrestFilterBuilder } from '@supabase/postgrest-js';
 
 // Mock data
 export const mockMetricsData: MetricsData[] = [{
@@ -13,88 +14,58 @@ export const mockMetricsData: MetricsData[] = [{
   health_status: 'healthy'
 }];
 
+class MockPostgrestBuilder extends PostgrestBuilder {
+  constructor(data: any = null, error: any = null) {
+    super({
+      fetch: vi.fn(),
+      shouldThrowOnError: false,
+      headers: { 'Content-Type': 'application/json' },
+      schema: 'public',
+      table: 'test',
+      method: 'GET',
+    });
+    
+    this.data = data;
+    this.error = error;
+  }
+
+  then(callback: (response: any) => any) {
+    return Promise.resolve(callback({ data: this.data, error: this.error }));
+  }
+
+  catch(callback: (error: any) => any) {
+    return Promise.resolve(callback(this.error));
+  }
+}
+
 // Create mock response builder
 export const createMockSupabaseResponse = (data: any = null, error: any = null) => {
-  const mockBuilder = {
-    data,
-    error,
-    count: null,
-    status: error ? 500 : 200,
-    statusText: error ? "Error" : "OK",
-    body: data,
-    // Basic filter methods
-    eq: vi.fn().mockReturnThis(),
-    neq: vi.fn().mockReturnThis(),
-    gt: vi.fn().mockReturnThis(),
-    gte: vi.fn().mockReturnThis(),
-    lt: vi.fn().mockReturnThis(),
-    lte: vi.fn().mockReturnThis(),
-    like: vi.fn().mockReturnThis(),
-    ilike: vi.fn().mockReturnThis(),
-    is: vi.fn().mockReturnThis(),
-    in: vi.fn().mockReturnThis(),
-    contains: vi.fn().mockReturnThis(),
-    containedBy: vi.fn().mockReturnThis(),
-    rangeLt: vi.fn().mockReturnThis(),
-    rangeGt: vi.fn().mockReturnThis(),
-    rangeGte: vi.fn().mockReturnThis(),
-    rangeLte: vi.fn().mockReturnThis(),
-    rangeAdjacent: vi.fn().mockReturnThis(),
-    overlaps: vi.fn().mockReturnThis(),
-    match: vi.fn().mockReturnThis(),
-    not: vi.fn().mockReturnThis(),
-    or: vi.fn().mockReturnThis(),
-    filter: vi.fn().mockReturnThis(),
-    // Additional filter methods
-    likeAllOf: vi.fn().mockReturnThis(),
-    likeAnyOf: vi.fn().mockReturnThis(),
-    ilikeAllOf: vi.fn().mockReturnThis(),
-    ilikeAnyOf: vi.fn().mockReturnThis(),
-    textSearch: vi.fn().mockReturnThis(),
-    withinRange: vi.fn().mockReturnThis(),
-    containsAllOf: vi.fn().mockReturnThis(),
-    containsAnyOf: vi.fn().mockReturnThis(),
-    containedByAnyOf: vi.fn().mockReturnThis(),
-    containedByAllOf: vi.fn().mockReturnThis(),
-    matchAllOf: vi.fn().mockReturnThis(),
-    matchAnyOf: vi.fn().mockReturnThis(),
-    notAllOf: vi.fn().mockReturnThis(),
-    notAnyOf: vi.fn().mockReturnThis(),
-    orAllOf: vi.fn().mockReturnThis(),
-    orAnyOf: vi.fn().mockReturnThis(),
-    filterAllOf: vi.fn().mockReturnThis(),
-    filterAnyOf: vi.fn().mockReturnThis(),
-    // Query methods
-    order: vi.fn().mockReturnThis(),
-    limit: vi.fn().mockReturnThis(),
-    range: vi.fn().mockReturnThis(),
-    abortSignal: vi.fn().mockReturnThis(),
-    csv: vi.fn().mockReturnThis(),
-    maybeSingle: vi.fn().mockReturnThis(),
-    single: vi.fn().mockReturnThis(),
-    // PostgreSQL specific methods
-    geojson: vi.fn().mockReturnThis(),
-    explain: vi.fn().mockReturnThis(),
-    rollback: vi.fn().mockReturnThis(),
-    returns: vi.fn().mockReturnThis(),
-    options: vi.fn().mockReturnThis(),
-    execute: vi.fn().mockReturnThis(),
-    schema: vi.fn().mockReturnThis(),
-    // Request configuration
-    method: 'POST',
-    url: 'https://example.com/api',
-    headers: { 'Content-Type': 'application/json' },
-    shouldThrowOnError: false,
-    // Additional required properties
-    fetch: vi.fn().mockReturnThis(),
-    isMaybeSingle: false,
-    setHeader: vi.fn().mockReturnThis(),
-    // Response methods
-    select: () => mockBuilder,
-    then: (callback: (response: any) => any) => Promise.resolve(callback({ data, error })),
-    catch: (callback: (error: any) => any) => Promise.resolve(callback(error)),
-    throwOnError: () => mockBuilder,
-  };
+  const mockBuilder = new MockPostgrestBuilder(data, error);
 
-  return mockBuilder;
+  // Add all the required filter methods
+  const filterMethods = [
+    'eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'like', 'ilike',
+    'is', 'in', 'contains', 'containedBy', 'rangeLt', 'rangeGt',
+    'rangeGte', 'rangeLte', 'rangeAdjacent', 'overlaps', 'match',
+    'not', 'or', 'filter'
+  ];
+
+  filterMethods.forEach(method => {
+    (mockBuilder as any)[method] = vi.fn().mockReturnThis();
+  });
+
+  // Add additional required methods
+  mockBuilder.select = vi.fn().mockReturnThis();
+  (mockBuilder as any).order = vi.fn().mockReturnThis();
+  (mockBuilder as any).limit = vi.fn().mockReturnThis();
+  (mockBuilder as any).range = vi.fn().mockReturnThis();
+  (mockBuilder as any).single = vi.fn().mockReturnThis();
+  (mockBuilder as any).maybeSingle = vi.fn().mockReturnThis();
+  (mockBuilder as any).csv = vi.fn().mockReturnThis();
+  (mockBuilder as any).geojson = vi.fn().mockReturnThis();
+  (mockBuilder as any).explain = vi.fn().mockReturnThis();
+  (mockBuilder as any).rollback = vi.fn().mockReturnThis();
+  (mockBuilder as any).returns = vi.fn().mockReturnThis();
+
+  return mockBuilder as unknown as PostgrestFilterBuilder<any>;
 };
