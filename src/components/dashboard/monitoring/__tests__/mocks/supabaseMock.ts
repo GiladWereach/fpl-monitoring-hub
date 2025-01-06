@@ -1,6 +1,6 @@
 import { vi } from 'vitest';
 import type { MetricsData } from '../../types/monitoring-types';
-import { PostgrestBuilder, PostgrestFilterBuilder } from '@supabase/postgrest-js';
+import { PostgrestBuilder, PostgrestFilterBuilder } from '@supabase/supabase-js';
 import type { Database } from '@/integrations/supabase/types';
 
 // Mock data
@@ -21,12 +21,11 @@ class MockPostgrestBuilder<T> extends PostgrestBuilder<T> {
 
   constructor(data: any = null, error: any = null) {
     super({
-      fetch: vi.fn(),
-      shouldThrowOnError: false,
-      headers: { 'Content-Type': 'application/json' },
+      url: 'http://mock.url',
+      headers: {},
       schema: 'public',
-      table: 'test',
-      method: 'GET',
+      fetch: vi.fn(),
+      shouldThrowOnError: false
     });
     
     this.mockData = data;
@@ -42,6 +41,14 @@ class MockPostgrestBuilder<T> extends PostgrestBuilder<T> {
   }
 
   select(): this {
+    return this;
+  }
+
+  single(): this {
+    return this;
+  }
+
+  maybeSingle(): this {
     return this;
   }
 }
@@ -66,8 +73,6 @@ export const createMockSupabaseResponse = (data: any = null, error: any = null) 
   (mockBuilder as any).order = vi.fn().mockReturnThis();
   (mockBuilder as any).limit = vi.fn().mockReturnThis();
   (mockBuilder as any).range = vi.fn().mockReturnThis();
-  (mockBuilder as any).single = vi.fn().mockReturnThis();
-  (mockBuilder as any).maybeSingle = vi.fn().mockReturnThis();
   (mockBuilder as any).csv = vi.fn().mockReturnThis();
   (mockBuilder as any).geojson = vi.fn().mockReturnThis();
   (mockBuilder as any).explain = vi.fn().mockReturnThis();
