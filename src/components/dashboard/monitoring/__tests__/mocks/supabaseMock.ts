@@ -26,20 +26,18 @@ class MockPostgrestBuilder<T> extends PostgrestBuilder<T> {
       schema: 'public',
       fetch: vi.fn(),
       shouldThrowOnError: false,
-      signal: undefined,
-      allowEmpty: false
+      signal: undefined
     });
     
     this.mockData = data;
     this.mockError = error;
   }
 
-  then(onfulfilled?: ((value: T) => T | PromiseLike<T>) | undefined): Promise<T> {
-    return Promise.resolve(onfulfilled ? onfulfilled({ data: this.mockData, error: this.mockError }) : { data: this.mockData, error: this.mockError } as T);
-  }
-
-  catch(): Promise<T> {
-    return Promise.resolve({ data: this.mockData, error: this.mockError } as T);
+  async then<TResult1 = any>(
+    onfulfilled?: ((value: { data: T | null; error: any }) => TResult1 | PromiseLike<TResult1>)
+  ): Promise<TResult1> {
+    const result = { data: this.mockData, error: this.mockError };
+    return onfulfilled ? onfulfilled(result) : result as any;
   }
 
   throwOnError(): this {
