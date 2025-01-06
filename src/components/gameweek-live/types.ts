@@ -14,6 +14,7 @@ export interface PlayerPerformanceData {
   saves: number;
   minutes: number;
   total_points: number;
+  fixture_id: number | null;
   points_calculation: PointsCalculation | null;
   player: {
     id: number;

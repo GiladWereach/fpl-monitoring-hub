@@ -20,9 +20,9 @@ class MockPostgrestBuilder<T> extends PostgrestBuilder<T> {
   protected headers: { [key: string]: string } = {};
   protected schema: string = 'public';
   protected url: URL = new URL('http://mock.url');
-  protected body: unknown;
+  protected body: unknown = null;
   protected shouldThrowOnError: boolean = false;
-  protected signal?: AbortSignal;
+  protected signal?: AbortSignal = undefined;
   private mockData: T | null;
   private mockError: any;
 
@@ -33,7 +33,6 @@ class MockPostgrestBuilder<T> extends PostgrestBuilder<T> {
       schema: 'public',
       fetch: vi.fn(),
       shouldThrowOnError: false,
-      signal: undefined,
     });
     
     this.mockData = data;
