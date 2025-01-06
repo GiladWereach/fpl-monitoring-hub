@@ -23,8 +23,12 @@ export const PerformanceTable: React.FC<PerformanceTableProps> = ({
   homeTeam,
   awayTeam,
 }) => {
-  // Sort performances by total points in descending order
-  const sortedPerformances = [...performances].sort((a, b) => b.total_points - a.total_points);
+  // Sort performances by total points (including bonus) in descending order
+  const sortedPerformances = [...performances].sort((a, b) => {
+    const totalA = a.total_points + (a.bonus || 0);
+    const totalB = b.total_points + (b.bonus || 0);
+    return totalB - totalA;
+  });
 
   return (
     <Table>
@@ -71,7 +75,7 @@ export const PerformanceTable: React.FC<PerformanceTableProps> = ({
             <TableCell className="text-right">{perf.saves}</TableCell>
             <TableCell className="text-right">{perf.bps}</TableCell>
             <TableCell className="text-right font-bold">
-              {perf.total_points}
+              {perf.total_points + (perf.bonus || 0)}
             </TableCell>
           </TableRow>
         ))}
