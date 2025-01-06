@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/table';
 import { PlayerPerformanceData } from '../types';
 import { getRowClassName } from '../utils/table-utils';
+import { calculateBonusPoints } from '../utils/bonus-utils';
 
 interface PerformanceTableProps {
   performances: PlayerPerformanceData[];
@@ -23,12 +24,55 @@ export const PerformanceTable: React.FC<PerformanceTableProps> = ({
   homeTeam,
   awayTeam,
 }) => {
-  // Sort performances by total points (including bonus) in descending order
-  const sortedPerformances = [...performances].sort((a, b) => {
-    const totalA = a.total_points + (a.bonus || 0);
-    const totalB = b.total_points + (b.bonus || 0);
+  // Group performances by fixture for bonus point calculations
+  const performancesByFixture = performances.reduce((acc: { [key: number]: PlayerPerformanceData[] }, curr) => {
+    const fixtureId = curr.fixture_id || 0;
+    if (!acc[fixtureId]) {
+      acc[fixtureId] = [];
+    }
+    acc[fixtureId].push(curr);
+    return acc;
+  }, {});
+
+  // Calculate bonus points for each player
+  const performancesWithBonus = performances.map(perf => {
+    const fixturePerformances = performancesByFixture[perf.fixture_id || 0] || [];
+    const bpsValues = fixturePerformances.map(p => ({
+      player_id: p.player.id,
+      bps: p.bps,
+      fixture_id: p.fixture_id || 0,
+      minutes: p.minutes
+    }));
+    
+    const calculatedBonus = calculateBonusPoints(
+      [{ 
+        player_id: perf.player.id, 
+        bps: perf.bps, 
+        fixture_id: perf.fixture_id || 0,
+        minutes: perf.minutes 
+      }],
+      bpsValues
+    );
+
+    return {
+      ...perf,
+      calculatedBonus
+    };
+  });
+
+  // Sort performances by total points (including calculated bonus) in descending order
+  const sortedPerformances = [...performancesWithBonus].sort((a, b) => {
+    const totalA = a.total_points + a.calculatedBonus;
+    const totalB = b.total_points + b.calculatedBonus;
     return totalB - totalA;
   });
+
+  console.log('Performances with calculated bonus:', sortedPerformances.map(p => ({
+    player: p.player.web_name,
+    bps: p.bps,
+    calculatedBonus: p.calculatedBonus,
+    totalPoints: p.total_points + p.calculatedBonus
+  })));
 
   return (
     <Table>
@@ -75,7 +119,7 @@ export const PerformanceTable: React.FC<PerformanceTableProps> = ({
             <TableCell className="text-right">{perf.saves}</TableCell>
             <TableCell className="text-right">{perf.bps}</TableCell>
             <TableCell className="text-right font-bold">
-              {perf.total_points + (perf.bonus || 0)}
+              {perf.total_points + perf.calculatedBonus}
             </TableCell>
           </TableRow>
         ))}
