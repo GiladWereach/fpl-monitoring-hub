@@ -85,6 +85,10 @@ export const createMockSupabaseResponse = (data: any = null, error: any = null) 
     url: 'https://example.com/api',
     headers: { 'Content-Type': 'application/json' },
     shouldThrowOnError: false,
+    // Additional required properties
+    fetch: vi.fn().mockReturnThis(),
+    isMaybeSingle: false,
+    setHeader: vi.fn().mockReturnThis(),
     // Response methods
     select: () => mockBuilder,
     then: (callback: (response: any) => any) => Promise.resolve(callback({ data, error })),
