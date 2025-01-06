@@ -21,7 +21,7 @@ class MockPostgrestBuilder<T> extends PostgrestBuilder<T> {
 
   constructor(data: any = null, error: any = null) {
     super({
-      url: 'http://mock.url',
+      url: new URL('http://mock.url'),
       headers: {},
       schema: 'public',
       fetch: vi.fn(),
