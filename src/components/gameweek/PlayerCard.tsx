@@ -35,11 +35,15 @@ export function PlayerCard({
     player_id: player?.id,
     is_captain: isCaptain,
     points_data: pointsData,
-    loading: pointsLoading
+    loading: pointsLoading,
+    raw_points: pointsData?.final_total_points,
+    captain_multiplier: isCaptain ? 2 : 1
   });
 
-  const basePoints = pointsData?.final_total_points ?? 0;
-  const points = isCaptain ? basePoints * 2 : basePoints;
+  // Calculate points with captain multiplier
+  const points = pointsData?.final_total_points 
+    ? (isCaptain ? pointsData.final_total_points * 2 : pointsData.final_total_points)
+    : 0;
 
   return (
     <HoverCard>

@@ -10,7 +10,7 @@ export function PointsBreakdown({ pointsData, isCaptain, isViceCaptain }: Points
   if (!pointsData) return null;
 
   const renderBreakdownItem = (label: string, value: number) => {
-    if (value === 0) return null;
+    if (!value || value === 0) return null;
     const pointsToShow = isCaptain ? value * 2 : value;
     return (
       <div className="flex justify-between items-center">
@@ -22,12 +22,12 @@ export function PointsBreakdown({ pointsData, isCaptain, isViceCaptain }: Points
 
   return (
     <div className="space-y-2">
-      {pointsData.minutes_points > 0 && renderBreakdownItem('Minutes', pointsData.minutes_points)}
-      {pointsData.goals_scored_points > 0 && renderBreakdownItem('Goals', pointsData.goals_scored_points)}
-      {pointsData.assist_points > 0 && renderBreakdownItem('Assists', pointsData.assist_points)}
-      {pointsData.clean_sheet_points > 0 && renderBreakdownItem('Clean Sheet', pointsData.clean_sheet_points)}
-      {pointsData.saves_points > 0 && renderBreakdownItem('Saves', pointsData.saves_points)}
-      {pointsData.bonus_points > 0 && renderBreakdownItem('Bonus', pointsData.bonus_points)}
+      {renderBreakdownItem('Minutes', pointsData.minutes_points)}
+      {renderBreakdownItem('Goals', pointsData.goals_scored_points)}
+      {renderBreakdownItem('Assists', pointsData.assist_points)}
+      {renderBreakdownItem('Clean Sheet', pointsData.clean_sheet_points)}
+      {renderBreakdownItem('Saves', pointsData.saves_points)}
+      {renderBreakdownItem('Bonus', pointsData.bonus_points)}
       
       {/* Captain/Vice Captain Section */}
       {(isCaptain || isViceCaptain) && (
