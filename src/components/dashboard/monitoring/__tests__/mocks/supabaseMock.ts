@@ -64,10 +64,16 @@ export const createMockSupabaseResponse = (data: any = null, error: any = null) 
     orAnyOf: vi.fn().mockReturnThis(),
     filterAllOf: vi.fn().mockReturnThis(),
     filterAnyOf: vi.fn().mockReturnThis(),
+    // Query methods
+    order: vi.fn().mockReturnThis(),
+    limit: vi.fn().mockReturnThis(),
+    range: vi.fn().mockReturnThis(),
+    abortSignal: vi.fn().mockReturnThis(),
+    csv: vi.fn().mockReturnThis(),
+    maybeSingle: vi.fn().mockReturnThis(),
+    single: vi.fn().mockReturnThis(),
     // Response methods
     select: () => mockBuilder,
-    single: () => createMockSupabaseResponse(data?.[0] || null, error),
-    maybeSingle: () => createMockSupabaseResponse(data?.[0] || null, error),
     then: (callback: (response: any) => any) => Promise.resolve(callback({ data, error })),
     catch: (callback: (error: any) => any) => Promise.resolve(callback(error)),
     throwOnError: () => mockBuilder,
