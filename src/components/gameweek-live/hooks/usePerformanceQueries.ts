@@ -58,18 +58,19 @@ export const usePerformanceQueries = (gameweek: number, matchId?: number | null)
         throw perfError;
       }
 
-      // Combine the data
+      // Combine the data - Modified join logic here
       const combinedData = performanceData?.map(perf => {
+        // Find points calculation by player_id and event_id only
         const pointsCalc = pointsData?.find(p => 
           p.player_id === perf.player_id && 
-          p.event_id === gameweek &&
-          p.fixture_id === perf.fixture_id
+          p.event_id === gameweek
         );
 
         console.log(`Points data for player ${perf.player_id}:`, {
           performance: perf,
           pointsCalculation: pointsCalc,
-          combinedPoints: pointsCalc?.final_total_points || 0
+          combinedPoints: pointsCalc?.final_total_points || 0,
+          fixture: perf.fixture_id
         });
 
         return {
