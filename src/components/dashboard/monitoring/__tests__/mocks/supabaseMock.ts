@@ -25,22 +25,40 @@ class MockPostgrestBuilder<T> extends PostgrestBuilder<T> {
       headers: {},
       schema: 'public',
       fetch: vi.fn(),
-      shouldThrowOnError: false
+      shouldThrowOnError: false,
+      signal: undefined,
+      allowEmpty: false
     });
     
     this.mockData = data;
     this.mockError = error;
   }
 
-  then(callback: (response: any) => any): Promise<any> {
-    return Promise.resolve(callback({ data: this.mockData, error: this.mockError }));
+  then(onfulfilled?: ((value: T) => T | PromiseLike<T>) | undefined): Promise<T> {
+    return Promise.resolve(onfulfilled ? onfulfilled({ data: this.mockData, error: this.mockError }) : { data: this.mockData, error: this.mockError } as T);
   }
 
-  catch(callback: (error: any) => any): Promise<any> {
-    return Promise.resolve(callback(this.mockError));
+  catch(): Promise<T> {
+    return Promise.resolve({ data: this.mockData, error: this.mockError } as T);
   }
 
-  select(): this {
+  throwOnError(): this {
+    return this;
+  }
+
+  select(columns?: string): this {
+    return this;
+  }
+
+  order(): this {
+    return this;
+  }
+
+  limit(): this {
+    return this;
+  }
+
+  range(): this {
     return this;
   }
 
@@ -55,7 +73,7 @@ class MockPostgrestBuilder<T> extends PostgrestBuilder<T> {
 
 // Create mock response builder
 export const createMockSupabaseResponse = (data: any = null, error: any = null) => {
-  const mockBuilder = new MockPostgrestBuilder<Database>(data, error);
+  const mockBuilder = new MockPostgrestBuilder(data, error);
 
   // Add all the required filter methods
   const filterMethods = [
@@ -68,16 +86,6 @@ export const createMockSupabaseResponse = (data: any = null, error: any = null) 
   filterMethods.forEach(method => {
     (mockBuilder as any)[method] = vi.fn().mockReturnThis();
   });
-
-  // Add additional required methods
-  (mockBuilder as any).order = vi.fn().mockReturnThis();
-  (mockBuilder as any).limit = vi.fn().mockReturnThis();
-  (mockBuilder as any).range = vi.fn().mockReturnThis();
-  (mockBuilder as any).csv = vi.fn().mockReturnThis();
-  (mockBuilder as any).geojson = vi.fn().mockReturnThis();
-  (mockBuilder as any).explain = vi.fn().mockReturnThis();
-  (mockBuilder as any).rollback = vi.fn().mockReturnThis();
-  (mockBuilder as any).returns = vi.fn().mockReturnThis();
 
   return mockBuilder as unknown as PostgrestFilterBuilder<Database['public'], any, any>;
 };
