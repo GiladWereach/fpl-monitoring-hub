@@ -9,6 +9,9 @@ import {
 import { PlayerStatus } from './PlayerStatus';
 import { PointsBreakdown } from './components/PointsBreakdown';
 import { usePlayerPoints } from '@/hooks/usePlayerPoints';
+import { calculateBonusPoints } from '@/components/gameweek-live/utils/bonus-utils';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 interface PlayerCardProps {
   player: any;
@@ -30,20 +33,73 @@ export function PlayerCard({
   const [isExpanded, setIsExpanded] = useState(false);
   
   const { data: pointsData, isLoading: pointsLoading } = usePlayerPoints(player?.id, eventId);
-  
-  console.log(`PlayerCard render for ${player?.web_name}:`, {
-    player_id: player?.id,
-    is_captain: isCaptain,
-    points_data: pointsData,
-    loading: pointsLoading,
-    raw_points: pointsData?.final_total_points,
-    captain_multiplier: isCaptain ? 2 : 1
+
+  // Fetch all performances for the fixture to calculate bonus points
+  const { data: fixturePerformances } = useQuery({
+    queryKey: ['fixture-performances', fixture_id, eventId],
+    enabled: !!fixture_id && !!eventId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('gameweek_live_performance')
+        .select(`
+          *,
+          player:players(
+            id,
+            web_name,
+            team:teams(
+              short_name
+            )
+          )
+        `)
+        .eq('event_id', eventId)
+        .eq('fixture_id', fixture_id);
+
+      if (error) {
+        console.error('Error fetching fixture performances:', error);
+        return [];
+      }
+
+      return data || [];
+    }
   });
 
-  // Calculate points with captain multiplier
-  const points = pointsData?.final_total_points 
-    ? (isCaptain ? pointsData.final_total_points * 2 : pointsData.final_total_points)
-    : 0;
+  // Calculate bonus points if we have fixture performances
+  const calculatedBonus = React.useMemo(() => {
+    if (!fixturePerformances?.length || !player?.id) return 0;
+
+    const playerBPSData = fixturePerformances
+      .filter(p => p.player_id === player.id)
+      .map(p => ({
+        player_id: p.player_id,
+        bps: p.bps,
+        fixture_id: p.fixture_id,
+        minutes: p.minutes
+      }));
+
+    const allBPSData = fixturePerformances.map(p => ({
+      player_id: p.player_id,
+      bps: p.bps,
+      fixture_id: p.fixture_id,
+      minutes: p.minutes
+    }));
+
+    return calculateBonusPoints(playerBPSData, allBPSData);
+  }, [fixturePerformances, player?.id]);
+
+  // Calculate total points including bonus and captain multiplier
+  const points = React.useMemo(() => {
+    const basePoints = pointsData?.final_total_points || 0;
+    const totalWithBonus = basePoints + calculatedBonus;
+    return isCaptain ? totalWithBonus * 2 : totalWithBonus;
+  }, [pointsData?.final_total_points, calculatedBonus, isCaptain]);
+
+  console.log(`PlayerCard points calculation for ${player?.web_name}:`, {
+    player_id: player?.id,
+    base_points: pointsData?.final_total_points,
+    calculated_bonus: calculatedBonus,
+    is_captain: isCaptain,
+    final_points: points
+  });
 
   return (
     <HoverCard>
@@ -100,6 +156,7 @@ export function PlayerCard({
           pointsData={pointsData}
           isCaptain={isCaptain}
           isViceCaptain={isViceCaptain}
+          bonusPoints={calculatedBonus}
         />
       </HoverCardContent>
     </HoverCard>
