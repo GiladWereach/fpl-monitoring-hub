@@ -72,6 +72,14 @@ export const createMockSupabaseResponse = (data: any = null, error: any = null) 
     csv: vi.fn().mockReturnThis(),
     maybeSingle: vi.fn().mockReturnThis(),
     single: vi.fn().mockReturnThis(),
+    // PostgreSQL specific methods
+    geojson: vi.fn().mockReturnThis(),
+    explain: vi.fn().mockReturnThis(),
+    rollback: vi.fn().mockReturnThis(),
+    returns: vi.fn().mockReturnThis(),
+    options: vi.fn().mockReturnThis(),
+    execute: vi.fn().mockReturnThis(),
+    schema: vi.fn().mockReturnThis(),
     // Response methods
     select: () => mockBuilder,
     then: (callback: (response: any) => any) => Promise.resolve(callback({ data, error })),
