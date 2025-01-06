@@ -59,6 +59,7 @@ export function PlayerCard({
         return [];
       }
 
+      console.log(`Fixture ${fixture_id} performances:`, data);
       return data || [];
     }
   });
@@ -83,23 +84,30 @@ export function PlayerCard({
       minutes: p.minutes
     }));
 
-    return calculateBonusPoints(playerBPSData, allBPSData);
+    const bonus = calculateBonusPoints(playerBPSData, allBPSData);
+    console.log(`Calculated bonus for ${player.web_name}:`, {
+      playerBPS: playerBPSData,
+      allBPS: allBPSData,
+      bonus: bonus
+    });
+    return bonus;
   }, [fixturePerformances, player?.id]);
 
   // Calculate total points including bonus and captain multiplier
   const points = React.useMemo(() => {
     const basePoints = pointsData?.final_total_points || 0;
     const totalWithBonus = basePoints + calculatedBonus;
-    return isCaptain ? totalWithBonus * 2 : totalWithBonus;
-  }, [pointsData?.final_total_points, calculatedBonus, isCaptain]);
+    const finalPoints = isCaptain ? totalWithBonus * 2 : totalWithBonus;
 
-  console.log(`PlayerCard points calculation for ${player?.web_name}:`, {
-    player_id: player?.id,
-    base_points: pointsData?.final_total_points,
-    calculated_bonus: calculatedBonus,
-    is_captain: isCaptain,
-    final_points: points
-  });
+    console.log(`Points calculation for ${player?.web_name}:`, {
+      base_points: basePoints,
+      bonus_points: calculatedBonus,
+      is_captain: isCaptain,
+      final_points: finalPoints
+    });
+
+    return finalPoints;
+  }, [pointsData?.final_total_points, calculatedBonus, isCaptain, player?.web_name]);
 
   return (
     <HoverCard>
