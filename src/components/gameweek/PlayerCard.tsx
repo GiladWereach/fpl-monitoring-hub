@@ -33,7 +33,11 @@ export function PlayerCard({
 
   console.log('PlayerCard render:', {
     player: player?.web_name,
-    liveData,
+    liveData: {
+      total_points: liveData?.total_points,
+      points_calculation: liveData?.points_calculation,
+      minutes: liveData?.minutes
+    },
     isCaptain,
     isViceCaptain,
     fixture_id,
@@ -41,10 +45,18 @@ export function PlayerCard({
   });
 
   const totalPoints = useMemo(() => {
-    if (!liveData?.points_calculation) return 0;
-    const basePoints = liveData.points_calculation?.final_total_points || 0;
+    if (!liveData) return 0;
+    
+    // Use total_points from live data as the base
+    const basePoints = liveData.total_points || 0;
+    console.log(`Calculating points for ${player?.web_name}:`, {
+      basePoints,
+      isCaptain,
+      finalPoints: isCaptain ? basePoints * 2 : basePoints
+    });
+    
     return isCaptain ? basePoints * 2 : basePoints;
-  }, [liveData, isCaptain]);
+  }, [liveData, isCaptain, player?.web_name]);
 
   const getPointsBreakdown = () => {
     if (!liveData?.points_calculation) return null;
@@ -59,8 +71,8 @@ export function PlayerCard({
       ownGoals: calc.own_goal_points,
       penaltiesSaved: calc.penalty_save_points,
       penaltiesMissed: calc.penalty_miss_points,
-      yellowCards: 0, // These aren't in the points calculation yet
-      redCards: 0, // These aren't in the points calculation yet
+      yellowCards: 0,
+      redCards: 0,
       saves: calc.saves_points,
       bonus: calc.bonus_points,
       total: calc.final_total_points
