@@ -45,6 +45,27 @@ export function PlayerCard({
     return isCaptain ? basePoints * 2 : basePoints;
   }, [liveData, isCaptain]);
 
+  const getPointsBreakdown = () => {
+    if (!liveData?.points_calculation) return null;
+    
+    const calc = liveData.points_calculation;
+    return {
+      minutes: calc.minutes_points,
+      goals: calc.goals_scored_points,
+      assists: calc.assist_points,
+      cleanSheets: calc.clean_sheet_points,
+      goalsConceded: calc.goals_conceded_points,
+      ownGoals: calc.own_goal_points,
+      penaltiesSaved: calc.penalty_save_points,
+      penaltiesMissed: calc.penalty_miss_points,
+      yellowCards: 0, // These aren't in the points calculation yet
+      redCards: 0, // These aren't in the points calculation yet
+      saves: calc.saves_points,
+      bonus: calc.bonus_points,
+      total: calc.final_total_points
+    };
+  };
+
   return (
     <HoverCard>
       <HoverCardTrigger asChild>
@@ -95,7 +116,7 @@ export function PlayerCard({
       >
         {liveData?.points_calculation && (
           <PointsBreakdown 
-            pointsData={liveData.points_calculation}
+            pointsData={getPointsBreakdown()}
             isCaptain={isCaptain}
             isViceCaptain={isViceCaptain}
           />

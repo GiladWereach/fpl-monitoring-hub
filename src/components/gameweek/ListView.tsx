@@ -13,7 +13,7 @@ interface ListViewProps {
 export function ListView({ teamSelection, players, liveData }: ListViewProps) {
   const getPlayerData = (pick: any) => {
     const player = players?.find(p => p.id === pick.element);
-    const playerLiveData = liveData?.find(d => d.player_id === pick.element);
+    const playerLiveData = liveData?.find(d => d.player.id === pick.element);
     const points = playerLiveData?.points_calculation?.final_total_points || 0;
     
     console.log('ListView player data:', {
