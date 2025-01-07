@@ -16,6 +16,11 @@ export interface PlayerPerformanceData {
   total_points: number;
   fixture_id: number | null;
   points_calculation: PointsCalculation | null;
+  event_id?: number;
+  creativity?: number;
+  expected_assists?: number;
+  expected_goal_involvements?: number;
+  expected_goals?: number;
   player: {
     id: number;
     first_name: string;
@@ -40,4 +45,8 @@ export interface PointsCalculation {
   saves_points: number;
   bonus_points: number;
   final_total_points: number;
+}
+
+export interface FixturePerformance extends PlayerPerformanceData {
+  fixture_id: number;
 }

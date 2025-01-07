@@ -57,7 +57,7 @@ export function PlayerCard({
         return [];
       }
 
-      return data as PlayerPerformanceData[];
+      return data as unknown as PlayerPerformanceData[];
     }
   });
 
@@ -74,7 +74,7 @@ export function PlayerCard({
         team: player.team
       },
       fixture_id: fixture_id
-    } as PlayerPerformanceData;
+    } as unknown as PlayerPerformanceData;
 
     return calculatePlayerPoints(
       performance,
