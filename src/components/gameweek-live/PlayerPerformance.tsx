@@ -1,18 +1,25 @@
 import React, { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { usePerformanceQueries } from './hooks/usePerformanceQueries';
+import { useGameweekPerformance } from '@/hooks/useGameweekPerformance';
 import { PerformanceTable } from './components/PerformanceTable';
+import { useToast } from '@/hooks/use-toast';
 
 const PlayerPerformance = ({ gameweek, matchId }: { gameweek: number; matchId?: number | null }) => {
   const [search, setSearch] = useState('');
-  const { performancesQuery, matchDetailsQuery } = usePerformanceQueries(gameweek, matchId);
+  const { toast } = useToast();
+  const { data: performances, isLoading, error } = useGameweekPerformance(gameweek, matchId);
 
-  if (performancesQuery.isLoading) {
+  if (isLoading) {
     return <div>Loading performances...</div>;
   }
 
-  if (performancesQuery.error || matchDetailsQuery.error) {
+  if (error) {
+    toast({
+      title: "Error loading performance data",
+      description: "Please try refreshing the page",
+      variant: "destructive",
+    });
     return (
       <div className="p-4 text-red-500">
         Error loading data. Please try refreshing the page.
@@ -20,7 +27,7 @@ const PlayerPerformance = ({ gameweek, matchId }: { gameweek: number; matchId?: 
     );
   }
 
-  const filteredPerformances = performancesQuery.data?.filter(p => 
+  const filteredPerformances = performances?.filter(p => 
     p.player.web_name.toLowerCase().includes(search.toLowerCase()) ||
     p.player.team.short_name.toLowerCase().includes(search.toLowerCase())
   );
@@ -43,8 +50,6 @@ const PlayerPerformance = ({ gameweek, matchId }: { gameweek: number; matchId?: 
         <PerformanceTable
           performances={filteredPerformances || []}
           matchId={matchId}
-          homeTeam={matchDetailsQuery.data?.homeTeam}
-          awayTeam={matchDetailsQuery.data?.awayTeam}
         />
       </div>
     </div>
