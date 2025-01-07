@@ -9,7 +9,7 @@ import {
 import { PlayerStatus } from './PlayerStatus';
 import { PointsBreakdown } from './components/PointsBreakdown';
 import { usePlayerPoints } from '@/hooks/usePlayerPoints';
-import { calculateBonusPoints } from '@/components/gameweek-live/utils/bonus-utils';
+import { calculatePlayerPoints } from '@/utils/points-calculator';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -32,9 +32,7 @@ export function PlayerCard({
 }: PlayerCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   
-  const { data: pointsData, isLoading: pointsLoading } = usePlayerPoints(player?.id, eventId);
-
-  // Fetch all performances for the fixture to calculate bonus points
+  // Fetch fixture performances for bonus point calculation
   const { data: fixturePerformances } = useQuery({
     queryKey: ['fixture-performances', fixture_id, eventId],
     enabled: !!fixture_id && !!eventId,
@@ -59,55 +57,32 @@ export function PlayerCard({
         return [];
       }
 
-      console.log(`Fixture ${fixture_id} performances:`, data);
       return data || [];
     }
   });
 
-  // Calculate bonus points if we have fixture performances
-  const calculatedBonus = React.useMemo(() => {
-    if (!fixturePerformances?.length || !player?.id) return 0;
+  // Calculate points using our centralized calculator
+  const pointsBreakdown = React.useMemo(() => {
+    if (!liveData) return null;
 
-    const playerBPSData = fixturePerformances
-      .filter(p => p.player_id === player.id)
-      .map(p => ({
-        player_id: p.player_id,
-        bps: p.bps,
-        fixture_id: p.fixture_id,
-        minutes: p.minutes
-      }));
+    const performance = {
+      ...liveData,
+      player: {
+        id: player.id,
+        web_name: player.web_name,
+        element_type: player.element_type,
+        team: player.team
+      },
+      fixture_id: fixture_id
+    };
 
-    const allBPSData = fixturePerformances.map(p => ({
-      player_id: p.player_id,
-      bps: p.bps,
-      fixture_id: p.fixture_id,
-      minutes: p.minutes
-    }));
-
-    const bonus = calculateBonusPoints(playerBPSData, allBPSData);
-    console.log(`Calculated bonus for ${player.web_name}:`, {
-      playerBPS: playerBPSData,
-      allBPS: allBPSData,
-      bonus: bonus
-    });
-    return bonus;
-  }, [fixturePerformances, player?.id]);
-
-  // Calculate total points including bonus and captain multiplier
-  const points = React.useMemo(() => {
-    const basePoints = pointsData?.final_total_points || 0;
-    const totalWithBonus = basePoints + calculatedBonus;
-    const finalPoints = isCaptain ? totalWithBonus * 2 : totalWithBonus;
-
-    console.log(`Points calculation for ${player?.web_name}:`, {
-      base_points: basePoints,
-      bonus_points: calculatedBonus,
-      is_captain: isCaptain,
-      final_points: finalPoints
-    });
-
-    return finalPoints;
-  }, [pointsData?.final_total_points, calculatedBonus, isCaptain, player?.web_name]);
+    return calculatePlayerPoints(
+      performance,
+      isCaptain,
+      isViceCaptain,
+      fixturePerformances
+    );
+  }, [liveData, player, isCaptain, isViceCaptain, fixturePerformances, fixture_id]);
 
   return (
     <HoverCard>
@@ -126,7 +101,7 @@ export function PlayerCard({
           onClick={() => setIsExpanded(!isExpanded)}
           role="button"
           tabIndex={0}
-          aria-label={`${player?.web_name} - ${points} points`}
+          aria-label={`${player?.web_name} - ${pointsBreakdown?.total || 0} points`}
         >
           {(isCaptain || isViceCaptain) && (
             <div className="absolute top-2 right-2">
@@ -146,7 +121,7 @@ export function PlayerCard({
           </p>
           
           <div className="text-xl font-bold text-[#3DFF9A]">
-            {pointsLoading ? '...' : points}
+            {pointsBreakdown?.total || 0}
           </div>
 
           <PlayerStatus 
@@ -161,10 +136,9 @@ export function PlayerCard({
         side="right"
       >
         <PointsBreakdown 
-          pointsData={pointsData}
+          pointsData={pointsBreakdown}
           isCaptain={isCaptain}
           isViceCaptain={isViceCaptain}
-          bonusPoints={calculatedBonus}
         />
       </HoverCardContent>
     </HoverCard>

@@ -1,44 +1,58 @@
 import React from 'react';
+import { PointsBreakdown as PointsBreakdownType } from '@/utils/points-calculator';
 
 interface PointsBreakdownProps {
-  pointsData: any;
+  pointsData: PointsBreakdownType | null;
   isCaptain: boolean;
   isViceCaptain: boolean;
-  bonusPoints?: number;
 }
 
 export function PointsBreakdown({ 
-  pointsData, 
-  isCaptain, 
-  isViceCaptain,
-  bonusPoints = 0
+  pointsData,
+  isCaptain,
+  isViceCaptain
 }: PointsBreakdownProps) {
   if (!pointsData) return null;
 
-  const basePoints = pointsData.final_total_points || 0;
-  const totalPoints = isCaptain ? (basePoints + bonusPoints) * 2 : basePoints + bonusPoints;
+  const renderPointLine = (label: string, points: number) => {
+    if (points === 0) return null;
+    return (
+      <div className="flex justify-between text-sm">
+        <span>{label}</span>
+        <span className={points < 0 ? 'text-red-500' : ''}>
+          {points > 0 ? `+${points}` : points}
+        </span>
+      </div>
+    );
+  };
+
+  const basePoints = pointsData.total / (isCaptain ? 2 : 1);
 
   return (
     <div className="space-y-2 text-sm">
-      <div className="flex justify-between">
-        <span>Base</span>
-        <span>{basePoints}</span>
-      </div>
-      {bonusPoints > 0 && (
-        <div className="flex justify-between text-[#3DFF9A]">
-          <span>Bonus</span>
-          <span>+{bonusPoints}</span>
-        </div>
-      )}
+      {renderPointLine('Minutes', pointsData.minutes)}
+      {renderPointLine('Goals', pointsData.goals)}
+      {renderPointLine('Assists', pointsData.assists)}
+      {renderPointLine('Clean Sheet', pointsData.cleanSheets)}
+      {renderPointLine('Goals Conceded', pointsData.goalsConceded)}
+      {renderPointLine('Own Goals', pointsData.ownGoals)}
+      {renderPointLine('Penalties Saved', pointsData.penaltiesSaved)}
+      {renderPointLine('Penalties Missed', pointsData.penaltiesMissed)}
+      {renderPointLine('Yellow Cards', pointsData.yellowCards)}
+      {renderPointLine('Red Cards', pointsData.redCards)}
+      {renderPointLine('Saves', pointsData.saves)}
+      {renderPointLine('Bonus', pointsData.bonus)}
+      
       {isCaptain && (
         <div className="flex justify-between text-[#eaff80]">
           <span>Captain (×2)</span>
           <span>×2</span>
         </div>
       )}
+      
       <div className="border-t pt-1 flex justify-between font-bold">
         <span>Total</span>
-        <span>{totalPoints}</span>
+        <span>{pointsData.total}</span>
       </div>
     </div>
   );
