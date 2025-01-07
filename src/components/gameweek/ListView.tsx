@@ -2,18 +2,26 @@ import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { calculateTotalPoints, calculateBenchPoints } from './utils/points-calculator';
+import { PlayerPerformanceData } from '@/components/gameweek-live/types';
 
 interface ListViewProps {
   teamSelection?: any;
   players?: any[];
-  liveData?: any[];
+  liveData?: PlayerPerformanceData[];
 }
 
 export function ListView({ teamSelection, players, liveData }: ListViewProps) {
   const getPlayerData = (pick: any) => {
     const player = players?.find(p => p.id === pick.element);
     const playerLiveData = liveData?.find(d => d.player_id === pick.element);
-    const points = playerLiveData?.total_points || 0;
+    const points = playerLiveData?.points_calculation?.final_total_points || 0;
+    
+    console.log('ListView player data:', {
+      player: player?.web_name,
+      liveData: playerLiveData,
+      points,
+      isCaptain: pick.is_captain
+    });
     
     return {
       ...player,
@@ -37,10 +45,10 @@ export function ListView({ teamSelection, players, liveData }: ListViewProps) {
           <TableRow>
             <TableHead>Player</TableHead>
             <TableHead>Position</TableHead>
-            <TableHead>Points</TableHead>
-            <TableHead>Minutes</TableHead>
-            <TableHead>G+A</TableHead>
-            <TableHead>Bonus</TableHead>
+            <TableHead className="text-right">Points</TableHead>
+            <TableHead className="text-right">Minutes</TableHead>
+            <TableHead className="text-right">G+A</TableHead>
+            <TableHead className="text-right">Bonus</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -56,12 +64,12 @@ export function ListView({ teamSelection, players, liveData }: ListViewProps) {
                   {pick.is_vice_captain && <span className="ml-1 text-[#3DFF9A]">(V)</span>}
                 </TableCell>
                 <TableCell>{playerData.element_type}</TableCell>
-                <TableCell>{playerData.points}</TableCell>
-                <TableCell>{playerData.liveData?.minutes || 0}</TableCell>
-                <TableCell>
+                <TableCell className="text-right">{playerData.points}</TableCell>
+                <TableCell className="text-right">{playerData.liveData?.minutes || 0}</TableCell>
+                <TableCell className="text-right">
                   {(playerData.liveData?.goals_scored || 0) + (playerData.liveData?.assists || 0)}
                 </TableCell>
-                <TableCell>{playerData.liveData?.bonus || 0}</TableCell>
+                <TableCell className="text-right">{playerData.liveData?.bonus || 0}</TableCell>
               </TableRow>
             );
           })}
