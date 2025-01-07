@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { cn } from "@/lib/utils";
-import { Copyright } from "lucide-react";
+import { Copyright, Loader2 } from "lucide-react";
 import {
   HoverCard,
   HoverCardContent,
@@ -10,6 +10,7 @@ import { PlayerStatus } from './PlayerStatus';
 import { PointsBreakdown } from './components/PointsBreakdown';
 import { calculatePlayerPoints } from '@/utils/points-calculator';
 import { PlayerPerformanceData } from '@/components/gameweek-live/types';
+import { useToast } from '@/hooks/use-toast';
 
 interface PlayerCardProps {
   player: any;
@@ -28,6 +29,8 @@ export function PlayerCard({
   fixture_id,
   eventId 
 }: PlayerCardProps) {
+  const { toast } = useToast();
+
   console.log('PlayerCard render:', {
     player: player?.web_name,
     liveData,
@@ -37,10 +40,8 @@ export function PlayerCard({
     eventId
   });
 
-  // Calculate points using the points calculation from live data
-  const totalPoints = React.useMemo(() => {
-    if (!liveData) return 0;
-    
+  const totalPoints = useMemo(() => {
+    if (!liveData?.points_calculation) return 0;
     const basePoints = liveData.points_calculation?.final_total_points || 0;
     return isCaptain ? basePoints * 2 : basePoints;
   }, [liveData, isCaptain]);
@@ -65,6 +66,14 @@ export function PlayerCard({
       total: calc.final_total_points
     };
   };
+
+  if (!player) {
+    return (
+      <div className="w-full max-w-[120px] h-[100px] bg-secondary/95 rounded-lg flex items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-foreground/50" />
+      </div>
+    );
+  }
 
   return (
     <HoverCard>
@@ -114,12 +123,16 @@ export function PlayerCard({
         className="w-[200px] bg-secondary/95 backdrop-blur-sm border-accent/20 animate-fade-in"
         side="right"
       >
-        {liveData?.points_calculation && (
+        {liveData?.points_calculation ? (
           <PointsBreakdown 
             pointsData={getPointsBreakdown()}
             isCaptain={isCaptain}
             isViceCaptain={isViceCaptain}
           />
+        ) : (
+          <div className="text-sm text-foreground/70 text-center py-2">
+            No points data available
+          </div>
         )}
       </HoverCardContent>
     </HoverCard>
