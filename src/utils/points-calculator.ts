@@ -36,7 +36,7 @@ export function calculatePlayerPoints(
     fixturePerformances: fixturePerformances?.length
   });
 
-  // Calculate base points from performance data
+  // Calculate base points
   const basePoints = {
     minutes: calculateMinutesPoints(performance.minutes),
     goals: calculateGoalsPoints(performance.goals_scored, performance.player.element_type),

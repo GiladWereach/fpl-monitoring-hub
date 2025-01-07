@@ -8,10 +8,10 @@ import {
 } from "@/components/ui/hover-card";
 import { PlayerStatus } from './PlayerStatus';
 import { PointsBreakdown } from './components/PointsBreakdown';
-import { usePlayerPoints } from '@/hooks/usePlayerPoints';
 import { calculatePlayerPoints } from '@/utils/points-calculator';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { PlayerPerformanceData } from '@/components/gameweek-live/types';
 
 interface PlayerCardProps {
   player: any;
@@ -57,7 +57,7 @@ export function PlayerCard({
         return [];
       }
 
-      return data || [];
+      return data as PlayerPerformanceData[];
     }
   });
 
@@ -74,7 +74,7 @@ export function PlayerCard({
         team: player.team
       },
       fixture_id: fixture_id
-    };
+    } as PlayerPerformanceData;
 
     return calculatePlayerPoints(
       performance,
