@@ -53,7 +53,8 @@ export function useGameweekPerformance(gameweekId: number | undefined, matchId?:
       const combinedData = performanceData?.map(perf => {
         const pointsCalc = pointsData?.find(p => 
           p.player_id === perf.player_id && 
-          p.event_id === gameweekId
+          p.event_id === gameweekId &&
+          p.fixture_id === perf.fixture_id
         );
 
         return {
