@@ -31,38 +31,63 @@ export function PlayerCard({
 }: PlayerCardProps) {
   const { toast } = useToast();
 
-  console.log('PlayerCard render:', {
-    player: player?.web_name,
-    liveData: {
-      total_points: liveData?.total_points,
-      points_calculation: liveData?.points_calculation,
-      minutes: liveData?.minutes
-    },
+  console.log('PlayerCard render for:', player?.web_name, {
+    raw_live_data: liveData,
+    points_calculation: liveData?.points_calculation,
+    total_points: liveData?.total_points,
+    minutes: liveData?.minutes,
     isCaptain,
     isViceCaptain,
-    fixture_id,
-    eventId
+    fixture_id
   });
 
   const totalPoints = useMemo(() => {
-    if (!liveData) return 0;
-    
-    // Use total_points from live data as the base
-    const basePoints = liveData.total_points || 0;
-    console.log(`Calculating points for ${player?.web_name}:`, {
-      basePoints,
-      isCaptain,
-      finalPoints: isCaptain ? basePoints * 2 : basePoints
+    console.log(`Starting points calculation for ${player?.web_name}:`, {
+      has_live_data: !!liveData,
+      points_calculation: liveData?.points_calculation,
+      total_points: liveData?.total_points,
+      raw_points: liveData?.points_calculation?.final_total_points
     });
     
-    return isCaptain ? basePoints * 2 : basePoints;
+    if (!liveData) {
+      console.log(`No live data for ${player?.web_name}, returning 0`);
+      return 0;
+    }
+    
+    // First try points calculation
+    if (liveData.points_calculation?.final_total_points !== undefined) {
+      const basePoints = liveData.points_calculation.final_total_points;
+      const finalPoints = isCaptain ? basePoints * 2 : basePoints;
+      console.log(`Using points calculation for ${player?.web_name}:`, {
+        basePoints,
+        isCaptain,
+        finalPoints
+      });
+      return finalPoints;
+    }
+    
+    // Fallback to total_points
+    const basePoints = liveData.total_points || 0;
+    const finalPoints = isCaptain ? basePoints * 2 : basePoints;
+    console.log(`Using total_points fallback for ${player?.web_name}:`, {
+      basePoints,
+      isCaptain,
+      finalPoints
+    });
+    
+    return finalPoints;
   }, [liveData, isCaptain, player?.web_name]);
 
   const getPointsBreakdown = () => {
+    console.log(`Getting points breakdown for ${player?.web_name}:`, {
+      has_points_calculation: !!liveData?.points_calculation,
+      points_calculation: liveData?.points_calculation
+    });
+    
     if (!liveData?.points_calculation) return null;
     
     const calc = liveData.points_calculation;
-    return {
+    const breakdown = {
       minutes: calc.minutes_points,
       goals: calc.goals_scored_points,
       assists: calc.assist_points,
@@ -77,6 +102,9 @@ export function PlayerCard({
       bonus: calc.bonus_points,
       total: calc.final_total_points
     };
+
+    console.log(`Points breakdown for ${player?.web_name}:`, breakdown);
+    return breakdown;
   };
 
   if (!player) {
