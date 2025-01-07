@@ -13,6 +13,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { PlayerPerformanceData } from '@/components/gameweek-live/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/hooks/use-toast';
 
 interface PlayerCardProps {
   player: any;
@@ -32,9 +33,10 @@ export function PlayerCard({
   eventId 
 }: PlayerCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const { toast } = useToast();
   
   // Fetch fixture performances for bonus point calculation
-  const { data: fixturePerformances, isLoading: isLoadingFixtures } = useQuery({
+  const { data: fixturePerformances, isLoading: isLoadingFixtures, error } = useQuery({
     queryKey: ['fixture-performances', fixture_id, eventId],
     enabled: !!fixture_id && !!eventId,
     queryFn: async () => {
@@ -57,13 +59,30 @@ export function PlayerCard({
 
       if (error) {
         console.error('Error fetching fixture performances:', error);
-        return [];
+        toast({
+          title: "Error fetching performance data",
+          description: "Please try refreshing the page",
+          variant: "destructive",
+        });
+        throw error;
       }
 
       return data as unknown as PlayerPerformanceData[];
     },
-    staleTime: 30000, // Consider data fresh for 30 seconds
-    cacheTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+    staleTime: 30_000, // Consider data fresh for 30 seconds
+    gcTime: 5 * 60 * 1000, // Keep in garbage collection for 5 minutes
+    retry: 2,
+    refetchInterval: 60_000, // Refetch every minute
+    meta: {
+      onError: (error: Error) => {
+        console.error('Error in fixture performances query:', error);
+        toast({
+          title: "Error updating live data",
+          description: "Some data may be outdated",
+          variant: "destructive",
+        });
+      }
+    }
   });
 
   // Calculate points using our centralized calculator
@@ -97,6 +116,15 @@ export function PlayerCard({
 
   if (!player) {
     return <Skeleton className="w-[120px] h-[160px] rounded-lg" />;
+  }
+
+  if (error) {
+    console.error('Render error in PlayerCard:', error);
+    return (
+      <div className="w-[120px] h-[160px] rounded-lg bg-red-500/10 border border-red-500/20 flex items-center justify-center p-4 text-center text-sm text-red-500">
+        Error loading player data
+      </div>
+    );
   }
 
   return (
