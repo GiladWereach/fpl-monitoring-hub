@@ -12,6 +12,7 @@ import { calculatePlayerPoints } from '@/utils/points-calculator';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { PlayerPerformanceData } from '@/components/gameweek-live/types';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface PlayerCardProps {
   player: any;
@@ -33,10 +34,12 @@ export function PlayerCard({
   const [isExpanded, setIsExpanded] = useState(false);
   
   // Fetch fixture performances for bonus point calculation
-  const { data: fixturePerformances } = useQuery({
+  const { data: fixturePerformances, isLoading: isLoadingFixtures } = useQuery({
     queryKey: ['fixture-performances', fixture_id, eventId],
     enabled: !!fixture_id && !!eventId,
     queryFn: async () => {
+      console.log(`Fetching fixture performances for fixture ${fixture_id} in event ${eventId}`);
+      
       const { data, error } = await supabase
         .from('gameweek_live_performance')
         .select(`
@@ -58,12 +61,20 @@ export function PlayerCard({
       }
 
       return data as unknown as PlayerPerformanceData[];
-    }
+    },
+    staleTime: 30000, // Consider data fresh for 30 seconds
+    cacheTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
   });
 
   // Calculate points using our centralized calculator
   const pointsBreakdown = React.useMemo(() => {
     if (!liveData) return null;
+
+    console.log(`Calculating points for player ${player.web_name}`, {
+      liveData,
+      isCaptain,
+      isViceCaptain
+    });
 
     const performance = {
       ...liveData,
@@ -84,6 +95,10 @@ export function PlayerCard({
     );
   }, [liveData, player, isCaptain, isViceCaptain, fixturePerformances, fixture_id]);
 
+  if (!player) {
+    return <Skeleton className="w-[120px] h-[160px] rounded-lg" />;
+  }
+
   return (
     <HoverCard>
       <HoverCardTrigger asChild>
@@ -93,7 +108,6 @@ export function PlayerCard({
             "p-4 rounded-lg transition-all duration-200",
             "bg-secondary/95 backdrop-blur-sm border border-accent/20",
             "hover:bg-accent/10 hover:scale-105 cursor-pointer",
-            "flex flex-col items-center justify-center gap-3",
             "shadow-lg hover:shadow-xl",
             "animate-fade-in",
             isExpanded && "bg-accent/10"
@@ -121,7 +135,11 @@ export function PlayerCard({
           </p>
           
           <div className="text-xl font-bold text-[#3DFF9A]">
-            {pointsBreakdown?.total || 0}
+            {isLoadingFixtures ? (
+              <Skeleton className="h-6 w-8 mx-auto" />
+            ) : (
+              pointsBreakdown?.total || 0
+            )}
           </div>
 
           <PlayerStatus 
