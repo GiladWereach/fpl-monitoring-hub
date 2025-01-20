@@ -40,8 +40,11 @@ export function PitchView({ teamSelection, players, liveData, eventId }: PitchVi
   };
 
   const getFormationPlayers = () => {
-    // Ensure formation is in correct format (e.g., "4-4-2")
-    const formationString = teamSelection?.formation || '4-4-2';
+    // Get formation string from the correct path
+    const formationString = typeof teamSelection?.formation === 'string' 
+      ? teamSelection.formation 
+      : teamSelection?.formation?.formation || '4-4-2';
+
     console.log('Formation:', formationString);
     
     if (!/^\d-\d-\d$/.test(formationString)) {
@@ -71,7 +74,9 @@ export function PitchView({ teamSelection, players, liveData, eventId }: PitchVi
   }
 
   const { defenders, midfielders, forwards } = getFormationPlayers();
-  const formationClass = `formation-${teamSelection?.formation?.replace(/-/g, '')}`;
+  const formationClass = `formation-${typeof teamSelection?.formation === 'string' 
+    ? teamSelection.formation.replace(/-/g, '') 
+    : teamSelection?.formation?.formation?.replace(/-/g, '') || '442'}`;
 
   return (
     <div className="space-y-8">
