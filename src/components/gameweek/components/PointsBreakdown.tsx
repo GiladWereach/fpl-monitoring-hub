@@ -1,8 +1,23 @@
 import React from 'react';
-import { PointsBreakdown as PointsBreakdownType } from '@/utils/points-calculator';
+
+export interface PointsBreakdown {
+  minutes: number;
+  goals: number;
+  assists: number;
+  cleanSheets: number;
+  goalsConceded: number;
+  ownGoals: number;
+  penaltiesSaved: number;
+  penaltiesMissed: number;
+  yellowCards: number;
+  redCards: number;
+  saves: number;
+  bonus: number;
+  total: number;
+}
 
 interface PointsBreakdownProps {
-  pointsData: PointsBreakdownType | null;
+  pointsData: PointsBreakdown | null;
   isCaptain: boolean;
   isViceCaptain: boolean;
 }
@@ -25,8 +40,6 @@ export function PointsBreakdown({
       </div>
     );
   };
-
-  const basePoints = pointsData.total / (isCaptain ? 2 : 1);
 
   return (
     <div className="space-y-2 text-sm">
