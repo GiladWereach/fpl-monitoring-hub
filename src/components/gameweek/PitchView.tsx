@@ -17,18 +17,16 @@ export function PitchView({ teamSelection, players, liveData, eventId }: PitchVi
     if (!pick) return null;
     
     const player = players.find(p => p.id === pick.element);
-    const playerLiveData = liveData?.find(d => d.player_id === pick.element);
+    const playerLiveData = liveData?.find(d => d.player.id === pick.element);
     
-    console.log('Player Live Data:', {
+    console.log('PitchView player data:', {
+      position,
       player_id: player?.id,
       web_name: player?.web_name,
-      chance_of_playing: player?.chance_of_playing_this_round,
-      status: player?.status,
       live_data: playerLiveData ? {
         minutes: playerLiveData.minutes,
         total_points: playerLiveData.total_points,
-        fixture_id: playerLiveData.fixture_id,
-        points_breakdown: playerLiveData.points_breakdown
+        points_calculation: playerLiveData.points_calculation
       } : 'No live data'
     });
 
@@ -42,11 +40,12 @@ export function PitchView({ teamSelection, players, liveData, eventId }: PitchVi
   };
 
   const getFormationPlayers = () => {
-    const formationString = typeof teamSelection?.formation === 'string' ? 
-      teamSelection.formation : '4-4-2';
+    // Ensure formation is in correct format (e.g., "4-4-2")
+    const formationString = teamSelection?.formation || '4-4-2';
+    console.log('Formation:', formationString);
     
     if (!/^\d-\d-\d$/.test(formationString)) {
-      console.warn('Invalid formation format, defaulting to 4-4-2');
+      console.warn('Invalid formation format:', formationString);
       return {
         defenders: [2, 3, 4, 5],
         midfielders: [6, 7, 8, 9],
@@ -56,11 +55,14 @@ export function PitchView({ teamSelection, players, liveData, eventId }: PitchVi
 
     const [def, mid, fwd] = formationString.split('-').map(Number);
     
-    return {
-      defenders: Array.from({ length: def }, (_, i) => i + 2),
-      midfielders: Array.from({ length: mid }, (_, i) => i + 2 + def),
-      forwards: Array.from({ length: fwd }, (_, i) => i + 2 + def + mid)
-    };
+    // Calculate positions based on formation
+    const defenders = Array.from({ length: def }, (_, i) => i + 2);
+    const midfielders = Array.from({ length: mid }, (_, i) => i + 2 + def);
+    const forwards = Array.from({ length: fwd }, (_, i) => i + 2 + def + mid);
+
+    console.log('Formation positions:', { defenders, midfielders, forwards });
+    
+    return { defenders, midfielders, forwards };
   };
 
   if (!eventId) {
@@ -69,8 +71,7 @@ export function PitchView({ teamSelection, players, liveData, eventId }: PitchVi
   }
 
   const { defenders, midfielders, forwards } = getFormationPlayers();
-  const formationClass = typeof teamSelection?.formation === 'string' ? 
-    `formation-${teamSelection.formation.replace(/-/g, '')}` : 'formation-442';
+  const formationClass = `formation-${teamSelection?.formation?.replace(/-/g, '')}`;
 
   return (
     <div className="space-y-8">

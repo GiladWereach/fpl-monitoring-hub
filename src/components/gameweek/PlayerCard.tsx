@@ -41,45 +41,23 @@ export function PlayerCard({
   });
 
   const totalPoints = useMemo(() => {
-    console.log(`Starting points calculation for ${player?.web_name}:`, {
-      has_live_data: !!liveData,
-      points_calculation: liveData?.points_calculation,
-      points_calculation_exists: liveData?.points_calculation !== null,
-      final_total_points: liveData?.points_calculation?.final_total_points,
-      total_points: liveData?.total_points
-    });
-    
     if (!liveData) {
       console.log(`No live data for ${player?.web_name}, returning 0`);
       return 0;
     }
 
-    // Check if points_calculation exists and is not null
-    if (liveData.points_calculation !== null && liveData.points_calculation !== undefined) {
-      // Then check if final_total_points exists and is not undefined
-      if (typeof liveData.points_calculation.final_total_points === 'number') {
-        const basePoints = liveData.points_calculation.final_total_points;
-        const finalPoints = isCaptain ? basePoints * 2 : basePoints;
-        console.log(`Using points calculation for ${player?.web_name}:`, {
-          basePoints,
-          isCaptain,
-          finalPoints,
-          calculation: 'from points_calculation'
-        });
-        return finalPoints;
-      }
-    }
+    // Calculate base points from points calculation or total points
+    const basePoints = liveData.points_calculation?.final_total_points ?? liveData.total_points ?? 0;
     
-    // Fallback to total_points only if points_calculation is null or undefined
-    const basePoints = liveData.total_points || 0;
+    // Apply captain multiplier
     const finalPoints = isCaptain ? basePoints * 2 : basePoints;
-    console.log(`Using total_points fallback for ${player?.web_name}:`, {
+
+    console.log(`Points calculation for ${player?.web_name}:`, {
       basePoints,
       isCaptain,
-      finalPoints,
-      calculation: 'from total_points fallback'
+      finalPoints
     });
-    
+
     return finalPoints;
   }, [liveData, isCaptain, player?.web_name]);
 

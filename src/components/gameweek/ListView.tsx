@@ -14,18 +14,22 @@ export function ListView({ teamSelection, players, liveData }: ListViewProps) {
   const getPlayerData = (pick: any) => {
     const player = players?.find(p => p.id === pick.element);
     const playerLiveData = liveData?.find(d => d.player.id === pick.element);
-    const points = playerLiveData?.points_calculation?.final_total_points || 0;
+    
+    // Calculate points including bonus points if available
+    const basePoints = playerLiveData?.points_calculation?.final_total_points || playerLiveData?.total_points || 0;
+    const points = pick.is_captain ? basePoints * 2 : basePoints;
     
     console.log('ListView player data:', {
       player: player?.web_name,
       liveData: playerLiveData,
-      points,
-      isCaptain: pick.is_captain
+      basePoints,
+      isCaptain: pick.is_captain,
+      finalPoints: points
     });
     
     return {
       ...player,
-      points: pick.is_captain ? points * 2 : points,
+      points,
       liveData: playerLiveData
     };
   };
