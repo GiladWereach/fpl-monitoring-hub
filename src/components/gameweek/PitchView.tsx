@@ -36,10 +36,19 @@ export function PitchView({ teamSelection, players, liveData, eventId }: PitchVi
     // Add null check for player object in live data
     const playerLiveData = liveData?.find(d => d?.player && d.player.id === pick.element);
     
+    // Calculate total points including bonus if available
+    const totalPoints = playerLiveData?.points_calculation?.final_total_points || 
+                       playerLiveData?.total_points || 
+                       0;
+
+    // Apply captain multiplier
+    const finalPoints = pick.is_captain ? totalPoints * 2 : totalPoints;
+    
     console.log('PitchView player data:', {
       position,
       player_id: player?.id,
       web_name: player?.web_name,
+      total_points: finalPoints,
       live_data: playerLiveData ? {
         minutes: playerLiveData.minutes,
         total_points: playerLiveData.total_points,
@@ -52,7 +61,11 @@ export function PitchView({ teamSelection, players, liveData, eventId }: PitchVi
       isCaptain: pick.is_captain,
       isViceCaptain: pick.is_vice_captain,
       liveData: playerLiveData,
-      fixture_id: playerLiveData?.fixture_id
+      fixture_id: playerLiveData?.fixture_id,
+      totalPoints: finalPoints,
+      inPlay: playerLiveData?.minutes > 0 && 
+              !playerLiveData?.finished_provisional && 
+              !playerLiveData?.postponed
     };
   };
 

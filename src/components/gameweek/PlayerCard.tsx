@@ -18,6 +18,8 @@ interface PlayerCardProps {
   liveData?: PlayerPerformanceData;
   fixture_id?: number;
   eventId: number;
+  totalPoints?: number;
+  inPlay?: boolean;
 }
 
 export function PlayerCard({ 
@@ -26,40 +28,22 @@ export function PlayerCard({
   isViceCaptain, 
   liveData,
   fixture_id,
-  eventId 
+  eventId,
+  totalPoints = 0,
+  inPlay = false
 }: PlayerCardProps) {
   const { toast } = useToast();
 
   console.log('PlayerCard render for:', player?.web_name, {
     raw_live_data: liveData,
     points_calculation: liveData?.points_calculation,
-    total_points: liveData?.total_points,
+    total_points: totalPoints,
     minutes: liveData?.minutes,
+    inPlay,
     isCaptain,
     isViceCaptain,
     fixture_id
   });
-
-  const totalPoints = useMemo(() => {
-    if (!liveData) {
-      console.log(`No live data for ${player?.web_name}, returning 0`);
-      return 0;
-    }
-
-    // Calculate base points from points calculation or total points
-    const basePoints = liveData.points_calculation?.final_total_points ?? liveData.total_points ?? 0;
-    
-    // Apply captain multiplier
-    const finalPoints = isCaptain ? basePoints * 2 : basePoints;
-
-    console.log(`Points calculation for ${player?.web_name}:`, {
-      basePoints,
-      isCaptain,
-      finalPoints
-    });
-
-    return finalPoints;
-  }, [liveData, isCaptain, player?.web_name]);
 
   const getPointsBreakdown = () => {
     console.log(`Getting points breakdown for ${player?.web_name}:`, {
@@ -109,7 +93,8 @@ export function PlayerCard({
             "bg-secondary/95 backdrop-blur-sm border border-accent/20",
             "hover:bg-accent/10 hover:scale-105 cursor-pointer",
             "shadow-lg hover:shadow-xl",
-            "animate-fade-in"
+            "animate-fade-in",
+            inPlay && "ring-2 ring-[#3DFF9A]"
           )}
           role="button"
           tabIndex={0}
