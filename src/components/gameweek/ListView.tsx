@@ -12,15 +12,25 @@ interface ListViewProps {
 
 export function ListView({ teamSelection, players, liveData }: ListViewProps) {
   const getPlayerData = (pick: any) => {
-    const player = players?.find(p => p.id === pick.element);
-    const playerLiveData = liveData?.find(d => d.player.id === pick.element);
+    if (!pick || !players) {
+      console.log('Missing pick or players data:', { pick, playersLength: players?.length });
+      return null;
+    }
+
+    const player = players.find(p => p.id === pick.element);
+    if (!player) {
+      console.log('Player not found:', { pickElement: pick.element });
+      return null;
+    }
+
+    const playerLiveData = liveData?.find(d => d.player?.id === pick.element);
     
     // Calculate points including bonus points if available
     const basePoints = playerLiveData?.points_calculation?.final_total_points || playerLiveData?.total_points || 0;
     const points = pick.is_captain ? basePoints * 2 : basePoints;
     
     console.log('ListView player data:', {
-      player: player?.web_name,
+      player: player.web_name,
       liveData: playerLiveData,
       basePoints,
       isCaptain: pick.is_captain,
@@ -37,6 +47,15 @@ export function ListView({ teamSelection, players, liveData }: ListViewProps) {
   // Calculate points for starting 11 and bench separately
   const totalPoints = calculateTotalPoints(teamSelection?.picks || [], getPlayerData);
   const benchPoints = calculateBenchPoints(teamSelection?.picks || [], getPlayerData);
+
+  if (!teamSelection?.picks) {
+    console.log('No team selection data available');
+    return (
+      <Card className="glass-card p-6">
+        <div>Loading team data...</div>
+      </Card>
+    );
+  }
 
   return (
     <Card className="glass-card p-6">
@@ -56,7 +75,7 @@ export function ListView({ teamSelection, players, liveData }: ListViewProps) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {teamSelection?.picks.map((pick: any) => {
+          {teamSelection.picks.map((pick: any) => {
             const playerData = getPlayerData(pick);
             if (!playerData) return null;
             
