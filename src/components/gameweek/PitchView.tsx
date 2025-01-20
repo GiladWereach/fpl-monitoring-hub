@@ -33,7 +33,8 @@ export function PitchView({ teamSelection, players, liveData, eventId }: PitchVi
       return null;
     }
 
-    const playerLiveData = liveData?.find(d => d.player.id === pick.element);
+    // Add null check for player object in live data
+    const playerLiveData = liveData?.find(d => d?.player && d.player.id === pick.element);
     
     console.log('PitchView player data:', {
       position,
