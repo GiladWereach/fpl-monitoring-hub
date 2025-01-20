@@ -33,8 +33,8 @@ export function PitchView({ teamSelection, players, liveData, eventId }: PitchVi
       return null;
     }
 
-    // Add null check for player object in live data
-    const playerLiveData = liveData?.find(d => d?.player && d.player.id === pick.element);
+    // Find live data for the player
+    const playerLiveData = liveData?.find(d => d?.player?.id === pick.element);
     
     // Calculate total points including bonus if available
     const totalPoints = playerLiveData?.points_calculation?.final_total_points || 
@@ -44,27 +44,24 @@ export function PitchView({ teamSelection, players, liveData, eventId }: PitchVi
     // Apply captain multiplier
     const finalPoints = pick.is_captain ? totalPoints * 2 : totalPoints;
     
-    console.log('PitchView player data:', {
-      position,
-      player_id: player?.id,
-      web_name: player?.web_name,
-      total_points: finalPoints,
-      live_data: playerLiveData ? {
-        minutes: playerLiveData.minutes,
-        total_points: playerLiveData.total_points,
-        points_calculation: playerLiveData.points_calculation
-      } : 'No live data'
-    });
-
+    // Determine if player is in play
     const isInPlay = playerLiveData?.minutes > 0 && 
                     !playerLiveData?.finished_provisional && 
                     !playerLiveData?.postponed;
 
-    console.log(`Player ${player.web_name} inPlay status:`, {
-      minutes: playerLiveData?.minutes,
-      finished_provisional: playerLiveData?.finished_provisional,
-      postponed: playerLiveData?.postponed,
-      isInPlay
+    console.log('PitchView player data:', {
+      position,
+      player_id: player.id,
+      web_name: player.web_name,
+      total_points: finalPoints,
+      is_in_play: isInPlay,
+      live_data: playerLiveData ? {
+        minutes: playerLiveData.minutes,
+        total_points: playerLiveData.total_points,
+        points_calculation: playerLiveData.points_calculation,
+        finished_provisional: playerLiveData.finished_provisional,
+        postponed: playerLiveData.postponed
+      } : 'No live data'
     });
 
     return {
@@ -79,7 +76,6 @@ export function PitchView({ teamSelection, players, liveData, eventId }: PitchVi
   };
 
   const getFormationPlayers = () => {
-    // Get formation string from the correct path
     const formationString = typeof teamSelection?.formation === 'string' 
       ? teamSelection.formation 
       : teamSelection?.formation?.formation || '4-4-2';
@@ -97,7 +93,6 @@ export function PitchView({ teamSelection, players, liveData, eventId }: PitchVi
 
     const [def, mid, fwd] = formationString.split('-').map(Number);
     
-    // Calculate positions based on formation
     const defenders = Array.from({ length: def }, (_, i) => i + 2);
     const midfielders = Array.from({ length: mid }, (_, i) => i + 2 + def);
     const forwards = Array.from({ length: fwd }, (_, i) => i + 2 + def + mid);

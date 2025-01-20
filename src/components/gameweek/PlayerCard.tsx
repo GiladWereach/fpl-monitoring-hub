@@ -45,36 +45,6 @@ export function PlayerCard({
     fixture_id
   });
 
-  const getPointsBreakdown = () => {
-    console.log(`Getting points breakdown for ${player?.web_name}:`, {
-      has_points_calculation: !!liveData?.points_calculation,
-      points_calculation_exists: liveData?.points_calculation !== null,
-      points_calculation: liveData?.points_calculation
-    });
-    
-    if (!liveData?.points_calculation) return null;
-    
-    const calc = liveData.points_calculation;
-    const breakdown = {
-      minutes: calc.minutes_points,
-      goals: calc.goals_scored_points,
-      assists: calc.assist_points,
-      cleanSheets: calc.clean_sheet_points,
-      goalsConceded: calc.goals_conceded_points,
-      ownGoals: calc.own_goal_points,
-      penaltiesSaved: calc.penalty_save_points,
-      penaltiesMissed: calc.penalty_miss_points,
-      yellowCards: 0,
-      redCards: 0,
-      saves: calc.saves_points,
-      bonus: calc.bonus_points,
-      total: calc.final_total_points
-    };
-
-    console.log(`Points breakdown for ${player?.web_name}:`, breakdown);
-    return breakdown;
-  };
-
   if (!player) {
     return (
       <div className="w-full max-w-[120px] h-[100px] bg-secondary/95 rounded-lg flex items-center justify-center">
@@ -134,7 +104,7 @@ export function PlayerCard({
       >
         {liveData?.points_calculation ? (
           <PointsBreakdown 
-            pointsData={getPointsBreakdown()}
+            pointsData={liveData.points_calculation}
             isCaptain={isCaptain}
             isViceCaptain={isViceCaptain}
           />
