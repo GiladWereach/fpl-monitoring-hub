@@ -1,8 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { PlayerPerformanceData } from '@/components/gameweek-live/types';
+import { useToast } from '@/hooks/use-toast';
 
 export function useGameweekPerformance(gameweekId: number | undefined, matchId?: number | null) {
+  const { toast } = useToast();
+
   return useQuery({
     queryKey: ['gameweek-performance', gameweekId, matchId],
     enabled: !!gameweekId,
@@ -20,7 +23,9 @@ export function useGameweekPerformance(gameweekId: number | undefined, matchId?:
         throw pointsError;
       }
 
-      // Then get performance data
+      console.log('Points calculation data:', pointsData);
+
+      // Then get performance data with player info
       let query = supabase
         .from('gameweek_live_performance')
         .select(`
@@ -42,11 +47,16 @@ export function useGameweekPerformance(gameweekId: number | undefined, matchId?:
         query = query.eq('fixture_id', matchId);
       }
 
-      const { data: performanceData, error } = await query;
+      const { data: performanceData, error: perfError } = await query;
 
-      if (error) {
-        console.error('Error fetching performance data:', error);
-        throw error;
+      if (perfError) {
+        console.error('Error fetching performance data:', perfError);
+        toast({
+          title: "Error loading performance data",
+          description: "Please try refreshing the page",
+          variant: "destructive",
+        });
+        throw perfError;
       }
 
       // Combine the data
@@ -57,8 +67,15 @@ export function useGameweekPerformance(gameweekId: number | undefined, matchId?:
           p.fixture_id === perf.fixture_id
         );
 
+        console.log(`Points data for player ${perf.player_id}:`, {
+          performance: perf,
+          pointsCalculation: pointsCalc,
+          totalPoints: pointsCalc?.final_total_points || perf.total_points || 0
+        });
+
         return {
           ...perf,
+          total_points: pointsCalc?.final_total_points || perf.total_points || 0,
           points_calculation: pointsCalc ? {
             minutes_points: pointsCalc.minutes_points,
             goals_scored_points: pointsCalc.goals_scored_points,
@@ -75,7 +92,7 @@ export function useGameweekPerformance(gameweekId: number | undefined, matchId?:
         } as PlayerPerformanceData;
       });
 
-      console.log(`Fetched ${combinedData?.length || 0} performance records`);
+      console.log('Combined performance data:', combinedData);
       return combinedData || [];
     },
     refetchInterval: 30000 // Refetch every 30 seconds
