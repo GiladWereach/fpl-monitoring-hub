@@ -62,8 +62,8 @@ export const PerformanceTable: React.FC<PerformanceTableProps> = ({
 
   // Sort performances by total points (including calculated bonus) in descending order
   const sortedPerformances = [...performancesWithBonus].sort((a, b) => {
-    const totalA = a.total_points + a.calculatedBonus;
-    const totalB = b.total_points + b.calculatedBonus;
+    const totalA = (a.points_calculation?.final_total_points || a.total_points) + a.calculatedBonus;
+    const totalB = (b.points_calculation?.final_total_points || b.total_points) + b.calculatedBonus;
     return totalB - totalA;
   });
 
@@ -71,7 +71,8 @@ export const PerformanceTable: React.FC<PerformanceTableProps> = ({
     player: p.player.web_name,
     bps: p.bps,
     calculatedBonus: p.calculatedBonus,
-    totalPoints: p.total_points + p.calculatedBonus
+    points_calculation: p.points_calculation,
+    totalPoints: (p.points_calculation?.final_total_points || p.total_points) + p.calculatedBonus
   })));
 
   return (
@@ -119,7 +120,7 @@ export const PerformanceTable: React.FC<PerformanceTableProps> = ({
             <TableCell className="text-right">{perf.saves}</TableCell>
             <TableCell className="text-right">{perf.bps}</TableCell>
             <TableCell className="text-right font-bold">
-              {perf.total_points + perf.calculatedBonus}
+              {(perf.points_calculation?.final_total_points || perf.total_points) + perf.calculatedBonus}
             </TableCell>
           </TableRow>
         ))}

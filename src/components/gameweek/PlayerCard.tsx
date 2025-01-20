@@ -8,7 +8,6 @@ import {
 } from "@/components/ui/hover-card";
 import { PlayerStatus } from './PlayerStatus';
 import { PointsBreakdown } from './components/PointsBreakdown';
-import { calculatePlayerPoints } from '@/utils/points-calculator';
 import { PlayerPerformanceData } from '@/components/gameweek-live/types';
 import { useToast } from '@/hooks/use-toast';
 
