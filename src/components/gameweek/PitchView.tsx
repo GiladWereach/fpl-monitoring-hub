@@ -56,6 +56,17 @@ export function PitchView({ teamSelection, players, liveData, eventId }: PitchVi
       } : 'No live data'
     });
 
+    const isInPlay = playerLiveData?.minutes > 0 && 
+                    !playerLiveData?.finished_provisional && 
+                    !playerLiveData?.postponed;
+
+    console.log(`Player ${player.web_name} inPlay status:`, {
+      minutes: playerLiveData?.minutes,
+      finished_provisional: playerLiveData?.finished_provisional,
+      postponed: playerLiveData?.postponed,
+      isInPlay
+    });
+
     return {
       ...player,
       isCaptain: pick.is_captain,
@@ -63,9 +74,7 @@ export function PitchView({ teamSelection, players, liveData, eventId }: PitchVi
       liveData: playerLiveData,
       fixture_id: playerLiveData?.fixture_id,
       totalPoints: finalPoints,
-      inPlay: playerLiveData?.minutes > 0 && 
-              !playerLiveData?.finished_provisional && 
-              !playerLiveData?.postponed
+      inPlay: isInPlay
     };
   };
 
