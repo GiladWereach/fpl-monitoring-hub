@@ -12,11 +12,27 @@ interface PitchViewProps {
 
 export function PitchView({ teamSelection, players, liveData, eventId }: PitchViewProps) {
   const getPlayerData = (position: number) => {
-    if (!teamSelection || !players) return null;
+    if (!teamSelection?.picks || !players) {
+      console.log('Missing required data:', { 
+        hasPicks: !!teamSelection?.picks, 
+        hasPlayers: !!players,
+        position 
+      });
+      return null;
+    }
+    
     const pick = teamSelection.picks.find(p => p.position === position);
-    if (!pick) return null;
+    if (!pick) {
+      console.log(`No pick found for position ${position}`);
+      return null;
+    }
     
     const player = players.find(p => p.id === pick.element);
+    if (!player) {
+      console.log(`No player found for element ${pick.element} at position ${position}`);
+      return null;
+    }
+
     const playerLiveData = liveData?.find(d => d.player.id === pick.element);
     
     console.log('PitchView player data:', {
