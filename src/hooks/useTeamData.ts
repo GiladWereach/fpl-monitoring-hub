@@ -19,10 +19,14 @@ export const useTeamData = (teamId: string | null) => {
         .limit(1)
         .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error checking existing team:', error);
+        throw error;
+      }
       console.log('Found existing team:', data);
       return data;
-    }
+    },
+    retry: 1
   });
 
   // Query for team data
@@ -32,96 +36,97 @@ export const useTeamData = (teamId: string | null) => {
     queryFn: async () => {
       console.log('Fetching team data for ID:', teamId);
       
-      // First try to get data from our database
-      const { data: selectionData, error: selectionError } = await supabase
-        .from('team_selections')
-        .select(`
-          id,
-          fpl_team_id,
-          event,
-          formation,
-          captain_id,
-          vice_captain_id,
-          picks,
-          auto_subs
-        `)
-        .eq('fpl_team_id', parseInt(teamId!))
-        .eq('event', existingTeam.event)
-        .maybeSingle();
+      try {
+        // First try to get data from our database
+        const { data: selectionData, error: selectionError } = await supabase
+          .from('team_selections')
+          .select(`
+            id,
+            fpl_team_id,
+            event,
+            formation,
+            captain_id,
+            vice_captain_id,
+            picks,
+            auto_subs
+          `)
+          .eq('fpl_team_id', parseInt(teamId!))
+          .eq('event', existingTeam.event)
+          .maybeSingle();
 
-      if (selectionError) {
-        console.error('Error fetching team selection:', selectionError);
-        throw selectionError;
-      }
+        if (selectionError) {
+          console.error('Error fetching team selection:', selectionError);
+          throw selectionError;
+        }
 
-      // Get performance data separately
-      const { data: performanceData, error: performanceError } = await supabase
-        .from('team_performances')
-        .select(`
-          points,
-          total_points,
-          current_rank,
-          overall_rank,
-          team_value,
-          bank
-        `)
-        .eq('fpl_team_id', parseInt(teamId!))
-        .eq('event', existingTeam.event)
-        .maybeSingle();
+        // Get performance data separately
+        const { data: performanceData, error: performanceError } = await supabase
+          .from('team_performances')
+          .select(`
+            points,
+            total_points,
+            current_rank,
+            overall_rank,
+            team_value,
+            bank
+          `)
+          .eq('fpl_team_id', parseInt(teamId!))
+          .eq('event', existingTeam.event)
+          .maybeSingle();
 
-      if (performanceError) {
-        console.error('Error fetching team performance:', performanceError);
-        throw performanceError;
-      }
+        if (performanceError) {
+          console.error('Error fetching team performance:', performanceError);
+          throw performanceError;
+        }
 
-      console.log('Team selection data:', selectionData);
-      console.log('Team performance data:', performanceData);
+        console.log('Team selection data:', selectionData);
+        console.log('Team performance data:', performanceData);
 
-      if (selectionData) {
-        console.log('Found local team data:', selectionData);
-        return {
-          success: true,
-          data: {
-            team_info: {
-              fpl_team_id: parseInt(teamId!),
-              event: existingTeam.event,
-              last_updated: existingTeam.last_fetch
-            },
-            ...selectionData,
-            stats: performanceData || {},
-            formation: {
-              formation: selectionData.formation,
-              positions: getFormationPositions(selectionData.formation)
+        if (selectionData) {
+          console.log('Found local team data:', selectionData);
+          return {
+            success: true,
+            data: {
+              team_info: {
+                fpl_team_id: parseInt(teamId!),
+                event: existingTeam.event,
+                last_updated: existingTeam.last_fetch
+              },
+              ...selectionData,
+              stats: performanceData || {},
+              formation: {
+                formation: selectionData.formation,
+                positions: getFormationPositions(selectionData.formation)
+              }
             }
-          }
-        };
-      }
+          };
+        }
 
-      // If no local data or it's stale, fetch from FPL API
-      console.log('No local data found, fetching from API');
-      const response = await fetch(`/api/fetch-team-data`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ teamId: parseInt(teamId!) })
-      });
+        // If no local data or it's stale, fetch from FPL API
+        console.log('No local data found, fetching from API');
+        const response = await fetch(`/api/fetch-team-data`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ teamId: parseInt(teamId!) })
+        });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to fetch team data');
-      }
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to fetch team data');
+        }
 
-      return await response.json();
-    },
-    meta: {
-      onError: (error: Error) => {
-        console.error('Error fetching team data:', error);
+        return await response.json();
+      } catch (error: any) {
+        console.error('Error in team data fetch:', error);
         toast({
           title: "Error fetching team data",
-          description: error.message,
+          description: error.message || "Please try again later",
           variant: "destructive",
         });
+        throw error;
       }
-    }
+    },
+    retry: 1
   });
 
   return {
