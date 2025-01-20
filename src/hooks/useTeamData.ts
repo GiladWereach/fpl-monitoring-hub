@@ -14,7 +14,7 @@ export const useTeamData = (teamId: string | null) => {
       const { data, error } = await supabase
         .from('fpl_teams')
         .select('*')
-        .eq('fpl_team_id', teamId)
+        .eq('fpl_team_id', parseInt(teamId!))
         .order('event', { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -45,7 +45,7 @@ export const useTeamData = (teamId: string | null) => {
           picks,
           auto_subs
         `)
-        .eq('fpl_team_id', teamId)
+        .eq('fpl_team_id', parseInt(teamId!))
         .eq('event', existingTeam.event)
         .maybeSingle();
 
@@ -65,7 +65,7 @@ export const useTeamData = (teamId: string | null) => {
           team_value,
           bank
         `)
-        .eq('fpl_team_id', teamId)
+        .eq('fpl_team_id', parseInt(teamId!))
         .eq('event', existingTeam.event)
         .maybeSingle();
 
@@ -83,7 +83,7 @@ export const useTeamData = (teamId: string | null) => {
           success: true,
           data: {
             team_info: {
-              fpl_team_id: parseInt(teamId),
+              fpl_team_id: parseInt(teamId!),
               event: existingTeam.event,
               last_updated: existingTeam.last_fetch
             },
@@ -102,7 +102,7 @@ export const useTeamData = (teamId: string | null) => {
       const response = await fetch(`/api/fetch-team-data`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ teamId: parseInt(teamId) })
+        body: JSON.stringify({ teamId: parseInt(teamId!) })
       });
 
       if (!response.ok) {
