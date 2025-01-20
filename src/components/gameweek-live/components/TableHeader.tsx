@@ -1,13 +1,13 @@
 import React from 'react';
 import {
   TableHead,
-  TableHeader,
+  TableHeader as UITableHeader,
   TableRow,
 } from '@/components/ui/table';
 
-export const TableHeader = () => {
+export const TableHeader: React.FC = () => {
   return (
-    <TableHeader>
+    <UITableHeader>
       <TableRow>
         <TableHead>Player</TableHead>
         <TableHead>Team</TableHead>
@@ -25,6 +25,6 @@ export const TableHeader = () => {
         <TableHead className="text-right">BPS</TableHead>
         <TableHead className="text-right">Pts</TableHead>
       </TableRow>
-    </TableHeader>
+    </UITableHeader>
   );
 };
