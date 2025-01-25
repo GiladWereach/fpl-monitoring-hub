@@ -37,59 +37,61 @@ export function GameweekHeader({
   });
 
   return (
-    <>
-      <div className="relative py-6 text-center space-y-4">
-        <h1 className="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#3DFF9A] to-[#50E3C2]">
-          Gameweek {currentGameweek?.id} Live
-        </h1>
-        <p className="text-gray-400 max-w-2xl mx-auto">
-          Track your team's performance in real-time with detailed statistics and live updates
-        </p>
-      </div>
+    <div className="relative mb-8">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+        <div className="flex-1">
+          <h1 className="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#3DFF9A] to-[#50E3C2]">
+            Gameweek {currentGameweek?.id} Live
+          </h1>
+          <p className="text-gray-400 mt-2">
+            Track your team's performance in real-time with detailed statistics and live updates
+          </p>
+        </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-        <StatusCard
-          title="Total Points"
-          value={totalPoints}
-          status="success"
-          icon={<Trophy className="h-4 w-4" />}
-          details={[
-            { label: 'Goals', value: pitchGoals },
-            { label: 'Assists', value: pitchAssists },
-            { label: 'Bonus Points', value: pitchBonus }
-          ]}
-        />
-        <StatusCard
-          title="Players Playing"
-          value={`${playersPlaying}/11`}
-          status="info"
-          icon={<Users className="h-4 w-4" />}
-          details={[
-            { label: 'Started', value: pitchPlayersData?.filter(p => p.starts > 0).length || 0 },
-            { label: 'Minutes Played', value: pitchPlayersData?.reduce((sum, p) => sum + (p.minutes || 0), 0) || 0 }
-          ]}
-        />
-        <StatusCard
-          title="Average Score"
-          value="38"
-          status="warning"
-          icon={<TrendingUp className="h-4 w-4" />}
-          details={[
-            { label: 'Top Score', value: currentGameweek?.highest_score || '-' },
-            { label: 'Your Rank', value: currentGameweek?.rank || '-' }
-          ]}
-        />
-        <StatusCard
-          title="Next Deadline"
-          value="2d 4h"
-          status="info"
-          icon={<Clock className="h-4 w-4" />}
-          details={[
-            { label: 'Date', value: new Date(currentGameweek?.deadline_time).toLocaleDateString() },
-            { label: 'Time', value: new Date(currentGameweek?.deadline_time).toLocaleTimeString() }
-          ]}
-        />
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:w-2/3">
+          <StatusCard
+            title="Total Points"
+            value={totalPoints}
+            status="success"
+            icon={<Trophy className="h-4 w-4" />}
+            details={[
+              { label: 'Goals', value: pitchGoals },
+              { label: 'Assists', value: pitchAssists },
+              { label: 'Bonus Points', value: pitchBonus }
+            ]}
+          />
+          <StatusCard
+            title="Players Playing"
+            value={`${playersPlaying}/11`}
+            status="info"
+            icon={<Users className="h-4 w-4" />}
+            details={[
+              { label: 'Started', value: pitchPlayersData?.filter(p => p.starts > 0).length || 0 },
+              { label: 'Minutes Played', value: pitchPlayersData?.reduce((sum, p) => sum + (p.minutes || 0), 0) || 0 }
+            ]}
+          />
+          <StatusCard
+            title="Average Score"
+            value="38"
+            status="warning"
+            icon={<TrendingUp className="h-4 w-4" />}
+            details={[
+              { label: 'Top Score', value: currentGameweek?.highest_score || '-' },
+              { label: 'Your Rank', value: currentGameweek?.rank || '-' }
+            ]}
+          />
+          <StatusCard
+            title="Next Deadline"
+            value="2d 4h"
+            status="info"
+            icon={<Clock className="h-4 w-4" />}
+            details={[
+              { label: 'Date', value: new Date(currentGameweek?.deadline_time).toLocaleDateString() },
+              { label: 'Time', value: new Date(currentGameweek?.deadline_time).toLocaleTimeString() }
+            ]}
+          />
+        </div>
       </div>
-    </>
+    </div>
   );
 }

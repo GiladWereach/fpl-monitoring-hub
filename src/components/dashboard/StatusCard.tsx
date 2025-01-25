@@ -30,21 +30,21 @@ export function StatusCard({
   return (
     <HoverCard>
       <HoverCardTrigger asChild>
-        <Card className="glass-card transition-all duration-200 hover:scale-[1.02] w-full">
-          <CardContent className="p-6">
-            <div className="flex items-start justify-between space-x-4">
-              <div className="space-y-3">
-                <p className="text-sm font-medium text-muted-foreground">{title}</p>
-                <h3 className="text-2xl font-bold tracking-tight">{value}</h3>
+        <Card className="glass-card transition-all duration-200 hover:scale-[1.02]">
+          <CardContent className="p-4">
+            <div className="flex items-start justify-between space-x-2">
+              <div className="space-y-1.5">
+                <p className="text-xs font-medium text-muted-foreground">{title}</p>
+                <h3 className="text-lg font-bold tracking-tight">{value}</h3>
                 {trend && (
                   <p className={cn(
-                    "text-sm font-medium",
+                    "text-xs font-medium",
                     trend.value > 0 ? "text-success" : "text-destructive"
                   )}>
                     {trend.value > 0 ? "↑" : "↓"} {Math.abs(trend.value)}% {trend.label}
                   </p>
                 )}
-                {indicator && <div className="mt-2">{indicator}</div>}
+                {indicator && <div className="mt-1">{indicator}</div>}
               </div>
               <div
                 className={cn("status-badge", {
@@ -61,7 +61,7 @@ export function StatusCard({
         </Card>
       </HoverCardTrigger>
       {details && (
-        <HoverCardContent className="w-80">
+        <HoverCardContent className="w-64">
           <div className="space-y-2">
             {details.map((detail, index) => (
               <div key={index} className="flex justify-between items-center">
