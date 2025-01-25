@@ -4,13 +4,14 @@ interface LivePerformanceProps {
   totalPoints: number;
   benchPoints: number;
   liveData: any[];
+  teamPicks: any[];
 }
 
-export function LivePerformance({ totalPoints, benchPoints, liveData }: LivePerformanceProps) {
+export function LivePerformance({ totalPoints, benchPoints, liveData, teamPicks }: LivePerformanceProps) {
   // Filter live data to only include pitch players (positions 1-11)
   const pitchPlayersData = liveData?.filter(p => {
-    const position = p?.player?.picks?.find(pick => pick.element === p.player.id)?.position;
-    return position && position <= 11;
+    const pick = teamPicks?.find(pick => pick.element === p.player_id);
+    return pick && pick.position <= 11;
   });
 
   // Calculate stats only for pitch players
@@ -18,6 +19,16 @@ export function LivePerformance({ totalPoints, benchPoints, liveData }: LivePerf
   const pitchAssists = pitchPlayersData?.reduce((sum, p) => sum + (p.assists || 0), 0) || 0;
   const pitchBonus = pitchPlayersData?.reduce((sum, p) => sum + (p.bonus || 0), 0) || 0;
   const playersPlaying = pitchPlayersData?.filter(p => p.minutes > 0).length || 0;
+
+  console.log('LivePerformance stats:', {
+    pitchPlayersData,
+    pitchGoals,
+    pitchAssists,
+    pitchBonus,
+    playersPlaying,
+    totalPoints,
+    benchPoints
+  });
 
   return (
     <div className="space-y-4">

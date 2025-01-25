@@ -4,6 +4,7 @@ import { ViewToggle } from './ViewToggle';
 import { PitchView } from './PitchView';
 import { ListView } from './ListView';
 import { LivePerformance } from './LivePerformance';
+import { calculateTotalPoints, calculateBenchPoints } from './utils/points-calculator';
 
 interface TeamViewProps {
   teamData: any;
@@ -38,13 +39,23 @@ export const TeamView: React.FC<TeamViewProps> = ({
     );
   }
 
-  const { points = 0, benchPoints = 0 } = teamData.data.stats || {};
-  const currentEvent = teamData.data.team_info?.event;
+  // Calculate points only from pitch players
+  const getPlayerData = (pick: any) => {
+    const playerLiveData = liveData?.find(p => p.player_id === pick.element);
+    return {
+      points: playerLiveData?.points_calculation?.final_total_points || 0,
+      isCaptain: pick.is_captain
+    };
+  };
 
-  console.log('TeamView render:', {
-    event: currentEvent,
-    has_data: !!teamData?.data,
-    view_mode: viewMode
+  const points = calculateTotalPoints(teamData.data.picks, getPlayerData);
+  const benchPoints = calculateBenchPoints(teamData.data.picks, getPlayerData);
+
+  console.log('TeamView points calculation:', {
+    total_points: points,
+    bench_points: benchPoints,
+    picks: teamData.data.picks,
+    live_data: liveData
   });
 
   return (
@@ -55,7 +66,7 @@ export const TeamView: React.FC<TeamViewProps> = ({
             teamSelection={teamData.data}
             players={players}
             liveData={liveData}
-            eventId={currentEvent}
+            eventId={teamData.data.team_info?.event}
           />
         ) : (
           <ListView
@@ -72,6 +83,7 @@ export const TeamView: React.FC<TeamViewProps> = ({
           totalPoints={points}
           benchPoints={benchPoints}
           liveData={liveData}
+          teamPicks={teamData.data.picks}
         />
       </div>
     </div>
