@@ -58,8 +58,8 @@ export function PlayerCard({
       ownGoals: calc.own_goal_points || 0,
       penaltiesSaved: calc.penalty_save_points || 0,
       penaltiesMissed: calc.penalty_miss_points || 0,
-      yellowCards: calc.card_points || 0,
-      redCards: 0,
+      yellowCards: 0, // Yellow cards points are not in PointsCalculation type
+      redCards: 0, // Red cards points are not in PointsCalculation type
       saves: calc.saves_points || 0,
       bonus: calc.bonus_points || 0,
       total: calc.final_total_points || 0
