@@ -26,9 +26,7 @@ export function ListView({ teamSelection, players, liveData }: ListViewProps) {
     const playerLiveData = liveData?.find(d => d.player?.id === pick.element);
     
     // Calculate points including bonus points if available
-    const basePoints = playerLiveData?.points_calculation?.final_total_points || 
-                      playerLiveData?.total_points || 
-                      0;
+    const basePoints = playerLiveData?.points_calculation?.final_total_points || 0;
     const points = pick.is_captain ? basePoints * 2 : basePoints;
     
     console.log('ListView player data:', {

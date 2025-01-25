@@ -58,8 +58,8 @@ export function PlayerCard({
       ownGoals: calc.own_goal_points || 0,
       penaltiesSaved: calc.penalty_save_points || 0,
       penaltiesMissed: calc.penalty_miss_points || 0,
-      yellowCards: 0, // Not in points calculation
-      redCards: 0, // Not in points calculation
+      yellowCards: 0,
+      redCards: 0,
       saves: calc.saves_points || 0,
       bonus: calc.bonus_points || 0,
       total: calc.final_total_points || 0
@@ -67,7 +67,9 @@ export function PlayerCard({
   };
 
   // Calculate final points including captain multiplier
-  const finalPoints = isCaptain ? totalPoints * 2 : totalPoints;
+  const finalPoints = isCaptain ? 
+    (liveData?.points_calculation?.final_total_points || 0) * 2 : 
+    (liveData?.points_calculation?.final_total_points || 0);
 
   if (!player) {
     return (
