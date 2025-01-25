@@ -50,19 +50,19 @@ export function PlayerCard({
     
     const calc = liveData.points_calculation;
     return {
-      minutes: calc.minutes_points,
-      goals: calc.goals_scored_points,
-      assists: calc.assist_points,
-      cleanSheets: calc.clean_sheet_points,
-      goalsConceded: calc.goals_conceded_points,
-      ownGoals: calc.own_goal_points,
-      penaltiesSaved: calc.penalty_save_points,
-      penaltiesMissed: calc.penalty_miss_points,
-      yellowCards: 0, // Add if available in points calculation
-      redCards: 0, // Add if available in points calculation
-      saves: calc.saves_points,
-      bonus: calc.bonus_points,
-      total: calc.final_total_points
+      minutes: calc.minutes_points || 0,
+      goals: calc.goals_scored_points || 0,
+      assists: calc.assist_points || 0,
+      cleanSheets: calc.clean_sheet_points || 0,
+      goalsConceded: calc.goals_conceded_points || 0,
+      ownGoals: calc.own_goal_points || 0,
+      penaltiesSaved: calc.penalty_save_points || 0,
+      penaltiesMissed: calc.penalty_miss_points || 0,
+      yellowCards: calc.card_points || 0,
+      redCards: 0,
+      saves: calc.saves_points || 0,
+      bonus: calc.bonus_points || 0,
+      total: calc.final_total_points || 0
     };
   };
 

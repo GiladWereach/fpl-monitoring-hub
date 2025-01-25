@@ -44,9 +44,12 @@ export function PitchView({ teamSelection, players, liveData, eventId }: PitchVi
     // Apply captain multiplier
     const finalPoints = pick.is_captain ? totalPoints * 2 : totalPoints;
     
-    // Determine if player is in play
+    // Determine if player is in play - a player is in play if:
+    // 1. They have played minutes in the current gameweek
+    // 2. Their match has started but not finished
+    // 3. The match is not postponed
     const isInPlay = playerLiveData?.minutes > 0 && 
-                    !playerLiveData?.finished_provisional && 
+                    playerLiveData?.fixture_id && 
                     !playerLiveData?.postponed;
 
     console.log('PitchView player data:', {
@@ -59,7 +62,7 @@ export function PitchView({ teamSelection, players, liveData, eventId }: PitchVi
         minutes: playerLiveData.minutes,
         total_points: playerLiveData.total_points,
         points_calculation: playerLiveData.points_calculation,
-        finished_provisional: playerLiveData.finished_provisional,
+        fixture_id: playerLiveData.fixture_id,
         postponed: playerLiveData.postponed
       } : 'No live data'
     });
