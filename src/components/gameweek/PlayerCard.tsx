@@ -127,17 +127,12 @@ export function PlayerCard({
         className="w-[200px] bg-secondary/95 backdrop-blur-sm border-accent/20 animate-fade-in"
         side="right"
       >
-        {liveData?.points_calculation ? (
-          <PointsBreakdown 
-            pointsData={getPointsBreakdown()}
-            isCaptain={isCaptain}
-            isViceCaptain={isViceCaptain}
-          />
-        ) : (
-          <div className="text-sm text-foreground/70 text-center py-2">
-            No points data available
-          </div>
-        )}
+        <PointsBreakdown 
+          pointsData={getPointsBreakdown()}
+          isCaptain={isCaptain}
+          isViceCaptain={isViceCaptain}
+          liveData={liveData}
+        />
       </HoverCardContent>
     </HoverCard>
   );
