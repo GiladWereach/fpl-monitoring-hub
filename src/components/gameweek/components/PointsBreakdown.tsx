@@ -52,7 +52,7 @@ export function PointsBreakdown({
           {label}
           {count !== undefined && count > 0 && (
             <span className="text-muted-foreground ml-1">
-              ({count}x)
+              ({count})
             </span>
           )}
         </span>
@@ -78,17 +78,16 @@ export function PointsBreakdown({
       {renderPointLine('Saves', pointsData.saves, liveData?.saves)}
       {renderPointLine('Bonus', pointsData.bonus, liveData?.bonus)}
       
-      {isCaptain && (
-        <div className="flex justify-between text-[#eaff80]">
-          <span>Captain (×2)</span>
-          <span>×2</span>
-        </div>
-      )}
-      
       <div className="border-t pt-1 flex justify-between font-bold">
         <span>Total</span>
         <span>{pointsData.total}</span>
       </div>
+
+      {isCaptain && (
+        <div className="text-[#eaff80] text-center text-xs">
+          Captain bonus applied (×2)
+        </div>
+      )}
     </div>
   );
 }

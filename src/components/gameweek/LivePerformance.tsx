@@ -7,6 +7,18 @@ interface LivePerformanceProps {
 }
 
 export function LivePerformance({ totalPoints, benchPoints, liveData }: LivePerformanceProps) {
+  // Filter live data to only include pitch players (positions 1-11)
+  const pitchPlayersData = liveData?.filter(p => {
+    const position = p?.player?.picks?.find(pick => pick.element === p.player.id)?.position;
+    return position && position <= 11;
+  });
+
+  // Calculate stats only for pitch players
+  const pitchGoals = pitchPlayersData?.reduce((sum, p) => sum + (p.goals_scored || 0), 0) || 0;
+  const pitchAssists = pitchPlayersData?.reduce((sum, p) => sum + (p.assists || 0), 0) || 0;
+  const pitchBonus = pitchPlayersData?.reduce((sum, p) => sum + (p.bonus || 0), 0) || 0;
+  const playersPlaying = pitchPlayersData?.filter(p => p.minutes > 0).length || 0;
+
   return (
     <div className="space-y-4">
       <Card className="glass-card p-6">
@@ -22,21 +34,19 @@ export function LivePerformance({ totalPoints, benchPoints, liveData }: LivePerf
           </div>
           <div className="flex justify-between items-center">
             <span className="text-gray-400">Goals</span>
-            <span className="font-medium">
-              {liveData?.reduce((sum, p) => sum + (p.goals_scored || 0), 0) || 0}
-            </span>
+            <span className="font-medium">{pitchGoals}</span>
           </div>
           <div className="flex justify-between items-center">
             <span className="text-gray-400">Assists</span>
-            <span className="font-medium">
-              {liveData?.reduce((sum, p) => sum + (p.assists || 0), 0) || 0}
-            </span>
+            <span className="font-medium">{pitchAssists}</span>
           </div>
           <div className="flex justify-between items-center">
             <span className="text-gray-400">Bonus Points</span>
-            <span className="font-medium">
-              {liveData?.reduce((sum, p) => sum + (p.bonus || 0), 0) || 0}
-            </span>
+            <span className="font-medium">{pitchBonus}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-gray-400">Players Playing</span>
+            <span className="font-medium">{playersPlaying}</span>
           </div>
         </div>
       </Card>
