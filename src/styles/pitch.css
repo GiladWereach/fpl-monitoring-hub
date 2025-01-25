@@ -21,29 +21,29 @@
 
 .fpl-gk-row {
   @apply mt-4;
-  padding-top: 1.2em;
-  padding-bottom: 1.2em;
+  padding-top: 1.44em;
+  padding-bottom: 1.44em;
   animation: fade-in 0.3s ease-out;
 }
 
 .fpl-def-row {
   @apply my-auto;
-  padding-top: 1.2em;
-  padding-bottom: 1.2em;
+  padding-top: 1.44em;
+  padding-bottom: 1.44em;
   animation: fade-in 0.3s ease-out 0.1s backwards;
 }
 
 .fpl-mid-row {
   @apply my-auto;
-  padding-top: 1.2em;
-  padding-bottom: 1.2em;
+  padding-top: 1.44em;
+  padding-bottom: 1.44em;
   animation: fade-in 0.3s ease-out 0.2s backwards;
 }
 
 .fpl-fwd-row {
   @apply mb-4;
-  padding-top: 1.2em;
-  padding-bottom: 1.2em;
+  padding-top: 1.44em;
+  padding-bottom: 1.44em;
   animation: fade-in 0.3s ease-out 0.3s backwards;
 }
 
