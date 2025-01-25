@@ -76,30 +76,30 @@ export function PitchView({ teamSelection, players, liveData, eventId }: PitchVi
           <svg 
             xmlns="http://www.w3.org/2000/svg" 
             className="absolute inset-0 w-full h-full"
-            viewBox="0 0 68 68" 
-            preserveAspectRatio="xMidYMid slice"
+            viewBox="0 0 68 88" 
+            preserveAspectRatio="xMidYMid meet"
           >
-            <rect width="68" height="68" fill="#0D1117"/>
+            <rect width="68" height="88" fill="#0D1117"/>
             <g fill="none" stroke="rgba(61, 255, 154, 0.35)" strokeWidth="0.25">
-              {/* Main pitch border */}
-              <path d="M 0 0 h 68 v 68 h -68 Z"/>
+              {/* Main pitch boundary */}
+              <rect x="1" y="1" width="66" height="86" rx="1.5"/>
               
-              {/* Center line and circle */}
-              <path d="M 0 34 h 68"/>
-              <circle r="9.15" cx="34" cy="34"/>
-              <circle r="0.5" cx="34" cy="34" fill="rgba(61, 255, 154, 0.35)"/>
-              
+              {/* Center elements */}
+              <line x1="1" y1="44" x2="67" y2="44"/>
+              <circle cx="34" cy="44" r="8.2"/>
+              <circle cx="34" cy="44" r="0.5" fill="rgba(61, 255, 154, 0.35)"/>
+
               {/* Top penalty area */}
-              <path d="M 13.84 0 v 10.5 h 40.32 v -10.5"/>
-              <path d="M 24.84 0 v 3.5 h 18.32 v -3.5"/>
-              <circle r="0.5" cx="34" cy="7" fill="rgba(61, 255, 154, 0.35)"/>
-              <path d="M 26.733 10.5 a 9.15 9.15 0 0 0 14.534 0"/>
-              
+              <path d="M14 1v12h40V1"/>
+              <path d="M24 1v4h20V1"/>
+              <circle cx="34" cy="8" r="0.5" fill="rgba(61, 255, 154, 0.35)"/>
+              <path d="M26.5 13a8.2 8.2 0 0 0 15 0"/>
+
               {/* Bottom penalty area */}
-              <path d="M 13.84 68 v -10.5 h 40.32 v 10.5"/>
-              <path d="M 24.84 68 v -3.5 h 18.32 v 3.5"/>
-              <circle r="0.5" cx="34" cy="61" fill="rgba(61, 255, 154, 0.35)"/>
-              <path d="M 26.733 57.5 a 9.15 9.15 0 0 1 14.534 0"/>
+              <path d="M14 87v-9h40v9"/>
+              <path d="M24 87v-3h20v3"/>
+              <circle cx="34" cy="80" r="0.5" fill="rgba(61, 255, 154, 0.35)"/>
+              <path d="M26.5 78a8.2 8.2 0 0 1 15 0"/>
             </g>
           </svg>
 
