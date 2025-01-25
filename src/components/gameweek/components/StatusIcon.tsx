@@ -10,7 +10,7 @@ export const StatusIcon: React.FC<StatusIconProps> = ({ status }) => {
   const Icon = status.icon;
 
   return (
-    <div className="absolute bottom-1 left-1">
+    <div className="absolute left-1 top-1/2 -translate-y-1/2">
       <Icon 
         size={16}
         className={cn(

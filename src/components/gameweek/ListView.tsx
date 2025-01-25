@@ -84,7 +84,6 @@ export function ListView({ teamSelection, players, liveData }: ListViewProps) {
           <TableRow>
             <TableHead>Player</TableHead>
             <TableHead>Position</TableHead>
-            <TableHead>Status</TableHead>
             <TableHead className="text-right">Points</TableHead>
             <TableHead className="text-right">Minutes</TableHead>
             <TableHead className="text-right">G+A</TableHead>
@@ -100,19 +99,19 @@ export function ListView({ teamSelection, players, liveData }: ListViewProps) {
             
             return (
               <TableRow key={pick.element} className="h-10">
-                <TableCell className="py-2">
-                  {playerData.web_name}
-                  {pick.is_captain && <span className="ml-1 text-[#3DFF9A]">(C)</span>}
-                  {pick.is_vice_captain && <span className="ml-1 text-[#3DFF9A]">(V)</span>}
-                  {isSub && <span className="ml-1 text-gray-500">(Sub)</span>}
-                </TableCell>
-                <TableCell className="py-2">{getPositionName(playerData.element_type)}</TableCell>
-                <TableCell className="py-2">
+                <TableCell className="py-2 relative">
                   <PlayerStatus 
                     player={playerData} 
                     liveData={playerData.liveData}
                   />
+                  <span className="ml-6">
+                    {playerData.web_name}
+                    {pick.is_captain && <span className="ml-1 text-[#3DFF9A]">(C)</span>}
+                    {pick.is_vice_captain && <span className="ml-1 text-[#3DFF9A]">(V)</span>}
+                    {isSub && <span className="ml-1 text-gray-500">(Sub)</span>}
+                  </span>
                 </TableCell>
+                <TableCell className="py-2">{getPositionName(playerData.element_type)}</TableCell>
                 <TableCell className="text-right py-2">{playerData.points}</TableCell>
                 <TableCell className="text-right py-2">{playerData.liveData?.minutes || 0}</TableCell>
                 <TableCell className="text-right py-2">
