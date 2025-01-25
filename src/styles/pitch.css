@@ -2,14 +2,14 @@
   @apply relative w-full rounded-lg border border-accent/20 overflow-hidden;
   aspect-ratio: 68/65;
   max-width: 800px;
-  max-height: 80vh;
+  max-height: 70vh;
   margin: 0 auto;
-  min-height: min(600px, 80vh);
+  min-height: min(500px, 70vh);
   z-index: 0;
 }
 
 .fpl-pitch-grid {
-  @apply absolute inset-0 flex flex-col justify-evenly py-28 px-8;
+  @apply absolute inset-0 flex flex-col justify-evenly py-24 px-8;
   height: 100%;
   z-index: 1;
 }
@@ -21,26 +21,34 @@
 
 .fpl-gk-row {
   @apply mt-4;
+  padding-top: 1.2em;
+  padding-bottom: 1.2em;
   animation: fade-in 0.3s ease-out;
 }
 
 .fpl-def-row {
   @apply my-auto;
+  padding-top: 1.2em;
+  padding-bottom: 1.2em;
   animation: fade-in 0.3s ease-out 0.1s backwards;
 }
 
 .fpl-mid-row {
   @apply my-auto;
+  padding-top: 1.2em;
+  padding-bottom: 1.2em;
   animation: fade-in 0.3s ease-out 0.2s backwards;
 }
 
 .fpl-fwd-row {
   @apply mb-4;
+  padding-top: 1.2em;
+  padding-bottom: 1.2em;
   animation: fade-in 0.3s ease-out 0.3s backwards;
 }
 
 .fpl-bench-section {
-  @apply mt-8 p-6 bg-secondary/90 backdrop-blur-sm 
+  @apply mt-6 p-6 bg-secondary/90 backdrop-blur-sm 
          border border-accent/20 rounded-lg shadow-lg;
   animation: fade-in 0.3s ease-out 0.4s backwards;
 }
@@ -54,13 +62,13 @@
 /* Responsive adjustments */
 @media (max-width: 1024px) {
   .fpl-pitch-container {
-    min-height: min(500px, 70vh);
+    min-height: min(450px, 65vh);
     max-width: 600px;
-    max-height: 70vh;
+    max-height: 65vh;
   }
   
   .fpl-pitch-grid {
-    @apply py-20 px-6;
+    @apply py-16 px-6;
   }
 
   .fpl-row {
@@ -76,7 +84,7 @@
   }
   
   .fpl-pitch-grid {
-    @apply py-16 px-4;
+    @apply py-12 px-4;
   }
   
   .fpl-row {

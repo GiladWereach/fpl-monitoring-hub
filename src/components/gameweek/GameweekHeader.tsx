@@ -37,18 +37,15 @@ export function GameweekHeader({
   });
 
   return (
-    <div className="relative mb-8">
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+    <div className="relative mb-4">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div className="flex-1">
-          <h1 className="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#3DFF9A] to-[#50E3C2]">
+          <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#3DFF9A] to-[#50E3C2]">
             Gameweek {currentGameweek?.id} Live
           </h1>
-          <p className="text-gray-400 mt-2">
-            Track your team's performance in real-time with detailed statistics and live updates
-          </p>
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:w-2/3">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 lg:w-2/3">
           <StatusCard
             title="Total Points"
             value={totalPoints}
