@@ -1,10 +1,15 @@
 export interface PlayerPerformanceData {
   id: number;
-  assists: number;
-  bonus: number;
-  bps: number;
-  clean_sheets: number;
+  event_id: number;
+  player_id: number;
+  fixture_id: number | null;
+  modified: boolean;
+  in_dreamteam: boolean;
+  minutes: number;
+  total_points: number;
   goals_scored: number;
+  assists: number;
+  clean_sheets: number;
   goals_conceded: number;
   own_goals: number;
   penalties_saved: number;
@@ -12,22 +17,23 @@ export interface PlayerPerformanceData {
   yellow_cards: number;
   red_cards: number;
   saves: number;
-  minutes: number;
-  total_points: number;
-  fixture_id: number | null;
-  points_calculation: PointsCalculation | null;
-  event_id?: number;
-  creativity?: number;
-  expected_assists?: number;
-  expected_goal_involvements?: number;
-  expected_goals?: number;
+  bonus: number;
+  bps: number;
+  influence: number;
+  creativity: number;
+  threat: number;
+  ict_index: number;
+  starts: number;
+  expected_goals: number;
+  expected_assists: number;
+  expected_goal_involvements: number;
+  expected_goals_conceded: number;
+  points_calculation?: PointsCalculation;
   player: {
     id: number;
-    first_name: string;
-    second_name: string;
     web_name: string;
     element_type: number;
-    team: {
+    team?: {
       short_name: string;
     };
   };
@@ -47,6 +53,10 @@ export interface PointsCalculation {
   final_total_points: number;
 }
 
-export interface FixturePerformance extends PlayerPerformanceData {
-  fixture_id: number;
+export interface PlayerStatus {
+  isAvailable: boolean;
+  isDoubtful: boolean;
+  chanceOfPlaying: number | null;
+  status: string;
+  news?: string;
 }
