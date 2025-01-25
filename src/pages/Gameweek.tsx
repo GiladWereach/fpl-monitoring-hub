@@ -39,7 +39,7 @@ export default function Gameweek() {
       if (error) throw error;
       if (!data) throw new Error('No current gameweek found');
       
-      console.log('Current gameweek:', data);
+      console.log('Current gameweek data:', data);
       return data;
     }
   });
@@ -68,15 +68,7 @@ export default function Gameweek() {
       
       if (error) throw error;
       
-      // Log each player's availability data
-      data?.forEach(player => {
-        console.log(`Player ${player.web_name} availability:`, {
-          id: player.id,
-          chance_of_playing: player.chance_of_playing_this_round,
-          status: player.status
-        });
-      });
-      
+      console.log('Players data fetched:', data);
       return data;
     }
   });
@@ -87,47 +79,84 @@ export default function Gameweek() {
     queryFn: async () => {
       const playerIds = teamData.data.picks.map(p => p.element);
       console.log('Fetching points calculation data for players:', playerIds);
-      const { data, error } = await supabase
-        .from('player_points_calculation')
+      
+      // First get the live performance data
+      const { data: livePerformance, error: liveError } = await supabase
+        .from('gameweek_live_performance')
         .select(`
-          player_id,
-          minutes_points,
-          goals_scored_points,
-          assist_points,
-          clean_sheet_points,
-          bonus_points,
-          final_total_points
+          *,
+          player:players(
+            id,
+            web_name,
+            team:teams(
+              short_name
+            )
+          )
         `)
         .eq('event_id', currentGameweek.id)
         .in('player_id', playerIds);
+
+      if (liveError) throw liveError;
+      console.log('Live performance data:', livePerformance);
+
+      // Then get the points calculation data
+      const { data: pointsCalc, error: pointsError } = await supabase
+        .from('player_points_calculation')
+        .select('*')
+        .eq('event_id', currentGameweek.id)
+        .in('player_id', playerIds);
+
+      if (pointsError) throw pointsError;
+      console.log('Points calculation data:', pointsCalc);
       
-      if (error) throw error;
-      
-      // Map the data to match the expected format
-      const mappedData = data.map(d => ({
-        player_id: d.player_id,
-        minutes: d.minutes_points > 0 ? 60 : 0,
-        total_points: d.final_total_points || 0,
-        goals_scored: d.goals_scored_points > 0 ? 1 : 0,
-        assists: d.assist_points > 0 ? 1 : 0,
-        clean_sheets: d.clean_sheet_points > 0 ? 1 : 0,
-        bonus: d.bonus_points || 0,
-        // Add individual point contributions for the card
-        points_breakdown: {
-          minutes: d.minutes_points || 0,
-          goals: d.goals_scored_points || 0,
-          assists: d.assist_points || 0,
-          clean_sheets: d.clean_sheet_points || 0,
-          bonus: d.bonus_points || 0
-        }
-      }));
-      
-      console.log('Points calculation data:', mappedData);
-      return mappedData;
-    }
+      // Combine the data
+      const combinedData = livePerformance?.map(perf => {
+        const points = pointsCalc?.find(p => 
+          p.player_id === perf.player_id && 
+          p.event_id === currentGameweek.id &&
+          p.fixture_id === perf.fixture_id
+        );
+
+        console.log(`Combined data for player ${perf.player_id}:`, {
+          performance: perf,
+          pointsCalculation: points,
+          totalPoints: points?.final_total_points || 0
+        });
+
+        return {
+          ...perf,
+          points_calculation: points ? {
+            minutes_points: points.minutes_points || 0,
+            goals_scored_points: points.goals_scored_points || 0,
+            assist_points: points.assist_points || 0,
+            clean_sheet_points: points.clean_sheet_points || 0,
+            goals_conceded_points: points.goals_conceded_points || 0,
+            own_goal_points: points.own_goal_points || 0,
+            penalty_save_points: points.penalty_save_points || 0,
+            penalty_miss_points: points.penalty_miss_points || 0,
+            saves_points: points.saves_points || 0,
+            bonus_points: points.bonus_points || 0,
+            final_total_points: points.final_total_points || 0
+          } : null
+        };
+      });
+
+      return combinedData || [];
+    },
+    refetchInterval: 30000 // Refetch every 30 seconds
   });
 
   const isLoading = gameweekLoading || teamLoading || playersLoading || liveDataLoading;
+
+  console.log('Gameweek page render:', {
+    teamId,
+    hasTeamData: !!teamData?.data,
+    hasPlayers: !!players?.length,
+    hasLiveData: !!liveData?.length,
+    teamData: teamData?.data,
+    liveDataSample: liveData?.[0],
+    isLoading
+  });
 
   if (!teamId) {
     return null;
@@ -139,7 +168,7 @@ export default function Gameweek() {
         currentGameweek={currentGameweek}
         totalPoints={teamData?.data?.stats?.points || 0}
         playersPlaying={teamData?.data?.picks?.filter(p => 
-          liveData?.find(d => d.player_id === p.element)?.minutes > 0
+          liveData?.find(d => d.player?.id === p.element)?.minutes > 0
         )?.length || 0}
       />
 

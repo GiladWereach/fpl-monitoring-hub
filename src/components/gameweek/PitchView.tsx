@@ -36,35 +36,12 @@ export function PitchView({ teamSelection, players, liveData, eventId }: PitchVi
     // Find live data for the player
     const playerLiveData = liveData?.find(d => d?.player?.id === pick.element);
     
-    // Calculate total points including bonus if available
-    const totalPoints = playerLiveData?.points_calculation?.final_total_points || 
-                       playerLiveData?.total_points || 
-                       0;
-
-    // Apply captain multiplier
-    const finalPoints = pick.is_captain ? totalPoints * 2 : totalPoints;
-    
-    // Determine if player is in play - a player is in play if:
-    // 1. They have played minutes in the current gameweek
-    // 2. Their match has started but not finished
-    // 3. The match is not postponed
-    const isInPlay = playerLiveData?.minutes > 0 && 
-                    playerLiveData?.fixture_id && 
-                    !playerLiveData?.postponed;
-
-    console.log('PitchView player data:', {
-      position,
-      player_id: player.id,
-      web_name: player.web_name,
-      total_points: finalPoints,
-      is_in_play: isInPlay,
-      live_data: playerLiveData ? {
-        minutes: playerLiveData.minutes,
-        total_points: playerLiveData.total_points,
-        points_calculation: playerLiveData.points_calculation,
-        fixture_id: playerLiveData.fixture_id,
-        postponed: playerLiveData.postponed
-      } : 'No live data'
+    console.log(`Player data for position ${position}:`, {
+      player: player.web_name,
+      pick,
+      liveData: playerLiveData,
+      totalPoints: playerLiveData?.points_calculation?.final_total_points || 0,
+      inPlay: playerLiveData?.minutes > 0
     });
 
     return {
@@ -73,47 +50,24 @@ export function PitchView({ teamSelection, players, liveData, eventId }: PitchVi
       isViceCaptain: pick.is_vice_captain,
       liveData: playerLiveData,
       fixture_id: playerLiveData?.fixture_id,
-      totalPoints: finalPoints,
-      inPlay: isInPlay
+      totalPoints: playerLiveData?.points_calculation?.final_total_points || 0,
+      inPlay: playerLiveData?.minutes > 0
     };
   };
-
-  const getFormationPlayers = () => {
-    const formationString = typeof teamSelection?.formation === 'string' 
-      ? teamSelection.formation 
-      : teamSelection?.formation?.formation || '4-4-2';
-
-    console.log('Formation:', formationString);
-    
-    if (!/^\d-\d-\d$/.test(formationString)) {
-      console.warn('Invalid formation format:', formationString);
-      return {
-        defenders: [2, 3, 4, 5],
-        midfielders: [6, 7, 8, 9],
-        forwards: [10, 11]
-      };
-    }
-
-    const [def, mid, fwd] = formationString.split('-').map(Number);
-    
-    const defenders = Array.from({ length: def }, (_, i) => i + 2);
-    const midfielders = Array.from({ length: mid }, (_, i) => i + 2 + def);
-    const forwards = Array.from({ length: fwd }, (_, i) => i + 2 + def + mid);
-
-    console.log('Formation positions:', { defenders, midfielders, forwards });
-    
-    return { defenders, midfielders, forwards };
-  };
-
-  if (!eventId) {
-    console.warn('No eventId provided to PitchView');
-    return null;
-  }
 
   const { defenders, midfielders, forwards } = getFormationPlayers();
   const formationClass = `formation-${typeof teamSelection?.formation === 'string' 
     ? teamSelection.formation.replace(/-/g, '') 
     : teamSelection?.formation?.formation?.replace(/-/g, '') || '442'}`;
+
+  console.log('PitchView render:', {
+    formation: formationClass,
+    hasTeamSelection: !!teamSelection,
+    hasPlayers: !!players?.length,
+    hasLiveData: !!liveData?.length,
+    playerCount: players?.length,
+    liveDataCount: liveData?.length
+  });
 
   return (
     <div className="space-y-8">
@@ -189,4 +143,31 @@ export function PitchView({ teamSelection, players, liveData, eventId }: PitchVi
       <BenchSection getPlayerData={getPlayerData} eventId={eventId} />
     </div>
   );
+
+  function getFormationPlayers() {
+    const formationString = typeof teamSelection?.formation === 'string' 
+      ? teamSelection.formation 
+      : teamSelection?.formation?.formation || '4-4-2';
+
+    console.log('Formation:', formationString);
+    
+    if (!/^\d-\d-\d$/.test(formationString)) {
+      console.warn('Invalid formation format:', formationString);
+      return {
+        defenders: [2, 3, 4, 5],
+        midfielders: [6, 7, 8, 9],
+        forwards: [10, 11]
+      };
+    }
+
+    const [def, mid, fwd] = formationString.split('-').map(Number);
+    
+    const defenders = Array.from({ length: def }, (_, i) => i + 2);
+    const midfielders = Array.from({ length: mid }, (_, i) => i + 2 + def);
+    const forwards = Array.from({ length: fwd }, (_, i) => i + 2 + def + mid);
+
+    console.log('Formation positions:', { defenders, midfielders, forwards });
+    
+    return { defenders, midfielders, forwards };
+  }
 }
