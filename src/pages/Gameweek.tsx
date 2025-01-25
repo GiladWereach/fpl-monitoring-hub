@@ -47,7 +47,7 @@ export default function Gameweek() {
   // Get team data using our hook
   const { teamData, teamLoading, existingTeam } = useTeamData(teamId);
 
-  // Query for players data - Now including chance_of_playing_this_round and status
+  // Query for players data
   const { data: players, isLoading: playersLoading } = useQuery({
     queryKey: ['players', teamData?.data?.picks],
     enabled: !!teamData?.data?.picks,
@@ -148,6 +148,28 @@ export default function Gameweek() {
 
   const isLoading = gameweekLoading || teamLoading || playersLoading || liveDataLoading;
 
+  // Calculate points only from pitch players
+  const getPlayerData = (pick: any) => {
+    const playerLiveData = liveData?.find(p => p.player_id === pick.element);
+    return {
+      points: playerLiveData?.points_calculation?.final_total_points || 0,
+      isCaptain: pick.is_captain
+    };
+  };
+
+  const pitchPlayersData = liveData?.filter(p => {
+    const pick = teamData?.data?.picks?.find(pick => pick.element === p.player_id);
+    return pick && pick.position <= 11;
+  });
+
+  const totalPoints = teamData?.data?.picks?.filter(p => p.position <= 11)
+    .reduce((sum, pick) => {
+      const playerData = getPlayerData(pick);
+      return sum + (pick.is_captain ? playerData.points * 2 : playerData.points);
+    }, 0) || 0;
+
+  const playersPlaying = pitchPlayersData?.filter(p => p.minutes > 0).length || 0;
+
   console.log('Gameweek page render:', {
     teamId,
     hasTeamData: !!teamData?.data,
@@ -155,7 +177,9 @@ export default function Gameweek() {
     hasLiveData: !!liveData?.length,
     teamData: teamData?.data,
     liveDataSample: liveData?.[0],
-    isLoading
+    isLoading,
+    totalPoints,
+    playersPlaying
   });
 
   if (!teamId) {
@@ -166,10 +190,10 @@ export default function Gameweek() {
     <div className="space-y-6 animate-fade-in">
       <GameweekHeader 
         currentGameweek={currentGameweek}
-        totalPoints={teamData?.data?.stats?.points || 0}
-        playersPlaying={teamData?.data?.picks?.filter(p => 
-          liveData?.find(d => d.player?.id === p.element)?.minutes > 0
-        )?.length || 0}
+        totalPoints={totalPoints}
+        playersPlaying={playersPlaying}
+        liveData={liveData}
+        teamPicks={teamData?.data?.picks}
       />
 
       <TeamView 
