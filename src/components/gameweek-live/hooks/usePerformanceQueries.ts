@@ -31,8 +31,6 @@ export const usePerformanceQueries = (gameweek: number, matchId?: number | null)
           *,
           player:players(
             id,
-            first_name,
-            second_name,
             web_name,
             element_type,
             team:teams(
@@ -58,7 +56,7 @@ export const usePerformanceQueries = (gameweek: number, matchId?: number | null)
         throw perfError;
       }
 
-      // Combine the data - Using both fixture_id and event_id for accurate matching
+      // Combine the data
       const combinedData = performanceData?.map(perf => {
         const pointsCalc = pointsData?.find(p => 
           p.player_id === perf.player_id && 
@@ -66,12 +64,10 @@ export const usePerformanceQueries = (gameweek: number, matchId?: number | null)
           p.fixture_id === perf.fixture_id
         );
 
-        console.log(`Points data for player ${perf.player_id} in fixture ${perf.fixture_id}:`, {
+        console.log(`Points data for player ${perf.player_id}:`, {
           performance: perf,
           pointsCalculation: pointsCalc,
-          combinedPoints: pointsCalc?.final_total_points || 0,
-          fixture: perf.fixture_id,
-          event: gameweek
+          totalPoints: pointsCalc?.final_total_points || 0
         });
 
         return {
@@ -88,8 +84,8 @@ export const usePerformanceQueries = (gameweek: number, matchId?: number | null)
             saves_points: pointsCalc.saves_points,
             bonus_points: pointsCalc.bonus_points,
             final_total_points: pointsCalc.final_total_points
-          } : null
-        };
+          } : undefined
+        } as PlayerPerformanceData;
       });
 
       // Sort by total points
