@@ -76,30 +76,30 @@ export function PitchView({ teamSelection, players, liveData, eventId }: PitchVi
           <svg 
             xmlns="http://www.w3.org/2000/svg" 
             className="absolute inset-0 w-full h-full"
-            viewBox="0 0 68 88" 
+            viewBox="0 0 68 80" 
             preserveAspectRatio="xMidYMid meet"
           >
-            <rect width="68" height="88" fill="#0D1117"/>
+            <rect width="68" height="80" fill="#0D1117"/>
             <g fill="none" stroke="rgba(61, 255, 154, 0.35)" strokeWidth="0.25">
               {/* Main pitch boundary */}
-              <rect x="1" y="1" width="66" height="86" rx="1.5"/>
+              <rect x="1" y="1" width="66" height="78" rx="1.5"/>
               
               {/* Center elements */}
-              <line x1="1" y1="44" x2="67" y2="44"/>
-              <circle cx="34" cy="44" r="8.2"/>
-              <circle cx="34" cy="44" r="0.5" fill="rgba(61, 255, 154, 0.35)"/>
+              <line x1="1" y1="40" x2="67" y2="40"/>
+              <circle cx="34" cy="40" r="8.2"/>
+              <circle cx="34" cy="40" r="0.5" fill="rgba(61, 255, 154, 0.35)"/>
 
               {/* Top penalty area */}
-              <path d="M14 1v12h40V1"/>
-              <path d="M24 1v4h20V1"/>
-              <circle cx="34" cy="8" r="0.5" fill="rgba(61, 255, 154, 0.35)"/>
-              <path d="M26.5 13a8.2 8.2 0 0 0 15 0"/>
+              <path d="M14 1v10h40V1"/>
+              <path d="M24 1v3h20V1"/>
+              <circle cx="34" cy="6" r="0.5" fill="rgba(61, 255, 154, 0.35)"/>
+              <path d="M26.5 11a8.2 8.2 0 0 0 15 0"/>
 
               {/* Bottom penalty area */}
-              <path d="M14 87v-9h40v9"/>
-              <path d="M24 87v-3h20v3"/>
-              <circle cx="34" cy="80" r="0.5" fill="rgba(61, 255, 154, 0.35)"/>
-              <path d="M26.5 78a8.2 8.2 0 0 1 15 0"/>
+              <path d="M14 79v-8h40v8"/>
+              <path d="M24 79v-2h20v2"/>
+              <circle cx="34" cy="73" r="0.5" fill="rgba(61, 255, 154, 0.35)"/>
+              <path d="M26.5 71a8.2 8.2 0 0 1 15 0"/>
             </g>
           </svg>
 
