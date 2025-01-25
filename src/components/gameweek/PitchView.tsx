@@ -83,10 +83,8 @@ export function PitchView({ teamSelection, players, liveData, eventId }: PitchVi
             {/* Main pitch border */}
             <path d="M 0 0 h 68 v 105 h -68 Z"/>
             
-            {/* Center line */}
+            {/* Center line and circle */}
             <path d="M 0 52.5 h 68"/>
-            
-            {/* Center circle */}
             <circle r="9.15" cx="34" cy="52.5"/>
             <circle r="0.5" cx="34" cy="52.5" fill="rgba(61, 255, 154, 0.35)"/>
             
@@ -96,7 +94,7 @@ export function PitchView({ teamSelection, players, liveData, eventId }: PitchVi
             <circle r="0.5" cx="34" cy="10.94" fill="rgba(61, 255, 154, 0.35)"/>
             <path d="M 26.733027 16.5 a 9.15 9.15 0 0 0 14.533946 0"/>
             
-            {/* Bottom penalty area (mirrored) */}
+            {/* Bottom penalty area */}
             <path d="M 13.84 105 v -16.5 h 40.32 v 16.5"/>
             <path d="M 24.84 105 v -5.5 h 18.32 v 5.5"/>
             <circle r="0.5" cx="34" cy="94.06" fill="rgba(61, 255, 154, 0.35)"/>

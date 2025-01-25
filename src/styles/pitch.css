@@ -1,20 +1,20 @@
 .fpl-pitch-container {
   @apply relative w-full rounded-lg border border-accent/20 overflow-hidden;
   aspect-ratio: 68/105;
-  max-width: 500px;
+  max-width: 800px;
   margin: 0 auto;
-  min-height: 500px;
+  min-height: 600px;
   z-index: 0;
 }
 
 .fpl-pitch-grid {
-  @apply absolute inset-0 flex flex-col justify-between py-20 px-12;
+  @apply absolute inset-0 flex flex-col justify-between py-12 px-8;
   height: 100%;
   z-index: 1;
 }
 
 .fpl-position-labels {
-  @apply absolute inset-y-0 left-4 flex flex-col justify-between py-20;
+  @apply absolute inset-y-0 left-4 flex flex-col justify-between py-12;
   z-index: 2;
 }
 
@@ -25,7 +25,7 @@
 }
 
 .fpl-row {
-  @apply flex items-center justify-center gap-8 transition-all duration-300;
+  @apply flex items-center justify-center gap-4 transition-all duration-300;
 }
 
 .fpl-gk-row {
@@ -34,12 +34,12 @@
 }
 
 .fpl-def-row {
-  @apply mt-auto mb-16;
+  @apply mt-auto mb-auto;
   animation: fade-in 0.3s ease-out 0.1s backwards;
 }
 
 .fpl-mid-row {
-  @apply mb-16;
+  @apply mb-auto;
   animation: fade-in 0.3s ease-out 0.2s backwards;
 }
 
@@ -60,6 +60,48 @@
 .formation-352 .fpl-def-row { gap: 4rem; }
 .formation-343 .fpl-def-row { gap: 5rem; }
 
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .fpl-pitch-container {
+    min-height: 500px;
+    max-width: 600px;
+  }
+  
+  .fpl-pitch-grid {
+    @apply py-8 px-6;
+  }
+  
+  .fpl-position-labels {
+    @apply py-8;
+  }
+}
+
+@media (max-width: 768px) {
+  .fpl-pitch-container {
+    min-height: 400px;
+    max-width: 100%;
+  }
+  
+  .fpl-pitch-grid {
+    @apply py-6 px-4;
+  }
+  
+  .fpl-position-labels {
+    @apply py-6 left-2;
+  }
+  
+  .fpl-row {
+    @apply gap-2;
+  }
+  
+  .formation-433 .fpl-def-row,
+  .formation-442 .fpl-def-row,
+  .formation-352 .fpl-def-row,
+  .formation-343 .fpl-def-row {
+    gap: 2rem;
+  }
+}
+
 @keyframes fade-in {
   from {
     opacity: 0;
@@ -68,31 +110,5 @@
   to {
     opacity: 1;
     transform: translateY(0);
-  }
-}
-
-@media (max-width: 768px) {
-  .fpl-pitch-container {
-    min-height: 400px;
-  }
-  
-  .fpl-pitch-grid {
-    @apply py-16 px-4;
-  }
-  
-  .fpl-position-labels {
-    @apply py-16;
-  }
-  
-  .fpl-def-row {
-    @apply mb-12;
-  }
-  
-  .fpl-mid-row {
-    @apply mb-12;
-  }
-  
-  .fpl-fwd-row {
-    @apply mb-8;
   }
 }
