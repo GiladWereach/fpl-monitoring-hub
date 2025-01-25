@@ -2,7 +2,6 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
 import { calculateMinutesPoints, calculateGoalPoints, calculateGoalsConcededPoints, calculateCardPoints } from './calculators.ts';
 import { logDebug, logError } from './logging.ts';
-import type { LivePerformance, Player, ScoringRules, PointsCalculation } from './types.ts';
 import { calculateBonusPoints } from './calculators/bonusCalculator.ts';
 
 Deno.serve(async (req) => {
@@ -11,14 +10,14 @@ Deno.serve(async (req) => {
   }
 
   try {
-    logDebug('Starting points calculation');
+    logDebug('calculate-points', 'Starting points calculation');
     
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // First get the scoring rules
+    // First get the scoring rules with detailed error logging
     const { data: rules, error: rulesError } = await supabaseClient
       .from('scoring_rules')
       .select('*')
@@ -26,54 +25,76 @@ Deno.serve(async (req) => {
       .single();
 
     if (rulesError) {
+      logError('calculate-points', 'Failed to fetch scoring rules:', rulesError);
       throw new Error(`Failed to fetch scoring rules: ${rulesError.message}`);
     }
 
     if (!rules) {
+      logError('calculate-points', 'No scoring rules found in database');
       throw new Error('No scoring rules found');
     }
 
-    logDebug('Fetched scoring rules');
+    logDebug('calculate-points', 'Fetched scoring rules:', rules);
 
-    // Get performances that need points calculated
+    // Get performances that need points calculated with detailed logging
     const { data: performances, error: perfError } = await supabaseClient
       .from('gameweek_live_performance')
       .select(`
         *,
-        player:players (
+        player:players!inner(
+          id,
           element_type
         )
       `)
       .eq('modified', true);
 
     if (perfError) {
+      logError('calculate-points', 'Failed to fetch performances:', perfError);
       throw new Error(`Failed to fetch performances: ${perfError.message}`);
     }
 
     if (!performances?.length) {
-      logDebug('No performances to process');
+      logDebug('calculate-points', 'No performances to process');
       return new Response(
         JSON.stringify({ message: 'No performances to process' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    logDebug(`Processing ${performances.length} performances`);
+    logDebug('calculate-points', `Processing ${performances.length} performances`);
 
-    // Group performances by fixture for BPS calculations
+    // Group performances by fixture for BPS calculations with validation
     const fixturePerformances = performances.reduce((acc, perf) => {
-      if (!perf.fixture_id) return acc;
+      if (!perf.fixture_id) {
+        logDebug('calculate-points', `No fixture_id for performance ${perf.id}`);
+        return acc;
+      }
+      
       if (!acc[perf.fixture_id]) {
         acc[perf.fixture_id] = [];
       }
       acc[perf.fixture_id].push(perf);
       return acc;
-    }, {} as Record<number, LivePerformance[]>);
+    }, {} as Record<number, typeof performances>);
 
-    const pointsCalculations: PointsCalculation[] = [];
+    const pointsCalculations = [];
 
     for (const perf of performances) {
-      logDebug(`Calculating points for player ${perf.player_id}`);
+      if (!perf.player?.element_type) {
+        logError('calculate-points', `Missing player data for performance:`, { 
+          performance_id: perf.id,
+          player_id: perf.player_id
+        });
+        continue;
+      }
+
+      logDebug('calculate-points', `Calculating points for player ${perf.player_id}`, {
+        player_type: perf.player.element_type,
+        fixture_id: perf.fixture_id,
+        minutes: perf.minutes,
+        goals: perf.goals_scored,
+        assists: perf.assists
+      });
 
       // Ensure all values are defined with fallbacks to 0
       const minutes = perf.minutes || 0;
@@ -87,29 +108,21 @@ Deno.serve(async (req) => {
       const yellowCards = perf.yellow_cards || 0;
       const redCards = perf.red_cards || 0;
       const saves = perf.saves || 0;
-      const elementType = perf.player?.element_type || 0;
+      const elementType = perf.player.element_type;
 
-      // Calculate minutes points
+      // Calculate points with logging
       const minutesPoints = calculateMinutesPoints(minutes, rules);
-      
-      // Calculate goals points
       const goalsPoints = calculateGoalPoints(goalsScored, elementType, rules);
-      
-      // Calculate clean sheet and goals conceded points
       const cleanSheetPoints = cleanSheets ? calculateGoalsConcededPoints(0, elementType, rules) : 0;
       const goalsConcededPoints = calculateGoalsConcededPoints(goalsConceded, elementType, rules);
-      
-      // Calculate other points
       const assistPoints = assists * rules.assists;
       const penaltySavePoints = penaltiesSaved * rules.penalties_saved;
       const penaltyMissPoints = penaltiesMissed * rules.penalties_missed;
       const ownGoalPoints = ownGoals * rules.own_goals;
       const cardPoints = calculateCardPoints(yellowCards, redCards, rules);
-      
-      // Calculate save points (3 saves = 1 point)
       const savePoints = Math.floor(saves / 3);
 
-      // Calculate bonus points based on BPS
+      // Calculate bonus points based on BPS with validation
       let bonusPoints = 0;
       if (perf.fixture_id && fixturePerformances[perf.fixture_id]) {
         const fixtureBPS = fixturePerformances[perf.fixture_id].map(p => ({
@@ -123,13 +136,13 @@ Deno.serve(async (req) => {
           player_id: perf.player_id,
           bps: perf.bps || 0,
           fixture_id: perf.fixture_id,
-          minutes: perf.minutes || 0
+          minutes: minutes
         }];
 
         bonusPoints = calculateBonusPoints(playerBPS, fixtureBPS);
       }
 
-      // Sum up all points EXCEPT bonus points first
+      // Sum up all points
       const rawTotalPoints = 
         minutesPoints +
         goalsPoints +
@@ -142,10 +155,9 @@ Deno.serve(async (req) => {
         cardPoints +
         savePoints;
 
-      // Add bonus points for final total
       const finalTotalPoints = rawTotalPoints + bonusPoints;
 
-      logDebug(`Points breakdown for player ${perf.player_id}:`, {
+      logDebug('calculate-points', `Points breakdown for player ${perf.player_id}:`, {
         minutesPoints,
         goalsPoints,
         cleanSheetPoints,
@@ -197,7 +209,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Batch insert all calculations
+    // Batch insert all calculations with error handling
     const { error: insertError } = await supabaseClient
       .from('player_points_calculation')
       .upsert(pointsCalculations, {
@@ -205,6 +217,7 @@ Deno.serve(async (req) => {
       });
 
     if (insertError) {
+      logError('calculate-points', 'Failed to insert calculations:', insertError);
       throw new Error(`Failed to insert calculations: ${insertError.message}`);
     }
 
@@ -215,10 +228,11 @@ Deno.serve(async (req) => {
       .in('id', performances.map(p => p.id));
 
     if (updateError) {
+      logError('calculate-points', 'Failed to update performances:', updateError);
       throw new Error(`Failed to update performances: ${updateError.message}`);
     }
 
-    logDebug('Points calculation completed successfully');
+    logDebug('calculate-points', 'Points calculation completed successfully');
 
     return new Response(
       JSON.stringify({ 
@@ -235,7 +249,7 @@ Deno.serve(async (req) => {
     );
 
   } catch (error) {
-    logError('Error in points calculation:', error);
+    logError('calculate-points', 'Error in points calculation:', error);
     return new Response(
       JSON.stringify({ 
         error: error.message 
