@@ -2,20 +2,20 @@
   @apply relative w-full rounded-lg border border-accent/20 overflow-hidden;
   aspect-ratio: 68/105;
   max-width: 800px;
-  max-height: 85vh;
+  max-height: 90vh;
   margin: 0 auto;
-  min-height: min(700px, 85vh);
+  min-height: min(800px, 90vh);
   z-index: 0;
 }
 
 .fpl-pitch-grid {
-  @apply absolute inset-0 flex flex-col justify-evenly py-24 px-8;
+  @apply absolute inset-0 flex flex-col justify-evenly py-28 px-8;
   height: 100%;
   z-index: 1;
 }
 
 .fpl-position-labels {
-  @apply absolute inset-y-0 left-4 flex flex-col justify-evenly py-24;
+  @apply absolute inset-y-0 left-4 flex flex-col justify-evenly py-28;
   z-index: 2;
 }
 
@@ -27,11 +27,11 @@
 
 .fpl-row {
   @apply flex items-center justify-center gap-4 transition-all duration-300;
-  min-height: 100px;
+  min-height: 120px;
 }
 
 .fpl-gk-row {
-  @apply mt-0;
+  @apply mt-4;
   animation: fade-in 0.3s ease-out;
 }
 
@@ -46,7 +46,7 @@
 }
 
 .fpl-fwd-row {
-  @apply mb-auto;
+  @apply mb-4;
   animation: fade-in 0.3s ease-out 0.3s backwards;
 }
 
@@ -65,42 +65,42 @@
 /* Responsive adjustments */
 @media (max-width: 1024px) {
   .fpl-pitch-container {
-    min-height: min(600px, 75vh);
+    min-height: min(700px, 80vh);
     max-width: 600px;
-    max-height: 75vh;
+    max-height: 80vh;
   }
   
   .fpl-pitch-grid {
-    @apply py-16 px-6;
+    @apply py-20 px-6;
   }
   
   .fpl-position-labels {
-    @apply py-16;
+    @apply py-20;
   }
 
   .fpl-row {
-    min-height: 80px;
+    min-height: 100px;
   }
 }
 
 @media (max-width: 768px) {
   .fpl-pitch-container {
-    min-height: min(500px, 65vh);
+    min-height: min(600px, 70vh);
     max-width: 100%;
-    max-height: 65vh;
+    max-height: 70vh;
   }
   
   .fpl-pitch-grid {
-    @apply py-12 px-4;
+    @apply py-16 px-4;
   }
   
   .fpl-position-labels {
-    @apply py-12 left-2;
+    @apply py-16 left-2;
   }
   
   .fpl-row {
     @apply gap-2;
-    min-height: 60px;
+    min-height: 80px;
   }
   
   .formation-433 .fpl-def-row,
