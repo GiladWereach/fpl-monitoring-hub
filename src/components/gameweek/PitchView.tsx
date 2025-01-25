@@ -71,41 +71,35 @@ export function PitchView({ teamSelection, players, liveData, eventId }: PitchVi
 
   return (
     <div className="space-y-8">
-      <div className="min-h-[1000px] lg:min-h-[1200px] xl:min-h-[1400px] relative w-full">
+      <div className="min-h-[800px] lg:min-h-[900px] xl:min-h-[1000px] relative w-full">
         <div className={`fpl-pitch-container ${formationClass}`}>
           <svg 
             xmlns="http://www.w3.org/2000/svg" 
             className="absolute inset-0 w-full h-full"
-            viewBox="0 0 68 105" 
+            viewBox="0 0 68 68" 
             preserveAspectRatio="xMidYMid slice"
           >
-            <rect width="68" height="105" fill="#0D1117"/>
+            <rect width="68" height="68" fill="#0D1117"/>
             <g fill="none" stroke="rgba(61, 255, 154, 0.35)" strokeWidth="0.25">
               {/* Main pitch border */}
-              <path d="M 0 0 h 68 v 105 h -68 Z"/>
+              <path d="M 0 0 h 68 v 68 h -68 Z"/>
               
               {/* Center line and circle */}
-              <path d="M 0 52.5 h 68"/>
-              <circle r="9.15" cx="34" cy="52.5"/>
-              <circle r="0.5" cx="34" cy="52.5" fill="rgba(61, 255, 154, 0.35)"/>
+              <path d="M 0 34 h 68"/>
+              <circle r="9.15" cx="34" cy="34"/>
+              <circle r="0.5" cx="34" cy="34" fill="rgba(61, 255, 154, 0.35)"/>
               
               {/* Top penalty area */}
-              <path d="M 13.84 0 v 16.5 h 40.32 v -16.5"/>
-              <path d="M 24.84 0 v 5.5 h 18.32 v -5.5"/>
-              <circle r="0.5" cx="34" cy="10.94" fill="rgba(61, 255, 154, 0.35)"/>
-              <path d="M 26.733027 16.5 a 9.15 9.15 0 0 0 14.533946 0"/>
+              <path d="M 13.84 0 v 10.5 h 40.32 v -10.5"/>
+              <path d="M 24.84 0 v 3.5 h 18.32 v -3.5"/>
+              <circle r="0.5" cx="34" cy="7" fill="rgba(61, 255, 154, 0.35)"/>
+              <path d="M 26.733 10.5 a 9.15 9.15 0 0 0 14.534 0"/>
               
               {/* Bottom penalty area */}
-              <path d="M 13.84 105 v -16.5 h 40.32 v 16.5"/>
-              <path d="M 24.84 105 v -5.5 h 18.32 v 5.5"/>
-              <circle r="0.5" cx="34" cy="94.06" fill="rgba(61, 255, 154, 0.35)"/>
-              <path d="M 26.733027 88.5 a 9.15 9.15 0 0 1 14.533946 0"/>
-              
-              {/* Corner arcs */}
-              <path d="M 0 2 a 2 2 0 0 0 2 -2"/>
-              <path d="M 66 0 a 2 2 0 0 0 2 2"/>
-              <path d="M 68 103 a 2 2 0 0 0 -2 2"/>
-              <path d="M 2 105 a 2 2 0 0 0 -2 -2"/>
+              <path d="M 13.84 68 v -10.5 h 40.32 v 10.5"/>
+              <path d="M 24.84 68 v -3.5 h 18.32 v 3.5"/>
+              <circle r="0.5" cx="34" cy="61" fill="rgba(61, 255, 154, 0.35)"/>
+              <path d="M 26.733 57.5 a 9.15 9.15 0 0 1 14.534 0"/>
             </g>
           </svg>
 
