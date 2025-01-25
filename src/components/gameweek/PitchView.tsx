@@ -76,30 +76,30 @@ export function PitchView({ teamSelection, players, liveData, eventId }: PitchVi
           <svg 
             xmlns="http://www.w3.org/2000/svg" 
             className="absolute inset-0 w-full h-full"
-            viewBox="0 0 68 65" 
+            viewBox="0 0 68 55" 
             preserveAspectRatio="xMidYMid meet"
           >
-            <rect width="68" height="65" fill="#0D1117"/>
+            <rect width="68" height="55" fill="#0D1117"/>
             <g fill="none" stroke="rgba(61, 255, 154, 0.35)" strokeWidth="0.25">
               {/* Main pitch boundary */}
-              <rect x="1" y="1" width="66" height="63" rx="1.5"/>
+              <rect x="1" y="1" width="66" height="53" rx="1.5"/>
               
               {/* Center elements */}
-              <line x1="1" y1="32" x2="67" y2="32"/>
-              <circle cx="34" cy="32" r="5.5"/>
-              <circle cx="34" cy="32" r="0.5" fill="rgba(61, 255, 154, 0.35)"/>
+              <line x1="1" y1="27" x2="67" y2="27"/>
+              <circle cx="34" cy="27" r="5"/>
+              <circle cx="34" cy="27" r="0.5" fill="rgba(61, 255, 154, 0.35)"/>
 
               {/* Top penalty area */}
-              <path d="M14 1v8h40V1"/>
+              <path d="M14 1v6h40V1"/>
               <path d="M24 1v2h20V1"/>
-              <circle cx="34" cy="5" r="0.5" fill="rgba(61, 255, 154, 0.35)"/>
-              <path d="M27 9a5.5 5.5 0 0 0 14 0"/>
+              <circle cx="34" cy="4" r="0.5" fill="rgba(61, 255, 154, 0.35)"/>
+              <path d="M27.5 7a5 5 0 0 0 13 0"/>
 
               {/* Bottom penalty area */}
-              <path d="M14 64v-8h40v8"/>
-              <path d="M24 64v-2h20v2"/>
-              <circle cx="34" cy="60" r="0.5" fill="rgba(61, 255, 154, 0.35)"/>
-              <path d="M27 56a5.5 5.5 0 0 1 14 0"/>
+              <path d="M14 54v-6h40v6"/>
+              <path d="M24 54v-2h20v2"/>
+              <circle cx="34" cy="50" r="0.5" fill="rgba(61, 255, 154, 0.35)"/>
+              <path d="M27.5 48a5 5 0 0 1 13 0"/>
             </g>
           </svg>
           
