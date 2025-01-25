@@ -2,8 +2,9 @@
   @apply relative w-full rounded-lg border border-accent/20 overflow-hidden;
   aspect-ratio: 68/105;
   max-width: 800px;
+  max-height: 80vh;
   margin: 0 auto;
-  min-height: 600px;
+  min-height: min(600px, 80vh);
   z-index: 0;
 }
 
@@ -63,8 +64,9 @@
 /* Responsive adjustments */
 @media (max-width: 1024px) {
   .fpl-pitch-container {
-    min-height: 500px;
+    min-height: min(500px, 70vh);
     max-width: 600px;
+    max-height: 70vh;
   }
   
   .fpl-pitch-grid {
@@ -78,8 +80,9 @@
 
 @media (max-width: 768px) {
   .fpl-pitch-container {
-    min-height: 400px;
+    min-height: min(400px, 60vh);
     max-width: 100%;
+    max-height: 60vh;
   }
   
   .fpl-pitch-grid {
