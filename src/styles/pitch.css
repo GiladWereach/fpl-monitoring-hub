@@ -1,6 +1,6 @@
 .fpl-pitch-container {
   @apply relative w-full rounded-lg border border-accent/20 overflow-hidden;
-  aspect-ratio: 68/80;
+  aspect-ratio: 68/65;
   max-width: 800px;
   max-height: 90vh;
   margin: 0 auto;
