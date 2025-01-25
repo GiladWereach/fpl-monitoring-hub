@@ -58,13 +58,16 @@ export function PlayerCard({
       ownGoals: calc.own_goal_points || 0,
       penaltiesSaved: calc.penalty_save_points || 0,
       penaltiesMissed: calc.penalty_miss_points || 0,
-      yellowCards: 0, // Yellow cards points are not in PointsCalculation type
-      redCards: 0, // Red cards points are not in PointsCalculation type
+      yellowCards: 0, // Not in points calculation
+      redCards: 0, // Not in points calculation
       saves: calc.saves_points || 0,
       bonus: calc.bonus_points || 0,
       total: calc.final_total_points || 0
     };
   };
+
+  // Calculate final points including captain multiplier
+  const finalPoints = isCaptain ? totalPoints * 2 : totalPoints;
 
   if (!player) {
     return (
@@ -89,7 +92,7 @@ export function PlayerCard({
           )}
           role="button"
           tabIndex={0}
-          aria-label={`${player?.web_name} - ${totalPoints} points`}
+          aria-label={`${player?.web_name} - ${finalPoints} points`}
         >
           {(isCaptain || isViceCaptain) && (
             <div className="absolute top-2 right-2">
@@ -109,7 +112,7 @@ export function PlayerCard({
           </p>
           
           <div className="text-xl font-bold text-[#3DFF9A] text-center">
-            {totalPoints}
+            {finalPoints}
           </div>
 
           <PlayerStatus 
