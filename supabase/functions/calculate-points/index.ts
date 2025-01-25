@@ -63,33 +63,30 @@ Deno.serve(async (req) => {
     const pointsCalculations: PointsCalculation[] = [];
 
     for (const perf of performances) {
-      // Calculate bonus points if available
-      const bonusPoints = perf.bps ? Math.max(
-        0,
-        ...performances
-          .filter(p => p.fixture_id === perf.fixture_id)
-          .map(p => ({
-            player_id: p.player_id,
-            bps: p.bps,
-            fixture_id: p.fixture_id,
-            minutes: p.minutes
-          }))
-      ) : 0;
+      logDebug(`Calculating points for player ${perf.player_id}`);
 
       // Calculate minutes points
       const minutesPoints = calculateMinutesPoints(perf.minutes, rules);
       
+      // Calculate goals points
       const goalsPoints = calculateGoalPoints(perf.goals_scored, perf.player.element_type, rules);
+      
+      // Calculate clean sheet and goals conceded points
       const cleanSheetPoints = perf.clean_sheets ? calculateGoalsConcededPoints(0, perf.player.element_type, rules) : 0;
       const goalsConcededPoints = calculateGoalsConcededPoints(perf.goals_conceded, perf.player.element_type, rules);
+      
+      // Calculate other points
       const assistPoints = perf.assists * rules.assists;
       const penaltySavePoints = perf.penalties_saved * rules.penalties_saved;
       const penaltyMissPoints = perf.penalties_missed * rules.penalties_missed;
       const ownGoalPoints = perf.own_goals * rules.own_goals;
       const cardPoints = calculateCardPoints(perf.yellow_cards, perf.red_cards, rules);
-
+      
       // Calculate save points (3 saves = 1 point)
       const savePoints = Math.floor(perf.saves / 3);
+
+      // Calculate bonus points - ensure it's not null
+      const bonusPoints = perf.bonus || 0;
 
       // Sum up all points
       const rawTotalPoints = 
@@ -107,7 +104,21 @@ Deno.serve(async (req) => {
       // Add bonus points for final total
       const finalTotalPoints = rawTotalPoints + bonusPoints;
 
-      logDebug(`Calculated points for player ${perf.player_id}: ${finalTotalPoints}`);
+      logDebug(`Points breakdown for player ${perf.player_id}:`, {
+        minutesPoints,
+        goalsPoints,
+        cleanSheetPoints,
+        goalsConcededPoints,
+        assistPoints,
+        penaltySavePoints,
+        penaltyMissPoints,
+        ownGoalPoints,
+        cardPoints,
+        savePoints,
+        bonusPoints,
+        rawTotalPoints,
+        finalTotalPoints
+      });
 
       pointsCalculations.push({
         event_id: perf.event_id,
@@ -133,7 +144,7 @@ Deno.serve(async (req) => {
     const { error: insertError } = await supabaseClient
       .from('player_points_calculation')
       .upsert(pointsCalculations, {
-        onConflict: 'event_id,player_id'
+        onConflict: 'event_id,player_id,fixture_id'
       });
 
     if (insertError) {
