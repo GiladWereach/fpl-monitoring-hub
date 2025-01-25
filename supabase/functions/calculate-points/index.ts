@@ -6,7 +6,6 @@ import type { LivePerformance, Player, ScoringRules, PointsCalculation } from '.
 import { calculateBonusPoints } from './calculators/bonusCalculator.ts';
 
 Deno.serve(async (req) => {
-  // Handle CORS
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -76,41 +75,55 @@ Deno.serve(async (req) => {
     for (const perf of performances) {
       logDebug(`Calculating points for player ${perf.player_id}`);
 
+      // Ensure all values are defined with fallbacks to 0
+      const minutes = perf.minutes || 0;
+      const goalsScored = perf.goals_scored || 0;
+      const cleanSheets = perf.clean_sheets || 0;
+      const goalsConceded = perf.goals_conceded || 0;
+      const assists = perf.assists || 0;
+      const penaltiesSaved = perf.penalties_saved || 0;
+      const penaltiesMissed = perf.penalties_missed || 0;
+      const ownGoals = perf.own_goals || 0;
+      const yellowCards = perf.yellow_cards || 0;
+      const redCards = perf.red_cards || 0;
+      const saves = perf.saves || 0;
+      const elementType = perf.player?.element_type || 0;
+
       // Calculate minutes points
-      const minutesPoints = calculateMinutesPoints(perf.minutes, rules);
+      const minutesPoints = calculateMinutesPoints(minutes, rules);
       
       // Calculate goals points
-      const goalsPoints = calculateGoalPoints(perf.goals_scored, perf.player.element_type, rules);
+      const goalsPoints = calculateGoalPoints(goalsScored, elementType, rules);
       
       // Calculate clean sheet and goals conceded points
-      const cleanSheetPoints = perf.clean_sheets ? calculateGoalsConcededPoints(0, perf.player.element_type, rules) : 0;
-      const goalsConcededPoints = calculateGoalsConcededPoints(perf.goals_conceded, perf.player.element_type, rules);
+      const cleanSheetPoints = cleanSheets ? calculateGoalsConcededPoints(0, elementType, rules) : 0;
+      const goalsConcededPoints = calculateGoalsConcededPoints(goalsConceded, elementType, rules);
       
       // Calculate other points
-      const assistPoints = perf.assists * rules.assists;
-      const penaltySavePoints = perf.penalties_saved * rules.penalties_saved;
-      const penaltyMissPoints = perf.penalties_missed * rules.penalties_missed;
-      const ownGoalPoints = perf.own_goals * rules.own_goals;
-      const cardPoints = calculateCardPoints(perf.yellow_cards, perf.red_cards, rules);
+      const assistPoints = assists * rules.assists;
+      const penaltySavePoints = penaltiesSaved * rules.penalties_saved;
+      const penaltyMissPoints = penaltiesMissed * rules.penalties_missed;
+      const ownGoalPoints = ownGoals * rules.own_goals;
+      const cardPoints = calculateCardPoints(yellowCards, redCards, rules);
       
       // Calculate save points (3 saves = 1 point)
-      const savePoints = Math.floor(perf.saves / 3);
+      const savePoints = Math.floor(saves / 3);
 
       // Calculate bonus points based on BPS
       let bonusPoints = 0;
       if (perf.fixture_id && fixturePerformances[perf.fixture_id]) {
         const fixtureBPS = fixturePerformances[perf.fixture_id].map(p => ({
           player_id: p.player_id,
-          bps: p.bps,
+          bps: p.bps || 0,
           fixture_id: p.fixture_id || 0,
-          minutes: p.minutes
+          minutes: p.minutes || 0
         }));
         
         const playerBPS = [{
           player_id: perf.player_id,
-          bps: perf.bps,
+          bps: perf.bps || 0,
           fixture_id: perf.fixture_id,
-          minutes: perf.minutes
+          minutes: perf.minutes || 0
         }];
 
         bonusPoints = calculateBonusPoints(playerBPS, fixtureBPS);
@@ -145,7 +158,22 @@ Deno.serve(async (req) => {
         savePoints,
         bonusPoints,
         rawTotalPoints,
-        finalTotalPoints
+        finalTotalPoints,
+        stats: {
+          minutes,
+          goalsScored,
+          cleanSheets,
+          goalsConceded,
+          assists,
+          penaltiesSaved,
+          penaltiesMissed,
+          ownGoals,
+          yellowCards,
+          redCards,
+          saves,
+          elementType,
+          bps: perf.bps
+        }
       });
 
       pointsCalculations.push({
