@@ -3,12 +3,28 @@ import { Card } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { calculateTotalPoints, calculateBenchPoints } from './utils/points-calculator';
 import { PlayerPerformanceData } from '@/components/gameweek-live/types';
+import { PlayerStatus } from './PlayerStatus';
 
 interface ListViewProps {
   teamSelection?: any;
   players?: any[];
   liveData?: PlayerPerformanceData[];
 }
+
+const getPositionName = (elementType: number) => {
+  switch (elementType) {
+    case 1:
+      return 'GK';
+    case 2:
+      return 'DEF';
+    case 3:
+      return 'MID';
+    case 4:
+      return 'FWD';
+    default:
+      return '';
+  }
+};
 
 export function ListView({ teamSelection, players, liveData }: ListViewProps) {
   const getPlayerData = (pick: any) => {
@@ -68,6 +84,7 @@ export function ListView({ teamSelection, players, liveData }: ListViewProps) {
           <TableRow>
             <TableHead>Player</TableHead>
             <TableHead>Position</TableHead>
+            <TableHead>Status</TableHead>
             <TableHead className="text-right">Points</TableHead>
             <TableHead className="text-right">Minutes</TableHead>
             <TableHead className="text-right">G+A</TableHead>
@@ -79,20 +96,29 @@ export function ListView({ teamSelection, players, liveData }: ListViewProps) {
             const playerData = getPlayerData(pick);
             if (!playerData) return null;
             
+            const isSub = pick.position > 11;
+            
             return (
-              <TableRow key={pick.element}>
-                <TableCell>
+              <TableRow key={pick.element} className="h-10">
+                <TableCell className="py-2">
                   {playerData.web_name}
                   {pick.is_captain && <span className="ml-1 text-[#3DFF9A]">(C)</span>}
                   {pick.is_vice_captain && <span className="ml-1 text-[#3DFF9A]">(V)</span>}
+                  {isSub && <span className="ml-1 text-gray-500">(Sub)</span>}
                 </TableCell>
-                <TableCell>{playerData.element_type}</TableCell>
-                <TableCell className="text-right">{playerData.points}</TableCell>
-                <TableCell className="text-right">{playerData.liveData?.minutes || 0}</TableCell>
-                <TableCell className="text-right">
+                <TableCell className="py-2">{getPositionName(playerData.element_type)}</TableCell>
+                <TableCell className="py-2">
+                  <PlayerStatus 
+                    player={playerData} 
+                    liveData={playerData.liveData}
+                  />
+                </TableCell>
+                <TableCell className="text-right py-2">{playerData.points}</TableCell>
+                <TableCell className="text-right py-2">{playerData.liveData?.minutes || 0}</TableCell>
+                <TableCell className="text-right py-2">
                   {(playerData.liveData?.goals_scored || 0) + (playerData.liveData?.assists || 0)}
                 </TableCell>
-                <TableCell className="text-right">{playerData.liveData?.points_calculation?.bonus_points || 0}</TableCell>
+                <TableCell className="text-right py-2">{playerData.liveData?.points_calculation?.bonus_points || 0}</TableCell>
               </TableRow>
             );
           })}
