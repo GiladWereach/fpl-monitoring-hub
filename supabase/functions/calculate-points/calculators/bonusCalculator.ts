@@ -2,7 +2,7 @@ interface BPSData {
   player_id: number;
   bps: number;
   fixture_id: number;
-  minutes: number;  // Added minutes to the interface
+  minutes: number;
 }
 
 export const calculateBonusPoints = (playerBPSData: BPSData[], fixtureBPSData: BPSData[]): number => {
@@ -17,25 +17,36 @@ export const calculateBonusPoints = (playerBPSData: BPSData[], fixtureBPSData: B
   if (playerMinutes === 0) return 0;
 
   // Get all BPS values for players who have played minutes
-  const allBpsInFixture = fixtureBPSData
-    .filter(d => d.minutes > 0)  // Only consider players who played
-    .map(d => d.bps);
+  const playersWithMinutes = fixtureBPSData.filter(d => d.minutes > 0);
   
-  // Sort BPS in descending order and get unique values
-  const uniqueBps = [...new Set(allBpsInFixture)].sort((a, b) => b - a);
+  // Sort BPS in descending order
+  const sortedPlayers = [...playersWithMinutes].sort((a, b) => b.bps - a.bps);
   
-  // Get index of current BPS in unique sorted array
-  const bpsIndex = uniqueBps.indexOf(playerBps);
+  // If no players with minutes or player's BPS is 0, no bonus points
+  if (!sortedPlayers.length || playerBps === 0) return 0;
+
+  // Get unique BPS values in descending order
+  const uniqueBpsValues = [...new Set(sortedPlayers.map(p => p.bps))].sort((a, b) => b - a);
   
-  // If not in top 3 unique BPS values or BPS is 0, no bonus points
-  if (bpsIndex >= 3 || playerBps === 0) return 0;
+  // Handle ties according to FPL rules
+  const playerPosition = sortedPlayers.findIndex(p => p.bps === playerBps);
   
-  // Assign bonus points based on position in unique BPS values
-  // If same BPS, they get the same points
-  switch (bpsIndex) {
-    case 0: return 3; // Highest unique BPS
-    case 1: return 2; // Second highest unique BPS
-    case 2: return 1; // Third highest unique BPS
-    default: return 0;
+  // First place tie
+  if (playerPosition === 0) {
+    return 3;
+  } else if (playerPosition > 0 && playerBps === sortedPlayers[0].bps) {
+    return 3; // Also tied for first
   }
+  
+  // Second place tie
+  if (playerPosition === 1 || (playerBps === sortedPlayers[1]?.bps && playerBps !== sortedPlayers[0].bps)) {
+    return 2;
+  }
+  
+  // Third place tie
+  if (playerPosition === 2 || (playerBps === sortedPlayers[2]?.bps && playerBps !== sortedPlayers[1].bps)) {
+    return 1;
+  }
+  
+  return 0;
 };

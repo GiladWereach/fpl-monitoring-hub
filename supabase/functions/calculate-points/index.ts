@@ -3,6 +3,7 @@ import { corsHeaders } from '../_shared/cors.ts';
 import { calculateMinutesPoints, calculateGoalPoints, calculateGoalsConcededPoints, calculateCardPoints } from './calculators.ts';
 import { logDebug, logError } from './logging.ts';
 import type { LivePerformance, Player, ScoringRules, PointsCalculation } from './types.ts';
+import { calculateBonusPoints } from './calculators/bonusCalculator.ts';
 
 Deno.serve(async (req) => {
   // Handle CORS
@@ -60,6 +61,16 @@ Deno.serve(async (req) => {
 
     logDebug(`Processing ${performances.length} performances`);
 
+    // Group performances by fixture for BPS calculations
+    const fixturePerformances = performances.reduce((acc, perf) => {
+      if (!perf.fixture_id) return acc;
+      if (!acc[perf.fixture_id]) {
+        acc[perf.fixture_id] = [];
+      }
+      acc[perf.fixture_id].push(perf);
+      return acc;
+    }, {} as Record<number, LivePerformance[]>);
+
     const pointsCalculations: PointsCalculation[] = [];
 
     for (const perf of performances) {
@@ -85,10 +96,27 @@ Deno.serve(async (req) => {
       // Calculate save points (3 saves = 1 point)
       const savePoints = Math.floor(perf.saves / 3);
 
-      // Calculate bonus points - ensure it's not null
-      const bonusPoints = perf.bonus || 0;
+      // Calculate bonus points based on BPS
+      let bonusPoints = 0;
+      if (perf.fixture_id && fixturePerformances[perf.fixture_id]) {
+        const fixtureBPS = fixturePerformances[perf.fixture_id].map(p => ({
+          player_id: p.player_id,
+          bps: p.bps,
+          fixture_id: p.fixture_id || 0,
+          minutes: p.minutes
+        }));
+        
+        const playerBPS = [{
+          player_id: perf.player_id,
+          bps: perf.bps,
+          fixture_id: perf.fixture_id,
+          minutes: perf.minutes
+        }];
 
-      // Sum up all points
+        bonusPoints = calculateBonusPoints(playerBPS, fixtureBPS);
+      }
+
+      // Sum up all points EXCEPT bonus points first
       const rawTotalPoints = 
         minutesPoints +
         goalsPoints +
@@ -136,7 +164,8 @@ Deno.serve(async (req) => {
         card_points: cardPoints,
         bonus_points: bonusPoints,
         raw_total_points: rawTotalPoints,
-        final_total_points: finalTotalPoints
+        final_total_points: finalTotalPoints,
+        last_updated: new Date().toISOString()
       });
     }
 

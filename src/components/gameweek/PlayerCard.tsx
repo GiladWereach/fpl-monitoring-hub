@@ -67,9 +67,8 @@ export function PlayerCard({
   };
 
   // Calculate final points including captain multiplier
-  const finalPoints = isCaptain ? 
-    (liveData?.points_calculation?.final_total_points || 0) * 2 : 
-    (liveData?.points_calculation?.final_total_points || 0);
+  const basePoints = liveData?.points_calculation?.final_total_points || 0;
+  const finalPoints = isCaptain ? basePoints * 2 : basePoints;
 
   if (!player) {
     return (

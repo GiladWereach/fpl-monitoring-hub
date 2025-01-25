@@ -92,7 +92,7 @@ export function ListView({ teamSelection, players, liveData }: ListViewProps) {
                 <TableCell className="text-right">
                   {(playerData.liveData?.goals_scored || 0) + (playerData.liveData?.assists || 0)}
                 </TableCell>
-                <TableCell className="text-right">{playerData.liveData?.bonus || 0}</TableCell>
+                <TableCell className="text-right">{playerData.liveData?.points_calculation?.bonus_points || 0}</TableCell>
               </TableRow>
             );
           })}
