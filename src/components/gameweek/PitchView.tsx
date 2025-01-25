@@ -102,13 +102,6 @@ export function PitchView({ teamSelection, players, liveData, eventId }: PitchVi
               <path d="M27 56a5.5 5.5 0 0 1 14 0"/>
             </g>
           </svg>
-
-          <div className="fpl-position-labels">
-            <span className="fpl-position-label">GK</span>
-            <span className="fpl-position-label">DEF</span>
-            <span className="fpl-position-label">MID</span>
-            <span className="fpl-position-label">FWD</span>
-          </div>
           
           <div className="fpl-pitch-grid">
             <GoalkeeperRow getPlayerData={getPlayerData} eventId={eventId} />

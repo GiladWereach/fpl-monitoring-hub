@@ -14,17 +14,6 @@
   z-index: 1;
 }
 
-.fpl-position-labels {
-  @apply absolute inset-y-0 left-4 flex flex-col justify-evenly py-28;
-  z-index: 2;
-}
-
-.fpl-position-label {
-  @apply text-xs font-semibold tracking-wider text-accent/80;
-  writing-mode: vertical-lr;
-  transform: rotate(180deg);
-}
-
 .fpl-row {
   @apply flex items-center justify-center gap-4 transition-all duration-300;
   min-height: 120px;
@@ -73,10 +62,6 @@
   .fpl-pitch-grid {
     @apply py-20 px-6;
   }
-  
-  .fpl-position-labels {
-    @apply py-20;
-  }
 
   .fpl-row {
     min-height: 100px;
@@ -92,10 +77,6 @@
   
   .fpl-pitch-grid {
     @apply py-16 px-4;
-  }
-  
-  .fpl-position-labels {
-    @apply py-16 left-2;
   }
   
   .fpl-row {
