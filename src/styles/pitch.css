@@ -9,13 +9,13 @@
 }
 
 .fpl-pitch-grid {
-  @apply absolute inset-0 flex flex-col justify-between py-12 px-8;
+  @apply absolute inset-0 flex flex-col justify-between py-16 px-8;
   height: 100%;
   z-index: 1;
 }
 
 .fpl-position-labels {
-  @apply absolute inset-y-0 left-4 flex flex-col justify-between py-12;
+  @apply absolute inset-y-0 left-4 flex flex-col justify-between py-16;
   z-index: 2;
 }
 
@@ -30,7 +30,7 @@
 }
 
 .fpl-gk-row {
-  @apply mt-0;
+  @apply mt-0 mb-auto;
   animation: fade-in 0.3s ease-out;
 }
 
@@ -40,12 +40,12 @@
 }
 
 .fpl-mid-row {
-  @apply mb-auto;
+  @apply mt-auto mb-auto;
   animation: fade-in 0.3s ease-out 0.2s backwards;
 }
 
 .fpl-fwd-row {
-  @apply mb-12;
+  @apply mt-auto mb-16;
   animation: fade-in 0.3s ease-out 0.3s backwards;
 }
 
@@ -70,11 +70,11 @@
   }
   
   .fpl-pitch-grid {
-    @apply py-8 px-6;
+    @apply py-12 px-6;
   }
   
   .fpl-position-labels {
-    @apply py-8;
+    @apply py-12;
   }
 }
 
@@ -86,11 +86,11 @@
   }
   
   .fpl-pitch-grid {
-    @apply py-6 px-4;
+    @apply py-8 px-4;
   }
   
   .fpl-position-labels {
-    @apply py-6 left-2;
+    @apply py-8 left-2;
   }
   
   .fpl-row {
