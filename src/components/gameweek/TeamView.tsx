@@ -61,22 +61,25 @@ export const TeamView: React.FC<TeamViewProps> = ({
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
       <div className="lg:col-span-2 relative">
-        {viewMode === 'pitch' ? (
-          <PitchView 
-            teamSelection={teamData.data}
-            players={players}
-            liveData={liveData}
-            eventId={teamData.data.team_info?.event}
-            viewMode={viewMode}
-            setViewMode={setViewMode}
-          />
-        ) : (
-          <ListView
-            teamSelection={teamData.data}
-            players={players}
-            liveData={liveData}
-          />
-        )}
+        <div className="relative">
+          {viewMode === 'pitch' ? (
+            <PitchView 
+              teamSelection={teamData.data}
+              players={players}
+              liveData={liveData}
+              eventId={teamData.data.team_info?.event}
+              viewMode={viewMode}
+              setViewMode={setViewMode}
+            />
+          ) : (
+            <ListView
+              teamSelection={teamData.data}
+              players={players}
+              liveData={liveData}
+            />
+          )}
+          <ViewToggle viewMode={viewMode} setViewMode={setViewMode} />
+        </div>
       </div>
 
       <div className="space-y-4">

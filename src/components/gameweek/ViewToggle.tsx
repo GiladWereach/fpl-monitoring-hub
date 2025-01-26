@@ -8,11 +8,11 @@ interface ViewToggleProps {
 
 export function ViewToggle({ viewMode, setViewMode }: ViewToggleProps) {
   return (
-    <div className="absolute -right-14 flex flex-col space-y-2 z-10 top-1/2 -translate-y-1/2">
+    <div className="absolute top-4 right-4 flex flex-col space-y-2 z-10">
       <button
         onClick={() => setViewMode('pitch')}
         className={cn(
-          "p-2 rounded-l-md transition-colors border-r-2",
+          "p-2 rounded-md transition-colors border-2",
           viewMode === 'pitch' 
             ? "bg-[#3DFF9A]/20 text-[#3DFF9A] border-[#3DFF9A]" 
             : "text-gray-400 hover:bg-[#3DFF9A]/10 border-transparent"
@@ -24,7 +24,7 @@ export function ViewToggle({ viewMode, setViewMode }: ViewToggleProps) {
       <button
         onClick={() => setViewMode('list')}
         className={cn(
-          "p-2 rounded-l-md transition-colors border-r-2",
+          "p-2 rounded-md transition-colors border-2",
           viewMode === 'list' 
             ? "bg-[#3DFF9A]/20 text-[#3DFF9A] border-[#3DFF9A]" 
             : "text-gray-400 hover:bg-[#3DFF9A]/10 border-transparent"
