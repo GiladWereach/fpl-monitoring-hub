@@ -51,7 +51,7 @@ export function PlayerCard({
   });
 
   return (
-    <>
+    <div className="relative">
       <div 
         className={cn(
           "relative w-[90px] h-[110px] bg-secondary/90 backdrop-blur-sm rounded-lg border border-accent/20 shadow-lg cursor-pointer transition-all duration-300",
@@ -97,22 +97,19 @@ export function PlayerCard({
       </div>
 
       {showBreakdown && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center">
-          <div 
-            className="absolute inset-0 bg-black/40 backdrop-blur-sm" 
-            onClick={() => setShowBreakdown(false)} 
+        <div 
+          className="absolute z-[9999] left-[100%] top-0 ml-2"
+          style={{ minWidth: '200px' }}
+        >
+          <PointsBreakdown
+            pointsData={liveData?.points_calculation}
+            isCaptain={isCaptain}
+            isViceCaptain={isViceCaptain}
+            liveData={liveData}
+            onClose={() => setShowBreakdown(false)}
           />
-          <div className="relative z-[10000]">
-            <PointsBreakdown
-              pointsData={liveData?.points_calculation}
-              isCaptain={isCaptain}
-              isViceCaptain={isViceCaptain}
-              liveData={liveData}
-              onClose={() => setShowBreakdown(false)}
-            />
-          </div>
         </div>
       )}
-    </>
+    </div>
   );
 }
