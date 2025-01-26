@@ -86,18 +86,19 @@ export function PlayerCard({
           {getPointsDisplay()}
         </div>
 
-        <div className="absolute bottom-2.5 left-2.5">
+        <div className="absolute bottom-2 left-2">
           <PlayerStatus 
             player={player} 
             liveData={liveData}
-            eventId={eventId}
           />
         </div>
       </div>
 
       {showBreakdown && (
         <PointsBreakdown
-          player={player}
+          pointsData={liveData?.points_calculation}
+          isCaptain={isCaptain}
+          isViceCaptain={isViceCaptain}
           liveData={liveData}
           onClose={() => setShowBreakdown(false)}
         />

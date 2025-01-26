@@ -1,46 +1,19 @@
 import React from 'react';
 
-export interface PointsBreakdown {
-  minutes: number;
-  goals: number;
-  assists: number;
-  cleanSheets: number;
-  goalsConceded: number;
-  ownGoals: number;
-  penaltiesSaved: number;
-  penaltiesMissed: number;
-  yellowCards: number;
-  redCards: number;
-  saves: number;
-  bonus: number;
-  total: number;
-}
-
-interface PointsBreakdownProps {
-  pointsData: PointsBreakdown | null;
+export interface PointsBreakdownProps {
+  pointsData: any;
   isCaptain: boolean;
   isViceCaptain: boolean;
-  liveData?: {
-    minutes?: number;
-    goals_scored?: number;
-    assists?: number;
-    clean_sheets?: number;
-    goals_conceded?: number;
-    own_goals?: number;
-    penalties_saved?: number;
-    penalties_missed?: number;
-    yellow_cards?: number;
-    red_cards?: number;
-    saves?: number;
-    bonus?: number;
-  };
+  liveData?: any;
+  onClose: () => void;
 }
 
 export function PointsBreakdown({ 
   pointsData,
   isCaptain,
   isViceCaptain,
-  liveData
+  liveData,
+  onClose 
 }: PointsBreakdownProps) {
   if (!pointsData) return null;
 
@@ -64,23 +37,30 @@ export function PointsBreakdown({
   };
 
   return (
-    <div className="space-y-2 text-sm">
-      {renderPointLine('Minutes', pointsData.minutes, liveData?.minutes)}
-      {renderPointLine('Goals', pointsData.goals, liveData?.goals_scored)}
-      {renderPointLine('Assists', pointsData.assists, liveData?.assists)}
-      {renderPointLine('Clean Sheet', pointsData.cleanSheets, liveData?.clean_sheets)}
-      {renderPointLine('Goals Conceded', pointsData.goalsConceded, liveData?.goals_conceded)}
-      {renderPointLine('Own Goals', pointsData.ownGoals, liveData?.own_goals)}
-      {renderPointLine('Penalties Saved', pointsData.penaltiesSaved, liveData?.penalties_saved)}
-      {renderPointLine('Penalties Missed', pointsData.penaltiesMissed, liveData?.penalties_missed)}
-      {renderPointLine('Yellow Cards', pointsData.yellowCards, liveData?.yellow_cards)}
-      {renderPointLine('Red Cards', pointsData.redCards, liveData?.red_cards)}
-      {renderPointLine('Saves', pointsData.saves, liveData?.saves)}
-      {renderPointLine('Bonus', pointsData.bonus, liveData?.bonus)}
+    <div className="absolute top-0 left-0 w-[200px] p-4 bg-secondary/95 backdrop-blur-sm border border-accent/20 rounded-lg shadow-xl z-50 space-y-2">
+      <button 
+        onClick={onClose}
+        className="absolute top-2 right-2 text-gray-400 hover:text-white"
+      >
+        ×
+      </button>
+      
+      {renderPointLine('Minutes', pointsData.minutes_points, liveData?.minutes)}
+      {renderPointLine('Goals', pointsData.goals_scored_points, liveData?.goals_scored)}
+      {renderPointLine('Assists', pointsData.assist_points, liveData?.assists)}
+      {renderPointLine('Clean Sheet', pointsData.clean_sheet_points, liveData?.clean_sheets)}
+      {renderPointLine('Goals Conceded', pointsData.goals_conceded_points, liveData?.goals_conceded)}
+      {renderPointLine('Own Goals', pointsData.own_goal_points, liveData?.own_goals)}
+      {renderPointLine('Penalties Saved', pointsData.penalty_save_points, liveData?.penalties_saved)}
+      {renderPointLine('Penalties Missed', pointsData.penalty_miss_points, liveData?.penalties_missed)}
+      {renderPointLine('Yellow Cards', pointsData.card_points, liveData?.yellow_cards)}
+      {renderPointLine('Red Cards', pointsData.card_points, liveData?.red_cards)}
+      {renderPointLine('Saves', pointsData.saves_points, liveData?.saves)}
+      {renderPointLine('Bonus', pointsData.bonus_points, liveData?.bonus)}
       
       <div className="border-t pt-1 flex justify-between font-bold">
         <span>Total</span>
-        <span>{pointsData.total}</span>
+        <span>{isCaptain ? pointsData.final_total_points * 2 : pointsData.final_total_points}</span>
       </div>
 
       {isCaptain && (

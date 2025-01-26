@@ -23,7 +23,6 @@ export function GoalkeeperRow({ getPlayerData, eventId }: GoalkeeperRowProps) {
             isCaptain={player.isCaptain}
             isViceCaptain={player.isViceCaptain}
             liveData={player.liveData}
-            fixture_id={player.fixture_id}
             eventId={eventId}
           />
         );

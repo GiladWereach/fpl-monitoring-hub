@@ -26,7 +26,6 @@ export function PlayerRow({ positions, getPlayerData, eventId, className }: Play
             isCaptain={player.isCaptain}
             isViceCaptain={player.isViceCaptain}
             liveData={player.liveData}
-            fixture_id={player.fixture_id}
             eventId={eventId}
           />
         );
