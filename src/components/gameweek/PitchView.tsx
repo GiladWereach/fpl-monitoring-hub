@@ -70,7 +70,7 @@ export function PitchView({ teamSelection, players, liveData, eventId }: PitchVi
   });
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4">
       <div className="min-h-[600px] lg:min-h-[600px] xl:min-h-[600px] relative w-full">
         <div className={`fpl-pitch-container ${formationClass}`}>
           <svg 
