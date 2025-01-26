@@ -2,15 +2,25 @@ import React from 'react';
 import { GoalkeeperRow } from './pitch/GoalkeeperRow';
 import { PlayerRow } from './pitch/PlayerRow';
 import { BenchSection } from './pitch/BenchSection';
+import { ViewToggle } from './ViewToggle';
 
 interface PitchViewProps {
   teamSelection?: any;
   players?: any[];
   liveData?: any[];
   eventId?: number;
+  viewMode: 'pitch' | 'list';
+  setViewMode: (mode: 'pitch' | 'list') => void;
 }
 
-export function PitchView({ teamSelection, players, liveData, eventId }: PitchViewProps) {
+export function PitchView({ 
+  teamSelection, 
+  players, 
+  liveData, 
+  eventId,
+  viewMode,
+  setViewMode 
+}: PitchViewProps) {
   const getPlayerData = (position: number) => {
     if (!teamSelection?.picks || !players) {
       console.log('Missing required data:', { 
@@ -72,6 +82,7 @@ export function PitchView({ teamSelection, players, liveData, eventId }: PitchVi
   return (
     <div className="space-y-4">
       <div className="min-h-[600px] lg:min-h-[600px] xl:min-h-[600px] relative w-full">
+        <ViewToggle viewMode={viewMode} setViewMode={setViewMode} />
         <div className={`fpl-pitch-container ${formationClass}`}>
           <svg 
             xmlns="http://www.w3.org/2000/svg" 

@@ -67,6 +67,8 @@ export const TeamView: React.FC<TeamViewProps> = ({
             players={players}
             liveData={liveData}
             eventId={teamData.data.team_info?.event}
+            viewMode={viewMode}
+            setViewMode={setViewMode}
           />
         ) : (
           <ListView
@@ -75,7 +77,6 @@ export const TeamView: React.FC<TeamViewProps> = ({
             liveData={liveData}
           />
         )}
-        <ViewToggle viewMode={viewMode} setViewMode={setViewMode} />
       </div>
 
       <div className="space-y-4">
