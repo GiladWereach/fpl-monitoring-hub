@@ -95,14 +95,17 @@ export function PlayerCard({
       </div>
 
       {showBreakdown && (
-        <div className="absolute top-0 left-0 z-50">
-          <PointsBreakdown
-            pointsData={liveData?.points_calculation}
-            isCaptain={isCaptain}
-            isViceCaptain={isViceCaptain}
-            liveData={liveData}
-            onClose={() => setShowBreakdown(false)}
-          />
+        <div className="fixed inset-0 z-[100] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/20" onClick={() => setShowBreakdown(false)} />
+          <div className="relative z-[101]">
+            <PointsBreakdown
+              pointsData={liveData?.points_calculation}
+              isCaptain={isCaptain}
+              isViceCaptain={isViceCaptain}
+              liveData={liveData}
+              onClose={() => setShowBreakdown(false)}
+            />
+          </div>
         </div>
       )}
     </div>
