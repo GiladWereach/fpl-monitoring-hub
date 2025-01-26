@@ -13,7 +13,7 @@ export function PlayerRow({ positions, getPlayerData, eventId, className }: Play
   return (
     <div className={cn(
       "w-full flex items-center justify-center gap-4",
-      "py-5 md:py-[1.25em]",
+      "py-4 md:py-[1.0625em]", // Reduced from py-5 md:py-[1.25em]
       className
     )}>
       {positions.map(position => {
