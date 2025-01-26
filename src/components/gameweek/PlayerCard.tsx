@@ -1,141 +1,107 @@
 import React from 'react';
-import { cn } from "@/lib/utils";
-import { Copyright, Loader2 } from "lucide-react";
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card";
+import { cn } from '@/lib/utils';
 import { PlayerStatus } from './PlayerStatus';
 import { PointsBreakdown } from './components/PointsBreakdown';
-import { PlayerPerformanceData } from '@/components/gameweek-live/types';
-import { useToast } from '@/hooks/use-toast';
 
 interface PlayerCardProps {
   player: any;
-  isCaptain: boolean;
-  isViceCaptain: boolean;
-  liveData?: PlayerPerformanceData;
-  fixture_id?: number;
-  eventId: number;
-  totalPoints?: number;
-  inPlay?: boolean;
+  liveData?: any;
+  isCaptain?: boolean;
+  isViceCaptain?: boolean;
+  eventId?: number;
+  className?: string;
 }
 
 export function PlayerCard({ 
   player, 
+  liveData, 
   isCaptain, 
-  isViceCaptain, 
-  liveData,
-  fixture_id,
+  isViceCaptain,
   eventId,
-  totalPoints = 0,
-  inPlay = false
+  className 
 }: PlayerCardProps) {
-  const { toast } = useToast();
-
-  console.log('PlayerCard render for:', player?.web_name, {
-    raw_live_data: liveData,
-    points_calculation: liveData?.points_calculation,
-    total_points: totalPoints,
-    minutes: liveData?.minutes,
-    inPlay,
-    isCaptain,
-    isViceCaptain,
-    fixture_id
-  });
-
-  const getPointsBreakdown = () => {
-    if (!liveData?.points_calculation) return null;
-    
-    const calc = liveData.points_calculation;
-    return {
-      minutes: calc.minutes_points || 0,
-      goals: calc.goals_scored_points || 0,
-      assists: calc.assist_points || 0,
-      cleanSheets: calc.clean_sheet_points || 0,
-      goalsConceded: calc.goals_conceded_points || 0,
-      ownGoals: calc.own_goal_points || 0,
-      penaltiesSaved: calc.penalty_save_points || 0,
-      penaltiesMissed: calc.penalty_miss_points || 0,
-      yellowCards: 0,
-      redCards: 0,
-      saves: calc.saves_points || 0,
-      bonus: calc.bonus_points || 0,
-      total: calc.final_total_points || 0
-    };
-  };
-
-  // Calculate final points including captain multiplier
-  const basePoints = liveData?.points_calculation?.final_total_points || 0;
-  const finalPoints = isCaptain ? basePoints * 2 : basePoints;
-
+  const [showBreakdown, setShowBreakdown] = React.useState(false);
+  
   if (!player) {
-    return (
-      <div className="w-full max-w-[120px] h-[100px] bg-secondary/95 rounded-lg flex items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-foreground/50" />
-      </div>
-    );
+    console.log('No player data provided to PlayerCard');
+    return null;
   }
 
+  const finalPoints = liveData?.points_calculation?.final_total_points || 0;
+  const inPlay = liveData?.minutes > 0;
+  const hasStarted = liveData?.fixture?.started;
+  const isFinished = liveData?.fixture?.finished;
+
+  const getPointsDisplay = () => {
+    if (isCaptain) {
+      return `${finalPoints * 2}`;
+    }
+    return finalPoints;
+  };
+
+  console.log('PlayerCard render:', {
+    player: player.web_name,
+    isCaptain,
+    isViceCaptain,
+    finalPoints,
+    inPlay,
+    hasStarted,
+    isFinished,
+    liveData: !!liveData
+  });
+
   return (
-    <HoverCard>
-      <HoverCardTrigger asChild>
+    <div 
+      className={cn(
+        "relative w-[90px] h-[110px] bg-secondary/90 backdrop-blur-sm rounded-lg border border-accent/20 shadow-lg cursor-pointer transition-all duration-300",
+        "hover:scale-105 hover:border-[#3DFF9A]/40 hover:bg-secondary/95",
+        {
+          "border-[#3DFF9A]/40": inPlay,
+          "opacity-75": !hasStarted,
+        },
+        className
+      )}
+      onClick={() => setShowBreakdown(!showBreakdown)}
+    >
+      <div className="flex flex-col items-center justify-center h-full p-2">
+        <div className="text-xs text-center mb-1">
+          {player.web_name}
+        </div>
+        
+        {(isCaptain || isViceCaptain) && (
+          <div className="text-[10px] text-[#3DFF9A] mb-1">
+            {isCaptain ? '(C)' : '(V)'}
+          </div>
+        )}
+
         <div 
           className={cn(
-            "relative w-full max-w-[120px]",
-            "p-4 rounded-lg transition-all duration-200",
-            "bg-secondary/95 backdrop-blur-sm border border-accent/20",
-            "hover:bg-accent/10 hover:scale-105 cursor-pointer",
-            "shadow-lg hover:shadow-xl",
-            "animate-fade-in",
-            inPlay && "ring-2 ring-[#3DFF9A]"
+            "text-lg font-bold",
+            {
+              "text-[#3DFF9A]": finalPoints > 0,
+              "text-gray-400": finalPoints === 0
+            }
           )}
-          role="button"
-          tabIndex={0}
-          aria-label={`${player?.web_name} - ${finalPoints} points`}
         >
-          {(isCaptain || isViceCaptain) && (
-            <div className="absolute top-2 right-2">
-              <Copyright 
-                size={16} 
-                className={cn(
-                  "transition-colors",
-                  isCaptain ? "text-[#eaff80] drop-shadow-glow" : "text-gray-400"
-                )}
-                aria-label={isCaptain ? "Captain" : "Vice Captain"}
-              />
-            </div>
-          )}
-          
-          <p className="text-sm font-semibold truncate text-center w-full text-foreground/90">
-            {player?.web_name}
-          </p>
-          
-          <div className="text-xl font-bold text-[#3DFF9A] text-center">
-            {finalPoints}
-          </div>
-
-          <div className="absolute bottom-2 left-2">
-            <PlayerStatus 
-              player={player} 
-              liveData={liveData}
-              fixture_id={fixture_id}
-            />
-          </div>
+          {getPointsDisplay()}
         </div>
-      </HoverCardTrigger>
-      <HoverCardContent 
-        className="w-[200px] bg-secondary/95 backdrop-blur-sm border-accent/20 animate-fade-in"
-        side="right"
-      >
-        <PointsBreakdown 
-          pointsData={getPointsBreakdown()}
-          isCaptain={isCaptain}
-          isViceCaptain={isViceCaptain}
+
+        <div className="absolute bottom-2.5 left-2.5">
+          <PlayerStatus 
+            player={player} 
+            liveData={liveData}
+            eventId={eventId}
+          />
+        </div>
+      </div>
+
+      {showBreakdown && (
+        <PointsBreakdown
+          player={player}
           liveData={liveData}
+          onClose={() => setShowBreakdown(false)}
         />
-      </HoverCardContent>
-    </HoverCard>
+      )}
+    </div>
   );
 }
