@@ -116,7 +116,7 @@ export function PlayerCard({
             {finalPoints}
           </div>
 
-          <div className="absolute p-3">
+          <div className="absolute bottom-2 left-2">
             <PlayerStatus 
               player={player} 
               liveData={liveData}
