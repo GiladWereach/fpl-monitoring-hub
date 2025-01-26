@@ -51,53 +51,58 @@ export function PlayerCard({
   });
 
   return (
-    <div 
-      className={cn(
-        "relative w-[90px] h-[110px] bg-secondary/90 backdrop-blur-sm rounded-lg border border-accent/20 shadow-lg cursor-pointer transition-all duration-300",
-        "hover:scale-105 hover:border-[#3DFF9A]/40 hover:bg-secondary/95",
-        {
-          "border-[#3DFF9A]/40": inPlay,
-          "opacity-75": !hasStarted,
-        },
-        className
-      )}
-      onClick={() => setShowBreakdown(!showBreakdown)}
-    >
-      <div className="flex flex-col items-center justify-center h-full p-2">
-        <div className="text-xs text-center mb-1">
-          {player.web_name}
-        </div>
-        
-        {(isCaptain || isViceCaptain) && (
-          <div className="text-[10px] text-[#3DFF9A] mb-1">
-            {isCaptain ? '(C)' : '(V)'}
-          </div>
+    <>
+      <div 
+        className={cn(
+          "relative w-[90px] h-[110px] bg-secondary/90 backdrop-blur-sm rounded-lg border border-accent/20 shadow-lg cursor-pointer transition-all duration-300",
+          "hover:scale-105 hover:border-[#3DFF9A]/40 hover:bg-secondary/95",
+          {
+            "border-[#3DFF9A]/40": inPlay,
+            "opacity-75": !hasStarted,
+          },
+          className
         )}
-
-        <div 
-          className={cn(
-            "text-lg font-bold",
-            {
-              "text-[#3DFF9A]": finalPoints > 0,
-              "text-gray-400": finalPoints === 0
-            }
+        onClick={() => setShowBreakdown(!showBreakdown)}
+      >
+        <div className="flex flex-col items-center justify-center h-full p-2">
+          <div className="text-xs text-center mb-1">
+            {player.web_name}
+          </div>
+          
+          {(isCaptain || isViceCaptain) && (
+            <div className="text-[10px] text-[#3DFF9A] mb-1">
+              {isCaptain ? '(C)' : '(V)'}
+            </div>
           )}
-        >
-          {getPointsDisplay()}
-        </div>
 
-        <div className="absolute bottom-2 left-2">
-          <PlayerStatus 
-            player={player} 
-            liveData={liveData}
-          />
+          <div 
+            className={cn(
+              "text-lg font-bold",
+              {
+                "text-[#3DFF9A]": finalPoints > 0,
+                "text-gray-400": finalPoints === 0
+              }
+            )}
+          >
+            {getPointsDisplay()}
+          </div>
+
+          <div className="absolute bottom-2 left-2">
+            <PlayerStatus 
+              player={player} 
+              liveData={liveData}
+            />
+          </div>
         </div>
       </div>
 
       {showBreakdown && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/20" onClick={() => setShowBreakdown(false)} />
-          <div className="relative z-[101]">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center">
+          <div 
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm" 
+            onClick={() => setShowBreakdown(false)} 
+          />
+          <div className="relative z-[10000]">
             <PointsBreakdown
               pointsData={liveData?.points_calculation}
               isCaptain={isCaptain}
@@ -108,6 +113,6 @@ export function PlayerCard({
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
