@@ -116,11 +116,13 @@ export function PlayerCard({
             {finalPoints}
           </div>
 
-          <PlayerStatus 
-            player={player} 
-            liveData={liveData}
-            fixture_id={fixture_id}
-          />
+          <div className="absolute bottom-2 left-2">
+            <PlayerStatus 
+              player={player} 
+              liveData={liveData}
+              fixture_id={fixture_id}
+            />
+          </div>
         </div>
       </HoverCardTrigger>
       <HoverCardContent 

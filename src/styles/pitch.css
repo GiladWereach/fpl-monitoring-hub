@@ -48,7 +48,7 @@
 }
 
 .fpl-bench-section {
-  @apply mt-2 p-4 bg-secondary/90 backdrop-blur-sm 
+  @apply mt-1 p-3 bg-secondary/90 backdrop-blur-sm 
          border border-accent/20 rounded-lg shadow-lg;
   animation: fade-in 0.3s ease-out 0.4s backwards;
 }
