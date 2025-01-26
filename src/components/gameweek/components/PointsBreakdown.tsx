@@ -45,18 +45,18 @@ export function PointsBreakdown({
         ×
       </button>
       
-      {renderPointLine('Minutes', pointsData.minutes_points, liveData?.minutes)}
-      {renderPointLine('Goals', pointsData.goals_scored_points, liveData?.goals_scored)}
-      {renderPointLine('Assists', pointsData.assist_points, liveData?.assists)}
-      {renderPointLine('Clean Sheet', pointsData.clean_sheet_points, liveData?.clean_sheets)}
-      {renderPointLine('Goals Conceded', pointsData.goals_conceded_points, liveData?.goals_conceded)}
-      {renderPointLine('Own Goals', pointsData.own_goal_points, liveData?.own_goals)}
-      {renderPointLine('Penalties Saved', pointsData.penalty_save_points, liveData?.penalties_saved)}
-      {renderPointLine('Penalties Missed', pointsData.penalty_miss_points, liveData?.penalties_missed)}
-      {renderPointLine('Yellow Cards', pointsData.card_points, liveData?.yellow_cards)}
-      {renderPointLine('Red Cards', pointsData.card_points, liveData?.red_cards)}
-      {renderPointLine('Saves', pointsData.saves_points, liveData?.saves)}
-      {renderPointLine('Bonus', pointsData.bonus_points, liveData?.bonus)}
+      {liveData?.minutes > 0 && renderPointLine('Minutes', pointsData.minutes_points, liveData?.minutes)}
+      {liveData?.goals_scored > 0 && renderPointLine('Goals', pointsData.goals_scored_points, liveData?.goals_scored)}
+      {liveData?.assists > 0 && renderPointLine('Assists', pointsData.assist_points, liveData?.assists)}
+      {liveData?.clean_sheets > 0 && renderPointLine('Clean Sheet', pointsData.clean_sheet_points, liveData?.clean_sheets)}
+      {liveData?.goals_conceded > 0 && renderPointLine('Goals Conceded', pointsData.goals_conceded_points, liveData?.goals_conceded)}
+      {liveData?.own_goals > 0 && renderPointLine('Own Goals', pointsData.own_goal_points, liveData?.own_goals)}
+      {liveData?.penalties_saved > 0 && renderPointLine('Penalties Saved', pointsData.penalty_save_points, liveData?.penalties_saved)}
+      {liveData?.penalties_missed > 0 && renderPointLine('Penalties Missed', pointsData.penalty_miss_points, liveData?.penalties_missed)}
+      {liveData?.yellow_cards > 0 && renderPointLine('Yellow Cards', pointsData.card_points, liveData?.yellow_cards)}
+      {liveData?.red_cards > 0 && renderPointLine('Red Cards', pointsData.card_points, liveData?.red_cards)}
+      {liveData?.saves > 0 && renderPointLine('Saves', pointsData.saves_points, liveData?.saves)}
+      {liveData?.bonus > 0 && renderPointLine('Bonus', pointsData.bonus_points, liveData?.bonus)}
       
       <div className="border-t pt-1 flex justify-between font-bold">
         <span>Total</span>
